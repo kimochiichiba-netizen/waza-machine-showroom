@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜看護記録マシン（看護記録支援システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#1a9e8f;--brand-dk:#0f7d70;--brand-soft:#e3f6f2;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--violet:#7c5cf0;--violet-soft:#efeafe;
+  --sb:#0d1f2c;--sb-2:#123043;--sb-ink:#bcd2cf;--sb-ink-2:#6e8a8a;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(26,158,143,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.nav a .badge.am{background:var(--amber)}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn.violet{background:var(--violet);border-color:var(--violet);color:#fff}
+.btn.violet:hover{filter:brightness(1.06);color:#fff}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut */
+.donut-wrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.donut{width:128px;height:128px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;position:relative}
+.donut::after{content:"";position:absolute;width:78px;height:78px;border-radius:50%;background:var(--card)}
+.donut .dc{position:relative;z-index:1;text-align:center}
+.donut .dc b{font-size:22px;font-weight:900;display:block;line-height:1}
+.donut .dc span{font-size:10px;color:var(--ink-3);font-weight:700}
+.leg{display:flex;flex-direction:column;gap:8px;font-size:12.5px}
+.leg .lr{display:flex;align-items:center;gap:8px}
+.leg .lr .sw{width:11px;height:11px;border-radius:3px}
+.leg .lr b{margin-left:auto;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.done{background:var(--green-soft);color:var(--green)}
+.st.prog{background:var(--brand-soft);color:var(--brand)}
+.st.todo{background:var(--soft);color:var(--ink-3)}
+.st.alert{background:var(--red-soft);color:var(--red)}
+.st.draft{background:var(--amber-soft);color:var(--amber)}
+.st.ai{background:var(--violet-soft);color:var(--violet)}
+
+/* avatar / patient cell */
+.pcell{display:flex;align-items:center;gap:10px}
+.pav{width:34px;height:34px;border-radius:9px;flex-shrink:0;display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px}
+.pcell .pn b{font-size:13px}
+.pcell .pn span{display:block;font-size:11px;color:var(--ink-3)}
+.tag-s{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:7px;background:var(--soft);color:var(--ink-2)}
+.care-1{color:var(--green)!important}.care-3{color:var(--amber)!important}.care-5{color:var(--red)!important}
+
+/* vitals pills */
+.vit{display:inline-flex;gap:4px;align-items:baseline;font-size:12px;color:var(--ink-2)}
+.vit b{color:var(--ink);font-variant-numeric:tabular-nums}
+.vit.warn b{color:var(--red)}
+
+/* record / SOAP cards */
+.rec-grid{display:grid;grid-template-columns:1fr;gap:13px}
+.rec{background:var(--card);border:1px solid var(--line);border-radius:13px;box-shadow:var(--shadow);overflow:hidden}
+.rec .rh{display:flex;align-items:center;gap:11px;padding:13px 16px;border-bottom:1px solid var(--line)}
+.rec .rh .rt{font-weight:800;font-size:13.5px}
+.rec .rh .rm{font-size:11.5px;color:var(--ink-3)}
+.rec .rh .right{margin-left:auto;display:flex;align-items:center;gap:9px}
+.soap{display:grid;grid-template-columns:repeat(4,1fr);gap:0}
+@media(max-width:760px){.soap{grid-template-columns:1fr 1fr}}
+.soap .sq{padding:13px 15px;border-right:1px solid var(--line);font-size:12.5px}
+.soap .sq:last-child{border-right:0}
+.soap .sq .lbl{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:800;letter-spacing:.05em;margin-bottom:7px;padding:3px 8px;border-radius:6px}
+.soap .sq.s .lbl{background:#e3f0ff;color:#2f6df0}
+.soap .sq.o .lbl{background:var(--brand-soft);color:var(--brand)}
+.soap .sq.a .lbl{background:var(--amber-soft);color:var(--amber)}
+.soap .sq.p .lbl{background:var(--violet-soft);color:var(--violet)}
+.soap .sq p{color:var(--ink-2);line-height:1.55}
+
+/* obs (観察) board */
+.obs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:1080px){.obs-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:620px){.obs-grid{grid-template-columns:1fr}}
+.obs{background:var(--card);border:1px solid var(--line);border-radius:13px;box-shadow:var(--shadow);padding:15px 16px}
+.obs .oh{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.obs .vrow{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid var(--line);font-size:13px}
+.obs .vrow:first-of-type{border-top:0}
+.obs .vrow .vk{color:var(--ink-2);font-weight:600}
+.obs .vrow .vv{font-weight:800;font-variant-numeric:tabular-nums}
+.obs .vrow .vv.bad{color:var(--red)}
+.spark{display:flex;align-items:flex-end;gap:3px;height:34px;margin-top:4px}
+.spark i{flex:1;background:linear-gradient(180deg,var(--brand),var(--sky));border-radius:3px 3px 0 0;min-height:3px}
+
+/* 申し送り form */
+.handover-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.handover-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{min-height:88px;resize:vertical;line-height:1.55}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.prio{display:flex;gap:8px}
+.prio label{flex:1;border:1px solid var(--line-2);border-radius:9px;padding:9px;text-align:center;font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.prio input{display:none}
+.prio input:checked+span{color:var(--brand)}
+.prio label:has(input:checked){border-color:var(--brand);background:var(--brand-soft)}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* handover feed */
+.feed{display:flex;flex-direction:column;gap:11px}
+.fitem{border:1px solid var(--line);border-radius:12px;padding:13px 15px;background:var(--card);box-shadow:var(--shadow)}
+.fitem .fh{display:flex;align-items:center;gap:9px;margin-bottom:7px}
+.fitem .fh .pri{font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:6px}
+.fitem .fh .pri.high{background:var(--red-soft);color:var(--red)}
+.fitem .fh .pri.mid{background:var(--amber-soft);color:var(--amber)}
+.fitem .fh .pri.low{background:var(--soft);color:var(--ink-2)}
+.fitem .fh .who{font-size:11.5px;color:var(--ink-3);margin-left:auto}
+.fitem .fb{font-size:13px;color:var(--ink-2);line-height:1.55}
+.fitem .ft{margin-top:8px;font-size:11px;color:var(--ink-3);display:flex;gap:7px;align-items:center}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+
+.ai-io{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
+@media(max-width:860px){.ai-io{grid-template-columns:1fr}}
+.io-card{border:1px solid var(--line);border-radius:13px;overflow:hidden}
+.io-card .ioh{padding:11px 15px;font-size:12.5px;font-weight:800;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line)}
+.io-card.in .ioh{background:#f3f4f7;color:var(--ink-2)}
+.io-card.out .ioh{background:var(--brand-soft);color:var(--brand-dk)}
+.io-card .iob{padding:15px;font-size:13px;line-height:1.65;color:var(--ink-2);min-height:200px}
+.io-card.in .iob{white-space:pre-wrap;font-family:'Noto Sans JP',sans-serif}
+.transcript{color:var(--ink-2)}
+.soap-out{display:none}
+.soap-out.show{display:block;animation:fade .4s}
+.soap-out .sline{margin-bottom:11px;opacity:0;transform:translateY(6px);transition:all .4s}
+.soap-out .sline.in{opacity:1;transform:none}
+.soap-out .sline .k{display:inline-block;font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:6px;margin-bottom:4px}
+.soap-out .sline.s .k{background:#e3f0ff;color:#2f6df0}
+.soap-out .sline.o .k{background:var(--brand-soft);color:var(--brand)}
+.soap-out .sline.a .k{background:var(--amber-soft);color:var(--amber)}
+.soap-out .sline.p .k{background:var(--violet-soft);color:var(--violet)}
+.soap-out .sline .t{color:var(--ink);font-size:13px;line-height:1.55}
+
+.wave{display:flex;align-items:center;gap:3px;height:28px}
+.wave i{width:3px;background:var(--brand);border-radius:3px;height:6px}
+.wave.run i{animation:wv .8s ease-in-out infinite}
+.wave i:nth-child(2){animation-delay:.1s}.wave i:nth-child(3){animation-delay:.2s}
+.wave i:nth-child(4){animation-delay:.3s}.wave i:nth-child(5){animation-delay:.4s}
+.wave i:nth-child(6){animation-delay:.5s}.wave i:nth-child(7){animation-delay:.6s}
+@keyframes wv{0%,100%{height:6px}50%{height:24px}}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.secnote{font-size:11.5px;color:var(--ink-3);margin:-6px 0 16px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">看護記録マシン<small>技マシン｜看護記録支援</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="patients"><span class="i">🧑‍🦽</span>患者一覧</a>
+      <a data-v="records"><span class="i">📝</span>看護記録</a>
+      <a data-v="obs"><span class="i">🌡️</span>観察<span class="badge am" id="navObs">0</span></a>
+      <a data-v="handover"><span class="i">🔁</span>申し送り<span class="badge" id="navHo">0</span></a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">🎙️</span>AI記録（音声→SOAP）</a>
+    </nav>
+    <div class="org">
+      <div class="av">桜</div>
+      <div><b>さくら総合病院</b><span>デモ環境 / 3階東病棟</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。患者名・数値はすべて架空のサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">本日の病棟サマリー</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>看護記録 記入件数の推移</h3><span class="more">過去6日</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>本日の記録ステータス</h3></div>
+            <div class="pb">
+              <div class="donut-wrap">
+                <div class="donut" id="donut"><div class="dc"><b id="donutPct">0%</b><span>記録完了</span></div></div>
+                <div class="leg" id="donutLeg"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>要注意の患者</h3><span class="more" onclick="go('patients')">患者一覧へ</span></div>
+            <div class="pb"><div class="acts" id="alertList"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PATIENTS -->
+      <section class="view" id="v-patients">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="患者名・病室・担当看護師で検索"></div>
+          <div class="chips" id="careChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>患者</th><th>病室</th><th>主病名</th><th>要介護度</th><th>本日のバイタル</th><th>担当看護師</th><th>記録状況</th></tr></thead>
+          <tbody id="patRows"></tbody>
+        </table>
+      </section>
+
+      <!-- RECORDS -->
+      <section class="view" id="v-records">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="rq" placeholder="患者名・記録内容で検索"></div>
+          <div class="chips" id="recChips"></div>
+        </div>
+        <div class="rec-grid" id="recList"></div>
+      </section>
+
+      <!-- OBSERVATION -->
+      <section class="view" id="v-obs">
+        <p class="secnote">バイタルサインと観察項目を一覧で確認できます。基準値を外れた項目は自動で赤く強調されます。</p>
+        <div class="obs-grid" id="obsGrid"></div>
+      </section>
+
+      <!-- HANDOVER -->
+      <section class="view" id="v-handover">
+        <div class="handover-grid">
+          <div class="formcard">
+            <div style="font-size:14px;font-weight:800;margin-bottom:14px">申し送りを記入</div>
+            <div class="fg"><label>対象の患者</label><select id="hoPat"></select></div>
+            <div class="frow">
+              <div class="fg"><label>勤務帯</label><select id="hoShift"><option>日勤 → 準夜</option><option>準夜 → 深夜</option><option>深夜 → 日勤</option></select></div>
+              <div class="fg"><label>カテゴリ</label><select id="hoCat"><option>状態変化</option><option>投薬・処置</option><option>転倒・安全</option><option>家族対応</option><option>その他</option></select></div>
+            </div>
+            <div class="fg"><label>重要度</label>
+              <div class="prio">
+                <label><input type="radio" name="hoPri" value="high"><span>🔴 高</span></label>
+                <label><input type="radio" name="hoPri" value="mid" checked><span>🟠 中</span></label>
+                <label><input type="radio" name="hoPri" value="low"><span>⚪ 低</span></label>
+              </div>
+            </div>
+            <div class="fg"><label>申し送り内容</label><textarea id="hoBody" placeholder="例：14時に37.8℃の発熱。クーリング実施し15時に37.2℃へ。次勤務帯で再検温を。"></textarea></div>
+            <div class="linkrow">
+              <button class="btn primary" id="hoSave" style="flex:1;justify-content:center">🔁 申し送りを登録</button>
+              <button class="btn" id="hoAi" title="AIが文章を医療用語で整えます">✨ AI整文</button>
+            </div>
+            <div class="aihint" id="hoHint">✨ AIが医療記録用に文章を整えました</div>
+          </div>
+          <div>
+            <div style="font-size:14px;font-weight:800;margin-bottom:12px">本日の申し送り（<span id="hoCount">0</span>件）</div>
+            <div class="feed" id="hoFeed"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI VOICE → SOAP -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🎙️</div>
+            <div><div style="font-size:16px;font-weight:900">話すだけで、看護記録（SOAP）が完成</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">訪室時の会話やメモを話すだけ。AIが患者・時刻を判別し、<b>S/O/A/P</b>の形式に自動で整えます。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">🎙️ 録音して記録する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">1人あたり 8分</div>
+              <ul>
+                <li>🧠 訪室後に内容を思い出して整理</li>
+                <li>⌨️ SOAP形式に手入力で清書</li>
+                <li>📚 専門用語・表現を毎回確認</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🎙️ 話した内容を自動で文字起こし</li>
+                <li>🤖 S/O/A/P に自動で振り分け</li>
+                <li>✅ 看護師は確認して保存するだけ</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="ai-io">
+            <div class="io-card in">
+              <div class="ioh">🎙️ 入力（音声の文字起こし）<span class="wave" id="wave" style="margin-left:auto"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
+              <div class="iob"><div class="transcript" id="transcript">「録音して記録する」を押すと、訪室時の会話例から文字起こしのデモが始まります。</div></div>
+            </div>
+            <div class="io-card out">
+              <div class="ioh">📝 AIが整形した看護記録（SOAP）</div>
+              <div class="iob">
+                <div id="soapEmpty" style="color:var(--ink-3)">ここに整形後のSOAP記録が表示されます。</div>
+                <div class="soap-out" id="soapOut">
+                  <div class="sline s"><span class="k">S（主観）</span><div class="t" id="soapS"></div></div>
+                  <div class="sline o"><span class="k">O（客観）</span><div class="t" id="soapO"></div></div>
+                  <div class="sline a"><span class="k">A（アセスメント）</span><div class="t" id="soapA"></div></div>
+                  <div class="sline p"><span class="k">P（計画）</span><div class="t" id="soapP"></div></div>
+                  <div style="margin-top:12px"><button class="btn green" id="soapSave" style="width:100%;justify-content:center">✅ この内容で看護記録に保存</button></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const NURSES=['佐藤 美咲','田中 由紀','鈴木 拓海','高橋 彩','渡辺 健'];
+const PATIENTS=[
+  {id:'P-1024',name:'山田 太郎',kana:'やまだ たろう',age:78,sex:'男',room:'301',dx:'脳梗塞後遺症',care:3,nurse:'佐藤 美咲',color:'#2f6df0',
+    v:{t:37.8,bp:'148/92',hr:88,spo2:96,resp:18},warn:true},
+  {id:'P-1025',name:'佐々木 花子',kana:'ささき はなこ',age:84,sex:'女',room:'302',dx:'大腿骨頚部骨折 術後',care:4,nurse:'田中 由紀',color:'#16b877',
+    v:{t:36.7,bp:'126/78',hr:72,spo2:98,resp:16},warn:false},
+  {id:'P-1026',name:'伊藤 茂',kana:'いとう しげる',age:71,sex:'男',room:'303',dx:'2型糖尿病 / 末梢神経障害',care:2,nurse:'鈴木 拓海',color:'#e3941f',
+    v:{t:36.4,bp:'138/84',hr:76,spo2:97,resp:15},warn:false},
+  {id:'P-1027',name:'渡辺 久美子',kana:'わたなべ くみこ',age:90,sex:'女',room:'305',dx:'うっ血性心不全',care:5,nurse:'高橋 彩',color:'#e24a4a',
+    v:{t:37.1,bp:'104/62',hr:102,spo2:91,resp:24},warn:true},
+  {id:'P-1028',name:'中村 大輔',kana:'なかむら だいすけ',age:66,sex:'男',room:'306',dx:'COPD 急性増悪',care:3,nurse:'佐藤 美咲',color:'#7c5cf0',
+    v:{t:36.9,bp:'132/80',hr:84,spo2:93,resp:22},warn:true},
+  {id:'P-1029',name:'小林 春子',kana:'こばやし はるこ',age:82,sex:'女',room:'307',dx:'誤嚥性肺炎 回復期',care:4,nurse:'渡辺 健',color:'#0ea5b7',
+    v:{t:36.6,bp:'122/74',hr:70,spo2:98,resp:16},warn:false},
+  {id:'P-1030',name:'加藤 正一',kana:'かとう しょういち',age:75,sex:'男',room:'308',dx:'前立腺がん 化学療法中',care:2,nurse:'田中 由紀',color:'#1a9e8f',
+    v:{t:36.8,bp:'130/82',hr:74,spo2:97,resp:15},warn:false},
+  {id:'P-1031',name:'吉田 みどり',kana:'よしだ みどり',age:88,sex:'女',room:'310',dx:'認知症 / 脱水',care:4,nurse:'鈴木 拓海',color:'#e3941f',
+    v:{t:37.4,bp:'118/70',hr:90,spo2:96,resp:18},warn:false},
+];
+/* normal ranges for highlighting */
+const RANGE={t:[35.5,37.5],hr:[60,90],spo2:[95,100],resp:[12,20]};
+function bpHigh(bp){const s=parseInt(bp);return s>=140||s<90;}
+
+/* seeded RNG so the demo is deterministic */
+let SEED=4242;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+const TODAY=new Date();
+function hm(h,m){return ('0'+h).slice(-2)+':'+('0'+m).slice(-2);}
+
+/* records (SOAP) seed */
+const SOAP_SAMPLES=[
+  {s:'「夜はあまり眠れなかった」と訴え。痛みの訴えはなし。',o:'体温37.8℃、血圧148/92mmHg、脈拍88回/分。左半身の麻痺残存、自力体動わずか。',a:'発熱あり、感染兆候の有無を要観察。睡眠不足による日中の傾眠に注意。',p:'2時間ごとに検温。日中の離床を促し、夜間の良眠を図る。医師へ発熱を報告済み。'},
+  {s:'「傷の痛みは昨日より楽になった」と笑顔あり。',o:'術後3日目。創部の発赤・腫脹なし。体温36.7℃、SpO2 98%。リハビリで車椅子移乗が自立に近づく。',a:'創部経過は順調。離床の意欲あり、ADL拡大の好機。',p:'リハビリ継続。明日より歩行器での歩行訓練を開始予定。'},
+  {s:'「足の先がピリピリする」と神経症状の訴え継続。',o:'空腹時血糖142mg/dL。足背動脈触知良好、足趾に冷感なし。',a:'血糖コントロールは概ね良好だが末梢神経症状は持続。',p:'フットケア継続。血糖自己測定の手技を本人へ再指導。'},
+  {s:'息苦しさを訴え「横になると苦しい」とのこと。',o:'SpO2 91%（room air）、呼吸数24回/分、下腿浮腫++。体重前日比+0.8kg。',a:'心不全症状の増悪が疑われる。体液貯留の傾向。',p:'酸素2L投与開始、ファウラー位保持。医師へ緊急報告、利尿薬の指示確認。'},
+  {s:'咳嗽と喀痰の増加を訴える。「痰が切れにくい」と。',o:'SpO2 93%、呼吸数22回/分、両肺野にwheeze聴取。',a:'COPD増悪に伴う気道分泌物の貯留。',p:'吸入療法を時間通りに実施。体位ドレナージと去痰援助を行う。'},
+];
+let records=[];
+(function seedRec(){
+  for(let i=0;i<10;i++){
+    const p=PATIENTS[Math.floor(rnd()*PATIENTS.length)];
+    const samp=SOAP_SAMPLES[Math.floor(rnd()*SOAP_SAMPLES.length)];
+    const h=8+Math.floor(rnd()*12);const m=Math.floor(rnd()*60);
+    const stt=rnd()>0.78?'draft':(rnd()>0.5?'ai':'done');
+    records.push({pat:p.name,room:p.room,nurse:p.nurse,color:p.color,time:hm(h,m),
+      s:samp.s,o:samp.o,a:samp.a,p:samp.p,status:stt});
+  }
+  records.sort((a,b)=>b.time.localeCompare(a.time));
+})();
+
+/* handover seed */
+let handovers=[
+  {pat:'渡辺 久美子',pri:'high',cat:'状態変化',shift:'日勤 → 準夜',who:'高橋 彩',time:'15:40',
+   body:'15時よりSpO2 91%へ低下、下腿浮腫増強。酸素2L開始済み。医師指示で利尿薬投与。次勤務で尿量・体重・呼吸状態を1時間毎に観察。'},
+  {pat:'山田 太郎',pri:'mid',cat:'投薬・処置',shift:'日勤 → 準夜',who:'佐藤 美咲',time:'15:25',
+   body:'14時に37.8℃の発熱。クーリング実施し15時に37.2℃へ解熱傾向。次勤務帯で18時に再検温を依頼します。'},
+  {pat:'吉田 みどり',pri:'mid',cat:'転倒・安全',shift:'日勤 → 準夜',who:'鈴木 拓海',time:'14:10',
+   body:'夜間にベッド柵を越えようとする行動あり。離床センサー作動を確認済み。夜間は頻回の訪室をお願いします。'},
+];
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STLABEL={done:'記録済',prog:'記入中',todo:'未記入',alert:'要対応',draft:'下書き',ai:'AI生成'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]}</span>`;}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function initials(name){return name.replace(/\s/g,'').slice(0,1);}
+function careLabel(n){return '要介護'+n;}
+function careCls(n){return n>=5?'care-5':n>=3?'care-3':'care-1';}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','本日の病棟サマリー'],patients:['患者一覧','受け持ち患者の状態を一覧で管理します'],
+  records:['看護記録','SOAP形式の看護記録を確認・管理します'],obs:['観察','バイタルサイン・観察項目の確認'],
+  handover:['申し送り','勤務交代時の申し送りを記録します'],ai:['AI記録（音声→SOAP）','話すだけで看護記録を自動作成します']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='records'?'<button class="btn primary" onclick="go(\'ai\')">🎙️ AIで記録する</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'handover\')">🔁 申し送り</button><button class="btn primary" onclick="go(\'ai\')">🎙️ AI記録</button>'
+    : v==='patients'?'<button class="btn primary" onclick="go(\'obs\')">🌡️ 観察ボード</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='patients')renderPatients();
+  if(v==='records')renderRecords();
+  if(v==='obs')renderObs();
+  if(v==='handover')renderHandover();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const myPat=PATIENTS.length; // 担当患者
+  const recCount=records.length;
+  const warnCnt=PATIENTS.filter(p=>p.warn).length;
+  const doneCnt=records.filter(r=>r.status==='done').length;
+  $('kpis').innerHTML=`
+    ${kpi('#1a9e8f','担当患者',myPat+'<small>名</small>','3階東病棟','up','満床に近い')}
+    ${kpi('#2f6df0','本日の記録数',recCount+'<small>件</small>',doneCnt+'件 記録済','up','前日比 +3件')}
+    ${kpi('#16b877','記入時間の削減','62<small>%</small>','AI記録の効果','up','1人8分→3分')}
+    ${kpi('#e3941f','申し送り 未読',warnCnt+'<small>件</small>',' ','warn','要確認')}`;
+  // trend (記入件数)
+  const days=[];for(let k=5;k>=0;k--){const d=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-k);days.push(d);}
+  const counts=[14,17,12,19,22,records.length];
+  const mx=Math.max(...counts,1);
+  $('trendBars').innerHTML=days.map((d,i)=>`
+    <div class="bar-row"><span class="mlabel">${d.getMonth()+1}/${d.getDate()}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(counts[i]/mx*100)}"></div></div>
+      <span class="mval">${counts[i]}件</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // donut
+  const done=records.filter(r=>r.status==='done').length;
+  const ai=records.filter(r=>r.status==='ai').length;
+  const draft=records.filter(r=>r.status==='draft').length;
+  const total=records.length||1;
+  const dP=Math.round(done/total*100),aP=Math.round(ai/total*100);
+  const g1=dP*3.6, g2=(dP+aP)*3.6;
+  $('donut').style.background=`conic-gradient(var(--green) 0 ${g1}deg, var(--violet) ${g1}deg ${g2}deg, var(--soft) ${g2}deg 360deg)`;
+  $('donutPct').textContent=Math.round((done+ai)/total*100)+'%';
+  $('donutLeg').innerHTML=`
+    <div class="lr"><span class="sw" style="background:var(--green)"></span>記録済 <b>${done}件</b></div>
+    <div class="lr"><span class="sw" style="background:var(--violet)"></span>AI生成（確認待ち） <b>${ai}件</b></div>
+    <div class="lr"><span class="sw" style="background:var(--line-2)"></span>下書き <b>${draft}件</b></div>`;
+  // activity
+  const acts=[
+    {i:'🎙️',c:'#efeafe',t:'AI記録で 山田太郎さんのSOAPを自動作成',m:'3分前'},
+    {i:'💊',c:'#e6f8f0',t:'渡辺久美子さんへ利尿薬を投与・記録',m:'25分前'},
+    {i:'🌡️',c:'#fdeaea',t:'中村大輔さん SpO2 93%を観察記録（要注意）',m:'1時間前'},
+    {i:'🔁',c:'#e3f6f2',t:'日勤→準夜 の申し送り 3件を登録',m:'今日 15:40'},
+    {i:'📝',c:'#e3f0ff',t:'佐々木花子さんの看護記録を記録済に',m:'今日 14:55'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${a.m}</div></div></div>`).join('');
+  // alert patients
+  $('alertList').innerHTML=PATIENTS.filter(p=>p.warn).map(p=>{
+    const reasons=[];const v=p.v;
+    if(v.t>RANGE.t[1])reasons.push('発熱'+v.t+'℃');
+    if(v.spo2<RANGE.spo2[0])reasons.push('SpO2 '+v.spo2+'%');
+    if(v.hr>RANGE.hr[1])reasons.push('頻脈'+v.hr);
+    if(v.resp>RANGE.resp[1])reasons.push('頻呼吸'+v.resp);
+    return `<div class="act"><div class="ai" style="background:${p.color}22;color:${p.color};font-weight:800">${esc(initials(p.name))}</div>
+      <div><div class="at">${esc(p.name)}（${esc(p.room)}）</div><div class="am">${esc(p.dx)} ／ ${esc(reasons.join('・')||'経過観察')}</div></div>
+      <div style="margin-left:auto">${stBadge('alert')}</div></div>`;
+  }).join('')||'<div class="empty-cell">要注意の患者はいません 🎉</div>';
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ PATIENTS ============ */
+let careFilter='all';
+function renderCareChips(){
+  const opts=[['all','すべて'],['warn','要注意'],['5','要介護5'],['4','要介護4'],['low','要介護1-2']];
+  $('careChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===careFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('careChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{careFilter=c.dataset.s;renderCareChips();renderPatients();});
+}
+function renderPatients(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=PATIENTS.filter(p=>{
+    if(careFilter==='warn')return p.warn;
+    if(careFilter==='5')return p.care===5;
+    if(careFilter==='4')return p.care===4;
+    if(careFilter==='low')return p.care<=2;
+    return true;
+  }).filter(p=>!q||(p.name+p.kana+p.room+p.nurse+p.dx).toLowerCase().includes(q));
+  $('patRows').innerHTML=rows.length?rows.map(p=>{
+    const v=p.v;
+    const tCls=(v.t<RANGE.t[0]||v.t>RANGE.t[1])?'warn':'';
+    const spCls=v.spo2<RANGE.spo2[0]?'warn':'';
+    const recStt=p.warn?'alert':(rnd()>0.5?'done':'prog');
+    return `<tr onclick="go('obs')">
+      <td><div class="pcell"><div class="pav" style="background:${p.color}">${esc(initials(p.name))}</div>
+        <div class="pn"><b>${esc(p.name)}</b><span>${esc(p.id)} ・ ${p.age}歳 ${esc(p.sex)}</span></div></div></td>
+      <td><span class="tag-s">${esc(p.room)}</span></td>
+      <td style="color:var(--ink-2)">${esc(p.dx)}</td>
+      <td><b class="${careCls(p.care)}">${careLabel(p.care)}</b></td>
+      <td><span class="vit ${tCls}">🌡<b>${v.t}℃</b></span>　<span class="vit">💓<b>${v.hr}</b></span>　<span class="vit ${spCls}">🫁<b>${v.spo2}%</b></span></td>
+      <td style="color:var(--ink-2)">${esc(p.nurse)}</td>
+      <td>${stBadge(recStt)}</td></tr>`;
+  }).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する患者がいません</td></tr>';
+}
+$('q').addEventListener('input',renderPatients);
+
+/* ============ RECORDS ============ */
+let recFilter='all';
+function renderRecChips(){
+  const opts=[['all','すべて'],['done','記録済'],['ai','AI生成（確認待ち）'],['draft','下書き']];
+  $('recChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===recFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('recChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{recFilter=c.dataset.s;renderRecChips();renderRecords();});
+}
+function renderRecords(){
+  const q=($('rq').value||'').toLowerCase();
+  let rows=records.filter(r=>recFilter==='all'||r.status===recFilter)
+    .filter(r=>!q||(r.pat+r.s+r.o+r.a+r.p+r.nurse).toLowerCase().includes(q));
+  $('recList').innerHTML=rows.length?rows.map(r=>`
+    <div class="rec">
+      <div class="rh">
+        <div class="pav" style="background:${r.color};width:34px;height:34px">${esc(initials(r.pat))}</div>
+        <div><div class="rt">${esc(r.pat)} <span style="color:var(--ink-3);font-weight:600;font-size:12px">／ ${esc(r.room)}号室</span></div>
+          <div class="rm">記録者：${esc(r.nurse)} ・ 本日 ${esc(r.time)}</div></div>
+        <div class="right">${stBadge(r.status)}</div>
+      </div>
+      <div class="soap">
+        <div class="sq s"><span class="lbl">S 主観</span><p>${esc(r.s)}</p></div>
+        <div class="sq o"><span class="lbl">O 客観</span><p>${esc(r.o)}</p></div>
+        <div class="sq a"><span class="lbl">A 評価</span><p>${esc(r.a)}</p></div>
+        <div class="sq p"><span class="lbl">P 計画</span><p>${esc(r.p)}</p></div>
+      </div>
+    </div>`).join('')
+    :'<div class="empty-cell">該当する看護記録がありません</div>';
+}
+$('rq').addEventListener('input',renderRecords);
+
+/* ============ OBSERVATION ============ */
+function renderObs(){
+  $('obsGrid').innerHTML=PATIENTS.map(p=>{
+    const v=p.v;
+    const tBad=(v.t<RANGE.t[0]||v.t>RANGE.t[1]);
+    const hrBad=(v.hr<RANGE.hr[0]||v.hr>RANGE.hr[1]);
+    const spBad=v.spo2<RANGE.spo2[0];
+    const reBad=(v.resp<RANGE.resp[0]||v.resp>RANGE.resp[1]);
+    const bpBad=bpHigh(v.bp);
+    // mini sparkline (体温の推移を演出)
+    const base=v.t;const spark=[];
+    for(let i=0;i<8;i++){spark.push(Math.max(4,Math.round((base-35.8+ (rnd()*0.6-0.2))*28)));}
+    return `<div class="obs">
+      <div class="oh"><div class="pav" style="background:${p.color}">${esc(initials(p.name))}</div>
+        <div><div style="font-weight:800;font-size:13.5px">${esc(p.name)}</div>
+        <div style="font-size:11px;color:var(--ink-3)">${esc(p.room)}号室 ・ ${esc(p.dx)}</div></div>
+        ${p.warn?'<div style="margin-left:auto">'+stBadge('alert')+'</div>':''}</div>
+      <div class="vrow"><span class="vk">🌡 体温</span><span class="vv ${tBad?'bad':''}">${v.t} ℃</span></div>
+      <div class="vrow"><span class="vk">🩸 血圧</span><span class="vv ${bpBad?'bad':''}">${esc(v.bp)}</span></div>
+      <div class="vrow"><span class="vk">💓 脈拍</span><span class="vv ${hrBad?'bad':''}">${v.hr} 回/分</span></div>
+      <div class="vrow"><span class="vk">🫁 SpO₂</span><span class="vv ${spBad?'bad':''}">${v.spo2} %</span></div>
+      <div class="vrow"><span class="vk">🌬 呼吸数</span><span class="vv ${reBad?'bad':''}">${v.resp} 回/分</span></div>
+      <div style="font-size:11px;color:var(--ink-3);margin-top:10px">体温の推移（直近8回）</div>
+      <div class="spark">${spark.map(h=>`<i style="height:${h}px"></i>`).join('')}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ============ HANDOVER ============ */
+function renderHoSelect(){$('hoPat').innerHTML=PATIENTS.map(p=>`<option>${esc(p.name)}（${esc(p.room)}）</option>`).join('');}
+const PRILABEL={high:'高',mid:'中',low:'低'};
+function renderHandover(){
+  $('hoCount').textContent=handovers.length;
+  $('navHo').textContent=handovers.length;
+  $('hoFeed').innerHTML=handovers.map(h=>`
+    <div class="fitem">
+      <div class="fh"><span class="pri ${h.pri}">${PRILABEL[h.pri]}</span>
+        <b style="font-size:13px">${esc(h.pat)}</b>
+        <span class="tag-s">${esc(h.cat)}</span>
+        <span class="who">${esc(h.who)} ・ ${esc(h.time)}</span></div>
+      <div class="fb">${esc(h.body)}</div>
+      <div class="ft">🔁 ${esc(h.shift)}</div>
+    </div>`).join('')||'<div class="empty-cell">まだ申し送りはありません</div>';
+}
+$('hoAi').addEventListener('click',async()=>{
+  const ta=$('hoBody');if(!ta.value.trim()){showToast('先に申し送り内容を入力してください');return;}
+  const btn=$('hoAi');btn.disabled=true;btn.textContent='✨ 整文中…';
+  await new Promise(r=>setTimeout(r,700));
+  let t=ta.value.trim();
+  // 簡易な医療表現への整形デモ（置換）
+  t=t.replace(/熱が高い|熱っぽい/g,'発熱').replace(/さがった|下がった/g,'解熱傾向').replace(/苦しそう/g,'呼吸苦あり')
+     .replace(/だった。?/g,'。').replace(/しました。?/g,'実施。').replace(/します。?$/,'を依頼します。');
+  if(!/。$/.test(t))t+='。';
+  t='【観察】'+t+' 次勤務帯にて経過観察を継続。';
+  ta.value=t;
+  btn.disabled=false;btn.textContent='✨ AI整文';
+  $('hoHint').classList.add('show');setTimeout(()=>$('hoHint').classList.remove('show'),2200);
+});
+$('hoSave').addEventListener('click',()=>{
+  const body=$('hoBody').value.trim();
+  if(!body){showToast('申し送り内容を入力してください');return;}
+  const pri=document.querySelector('input[name="hoPri"]:checked').value;
+  const now=new Date();
+  handovers.unshift({pat:$('hoPat').value,pri,cat:$('hoCat').value,shift:$('hoShift').value,
+    who:'佐藤 美咲',time:hm(now.getHours(),now.getMinutes()),body});
+  $('hoBody').value='';
+  renderHandover();
+  showToast('申し送りを登録しました（'+handovers.length+'件）');
+});
+
+/* ============ AI VOICE → SOAP ============ */
+const DEMO_TRANSCRIPT='えーっと、301号室の山田太郎さん。本人は「夜あまり眠れなかった」って言ってます。痛みはないみたい。検温したら37度8分で、血圧は148の92、脈は88。左半身の麻痺はまだ残ってて、自分ではあまり動けない感じ。熱があるから感染兆候を見ていく必要があるのと、寝不足で昼間うとうとしてるので注意。2時間おきに検温して、昼間は起きてもらうようにする。先生にはもう発熱を報告済みです。';
+const DEMO_SOAP={
+  s:'「夜はあまり眠れなかった」と訴え。疼痛の訴えなし。',
+  o:'体温37.8℃、血圧148/92mmHg、脈拍88回/分。左半身の麻痺残存し、自力体動わずか。',
+  a:'発熱を認め、感染兆候の有無を要観察。睡眠不足による日中の傾眠に注意が必要。',
+  p:'2時間ごとに検温を実施。日中の離床を促し夜間の良眠を図る。発熱は医師へ報告済み。'
+};
+let aiBusy=false;
+$('aiRun').addEventListener('click',async()=>{
+  if(aiBusy)return;aiBusy=true;
+  const btn=$('aiRun');btn.disabled=true;
+  $('soapOut').classList.remove('show');$('soapEmpty').style.display='block';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='🎙️';
+  $('wave').classList.add('run');
+  $('baAfterList').style.opacity='1';
+  // 1) 録音演出
+  btn.textContent='🔴 録音中…';
+  $('transcript').textContent='';$('transcript').classList.add('transcript');
+  await new Promise(r=>setTimeout(r,500));
+  // 2) 文字起こしをタイプ表示
+  btn.textContent='✍️ 文字起こし中…';
+  for(let i=0;i<DEMO_TRANSCRIPT.length;i++){
+    $('transcript').textContent=DEMO_TRANSCRIPT.slice(0,i+1);
+    await new Promise(r=>setTimeout(r,14));
+  }
+  $('wave').classList.remove('run');
+  // 3) AIで整形
+  btn.textContent='🤖 SOAPに整形中…';
+  $('aiOrb').textContent='🤖';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent=Math.min(s,9)+'秒';},120);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // 4) SOAP表示（順番にフェードイン）
+  $('soapEmpty').style.display='none';
+  $('soapS').textContent=DEMO_SOAP.s;$('soapO').textContent=DEMO_SOAP.o;$('soapA').textContent=DEMO_SOAP.a;$('soapP').textContent=DEMO_SOAP.p;
+  $('soapOut').classList.add('show');
+  const lines=[...$('soapOut').querySelectorAll('.sline')];
+  for(let i=0;i<lines.length;i++){await new Promise(r=>setTimeout(r,200));lines[i].classList.add('in');}
+  btn.disabled=false;btn.textContent='🎙️ もう一度録音する';
+  aiBusy=false;
+  showToast('音声から看護記録（SOAP）を自動作成しました');
+});
+$('soapSave').addEventListener('click',()=>{
+  const now=new Date();
+  records.unshift({pat:'山田 太郎',room:'301',nurse:'佐藤 美咲',color:'#2f6df0',
+    time:hm(now.getHours(),now.getMinutes()),s:DEMO_SOAP.s,o:DEMO_SOAP.o,a:DEMO_SOAP.a,p:DEMO_SOAP.p,status:'ai'});
+  showToast('看護記録に保存しました（確認待ちとして登録）');
+  setTimeout(()=>go('records'),700);
+});
+
+/* ============ INIT ============ */
+renderCareChips();renderRecChips();renderHoSelect();renderDash();
+$('navObs').textContent=PATIENTS.filter(p=>p.warn).length;
+$('navHo').textContent=handovers.length;
+</script>
+</body>
+</html>

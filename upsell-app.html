@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜アップセル提案マシン（クロスセル自動提案システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#7b46e0;--brand-dk:#5f2fc4;--brand-soft:#f1ebff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--pink:#e0489a;
+  --sb:#1a1030;--sb-2:#241640;--sb-ink:#cbc4e0;--sb-ink-2:#897da6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#b46de8,#7b46e0,#e0489a,#b46de8);
+  display:grid;place-items:center;color:#fff;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(123,70,224,.4)}
+.nav a .badge{margin-left:auto;background:var(--pink);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--pink));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut */
+.donut-wrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.donut{width:128px;height:128px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;position:relative;
+  background:conic-gradient(var(--brand) 0 0)}
+.donut .hole{width:84px;height:84px;border-radius:50%;background:var(--card);display:grid;place-items:center;text-align:center}
+.donut .hole b{font-size:22px;font-weight:900;line-height:1}
+.donut .hole span{font-size:10px;color:var(--ink-3);font-weight:700}
+.legend{display:flex;flex-direction:column;gap:8px;font-size:12.5px;flex:1;min-width:150px}
+.legend .lg{display:flex;align-items:center;gap:8px}
+.legend .lg .sw{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.legend .lg b{margin-left:auto;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.hot{background:var(--red-soft);color:var(--red)}
+.st.warm{background:var(--amber-soft);color:var(--amber)}
+.st.cool{background:var(--brand-soft);color:var(--brand)}
+.st.won{background:var(--green-soft);color:var(--green)}
+.st.lost{background:var(--soft);color:var(--ink-3)}
+.st.active{background:var(--green-soft);color:var(--green)}
+.st.paused{background:var(--soft);color:var(--ink-3)}
+
+/* rank pill */
+.rank{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;padding:3px 9px;border-radius:7px}
+.rank.s{background:#fff4d6;color:#c08400}
+.rank.a{background:var(--brand-soft);color:var(--brand)}
+.rank.b{background:var(--soft);color:var(--ink-2)}
+
+/* fit meter */
+.fit{display:flex;align-items:center;gap:8px;min-width:120px}
+.fit .ft{flex:1;height:7px;border-radius:99px;background:var(--soft);overflow:hidden}
+.fit .ff{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--pink))}
+.fit b{font-size:11.5px;font-variant-numeric:tabular-nums;width:30px;text-align:right}
+
+/* products */
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:1080px){.pgrid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.pgrid{grid-template-columns:1fr}}
+.pcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow);transition:all .18s;cursor:pointer}
+.pcard:hover{border-color:var(--brand);transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.pcard .pic{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;font-size:20px;margin-bottom:11px}
+.pcard h4{font-size:14.5px;font-weight:800;margin-bottom:3px}
+.pcard .cat{font-size:11px;color:var(--ink-3);font-weight:700;margin-bottom:10px}
+.pcard .price{font-size:19px;font-weight:900;font-variant-numeric:tabular-nums}
+.pcard .price small{font-size:11px;color:var(--ink-3);font-weight:700}
+.pcard .meta{display:flex;gap:6px;margin-top:11px;flex-wrap:wrap}
+.pcard .tag2{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:6px;background:var(--soft);color:var(--ink-2)}
+
+/* scenario */
+.scn{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:14px}
+.scn .sh{display:flex;align-items:center;gap:12px;padding:15px 18px;border-bottom:1px solid var(--line)}
+.scn .sh .ico{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-size:18px;flex-shrink:0}
+.scn .sh h4{font-size:14.5px;font-weight:800}
+.scn .sh .desc{font-size:12px;color:var(--ink-3)}
+.scn .sb{padding:16px 18px}
+.flow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.flow .node{background:var(--soft);border:1px solid var(--line-2);border-radius:10px;padding:10px 14px;font-size:12.5px;font-weight:700;text-align:center;flex:1;min-width:120px}
+.flow .node small{display:block;font-size:10.5px;color:var(--ink-3);font-weight:600;margin-top:2px}
+.flow .ar{color:var(--brand);font-size:20px;font-weight:900}
+@media(max-width:680px){.flow{flex-direction:column;align-items:stretch}.flow .ar{transform:rotate(90deg);text-align:center}}
+.toggle{position:relative;width:42px;height:24px;border-radius:99px;background:var(--line-2);cursor:pointer;transition:background .2s;flex-shrink:0;margin-left:auto}
+.toggle.on{background:var(--green)}
+.toggle .kn{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle.on .kn{left:21px}
+
+/* form */
+.create-grid{display:grid;grid-template-columns:minmax(300px,360px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:60px}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.aihint{font-size:11px;color:var(--brand);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* before/after proposal card */
+.prop{background:#fff;border:1px solid var(--line);border-radius:12px;padding:0;box-shadow:var(--shadow);overflow:hidden}
+.prop .pt{padding:16px 18px;background:linear-gradient(135deg,var(--brand-soft),#fdf0fa);border-bottom:1px solid var(--line)}
+.prop .pt .nm{font-size:16px;font-weight:900}
+.prop .pt .tg{font-size:11.5px;color:var(--ink-2);font-weight:600;margin-top:2px}
+.prop-ba{display:grid;grid-template-columns:1fr 56px 1fr;align-items:stretch}
+@media(max-width:680px){.prop-ba{grid-template-columns:1fr;gap:12px;padding:12px}}
+.prop-ba .col{padding:16px 18px}
+.prop-ba .before{background:#fafbfd}
+.prop-ba .after{background:var(--green-soft)}
+.prop-ba .arrow{display:grid;place-items:center;font-size:24px;color:var(--brand)}
+@media(max-width:680px){.prop-ba .arrow{transform:rotate(90deg)}}
+.prop-ba .cl{font-size:11px;font-weight:800;letter-spacing:.04em;margin-bottom:12px;display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:7px}
+.prop-ba .before .cl{background:#e7e9ef;color:#6b7280}
+.prop-ba .after .cl{background:#cdeedd;color:var(--green)}
+.bline{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;padding:5px 0;border-bottom:1px dashed var(--line)}
+.bline:last-child{border-bottom:0}
+.bline .nm{color:var(--ink-2)}
+.bline.add .nm{color:var(--brand);font-weight:700}
+.bline .am{font-variant-numeric:tabular-nums;font-weight:700}
+.bline.add .am{color:var(--brand)}
+.psum{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border-radius:8px;margin-top:10px;font-weight:800}
+.before .psum{background:#eef0f4;color:var(--ink-2)}
+.after .psum{background:#bdebd4;color:var(--green)}
+.psum .a{font-family:'Orbitron';font-size:17px}
+.prop .reason{padding:14px 18px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink-2);background:var(--soft)}
+.prop .reason b{color:var(--ink)}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:11px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s;flex-wrap:wrap}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+.gen-item .gp{font-size:11.5px;color:var(--brand);font-weight:700;background:var(--brand-soft);padding:2px 8px;border-radius:6px}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#b46de8,#7b46e0);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(123,70,224,.4)}50%{box-shadow:0 0 40px rgba(224,72,154,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.tag-pill{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:6px;background:var(--soft);color:var(--ink-2);margin-right:4px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">アップセル提案マシン<small>技マシン｜クロスセル自動提案</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="cust"><span class="i">👥</span>対象顧客<span class="badge" id="navTargets">0</span></a>
+      <a data-v="prod"><span class="i">🛍️</span>提案商品</a>
+      <a data-v="scn"><span class="i">🔀</span>シナリオ</a>
+      <a data-v="effect"><span class="i">📈</span>効果</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI提案生成</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。顧客・数値はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">2026年5月のアップセル状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>商品カテゴリ別の提案額</h3><span class="more">今月</span></div>
+            <div class="pb"><div class="bars" id="catBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>提案ステージの内訳</h3></div>
+            <div class="pb"><div class="donut-wrap"><div class="donut" id="donut"><div class="hole"><b id="donutPct">—</b><span>成約率</span></div></div><div class="legend" id="donutLegend"></div></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>成約率の高いおすすめ顧客</h3><span class="more" onclick="go('cust')">すべて見る</span></div>
+            <div class="pb" style="padding:0">
+              <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+                <thead><tr><th>顧客</th><th>おすすめ商品</th><th class="r">想定上乗せ</th><th>適合度</th></tr></thead>
+                <tbody id="recoRows"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CUSTOMERS -->
+      <section class="view" id="v-cust">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="顧客名・業種・担当で検索"></div>
+          <div class="chips" id="stageChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>顧客</th><th>業種</th><th>現在の利用</th><th>AIおすすめ商品</th><th class="r">想定上乗せ/月</th><th>適合度</th><th>ステージ</th></tr></thead>
+          <tbody id="custRows"></tbody>
+        </table>
+      </section>
+
+      <!-- PRODUCTS -->
+      <section class="view" id="v-prod">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="qp" placeholder="商品名・カテゴリで検索"></div>
+          <div class="chips" id="catChips"></div>
+        </div>
+        <div class="pgrid" id="prodGrid"></div>
+      </section>
+
+      <!-- SCENARIO -->
+      <section class="view" id="v-scn">
+        <div id="scnList"></div>
+      </section>
+
+      <!-- EFFECT -->
+      <section class="view" id="v-effect">
+        <div class="kpis" id="effKpis"></div>
+        <div class="panel" style="margin-bottom:16px">
+          <div class="ph"><h3>月次のアップセル売上（提案による上乗せ分）</h3><span class="more">過去6ヶ月</span></div>
+          <div class="pb"><div class="bars" id="effBars"></div></div>
+        </div>
+        <div class="panel">
+          <div class="ph"><h3>シナリオ別の成果</h3></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>シナリオ</th><th class="r">提案数</th><th class="r">成約数</th><th class="r">成約率</th><th class="r">売上上乗せ</th></tr></thead>
+              <tbody id="effRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI PROPOSE -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div style="flex:1;min-width:200px"><div style="font-size:16px;font-weight:900">購買履歴から最適なクロスセルを自動提案</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">既存顧客 <b>32社</b> の購買履歴をAIが分析し、一社ごとに最適な追加提案を作成します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで提案を一括生成</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">3時間20分</div>
+              <ul>
+                <li>📂 顧客ごとに購買履歴を1件ずつ確認</li>
+                <li>🤔 営業の勘で「何を勧めるか」を検討</li>
+                <li>✍️ 提案書を手作りして個別に送付</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 購買パターンをAIが自動分析</li>
+                <li>🎯 相性の良い商品を適合度つきで抽出</li>
+                <li>📄 Before/After提案を一括生成</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ 生成された提案</div>
+            <div id="genItems"></div>
+            <div id="genProp" style="margin-top:14px"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const PRODUCTS=[
+  {n:'AI業務自動化 月額利用料',cat:'AI/DX',p:50000,ic:'🤖',col:'#7b46e0'},
+  {n:'AI業務自動化 初期設定',cat:'AI/DX',p:200000,ic:'⚙️',col:'#7b46e0'},
+  {n:'シフト管理システム 月額',cat:'システム',p:28000,ic:'🗓️',col:'#0ea5b7'},
+  {n:'介護記録システム 月額',cat:'システム',p:38000,ic:'📝',col:'#0ea5b7'},
+  {n:'ホームページ保守（月額）',cat:'Web',p:15000,ic:'🌐',col:'#16b877'},
+  {n:'ホームページ制作',cat:'Web',p:380000,ic:'🎨',col:'#16b877'},
+  {n:'青果定期便（Lボックス）',cat:'物販',p:9800,ic:'🥬',col:'#e3941f'},
+  {n:'業務用野菜セット',cat:'物販',p:12000,ic:'🥗',col:'#e3941f'},
+  {n:'配送サービス（月額）',cat:'物販',p:24000,ic:'🚚',col:'#e3941f'},
+  {n:'集客LP制作',cat:'Web',p:120000,ic:'📣',col:'#16b877'},
+  {n:'予約システム 月額',cat:'システム',p:18000,ic:'📅',col:'#0ea5b7'},
+  {n:'スタッフ研修パック',cat:'AI/DX',p:80000,ic:'🎓',col:'#7b46e0'},
+];
+const PMAP=Object.fromEntries(PRODUCTS.map(p=>[p.n,p]));
+
+const CUSTOMERS=[
+  {name:'大分中央クリニック',type:'医療',staff:'佐藤',current:['ホームページ保守（月額）'],reco:'AI業務自動化 月額利用料',fit:92,stage:'hot',reason:'問い合わせ電話が多くWeb予約導入の素地あり。HP保守の継続から自動化への移行が自然。'},
+  {name:'さくら総合病院',type:'医療',staff:'佐藤',current:['介護記録システム 月額'],reco:'AI業務自動化 初期設定',fit:88,stage:'hot',reason:'記録システムを使いこなしており、隣接する受付業務の自動化に高い関心。'},
+  {name:'つくし介護センター',type:'介護',staff:'田中',current:['シフト管理システム 月額'],reco:'介護記録システム 月額',fit:90,stage:'warm',reason:'シフト管理で効果実感済み。記録の紙運用が残っておりクロスセル余地が大きい。'},
+  {name:'豊後おおいた青果',type:'青果卸',staff:'鈴木',current:['青果定期便（Lボックス）','配送サービス（月額）'],reco:'AI業務自動化 月額利用料',fit:85,stage:'warm',reason:'受注がFAX中心。配送実績データが揃っており自動化の費用対効果が出やすい。'},
+  {name:'都町商店会',type:'小売',staff:'鈴木',current:['集客LP制作'],reco:'ホームページ保守（月額）',fit:78,stage:'cool',reason:'LP納品後の更新ニーズあり。月額保守へのスムーズな移行が見込める。'},
+  {name:'別府温泉ホテル組合',type:'宿泊',staff:'高橋',current:['ホームページ保守（月額）','予約システム 月額'],reco:'集客LP制作',fit:81,stage:'warm',reason:'予約システム稼働中で繁忙期の集客強化意欲が高い。季節LPの追加提案が有効。'},
+  {name:'大分海鮮市場',type:'飲食',staff:'高橋',current:['業務用野菜セット'],reco:'配送サービス（月額）',fit:74,stage:'cool',reason:'仕入頻度が高く定期配送のニーズが顕在化。客単価の底上げに直結。'},
+  {name:'みらい歯科医院',type:'医療',staff:'田中',current:['予約システム 月額'],reco:'ホームページ制作',fit:83,stage:'warm',reason:'予約システムは好調だがHPが古くリニューアル意向あり。SEO集客との相乗効果。'},
+  {name:'おおいた中央薬局',type:'医療',staff:'佐藤',current:['ホームページ保守（月額）'],reco:'AI業務自動化 月額利用料',fit:76,stage:'cool',reason:'在庫照会の電話対応が負担。自動応答による業務削減の訴求が刺さりやすい。'},
+  {name:'カフェ・ふくろう',type:'飲食',staff:'高橋',current:['集客LP制作'],reco:'予約システム 月額',fit:80,stage:'warm',reason:'LPからの予約導線が未整備。予約システムでコンバージョン改善が見込める。'},
+  {name:'大分運送サービス',type:'運送',staff:'鈴木',current:['シフト管理システム 月額'],reco:'AI業務自動化 初期設定',fit:87,stage:'hot',reason:'配車・点呼の自動化ニーズが強い。シフト管理の信頼関係を起点に拡張提案。'},
+  {name:'緑が丘デイサービス',type:'介護',staff:'田中',current:['介護記録システム 月額','シフト管理システム 月額'],reco:'スタッフ研修パック',fit:72,stage:'cool',reason:'システム定着率向上のため操作研修ニーズあり。解約防止と単価向上の両立。'},
+];
+
+/* seed extra silent customers for "32社" feel and stages */
+const STAGES=['hot','warm','cool','won','lost'];
+let SEED=4242;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+const TODAY=new Date();
+function ym(d){return (d.getMonth()+1)}
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STLABEL={hot:'有望',warm:'検討中',cool:'育成中',won:'成約',lost:'見送り',active:'稼働中',paused:'停止中'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]||esc(s)}</span>`;}
+function rankPill(fit){const r=fit>=85?'s':fit>=78?'a':'b';const lbl=fit>=85?'S':fit>=78?'A':'B';return `<span class="rank ${r}">${lbl}ランク</span>`;}
+function fitMeter(fit){return `<div class="fit"><div class="ft"><div class="ff" style="width:${fit}%"></div></div><b>${fit}</b></div>`;}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function recoPrice(c){const p=PMAP[c.reco];return p?p.p:0;}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','2026年'+ym(TODAY)+'月のアップセル状況'],
+  cust:['対象顧客','AIがクロスセル候補を抽出した顧客一覧'],
+  prod:['提案商品','クロスセルに使える商品ラインナップ'],
+  scn:['シナリオ','どんな条件で誰に何を提案するか'],
+  effect:['効果','アップセル提案による売上インパクト'],
+  ai:['AI提案生成','購買履歴から最適な追加提案を自動作成']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='cust'?'<button class="btn primary" onclick="go(\'ai\')">⚡ AIで提案生成</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'scn\')">🔀 シナリオ設定</button><button class="btn primary" onclick="go(\'ai\')">⚡ AIで提案生成</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='cust')renderCust();
+  if(v==='prod')renderProd();
+  if(v==='scn')renderScn();
+  if(v==='effect')renderEffect();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const targets=CUSTOMERS.length;
+  const totalUp=CUSTOMERS.reduce((s,c)=>s+recoPrice(c),0);
+  const won=CUSTOMERS.filter(c=>c.stage==='won').length;
+  const decided=CUSTOMERS.filter(c=>c.stage==='won'||c.stage==='lost').length;
+  const rate=decided?Math.round(won/decided*100):34;
+  $('kpis').innerHTML=`
+    ${kpi('#7b46e0','提案対象 顧客数',targets+'<small>社</small>','有望 '+CUSTOMERS.filter(c=>c.stage==='hot').length+'社','up','AIが抽出')}
+    ${kpi('#e0489a','想定 提案額/月',yen(totalUp),'年換算 '+yen(totalUp*12),'up','前月比 +18%')}
+    ${kpi('#16b877','成約率',rate+'<small>%</small>','業界平均 12%','up','+5pt')}
+    ${kpi('#e3941f','客単価 上昇',yen(34000),'1社あたり/月','up','+24%')}`;
+  // category bars
+  const cats={};CUSTOMERS.forEach(c=>{const p=PMAP[c.reco];if(!p)return;cats[p.cat]=(cats[p.cat]||0)+p.p;});
+  const ent=Object.entries(cats).sort((a,b)=>b[1]-a[1]);const mx=Math.max(...ent.map(e=>e[1]),1);
+  $('catBars').innerHTML=ent.map(([k,v])=>`
+    <div class="bar-row"><span class="mlabel">${esc(k)}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(v/mx*100)}"></div></div>
+      <span class="mval">${yen(v)}</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#catBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // donut by stage
+  const stCount={hot:0,warm:0,cool:0,won:0,lost:0};CUSTOMERS.forEach(c=>stCount[c.stage]++);
+  const segs=[['hot','#e24a4a','有望'],['warm','#e3941f','検討中'],['cool','#7b46e0','育成中'],['won','#16b877','成約'],['lost','#c2c9d6','見送り']];
+  const tot=CUSTOMERS.length;let acc=0;const stops=[];
+  segs.forEach(([k,col])=>{const frac=stCount[k]/tot*360;if(frac>0){stops.push(`${col} ${acc}deg ${acc+frac}deg`);acc+=frac;}});
+  $('donut').style.background=`conic-gradient(${stops.join(',')})`;
+  const dec=stCount.won+stCount.lost;$('donutPct').textContent=(dec?Math.round(stCount.won/dec*100):34)+'%';
+  $('donutLegend').innerHTML=segs.map(([k,col,lbl])=>`<div class="lg"><span class="sw" style="background:${col}"></span>${lbl}<b>${stCount[k]}社</b></div>`).join('');
+  // reco rows top 4
+  const top=[...CUSTOMERS].sort((a,b)=>b.fit-a.fit).slice(0,4);
+  $('recoRows').innerHTML=top.map(c=>`<tr onclick="go('cust')"><td><b>${esc(c.name)}</b></td>
+    <td style="color:var(--ink-2)">${esc(c.reco)}</td><td class="r tnum"><b>${yen(recoPrice(c))}</b></td>
+    <td>${fitMeter(c.fit)}</td></tr>`).join('');
+  // activity
+  const acts=[
+    {i:'🎉',c:'#e6f8f0',t:'大分運送サービス が AI初期設定 を成約（+¥200,000）',m:'12分前'},
+    {i:'⚡',c:'#f1ebff',t:'AI提案生成で 32社分の提案を作成（平均適合度 81）',m:'1時間前'},
+    {i:'📨',c:'#f1ebff',t:'大分中央クリニック へ提案書を送付',m:'今日 10:20'},
+    {i:'👀',c:'#fdf3e2',t:'さくら総合病院 が提案書を閲覧しました',m:'今日 9:05'},
+    {i:'🔀',c:'#e6f8f0',t:'シナリオ「保守→自動化アップセル」を有効化',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ CUSTOMERS ============ */
+let filterStage='all';
+function renderChips(){
+  const opts=[['all','すべて'],['hot','有望'],['warm','検討中'],['cool','育成中'],['won','成約'],['lost','見送り']];
+  $('stageChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStage?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('stageChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStage=c.dataset.s;renderChips();renderCust();});
+}
+function renderCust(){
+  renderChips();
+  const q=($('q').value||'').toLowerCase();
+  let rows=CUSTOMERS.filter(c=>filterStage==='all'||c.stage===filterStage)
+    .filter(c=>!q||(c.name+c.type+c.staff+c.reco).toLowerCase().includes(q))
+    .sort((a,b)=>b.fit-a.fit);
+  $('custRows').innerHTML=rows.length?rows.map(c=>`<tr onclick="proposeOne('${esc(c.name)}')">
+    <td><b>${esc(c.name)}</b><div style="font-size:11px;color:var(--ink-3)">担当：${esc(c.staff)}</div></td>
+    <td><span class="tag-pill">${esc(c.type)}</span></td>
+    <td style="color:var(--ink-2);font-size:12px">${c.current.map(x=>esc(x)).join('<br>')}</td>
+    <td><b style="color:var(--brand)">${esc(c.reco)}</b><div style="margin-top:3px">${rankPill(c.fit)}</div></td>
+    <td class="r tnum"><b>${yen(recoPrice(c))}</b></td>
+    <td>${fitMeter(c.fit)}</td>
+    <td>${stBadge(c.stage)}</td></tr>`).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する顧客がありません</td></tr>';
+  $('navTargets').textContent=CUSTOMERS.filter(c=>c.stage==='hot'||c.stage==='warm').length;
+}
+window.proposeOne=name=>{const c=CUSTOMERS.find(x=>x.name===name);if(c){showToast(c.name+' の提案書を作成しました（適合度 '+c.fit+'）');}};
+
+/* ============ PRODUCTS ============ */
+let filterCat='all';
+function renderProd(){
+  const cats=['all',...new Set(PRODUCTS.map(p=>p.cat))];
+  $('catChips').innerHTML=cats.map(c=>`<button class="chip ${c===filterCat?'on':''}" data-c="${esc(c)}">${c==='all'?'すべて':esc(c)}</button>`).join('');
+  $('catChips').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{filterCat=b.dataset.c;renderProd();});
+  const q=($('qp').value||'').toLowerCase();
+  const list=PRODUCTS.filter(p=>filterCat==='all'||p.cat===filterCat).filter(p=>!q||(p.n+p.cat).toLowerCase().includes(q));
+  // how many customers recommend each
+  const recoCount={};CUSTOMERS.forEach(c=>recoCount[c.reco]=(recoCount[c.reco]||0)+1);
+  $('prodGrid').innerHTML=list.length?list.map(p=>`<div class="pcard" onclick="showToast('${esc(p.n)} をシナリオに追加できます')">
+    <div class="pic" style="background:${p.col}22;color:${p.col}">${p.ic}</div>
+    <h4>${esc(p.n)}</h4><div class="cat">${esc(p.cat)}</div>
+    <div class="price">${yen(p.p)}<small> / ${p.n.includes('月額')?'月':'一括'}</small></div>
+    <div class="meta"><span class="tag2">🎯 おすすめ対象 ${recoCount[p.n]||0}社</span>${recoCount[p.n]?'<span class="tag2" style="background:var(--brand-soft);color:var(--brand)">人気</span>':''}</div>
+  </div>`).join('')
+    :'<div class="empty-cell" style="grid-column:1/-1">該当する商品がありません</div>';
+}
+
+/* ============ SCENARIO ============ */
+const SCENARIOS=[
+  {ico:'🔁',col:'#7b46e0',name:'保守 → AI自動化アップセル',desc:'HP保守を6ヶ月以上利用中の顧客に自動化を提案',trigger:'HP保守 6ヶ月継続',target:'医療・小売',reco:'AI業務自動化 月額',on:true,n:14},
+  {ico:'📈',col:'#0ea5b7',name:'システム導入後 横展開',desc:'システムを1つ導入済みの顧客に隣接システムを提案',trigger:'システム導入 完了',target:'介護・運送',reco:'介護記録/予約システム',on:true,n:9},
+  {ico:'🥬',col:'#e3941f',name:'物販 定期化アップセル',desc:'スポット購入が3回続いた顧客に定期便を提案',trigger:'スポット購入 3回',target:'飲食・小売',reco:'定期便・配送（月額）',on:true,n:7},
+  {ico:'🎓',col:'#16b877',name:'解約防止 研修クロスセル',desc:'利用率が低下した顧客に操作研修パックを提案',trigger:'ログイン率 低下',target:'全業種',reco:'スタッフ研修パック',on:false,n:5},
+];
+function renderScn(){
+  $('scnList').innerHTML=SCENARIOS.map((s,i)=>`
+    <div class="scn">
+      <div class="sh">
+        <div class="ico" style="background:${s.col}22;color:${s.col}">${s.ico}</div>
+        <div><h4>${esc(s.name)}</h4><div class="desc">${esc(s.desc)}</div></div>
+        <div class="toggle ${s.on?'on':''}" data-i="${i}"><div class="kn"></div></div>
+      </div>
+      <div class="sb">
+        <div class="flow">
+          <div class="node">🎯 トリガー<small>${esc(s.trigger)}</small></div>
+          <div class="ar">→</div>
+          <div class="node">👥 対象<small>${esc(s.target)}</small></div>
+          <div class="ar">→</div>
+          <div class="node">🛍️ 提案<small>${esc(s.reco)}</small></div>
+          <div class="ar">→</div>
+          <div class="node" style="background:var(--brand-soft);border-color:var(--brand);color:var(--brand)">📨 自動送付<small>該当 ${s.n}社</small></div>
+        </div>
+      </div>
+    </div>`).join('');
+  $('scnList').querySelectorAll('.toggle').forEach(t=>t.onclick=()=>{
+    const i=+t.dataset.i;SCENARIOS[i].on=!SCENARIOS[i].on;t.classList.toggle('on',SCENARIOS[i].on);
+    showToast('シナリオ「'+SCENARIOS[i].name+'」を'+(SCENARIOS[i].on?'有効化':'停止')+'しました');
+  });
+}
+
+/* ============ EFFECT ============ */
+function renderEffect(){
+  const totalUp=CUSTOMERS.reduce((s,c)=>s+recoPrice(c),0);
+  const won=CUSTOMERS.filter(c=>c.stage==='won');
+  const wonAmt=won.reduce((s,c)=>s+recoPrice(c),0);
+  $('effKpis').innerHTML=`
+    ${kpi('#7b46e0','累計 売上上乗せ',yen(2840000),'今年度','up','+¥2.84M')}
+    ${kpi('#16b877','成約 提案数',CUSTOMERS.filter(c=>c.stage==='won').length+8+'<small>件</small>','','up','回収順調')}
+    ${kpi('#e0489a','平均 客単価上昇',yen(34000),'1社/月','up','+24%')}
+    ${kpi('#e3941f','投資回収',' 4.2<small>ヶ月</small>','導入費に対し','up','黒字化済')}`;
+  // monthly bars
+  const base=[180000,240000,310000,420000,560000,totalUp];
+  const labels=[];for(let k=5;k>=0;k--){const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1);labels.push((d.getMonth()+1)+'月');}
+  const mx=Math.max(...base,1);
+  $('effBars').innerHTML=base.map((v,i)=>`
+    <div class="bar-row"><span class="mlabel">${labels[i]}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(v/mx*100)}"></div></div>
+      <span class="mval">${yen(v)}</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#effBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // scenario performance
+  $('effRows').innerHTML=SCENARIOS.map(s=>{
+    const prop=s.n;const conv=Math.max(1,Math.round(prop*(0.2+rnd()*0.3)));const rate=Math.round(conv/prop*100);
+    const amt=conv*(30000+Math.floor(rnd()*60000));
+    return `<tr><td><b>${esc(s.name)}</b> ${s.on?stBadge('active'):stBadge('paused')}</td>
+      <td class="r tnum">${prop}件</td><td class="r tnum">${conv}件</td>
+      <td class="r tnum"><b style="color:var(--green)">${rate}%</b></td><td class="r tnum"><b>${yen(amt)}</b></td></tr>`;
+  }).join('');
+}
+
+/* ============ AI PROPOSE ============ */
+function buildProp(c){
+  const p=PMAP[c.reco];const addP=p?p.p:0;
+  const curSum=c.current.reduce((s,n)=>s+(PMAP[n]?PMAP[n].p:0),0);
+  const beforeLines=c.current.map(n=>`<div class="bline"><span class="nm">${esc(n)}</span><span class="am">${yen(PMAP[n]?PMAP[n].p:0)}</span></div>`).join('')||'<div class="bline"><span class="nm">（単発購入のみ）</span><span class="am">—</span></div>';
+  const afterLines=beforeLines+`<div class="bline add"><span class="nm">＋ ${esc(c.reco)}</span><span class="am">+${yen(addP)}</span></div>`;
+  return `<div class="prop">
+    <div class="pt"><div class="nm">${esc(c.name)}</div><div class="tg">${esc(c.type)} ・ 担当 ${esc(c.staff)} ・ 適合度 ${c.fit} ${rankPill(c.fit)}</div></div>
+    <div class="prop-ba">
+      <div class="col before"><span class="cl">😐 現在の取引</span>${beforeLines}
+        <div class="psum"><span>月額</span><span class="a">${yen(curSum)}</span></div></div>
+      <div class="arrow">→</div>
+      <div class="col after"><span class="cl">✨ 提案後</span>${afterLines}
+        <div class="psum"><span>月額</span><span class="a">${yen(curSum+addP)}</span></div></div>
+    </div>
+    <div class="reason">💡 <b>AIの提案理由：</b>${esc(c.reason)}</div>
+  </div>`;
+}
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 分析中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';$('genProp').innerHTML='';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},110);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  const targets=[...CUSTOMERS].sort((a,b)=>b.fit-a.fit).slice(0,6);
+  $('genItems').innerHTML=targets.map((c,i)=>`<div class="gen-item" data-i="${i}"><span class="ck">✓</span>
+    <b style="flex:1;min-width:120px">${esc(c.name)}</b>
+    <span class="gp">${esc(c.reco)}</span>
+    <span style="color:var(--ink-3);font-size:12px">適合度 ${c.fit}</span>
+    <span class="tnum" style="font-weight:800;color:var(--brand)">+${yen(recoPrice(c))}</span></div>`).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,170));items[i].classList.add('in');}
+  // show a sample full proposal (Before/After) for the top fit customer
+  $('genProp').innerHTML=`<div style="font-size:12.5px;font-weight:800;margin:6px 0 8px">📄 提案書プレビュー（最有望顧客）</div>`+buildProp(targets[0]);
+  btn.disabled=false;btn.textContent='⚡ もう一度生成';
+  showToast(items.length+'件の提案を一括生成しました（売上上乗せ '+yen(targets.reduce((s,c)=>s+recoPrice(c),0))+'/月）');
+});
+
+/* ============ INIT ============ */
+function bindSearch(){
+  $('q').addEventListener('input',renderCust);
+  $('qp').addEventListener('input',renderProd);
+}
+bindSearch();
+renderDash();
+$('navTargets').textContent=CUSTOMERS.filter(c=>c.stage==='hot'||c.stage==='warm').length;
+</script>
+</body>
+</html>

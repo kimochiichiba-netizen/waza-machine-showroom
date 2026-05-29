@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜棚卸マシン（在庫棚卸システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* progress ring inside kpi */
+.kpi .ring{float:right;margin-top:-44px}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:78px 1fr 88px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-fill.amber{background:linear-gradient(90deg,var(--amber),#f0b44a)}
+.bar-fill.red{background:linear-gradient(90deg,var(--red),#f07a7a)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut */
+.donut-wrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.donut{width:132px;height:132px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;position:relative}
+.donut .hole{width:88px;height:88px;background:var(--card);border-radius:50%;display:grid;place-items:center;text-align:center}
+.donut .hole b{font-size:24px;font-weight:900;line-height:1}
+.donut .hole span{font-size:10.5px;color:var(--ink-3);font-weight:700}
+.legend{display:flex;flex-direction:column;gap:9px;font-size:12.5px}
+.legend .lg{display:flex;align-items:center;gap:8px}
+.legend .sw{width:11px;height:11px;border-radius:3px}
+.legend b{font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl th.c,table.tbl td.c{text-align:center}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.done{background:var(--green-soft);color:var(--green)}
+.st.prog{background:var(--brand-soft);color:var(--brand)}
+.st.wait{background:var(--soft);color:var(--ink-3)}
+.st.diff{background:var(--red-soft);color:var(--red)}
+.st.minor{background:var(--amber-soft);color:var(--amber)}
+.st.ok{background:var(--green-soft);color:var(--green)}
+
+/* count input cell */
+.countbox{width:88px;padding:7px 9px;border:1px solid var(--line-2);border-radius:8px;font-family:inherit;font-size:13px;text-align:right;font-variant-numeric:tabular-nums;background:var(--card)}
+.countbox:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+.countbox.flash{animation:flashok .9s}
+@keyframes flashok{0%{background:var(--green-soft);border-color:var(--green)}100%{background:var(--card)}}
+.diffval{font-weight:800;font-variant-numeric:tabular-nums}
+.diffval.minus{color:var(--red)}.diffval.plus{color:var(--brand)}.diffval.zero{color:var(--ink-3)}
+
+/* create / plan form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,400px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.fg .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+.gen-item .cause{font-size:11.5px;color:var(--ink-2);margin-top:2px}
+.gen-item .tag2{font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:6px;background:var(--amber-soft);color:var(--amber);flex-shrink:0}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.muted{color:var(--ink-2)}
+.tiny{font-size:11px;color:var(--ink-3)}
+.summary-bar{display:flex;gap:14px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 18px;margin-bottom:16px;box-shadow:var(--shadow);flex-wrap:wrap}
+.summary-bar .sb-it{font-size:12.5px;color:var(--ink-2);font-weight:600}
+.summary-bar .sb-it b{font-size:16px;color:var(--ink);font-weight:900;font-variant-numeric:tabular-nums}
+.progwrap{flex:1;min-width:160px;height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.progwrap .pf{height:100%;background:linear-gradient(90deg,var(--brand),var(--sky));border-radius:99px;transition:width .6s}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">棚卸マシン<small>技マシン｜在庫棚卸</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="plan"><span class="i">🗓️</span>棚卸計画</a>
+      <a data-v="count"><span class="i">📋</span>カウント</a>
+      <a data-v="diff"><span class="i">⚖️</span>差異<span class="badge" id="navDiff">0</span></a>
+      <a data-v="hist"><span class="i">🕘</span>履歴</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI差異分析</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。在庫・数値はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">2026年5月度 棚卸の状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>カテゴリ別 棚卸進捗</h3><span class="more">2026年5月度</span></div>
+            <div class="pb"><div class="bars" id="catBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>差異の内訳</h3></div>
+            <div class="pb">
+              <div class="donut-wrap">
+                <div class="donut" id="donut"><div class="hole"><b id="donutPct">0%</b><span>一致率</span></div></div>
+                <div class="legend" id="donutLegend"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>差異が大きい品目 TOP5</h3><span class="more" onclick="go('diff')">差異一覧へ</span></div>
+            <div class="pb" style="padding:0">
+              <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+                <thead><tr><th>品目</th><th class="r">理論</th><th class="r">実数</th><th class="r">差異額</th></tr></thead>
+                <tbody id="topDiffRows"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PLAN -->
+      <section class="view" id="v-plan">
+        <div class="create-grid">
+          <div class="formcard">
+            <div style="font-size:14px;font-weight:800;margin-bottom:14px">新しい棚卸計画を作成</div>
+            <div class="fg"><label>棚卸名</label><input id="plName" placeholder="例：2026年6月度 月次棚卸"></div>
+            <div class="fg"><label>対象拠点・倉庫</label>
+              <select id="plLoc"></select></div>
+            <div class="fg"><label>対象カテゴリ</label>
+              <select id="plCat"></select></div>
+            <div class="fg row2">
+              <div><label>実施日</label><input id="plDate" type="date"></div>
+              <div><label>担当者</label>
+                <select id="plStaff"></select></div>
+            </div>
+            <div class="fg"><label>備考</label><textarea id="plNote" rows="2" placeholder="例：冷蔵在庫を優先。賞味期限も確認。"></textarea></div>
+            <div class="linkrow" style="margin-top:6px">
+              <button class="btn primary" id="plCreate" style="flex:1;justify-content:center">🗓️ 棚卸計画を作成</button>
+              <button class="btn" id="plSample">サンプル</button>
+            </div>
+            <div class="tiny" style="margin-top:8px">作成すると「カウント」画面に対象品目リストが自動展開されます。</div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>登録済みの棚卸計画</h3></div>
+            <div class="pb" style="padding:0">
+              <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+                <thead><tr><th>棚卸名</th><th>拠点</th><th>実施日</th><th>担当</th><th class="c">品目</th><th>状態</th></tr></thead>
+                <tbody id="planRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- COUNT -->
+      <section class="view" id="v-count">
+        <div class="summary-bar">
+          <div class="sb-it">進捗 <b id="cntProg">0%</b></div>
+          <div class="progwrap"><div class="pf" id="cntProgBar" style="width:0"></div></div>
+          <div class="sb-it">カウント済 <b id="cntDone">0</b><span class="muted"> / <span id="cntTotal">0</span> 品目</span></div>
+          <button class="btn green" id="cntAuto" style="margin-left:auto">📷 ハンディ端末データを取込</button>
+        </div>
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="cq" placeholder="品目名・コード・棚番で検索"></div>
+          <div class="chips" id="catChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>コード</th><th>品目</th><th>棚番</th><th class="r">理論在庫</th><th class="r">実数</th><th class="r">差異</th><th class="c">状態</th></tr></thead>
+          <tbody id="countRows"></tbody>
+        </table>
+      </section>
+
+      <!-- DIFF -->
+      <section class="view" id="v-diff">
+        <div class="kpis" id="diffKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>差異が出ている品目</h3>
+            <button class="btn primary" id="goAi" style="margin-left:auto">⚡ AIで原因を分析</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>コード</th><th>品目</th><th class="r">理論</th><th class="r">実数</th><th class="r">差異数</th><th class="r">差異額</th><th class="c">区分</th></tr></thead>
+              <tbody id="diffRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- HISTORY -->
+      <section class="view" id="v-hist">
+        <table class="tbl">
+          <thead><tr><th>棚卸名</th><th>拠点</th><th>確定日</th><th class="r">対象品目</th><th class="r">差異品目</th><th class="r">差異額</th><th class="r">精度</th><th>状態</th></tr></thead>
+          <tbody id="histRows"></tbody>
+        </table>
+      </section>
+
+      <!-- AI DIFF ANALYSIS -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">差異の原因をAIが自動で推定</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">カウント結果と入出庫データを突き合わせ、<b id="aiDiffCnt">0件</b>の差異について原因をAIが推定します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで差異分析する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">3時間20分</div>
+              <ul>
+                <li>📑 帳簿と現物を1件ずつ突合</li>
+                <li>🔎 入出庫履歴を遡って原因を調査</li>
+                <li>📝 差異報告書を手で作成</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 差異品目を自動抽出</li>
+                <li>🧠 入出庫・賞味期限から原因を推定</li>
+                <li>📄 差異報告書まで自動生成</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">🧠 AIによる差異の原因推定</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const LOCATIONS=['本社 第1倉庫','大分流通センター','別府 冷蔵倉庫'];
+const STAFF=['佐藤','田中','鈴木','高橋'];
+const CATS=['青果','加工食品','資材','冷蔵品','日用品'];
+
+const TODAY=new Date();
+let SEED=4242;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+/* item master: 理論在庫(theory) と 実数(actual=null未カウント) */
+const NAMES={
+  '青果':['大分産トマト','ピーマン 2L','きゅうり A品','新玉ねぎ','大葉 100枚束','椎茸 原木','春キャベツ','レタス'],
+  '加工食品':['カットサラダMIX','カット白菜','冷凍ほうれん草','和風だしパック','ドレッシング 業務用','漬物セット'],
+  '資材':['段ボール M','保冷剤 大','рp袋 透明','配送ラベル','PPバンド','緩衝シート'],
+  '冷蔵品':['国産豚バラ','鶏もも肉','卵 Mサイズ','牛乳 1L','プレーンヨーグルト','バター 業務用'],
+  '日用品':['ペーパータオル','ゴム手袋 M','アルコール除菌','ビニール手袋','ふきん 業務用']
+};
+const UNITPRICE={'青果':[120,680],'加工食品':[180,520],'資材':[40,240],'冷蔵品':[150,920],'日用品':[90,480]};
+
+let items=[];
+(function seedItems(){
+  let code=1001;
+  CATS.forEach(cat=>{
+    NAMES[cat].forEach(nm=>{
+      const [lo,hi]=UNITPRICE[cat];
+      const price=Math.round((lo+rnd()*(hi-lo))/10)*10;
+      const theory=10+Math.floor(rnd()*180);
+      // 差異シナリオ: 約30%に差異, それ以外は一致
+      let actual=theory;
+      const r=rnd();
+      if(r<0.16){actual=theory-(1+Math.floor(rnd()*Math.min(8,theory)));} // 不足(大)
+      else if(r<0.30){actual=theory+(1+Math.floor(rnd()*4));}             // 過剰(小)
+      const shelf=String.fromCharCode(65+Math.floor(rnd()*5))+'-'+(1+Math.floor(rnd()*12))+'-'+(1+Math.floor(rnd()*6));
+      items.push({code:'SKU-'+(code++),name:nm,cat,price,theory,actual,shelf});
+    });
+  });
+})();
+const TOTAL_ITEMS=items.length;
+
+/* AI推定原因のテンプレ(差異タイプ別) */
+const CAUSES_SHORT=[
+  {t:'出庫漏れの計上ミス',d:'5/18の出庫データに未計上の伝票（伝票No.2026-0518-07）が見つかりました。'},
+  {t:'検品時の数え間違い',d:'前回入荷時のロット数と数量メモに不一致。検品ダブルカウントの可能性。'},
+  {t:'賞味期限切れの廃棄未記録',d:'冷蔵品で期限超過分が現場廃棄され、システム未反映と推定されます。'},
+  {t:'同梱・誤出荷',d:'近接棚番の類似品と取り違え。配送ラベルの突合で誤出荷の痕跡あり。'},
+  {t:'入庫の二重計上',d:'同一納品書が2回登録されており、理論在庫が過大になっています。'},
+  {t:'サンプル・社内消費の未記録',d:'営業サンプル持ち出しが記録されず、実数が少なくなっています。'},
+];
+
+/* 履歴(過去の確定棚卸) */
+const HISTORY=[
+  {name:'2026年4月度 月次棚卸',loc:'本社 第1倉庫',date:'2026/04/30',items:31,diff:6,amt:-18400,acc:98.1,status:'done'},
+  {name:'2026年3月度 月次棚卸',loc:'大分流通センター',date:'2026/03/31',items:28,diff:9,amt:-42600,acc:96.8,status:'done'},
+  {name:'2026年2月度 月次棚卸',loc:'別府 冷蔵倉庫',date:'2026/02/28',items:22,diff:4,amt:-9800,acc:98.6,status:'done'},
+  {name:'2026年1月度 棚卸（年初）',loc:'本社 第1倉庫',date:'2026/01/06',items:33,diff:11,amt:-58200,acc:95.4,status:'done'},
+  {name:'2025年12月度 月次棚卸',loc:'大分流通センター',date:'2025/12/29',items:30,diff:7,amt:-21300,acc:97.7,status:'done'},
+];
+
+/* 棚卸計画 */
+let plans=[
+  {name:'2026年5月度 月次棚卸',loc:'本社 第1倉庫',date:'2026/05/30',staff:'佐藤',items:TOTAL_ITEMS,status:'prog'},
+  {name:'2026年5月度 冷蔵品 中間棚卸',loc:'別府 冷蔵倉庫',date:'2026/05/15',staff:'高橋',items:6,status:'done'},
+  {name:'2026年6月度 月次棚卸（予定）',loc:'大分流通センター',date:'2026/06/30',staff:'鈴木',items:0,status:'wait'},
+];
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>(n<0?'-¥':'¥')+Math.abs(Math.round(n)).toLocaleString();
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+
+/* 差異計算: actualがnullなら未カウント */
+function diffOf(it){return it.actual==null?null:it.actual-it.theory;}
+function diffAmt(it){const d=diffOf(it);return d==null?0:d*it.price;}
+function countedItems(){return items.filter(i=>i.actual!=null);}
+function diffItems(){return items.filter(i=>i.actual!=null&&i.actual!==i.theory);}
+function diffClass(it){const d=diffOf(it);if(d==null||d===0)return null;return Math.abs(d*it.price)>=4000?'diff':'minor';}
+const DIFFLABEL={diff:'重大差異',minor:'軽微'};
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','2026年5月度 棚卸の状況'],plan:['棚卸計画','棚卸の計画を立てて対象品目を準備します'],
+  count:['カウント','実数を入力すると差異が自動計算されます'],diff:['差異','理論在庫と実数の差異を確認します'],
+  hist:['履歴','過去に確定した棚卸の記録'],ai:['AI差異分析','差異の原因をAIが自動で推定します']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI差異分析</button><button class="btn primary" onclick="go(\'count\')">📋 カウントを続ける</button>'
+    : v==='count'?'<button class="btn primary" onclick="go(\'diff\')">⚖️ 差異を確認</button>'
+    : v==='diff'?'<button class="btn primary" onclick="go(\'ai\')">⚡ AIで原因分析</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='plan')renderPlan();
+  if(v==='count')renderCount();
+  if(v==='diff')renderDiff();
+  if(v==='hist')renderHist();
+  if(v==='ai')renderAiMeta();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const counted=countedItems().length;
+  const prog=Math.round(counted/TOTAL_ITEMS*100);
+  const diffs=diffItems();
+  const totalDiffAmt=items.reduce((s,i)=>s+diffAmt(i),0);
+  const matched=counted-diffs.length;
+  const acc=counted?((matched/counted)*100):0;
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','対象品目',TOTAL_ITEMS+'<small> 品目</small>',CATS.length+'カテゴリ','up','5拠点中 1拠点 実施中')}
+    ${kpi('#0ea5b7','進捗率',prog+'<small>%</small>',counted+' / '+TOTAL_ITEMS+'品目','up',prog>=100?'完了':'カウント中')}
+    ${kpi('#e24a4a','差異額',yen(totalDiffAmt),diffs.length+'品目で差異',totalDiffAmt<0?'down':'warn',totalDiffAmt<0?'棚卸減耗':'要確認')}
+    ${kpi('#16b877','精度（一致率）',acc.toFixed(1)+'<small>%</small>',matched+' / '+counted+'一致','up','目標98%')}`;
+  // category progress bars
+  $('catBars').innerHTML=CATS.map(cat=>{
+    const cit=items.filter(i=>i.cat===cat);
+    const c=cit.filter(i=>i.actual!=null).length;
+    const pct=Math.round(c/cit.length*100);
+    const hasDiff=cit.some(i=>i.actual!=null&&i.actual!==i.theory);
+    const cls=pct<100?(hasDiff?'amber':''):(hasDiff?'red':'');
+    return `<div class="bar-row"><span class="mlabel">${cat}</span>
+      <div class="bar-track"><div class="bar-fill ${cls}" style="width:0" data-w="${pct}"></div></div>
+      <span class="mval">${c}/${cit.length}</span></div>`;
+  }).join('');
+  setTimeout(()=>document.querySelectorAll('#catBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // donut: 一致 / 不足 / 過剰
+  const counted2=countedItems();
+  const match=counted2.filter(i=>i.actual===i.theory).length;
+  const short=counted2.filter(i=>i.actual<i.theory).length;
+  const over=counted2.filter(i=>i.actual>i.theory).length;
+  const tot=Math.max(counted2.length,1);
+  const pMatch=match/tot*100,pShort=short/tot*100;
+  const a1=pMatch*3.6,a2=(pMatch+pShort)*3.6;
+  $('donut').style.background=`conic-gradient(var(--green) 0 ${a1}deg,var(--red) ${a1}deg ${a2}deg,var(--brand) ${a2}deg 360deg)`;
+  $('donutPct').textContent=Math.round(pMatch)+'%';
+  $('donutLegend').innerHTML=`
+    <div class="lg"><span class="sw" style="background:var(--green)"></span>一致 <b>&nbsp;${match}品目</b></div>
+    <div class="lg"><span class="sw" style="background:var(--red)"></span>不足 <b>&nbsp;${short}品目</b></div>
+    <div class="lg"><span class="sw" style="background:var(--brand)"></span>過剰 <b>&nbsp;${over}品目</b></div>`;
+  // top diff
+  const top=[...diffs].sort((a,b)=>Math.abs(diffAmt(b))-Math.abs(diffAmt(a))).slice(0,5);
+  $('topDiffRows').innerHTML=top.length?top.map(i=>{
+    const d=diffOf(i);const cls=d<0?'minus':'plus';
+    return `<tr><td><b>${esc(i.name)}</b><div class="tiny">${esc(i.cat)} ・ ${esc(i.code)}</div></td>
+      <td class="r tnum">${i.theory}</td><td class="r tnum">${i.actual}</td>
+      <td class="r"><span class="diffval ${cls}">${yen(diffAmt(i))}</span></td></tr>`;
+  }).join(''):'<tr><td colspan="4" class="empty-cell">差異はありません 🎉</td></tr>';
+  // activity
+  const acts=[
+    {i:'📷',c:'#e6f8f0',t:'ハンディ端末から 12品目のカウントを取込',m:'3分前'},
+    {i:'⚠️',c:'#fdeaea',t:'国産豚バラ で 重大差異（不足）を検知',m:'18分前'},
+    {i:'⚡',c:'#e6f8f0',t:'AI差異分析で 6件の原因を自動推定',m:'今日 10:22'},
+    {i:'🗓️',c:'#eaf1ff',t:'2026年5月度 月次棚卸 を開始しました',m:'今日 9:00'},
+    {i:'✅',c:'#e6f8f0',t:'別府 冷蔵倉庫 の中間棚卸を確定（精度98.6%）',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${a.t}</div><div class="am">${a.m}</div></div></div>`).join('');
+  $('navDiff').textContent=diffs.length;
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ PLAN ============ */
+function renderPlanForm(){
+  $('plLoc').innerHTML=LOCATIONS.map(l=>`<option>${l}</option>`).join('');
+  $('plCat').innerHTML='<option value="">全カテゴリ</option>'+CATS.map(c=>`<option>${c}</option>`).join('');
+  $('plStaff').innerHTML=STAFF.map(s=>`<option>${s}</option>`).join('');
+}
+function renderPlan(){
+  $('planRows').innerHTML=plans.map(p=>`<tr>
+    <td><b>${esc(p.name)}</b></td><td class="muted">${esc(p.loc)}</td><td class="muted">${esc(p.date)}</td>
+    <td class="muted">${esc(p.staff)}</td><td class="c tnum">${p.items}</td><td>${stBadge(p.status)}</td></tr>`).join('');
+}
+const STLABEL={done:'確定済',prog:'実施中',wait:'予定',diff:'重大差異',minor:'軽微',ok:'一致'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]||s}</span>`;}
+$('plSample').addEventListener('click',()=>{
+  $('plName').value='2026年6月度 月次棚卸';
+  $('plLoc').value='本社 第1倉庫';$('plCat').value='';
+  $('plStaff').value='佐藤';
+  const d=new Date(2026,5,30);$('plDate').value=d.toISOString().slice(0,10);
+  $('plNote').value='冷蔵在庫を優先。賞味期限も確認。';
+});
+$('plCreate').addEventListener('click',()=>{
+  const nm=$('plName').value.trim();
+  if(!nm){showToast('棚卸名を入力してください');return;}
+  const cat=$('plCat').value;
+  const cnt=cat?items.filter(i=>i.cat===cat).length:TOTAL_ITEMS;
+  plans.unshift({name:nm,loc:$('plLoc').value,date:($('plDate').value||'未定').replace(/-/g,'/'),staff:$('plStaff').value,items:cnt,status:'prog'});
+  renderPlan();
+  showToast('棚卸計画「'+nm+'」を作成しました（'+cnt+'品目）');
+  $('plName').value='';$('plNote').value='';
+});
+
+/* ============ COUNT ============ */
+let cntFilter='all';
+function renderCatChips(){
+  const opts=[['all','すべて'],...CATS.map(c=>[c,c])];
+  $('catChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===cntFilter?'on':''}" data-s="${esc(o[0])}">${esc(o[1])}</button>`).join('');
+  $('catChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{cntFilter=c.dataset.s;renderCatChips();renderCount();});
+}
+function updateCountSummary(){
+  const c=countedItems().length;const pct=Math.round(c/TOTAL_ITEMS*100);
+  $('cntProg').textContent=pct+'%';$('cntProgBar').style.width=pct+'%';
+  $('cntDone').textContent=c;$('cntTotal').textContent=TOTAL_ITEMS;
+}
+function renderCount(){
+  renderCatChips();updateCountSummary();
+  const q=($('cq').value||'').toLowerCase();
+  const rows=items.filter(i=>cntFilter==='all'||i.cat===cntFilter)
+    .filter(i=>!q||(i.name+i.code+i.shelf).toLowerCase().includes(q));
+  $('countRows').innerHTML=rows.length?rows.map(i=>{
+    const d=diffOf(i);
+    let dCell='<span class="tiny">未入力</span>',stCell='<span class="st wait">未カウント</span>';
+    if(d!=null){
+      const cls=d<0?'minus':d>0?'plus':'zero';
+      dCell=`<span class="diffval ${cls}">${d>0?'+':''}${d}</span>`;
+      stCell = d===0?'<span class="st ok">一致</span>':stBadge(diffClass(i));
+    }
+    return `<tr data-code="${esc(i.code)}">
+      <td class="mono tiny">${esc(i.code)}</td>
+      <td><b>${esc(i.name)}</b><div class="tiny">${esc(i.cat)}</div></td>
+      <td class="muted">${esc(i.shelf)}</td>
+      <td class="r tnum">${i.theory}</td>
+      <td class="r"><input class="countbox cinp" data-code="${esc(i.code)}" type="number" min="0" value="${i.actual==null?'':i.actual}" placeholder="—"></td>
+      <td class="r">${dCell}</td>
+      <td class="c">${stCell}</td></tr>`;
+  }).join(''):'<tr><td colspan="7" class="empty-cell">該当する品目がありません</td></tr>';
+  $('countRows').querySelectorAll('.cinp').forEach(inp=>{
+    inp.addEventListener('change',()=>{
+      const it=items.find(x=>x.code===inp.dataset.code);
+      if(!it)return;
+      it.actual=inp.value===''?null:Math.max(0,Math.floor(+inp.value||0));
+      inp.classList.add('flash');setTimeout(()=>inp.classList.remove('flash'),900);
+      renderCount();$('navDiff').textContent=diffItems().length;
+    });
+  });
+}
+$('cq').addEventListener('input',renderCount);
+$('cntAuto').addEventListener('click',async()=>{
+  const btn=$('cntAuto');btn.disabled=true;btn.textContent='📷 取込中…';
+  const todo=items.filter(i=>i.actual==null);
+  await new Promise(r=>setTimeout(r,900));
+  let n=0;
+  todo.forEach(i=>{ // 端末データ取込: 多くは一致、一部に差異
+    const r=rnd();
+    if(r<0.12)i.actual=Math.max(0,i.theory-(1+Math.floor(rnd()*6)));
+    else if(r<0.20)i.actual=i.theory+(1+Math.floor(rnd()*3));
+    else i.actual=i.theory;
+    n++;
+  });
+  btn.disabled=false;btn.textContent='📷 ハンディ端末データを取込';
+  renderCount();$('navDiff').textContent=diffItems().length;
+  showToast('ハンディ端末から '+n+'品目のカウントを取込みました');
+});
+
+/* ============ DIFF ============ */
+function renderDiff(){
+  const diffs=diffItems();
+  const totalAmt=diffs.reduce((s,i)=>s+diffAmt(i),0);
+  const short=diffs.filter(i=>i.actual<i.theory);
+  const major=diffs.filter(i=>diffClass(i)==='diff');
+  const counted=countedItems().length;
+  const acc=counted?((counted-diffs.length)/counted*100):0;
+  $('diffKpis').innerHTML=`
+    ${kpi('#e24a4a','差異額 合計',yen(totalAmt),diffs.length+'品目',totalAmt<0?'down':'warn',totalAmt<0?'減耗':'要確認')}
+    ${kpi('#e3941f','重大差異',major.length+'<small> 品目</small>',yen(major.reduce((s,i)=>s+diffAmt(i),0)),'down','要原因究明')}
+    ${kpi('#0ea5b7','不足品目',short.length+'<small> 品目</small>',yen(short.reduce((s,i)=>s+diffAmt(i),0)),'warn','棚卸減耗')}
+    ${kpi('#16b877','精度（一致率）',acc.toFixed(1)+'<small>%</small>','','up','カウント済ベース')}`;
+  $('diffRows').innerHTML=diffs.length?[...diffs].sort((a,b)=>Math.abs(diffAmt(b))-Math.abs(diffAmt(a))).map(i=>{
+    const d=diffOf(i);const cls=d<0?'minus':'plus';
+    return `<tr><td class="mono tiny">${esc(i.code)}</td><td><b>${esc(i.name)}</b><div class="tiny">${esc(i.cat)} ・ 棚番 ${esc(i.shelf)}</div></td>
+      <td class="r tnum">${i.theory}</td><td class="r tnum">${i.actual}</td>
+      <td class="r"><span class="diffval ${cls}">${d>0?'+':''}${d}</span></td>
+      <td class="r"><span class="diffval ${cls}">${yen(diffAmt(i))}</span></td>
+      <td class="c">${stBadge(diffClass(i))}</td></tr>`;
+  }).join(''):'<tr><td colspan="7" class="empty-cell">差異はありません。すべて一致しています 🎉</td></tr>';
+  $('navDiff').textContent=diffs.length;
+}
+$('goAi').addEventListener('click',()=>go('ai'));
+
+/* ============ HISTORY ============ */
+function renderHist(){
+  $('histRows').innerHTML=HISTORY.map(h=>`<tr>
+    <td><b>${esc(h.name)}</b></td><td class="muted">${esc(h.loc)}</td><td class="muted">${esc(h.date)}</td>
+    <td class="r tnum">${h.items}</td><td class="r tnum">${h.diff}</td>
+    <td class="r"><span class="diffval ${h.amt<0?'minus':'plus'}">${yen(h.amt)}</span></td>
+    <td class="r tnum"><b>${h.acc}%</b></td><td>${stBadge(h.status)}</td></tr>`).join('');
+}
+
+/* ============ AI DIFF ANALYSIS ============ */
+function renderAiMeta(){
+  const n=diffItems().length;
+  $('aiDiffCnt').textContent=n+'件';
+  $('aiSub').innerHTML='カウント結果と入出庫データを突き合わせ、<b>'+n+'件</b>の差異について原因をAIが推定します。';
+}
+$('aiRun').addEventListener('click',async()=>{
+  const diffs=[...diffItems()].sort((a,b)=>Math.abs(diffAmt(b))-Math.abs(diffAmt(a)));
+  if(!diffs.length){showToast('差異がありません。まずカウントを進めてください');return;}
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 分析中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';$('genList').classList.remove('show');$('genItems').innerHTML='';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},120);
+  await new Promise(r=>setTimeout(r,1200));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  const targets=diffs.slice(0,6);
+  $('genItems').innerHTML=targets.map((it,i)=>{
+    const cause=CAUSES_SHORT[i%CAUSES_SHORT.length];
+    const d=diffOf(it);
+    const conf=82+Math.floor(rnd()*16);
+    return `<div class="gen-item" data-i="${i}">
+      <span class="ck">!</span>
+      <div style="flex:1">
+        <b>${esc(it.name)}</b> <span class="tiny">（${esc(it.code)} / 差異 ${d>0?'+':''}${d} ・ ${yen(diffAmt(it))}）</span>
+        <div class="cause">推定原因：${esc(cause.t)} — ${esc(cause.d)}</div>
+      </div>
+      <span class="tag2">確度 ${conf}%</span></div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const els=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<els.length;i++){await new Promise(r=>setTimeout(r,200));els[i].classList.add('in');}
+  btn.disabled=false;btn.textContent='⚡ もう一度分析';
+  showToast(targets.length+'件の差異について原因を推定し、報告書を生成しました');
+});
+
+/* ============ INIT ============ */
+renderPlanForm();
+renderDash();
+$('navDiff').textContent=diffItems().length;
+</script>
+</body>
+</html>

@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜相談予約マシン（士業向け予約管理システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cf0;--purple-soft:#efeaff;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut / source breakdown */
+.donut-wrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.donut{width:128px;height:128px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;position:relative}
+.donut::after{content:"";position:absolute;width:78px;height:78px;border-radius:50%;background:var(--card)}
+.donut .di{position:relative;z-index:1;text-align:center}
+.donut .di b{font-size:21px;font-weight:900;display:block;line-height:1}
+.donut .di span{font-size:10px;color:var(--ink-3);font-weight:700}
+.legend{display:flex;flex-direction:column;gap:9px;font-size:12.5px;flex:1;min-width:150px}
+.legend .lg{display:flex;align-items:center;gap:9px}
+.legend .lg .sw{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.legend .lg .nm{color:var(--ink-2);font-weight:600}
+.legend .lg .vl{margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.done{background:var(--green-soft);color:var(--green)}
+.st.confirmed{background:var(--brand-soft);color:var(--brand)}
+.st.pending{background:var(--amber-soft);color:var(--amber)}
+.st.canceled{background:var(--red-soft);color:var(--red)}
+.st.noshow{background:var(--soft);color:var(--ink-3)}
+.tag-cat{display:inline-flex;font-size:11px;font-weight:700;padding:3px 9px;border-radius:7px;background:var(--soft);color:var(--ink-2)}
+.way{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;color:var(--ink-2)}
+
+/* slot management grid */
+.slot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.slot{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 14px;box-shadow:var(--shadow);transition:all .15s}
+.slot .sd{font-size:12px;color:var(--ink-3);font-weight:700}
+.slot .st-time{font-size:17px;font-weight:900;margin:3px 0 8px;font-variant-numeric:tabular-nums}
+.slot .meter{height:7px;border-radius:99px;background:var(--soft);overflow:hidden;margin-bottom:7px}
+.slot .meter i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky))}
+.slot .row{display:flex;align-items:center;justify-content:space-between;font-size:11.5px;color:var(--ink-2);font-weight:600}
+.slot .toggle{border:1px solid var(--line-2);background:var(--card);border-radius:7px;padding:5px 9px;font-size:11px;font-weight:800;cursor:pointer;color:var(--ink-2)}
+.slot.closed{opacity:.55;background:var(--soft)}
+.slot.closed .toggle{color:var(--green);border-color:var(--green)}
+.slot .toggle:hover{border-color:var(--brand);color:var(--brand)}
+
+/* create / hearing form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:84px;line-height:1.6}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* preview card (booking confirmation paper) */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:30px 32px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.pv-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}
+.pv-title{font-size:21px;font-weight:900;letter-spacing:.14em;color:var(--brand-dk);border-bottom:3px solid var(--brand-dk);padding-bottom:5px}
+.pv-meta{text-align:right;font-size:11.5px;color:var(--ink-2)}
+.pv-meta .no{font-family:'Orbitron';color:var(--ink);font-weight:700}
+.pv-row{display:flex;gap:12px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:12.5px}
+.pv-row .k{width:96px;color:var(--ink-3);font-weight:700;flex-shrink:0}
+.pv-row .v{font-weight:600;color:#1a2233}
+.pv-cust{font-size:18px;font-weight:900;border-bottom:1.5px solid #1a2233;display:inline-block;min-width:200px;padding-bottom:5px;margin-bottom:6px}
+.pv-banner{background:var(--soft);border-left:5px solid var(--brand-dk);border-radius:6px;padding:12px 16px;margin:16px 0;display:flex;justify-content:space-between;align-items:center}
+.pv-banner .a{font-family:'Orbitron';font-size:18px;font-weight:700;color:var(--brand-dk)}
+.pv-note{margin-top:16px;font-size:11px;color:var(--ink-2);border-top:1px solid var(--line);padding-top:12px}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+
+/* AI input + result */
+.ai-input{margin-top:20px;border-top:1px solid var(--line);padding-top:18px}
+.ai-input textarea{width:100%;padding:12px 14px;border:1px solid var(--line-2);border-radius:11px;font-family:inherit;font-size:13.5px;resize:vertical;min-height:92px;line-height:1.7}
+.ai-input textarea:focus{outline:none;border-color:var(--brand)}
+.sample-chips{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0 12px}
+.sample-chips .sc{font-size:12px;font-weight:700;padding:6px 11px;border-radius:8px;border:1px dashed var(--line-2);background:var(--soft);color:var(--ink-2);cursor:pointer;transition:all .15s}
+.sample-chips .sc:hover{border-color:var(--brand);color:var(--brand)}
+.gen-result{margin-top:18px;border:1px solid #bdebd4;background:linear-gradient(180deg,var(--green-soft),#f4fdf9);border-radius:13px;padding:18px;display:none}
+.gen-result.show{display:block;animation:fade .4s}
+.gen-result h4{font-size:13.5px;font-weight:900;margin-bottom:13px;display:flex;align-items:center;gap:8px}
+.res-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.res-card{background:#fff;border:1px solid #cdeedd;border-radius:11px;padding:13px 15px}
+.res-card .rl{font-size:11px;color:var(--ink-3);font-weight:800;letter-spacing:.03em;margin-bottom:5px;display:flex;align-items:center;gap:6px}
+.res-card .rv{font-size:15px;font-weight:900;color:var(--ink);line-height:1.4}
+.res-card .rv small{font-size:12px;color:var(--ink-2);font-weight:700}
+.res-list{list-style:none;margin-top:6px}
+.res-list li{font-size:12.5px;padding:5px 0;display:flex;gap:8px;color:var(--ink-2);opacity:0;transform:translateX(-8px);transition:all .4s}
+.res-list li.in{opacity:1;transform:none}
+.res-list li b{color:var(--ink)}
+.confbox{margin-top:14px;display:flex;gap:9px;flex-wrap:wrap}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.mini-list{display:flex;flex-direction:column;gap:9px}
+.mini{display:flex;align-items:center;gap:11px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:12.5px}
+.mini .mt{width:50px;font-weight:900;font-variant-numeric:tabular-nums;color:var(--brand-dk)}
+.mini .mn{font-weight:700;flex:1}
+.mini .mc{color:var(--ink-3);font-size:11px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">相談予約マシン<small>技マシン｜予約管理</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">📅</span>予約一覧<span class="badge" id="navPending">0</span></a>
+      <a data-v="slots"><span class="i">🗓️</span>枠管理</a>
+      <a data-v="hearing"><span class="i">📝</span>事前ヒアリング</a>
+      <a data-v="cust"><span class="i">👥</span>顧客</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI受付</a>
+    </nav>
+    <div class="org">
+      <div class="av">秋</div>
+      <div><b>あきば総合法務事務所</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。相談者・予約データはサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">今月の相談予約状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>月次の相談予約数</h3><span class="more">過去6ヶ月</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>相談分野の内訳</h3><span class="more">今月</span></div>
+            <div class="pb"><div class="donut-wrap"><div class="donut" id="donut"><div class="di"><b id="donutTot">0</b><span>件</span></div></div><div class="legend" id="legend"></div></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>本日の予約</h3><span class="more" onclick="go('list')">予約一覧へ</span></div>
+            <div class="pb"><div class="mini-list" id="todayList"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="相談者・分野・予約番号で検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>予約番号</th><th>相談者</th><th>相談分野</th><th>担当</th><th>日時</th><th>方法</th><th>状態</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- SLOTS -->
+      <section class="view" id="v-slots">
+        <div class="toolbar">
+          <div class="chips" id="dayChips"></div>
+          <button class="btn green" id="aiOptimize" style="margin-left:auto">⚡ AIで最適な枠配分を提案</button>
+        </div>
+        <div class="panel">
+          <div class="ph"><h3 id="slotDayTitle">枠の空き状況</h3><span class="more" id="slotSummary"></span></div>
+          <div class="pb"><div class="slot-grid" id="slotGrid"></div></div>
+        </div>
+      </section>
+
+      <!-- HEARING -->
+      <section class="view" id="v-hearing">
+        <div class="create-grid">
+          <div class="formcard">
+            <div style="font-size:13.5px;font-weight:900;margin-bottom:14px">📝 事前ヒアリングシート</div>
+            <div class="fg"><label>相談者氏名</label><input id="hName" placeholder="例：山田 太郎"></div>
+            <div class="fg2">
+              <div class="fg"><label>区分</label><select id="hType"><option>個人</option><option>法人</option></select></div>
+              <div class="fg"><label>連絡先（電話）</label><input id="hTel" placeholder="例：097-000-0000"></div>
+            </div>
+            <div class="fg"><label>相談分野</label><select id="hCat"></select></div>
+            <div class="fg"><label>ご相談内容（自由記述）</label><textarea id="hBody" placeholder="例：先月退職した会社から残業代が支払われていません。請求できるか相談したいです。"></textarea></div>
+            <div class="aihint" id="hHint">✨ AIが内容を読み取り、必要書類と担当を提案します</div>
+            <div class="linkrow" style="margin-top:14px">
+              <button class="btn primary" id="hAnalyze" style="flex:1;justify-content:center">⚡ AIでヒアリングを整理</button>
+              <button class="btn" id="hSample">サンプル</button>
+            </div>
+          </div>
+          <div>
+            <div class="paper" id="hPaper">
+              <div class="pv-top">
+                <div class="pv-title">事前ヒアリング票</div>
+                <div class="pv-meta"><div>受付番号：<span class="no" id="hNo">—</span></div><div>受付日：<span id="hDate">—</span></div></div>
+              </div>
+              <div><span class="pv-cust" id="hPvName">　様</span></div>
+              <div class="pv-row"><span class="k">区分</span><span class="v" id="hPvType">—</span></div>
+              <div class="pv-row"><span class="k">連絡先</span><span class="v" id="hPvTel">—</span></div>
+              <div class="pv-row"><span class="k">相談分野</span><span class="v" id="hPvCat">—</span></div>
+              <div class="pv-banner"><span style="font-weight:700">AI整理ステータス</span><span class="a" id="hPvStatus">未整理</span></div>
+              <div style="font-size:11.5px;color:var(--ink-3);font-weight:800;margin-bottom:5px">ご相談内容</div>
+              <div class="v" id="hPvBody" style="font-size:12.5px;color:var(--ink-2);min-height:40px;white-space:pre-wrap">—</div>
+              <div id="hPvAI" style="display:none;margin-top:14px">
+                <div style="font-size:11.5px;color:var(--green);font-weight:800;margin-bottom:7px">🤖 AIによる整理結果</div>
+                <div class="pv-row"><span class="k">推定分野</span><span class="v" id="hPvGuess">—</span></div>
+                <div class="pv-row"><span class="k">推奨担当</span><span class="v" id="hPvStaff">—</span></div>
+                <div class="pv-row"><span class="k">想定相談時間</span><span class="v" id="hPvDur">—</span></div>
+                <div style="font-size:11.5px;color:var(--ink-3);font-weight:800;margin:10px 0 5px">ご持参いただきたい書類</div>
+                <ul class="res-list" id="hPvDocs"></ul>
+              </div>
+              <div class="pv-note">本票は相談当日に弁護士・司法書士が確認します。秘密は厳守いたします。</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CUSTOMERS -->
+      <section class="view" id="v-cust">
+        <table class="tbl">
+          <thead><tr><th>相談者</th><th>区分</th><th>主な相談分野</th><th class="r">相談回数</th><th>最終相談日</th><th>状態</th></tr></thead>
+          <tbody id="custRows"></tbody>
+        </table>
+      </section>
+
+      <!-- AI RECEPTION -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">AI受付 — 相談内容から自動で振り分け・予約</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">相談者が入力した文章をAIが読み取り、<b>相談分野の分類・最適な空き枠・事前資料の案内</b>まで自動で行います。</div></div>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">約25分／件</div>
+              <ul>
+                <li>📞 電話で相談内容を聞き取り</li>
+                <li>🗂️ 分野を判断し担当を割り当て</li>
+                <li>🔁 空き枠を調整して候補日を提示</li>
+                <li>📄 必要書類を口頭で案内・メモ</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 相談文を読み取り分野を自動分類</li>
+                <li>👤 分野に強い担当を自動アサイン</li>
+                <li>🗓️ 直近の最適な空き枠を自動提案</li>
+                <li>📎 必要書類リストを自動案内</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="ai-input">
+            <label style="font-size:12.5px;font-weight:800;color:var(--ink-2)">相談者からの相談内容（このまま受付フォームに届く想定）</label>
+            <div class="sample-chips" id="sampleChips"></div>
+            <textarea id="aiText" placeholder="ここに相談内容を入力（または上のサンプルをクリック）"></textarea>
+            <div style="display:flex;gap:9px;margin-top:12px">
+              <button class="btn primary" id="aiRun" style="flex:1;justify-content:center">⚡ AIで受付・自動振り分け</button>
+            </div>
+          </div>
+
+          <div class="gen-result" id="genResult">
+            <h4>✅ AIによる受付が完了しました</h4>
+            <div class="res-grid">
+              <div class="res-card"><div class="rl">🏷️ 相談分野（自動分類）</div><div class="rv" id="rCat">—</div></div>
+              <div class="res-card"><div class="rl">👤 推奨担当</div><div class="rv" id="rStaff">—</div></div>
+              <div class="res-card"><div class="rl">🗓️ 最適な空き枠</div><div class="rv" id="rSlot">—</div></div>
+              <div class="res-card"><div class="rl">⏱️ 想定相談時間</div><div class="rv" id="rDur">—</div></div>
+            </div>
+            <div style="margin-top:14px">
+              <div style="font-size:12px;font-weight:800;color:var(--ink-2);margin-bottom:6px">📎 事前にご用意いただきたい書類（自動案内）</div>
+              <ul class="res-list" id="rDocs"></ul>
+            </div>
+            <div class="confbox">
+              <button class="btn green" id="aiBook">この内容で仮予約を確定</button>
+              <button class="btn" id="aiReset">別の相談で試す</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const STAFF=['秋葉 弁護士','三宅 弁護士','大友 司法書士','田島 行政書士'];
+// 相談分野マスタ（分野ごとに担当・想定時間・必要書類・キーワード）
+const CATS=[
+  {n:'相続・遺言',color:'#2f6df0',staff:'大友 司法書士',dur:'60分',
+   docs:['被相続人の戸籍謄本（出生〜死亡）','相続関係説明図（あれば）','固定資産評価証明書','遺言書（ある場合）'],
+   kw:['相続','遺言','遺産','名義変更','登記','亡くな','実家','財産']},
+  {n:'離婚・男女問題',color:'#7c5cf0',staff:'三宅 弁護士',dur:'50分',
+   docs:['戸籍謄本','源泉徴収票（双方の収入がわかるもの）','財産の一覧メモ','やり取りの記録（メール・LINE等）'],
+   kw:['離婚','慰謝料','養育費','親権','不倫','別居','財産分与','夫','妻','配偶']},
+  {n:'労働・残業代',color:'#16b877',staff:'秋葉 弁護士',dur:'50分',
+   docs:['雇用契約書','給与明細（直近6ヶ月分）','タイムカード・勤務記録','就業規則（あれば）'],
+   kw:['残業','給料','賃金','解雇','退職','パワハラ','労働','会社','未払','ハラスメント']},
+  {n:'交通事故',color:'#0ea5b7',staff:'秋葉 弁護士',dur:'45分',
+   docs:['交通事故証明書','診断書・通院記録','保険会社からの書類','事故状況のメモ'],
+   kw:['事故','けが','怪我','保険','過失','むち打ち','示談','後遺','追突','賠償']},
+  {n:'借金・債務整理',color:'#e3941f',staff:'大友 司法書士',dur:'60分',
+   docs:['借入先がわかる書類（明細・契約書）','給与明細・収支メモ','督促状（届いている場合）','本人確認書類'],
+   kw:['借金','返済','債務','過払','カード','ローン','取り立て','督促','破産','整理']},
+  {n:'会社設立・許認可',color:'#e24a4a',staff:'田島 行政書士',dur:'40分',
+   docs:['事業内容のメモ','役員予定者の本人確認書類','資本金の予定額メモ','屋号・商号の候補'],
+   kw:['設立','起業','許可','許認可','建設業','飲食','開業','法人','会社をつくる','登記']},
+];
+// 相談者マスタ
+const CUSTOMERS=[
+  {name:'山田 太郎',type:'個人',cat:'労働・残業代',last:'5/24',count:2,status:'継続'},
+  {name:'佐々木 美咲',type:'個人',cat:'離婚・男女問題',last:'5/22',count:1,status:'新規'},
+  {name:'株式会社大分工務店',type:'法人',cat:'会社設立・許認可',last:'5/20',count:4,status:'継続'},
+  {name:'高橋 健一',type:'個人',cat:'相続・遺言',last:'5/18',count:1,status:'新規'},
+  {name:'中村 由美',type:'個人',cat:'交通事故',last:'5/15',count:3,status:'継続'},
+  {name:'渡辺 隆',type:'個人',cat:'借金・債務整理',last:'5/12',count:2,status:'継続'},
+  {name:'有限会社別府商事',type:'法人',cat:'労働・残業代',last:'5/10',count:1,status:'新規'},
+  {name:'小林 さくら',type:'個人',cat:'相続・遺言',last:'5/8',count:1,status:'完了'},
+  {name:'加藤 誠',type:'個人',cat:'離婚・男女問題',last:'5/3',count:2,status:'継続'},
+];
+const WAYS=[['来所','🏢'],['オンライン','💻'],['電話','📞']];
+const TODAY=new Date();
+
+/* 乱数シード（再現性のあるダミーデータ） */
+let SEED=4127;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+/* 予約シードデータ生成 */
+const STATUSES=['done','done','confirmed','confirmed','pending','canceled','noshow','confirmed'];
+let bookings=[];
+(function seed(){
+  const TIMES=['10:00','11:00','13:00','14:00','15:00','16:00'];
+  for(let i=0;i<26;i++){
+    const c=pick(CUSTOMERS);
+    const cat=CATS.find(x=>x.n===c.cat)||pick(CATS);
+    const dayOffset=Math.floor(rnd()*40)-25; // -25 〜 +14 日
+    const d=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+dayOffset);
+    let stt;
+    if(d<TODAY) stt=pick(['done','done','done','canceled','noshow']);
+    else if(d.toDateString()===TODAY.toDateString()) stt=pick(['confirmed','confirmed','pending']);
+    else stt=pick(['confirmed','confirmed','pending','pending']);
+    const way=pick(WAYS);
+    bookings.push({
+      no:'RSV-'+(202600+i+1),name:c.name,type:c.type,cat:cat.n,catColor:cat.color,
+      staff:cat.staff,dur:cat.dur,date:d,time:pick(TIMES),way:way[0],wayIcon:way[1],status:stt
+    });
+  }
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const fmtD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+const WD=['日','月','火','水','木','金','土'];
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STLABEL={done:'相談済',confirmed:'予約確定',pending:'仮予約',canceled:'キャンセル',noshow:'無断不来'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]}</span>`;}
+function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+
+/* ============ ROUTING ============ */
+const TITLES={
+  dash:['ダッシュボード','今月の相談予約状況'],
+  list:['予約一覧','相談予約を管理します'],
+  slots:['枠管理','相談枠の空き状況を調整します'],
+  hearing:['事前ヒアリング','相談内容をAIが整理し当日に備えます'],
+  cust:['顧客','相談者ごとの相談状況'],
+  ai:['AI受付','相談内容から自動で振り分け・予約します']
+};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn" onclick="go(\'slots\')">🗓️ 枠管理</button><button class="btn primary" onclick="go(\'ai\')">⚡ AI受付で新規予約</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'slots\')">🗓️ 枠管理</button><button class="btn primary" onclick="go(\'ai\')">⚡ AI受付</button>'
+    : v==='hearing'?'<button class="btn primary" onclick="go(\'ai\')">⚡ AI受付へ</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='slots')renderSlots();
+  if(v==='cust')renderCust();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const tm=bookings.filter(b=>thisMonth(b.date));
+  const reserved=tm.filter(b=>['confirmed','pending','done'].includes(b.status));
+  const canceled=tm.filter(b=>b.status==='canceled'||b.status==='noshow');
+  const done=tm.filter(b=>b.status==='done');
+  // 予約率 = 確保された枠のうち実際に予約された割合（デモ用に算出）
+  const totalSlots=tm.length+8;
+  const bookRate=Math.round(reserved.length/totalSlots*100);
+  const cancelRate=tm.length?Math.round(canceled.length/tm.length*100):0;
+  // 成約 = 相談済のうち受任に至った想定（done の 70%）
+  const dealCount=Math.round(done.length*0.7);
+  const dealRate=done.length?Math.round(dealCount/done.length*100):0;
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','今月の相談予約',reserved.length+'<small>件</small>',totalSlots+'枠中','up','前月比 +9%')}
+    ${kpi('#16b877','予約率',bookRate+'<small>%</small>','','up','枠が埋まっています')}
+    ${kpi('#e3941f','キャンセル率',cancelRate+'<small>%</small>',canceled.length+'件','warn','前日リマインドで抑制')}
+    ${kpi('#7c5cf0','成約率',dealRate+'<small>%</small>',dealCount+'件 受任','up','相談済 '+done.length+'件')}`;
+
+  // 月次トレンド（過去6ヶ月の予約件数）
+  const months=[];for(let k=5;k>=0;k--){const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1);months.push(d);}
+  const counts=months.map(m=>bookings.filter(b=>b.date.getMonth()===m.getMonth()&&b.date.getFullYear()===m.getFullYear()).length);
+  // 過去月はシードに乏しいので自然な見せ数を補完（デモ用）
+  const base=[14,17,15,19,22,reserved.length];
+  const disp=counts.map((c,i)=>Math.max(c,base[i]||c));
+  const mx=Math.max(...disp,1);
+  $('trendBars').innerHTML=months.map((m,i)=>`
+    <div class="bar-row"><span class="mlabel">${m.getMonth()+1}月</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(disp[i]/mx*100)}"></div></div>
+      <span class="mval">${disp[i]}件</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+
+  // 相談分野ドーナツ
+  const byCat=CATS.map(c=>({n:c.n,color:c.color,v:reserved.filter(b=>b.cat===c.n).length})).filter(x=>x.v>0);
+  const tot=byCat.reduce((s,x)=>s+x.v,0)||1;
+  $('donutTot').textContent=tot;
+  let acc=0;const segs=byCat.map(x=>{const from=acc/tot*360;acc+=x.v;const to=acc/tot*360;return `${x.color} ${from}deg ${to}deg`;});
+  $('donut').style.background=`conic-gradient(${segs.join(',')||'var(--soft) 0deg 360deg'})`;
+  $('legend').innerHTML=byCat.map(x=>`<div class="lg"><span class="sw" style="background:${x.color}"></span><span class="nm">${esc(x.n)}</span><span class="vl">${x.v}件 ・ ${Math.round(x.v/tot*100)}%</span></div>`).join('')
+    || '<div style="color:var(--ink-3)">今月の予約はまだありません</div>';
+
+  // 本日の予約
+  const todays=bookings.filter(b=>b.date.toDateString()===TODAY.toDateString()&&b.status!=='canceled').sort((a,b)=>a.time.localeCompare(b.time));
+  $('todayList').innerHTML=todays.length?todays.map(b=>`<div class="mini">
+    <span class="mt">${esc(b.time)}</span>
+    <div class="mn">${esc(b.name)}<div class="mc">${esc(b.cat)} ・ ${esc(b.staff)}</div></div>
+    <span class="way">${b.wayIcon} ${esc(b.way)}</span>${stBadge(b.status)}</div>`).join('')
+    : '<div style="color:var(--ink-3);padding:14px;text-align:center">本日の予約はありません</div>';
+
+  // アクティビティ
+  const acts=[
+    {i:'⚡',c:'#e6f8f0',t:'AI受付で「残業代の相談」を労働分野に自動分類・仮予約',m:'たった今'},
+    {i:'✅',c:'#e6f8f0',t:'高橋 太郎 様の相続相談が完了（受任手続きへ）',m:'40分前'},
+    {i:'🗓️',c:'#eaf1ff',t:'明日 14:00 の枠を1件追加で開放しました',m:'1時間前'},
+    {i:'✉️',c:'#eaf1ff',t:'佐々木 美咲 様へ前日リマインドを自動送信',m:'今日 9:00'},
+    {i:'⚠️',c:'#fdeaea',t:'渡辺 隆 様の仮予約が未確定のままです',m:'今日 8:30'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?esc(sub)+' ・ ':''}${esc(d)}</div></div>`;}
+
+/* ============ LIST ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['confirmed','予約確定'],['pending','仮予約'],['done','相談済'],['canceled','キャンセル'],['noshow','無断不来']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=bookings.filter(b=>filterStatus==='all'||b.status===filterStatus)
+    .filter(b=>!q||(b.name+b.cat+b.no+b.staff).toLowerCase().includes(q))
+    .sort((a,b)=>b.date-a.date||a.time.localeCompare(b.time));
+  $('listRows').innerHTML=rows.length?rows.map(b=>`<tr>
+    <td class="mono" style="font-size:12px">${esc(b.no)}</td>
+    <td><b>${esc(b.name)}</b><div style="font-size:11px;color:var(--ink-3)">${esc(b.type)}</div></td>
+    <td><span class="tag-cat" style="color:${b.catColor};background:${b.catColor}15">${esc(b.cat)}</span></td>
+    <td style="color:var(--ink-2)">${esc(b.staff)}</td>
+    <td style="color:var(--ink-2)">${fmtD(b.date)}（${WD[b.date.getDay()]}）<b style="color:var(--ink)"> ${esc(b.time)}</b></td>
+    <td><span class="way">${b.wayIcon} ${esc(b.way)}</span></td>
+    <td>${stBadge(b.status)}</td></tr>`).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する予約がありません</td></tr>';
+  $('navPending').textContent=bookings.filter(b=>b.status==='pending').length;
+}
+$('q').addEventListener('input',renderList);
+
+/* ============ SLOTS ============ */
+let slotDay=0; // 0=今日, 1=明日 ...
+const SLOT_TIMES=['10:00','11:00','13:00','14:00','15:00','16:00','17:00'];
+// 各日×各時間のキャパと予約数を擬似生成
+function slotData(dayIdx){
+  const d=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+dayIdx);
+  return SLOT_TIMES.map((t,i)=>{
+    SEED=4127+dayIdx*97+i*13; // 安定した擬似値
+    const cap=2;
+    const booked=Math.floor(rnd()*(cap+1));
+    const closed=rnd()>0.86;
+    return {time:t,cap,booked:closed?0:booked,closed,date:d};
+  });
+}
+let slotState={};
+function renderDayChips(){
+  $('dayChips').innerHTML=[0,1,2,3,4].map(i=>{
+    const d=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+i);
+    const label=i===0?'今日':i===1?'明日':`${d.getMonth()+1}/${d.getDate()}`;
+    return `<button class="chip ${i===slotDay?'on':''}" data-d="${i}">${label}（${WD[d.getDay()]}）</button>`;
+  }).join('');
+  $('dayChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{slotDay=+c.dataset.d;renderDayChips();renderSlots();});
+}
+function renderSlots(){
+  if(!slotState[slotDay])slotState[slotDay]=slotData(slotDay);
+  const slots=slotState[slotDay];
+  const d=slots[0].date;
+  $('slotDayTitle').textContent=`${d.getMonth()+1}/${d.getDate()}（${WD[d.getDay()]}）の枠`;
+  const open=slots.filter(s=>!s.closed);
+  const free=open.reduce((s,x)=>s+(x.cap-x.booked),0);
+  $('slotSummary').textContent=`空き ${free}枠 / 開放 ${open.length}コマ`;
+  $('slotGrid').innerHTML=slots.map((s,i)=>{
+    const pct=s.cap?Math.round(s.booked/s.cap*100):0;
+    return `<div class="slot ${s.closed?'closed':''}" data-i="${i}">
+      <div class="sd">${s.time}〜</div>
+      <div class="st-time">${s.closed?'受付停止':(s.cap-s.booked)+' 枠空き'}</div>
+      <div class="meter"><i style="width:${s.closed?0:pct}%"></i></div>
+      <div class="row"><span>${s.booked}/${s.cap} 予約</span>
+        <button class="toggle">${s.closed?'開放する':'停止する'}</button></div>
+    </div>`;
+  }).join('');
+  $('slotGrid').querySelectorAll('.slot').forEach(el=>{
+    const i=+el.dataset.i;
+    el.querySelector('.toggle').onclick=(e)=>{
+      e.stopPropagation();
+      const s=slotState[slotDay][i];s.closed=!s.closed;if(s.closed)s.booked=0;
+      renderSlots();showToast(`${s.time} の枠を${s.closed?'受付停止':'開放'}しました`);
+    };
+  });
+}
+$('aiOptimize').addEventListener('click',async()=>{
+  const btn=$('aiOptimize');btn.disabled=true;btn.textContent='⚡ 分析中…';
+  await new Promise(r=>setTimeout(r,900));
+  // 予約が集中している時間帯にキャパを足す提案を反映（デモ）
+  if(!slotState[slotDay])slotState[slotDay]=slotData(slotDay);
+  let added=0;
+  slotState[slotDay].forEach(s=>{if(!s.closed&&s.booked>=s.cap){s.cap+=1;added++;}});
+  // 終日停止が多い日は1コマ開放
+  const closedOnes=slotState[slotDay].filter(s=>s.closed);
+  if(closedOnes.length){closedOnes[0].closed=false;closedOnes[0].booked=0;added++;}
+  btn.disabled=false;btn.textContent='⚡ AIで最適な枠配分を提案';
+  renderSlots();
+  showToast(`予約の集中状況からAIが ${added}コマ分の追加開放を提案・反映しました`);
+});
+
+/* ============ CUSTOMERS ============ */
+function renderCust(){
+  $('custRows').innerHTML=CUSTOMERS.map(c=>{
+    const cat=CATS.find(x=>x.n===c.cat);
+    const stMap={'新規':'pending','継続':'confirmed','完了':'done'};
+    return `<tr><td><b>${esc(c.name)}</b></td>
+      <td><span class="tag-cat">${esc(c.type)}</span></td>
+      <td><span class="tag-cat" style="color:${cat?cat.color:'#566072'};background:${cat?cat.color+'15':'var(--soft)'}">${esc(c.cat)}</span></td>
+      <td class="r tnum">${c.count}回</td>
+      <td style="color:var(--ink-2)">${esc(c.last)}</td>
+      <td>${stBadge(stMap[c.status]||'pending')}<span style="display:none">${esc(c.status)}</span></td></tr>`;
+  }).join('');
+}
+
+/* ============ 事前ヒアリング ============ */
+function renderHearingCats(){$('hCat').innerHTML='<option value="">（AIに自動判定させる）</option>'+CATS.map(c=>`<option>${c.n}</option>`).join('');}
+function renderHearingPaper(){
+  const nm=$('hName').value.trim();
+  $('hPvName').textContent=(nm||'　')+' 様';
+  $('hPvType').textContent=$('hType').value;
+  $('hPvTel').textContent=$('hTel').value.trim()||'—';
+  $('hPvCat').textContent=$('hCat').value||'（未選択）';
+  const body=$('hBody').value.trim();
+  $('hPvBody').textContent=body||'—';
+}
+['hName','hTel','hBody'].forEach(id=>$(id).addEventListener('input',renderHearingPaper));
+['hType','hCat'].forEach(id=>$(id).addEventListener('change',renderHearingPaper));
+
+// 相談文 → 分野推定（キーワードマッチ）
+function classify(text){
+  const t=(text||'').toLowerCase();
+  let best=null,bestScore=0;
+  CATS.forEach(c=>{
+    let sc=0;c.kw.forEach(k=>{if(t.includes(k.toLowerCase()))sc++;});
+    if(sc>bestScore){bestScore=sc;best=c;}
+  });
+  return best||CATS[0];
+}
+$('hSample').addEventListener('click',()=>{
+  $('hName').value='山田 太郎';$('hType').value='個人';$('hTel').value='097-555-0123';$('hCat').value='';
+  $('hBody').value='先月退職した会社から、3年分の残業代が支払われていません。タイムカードのコピーは手元にあります。請求できるか相談したいです。';
+  renderHearingPaper();
+});
+$('hAnalyze').addEventListener('click',async()=>{
+  const body=$('hBody').value.trim();
+  if(!$('hName').value.trim()||!body){showToast('氏名と相談内容を入力してください');return;}
+  const btn=$('hAnalyze');btn.textContent='⚡ AIが整理中…';btn.disabled=true;
+  $('hHint').classList.add('show');
+  await new Promise(r=>setTimeout(r,900));
+  const cat=$('hCat').value?CATS.find(c=>c.n===$('hCat').value):classify(body);
+  const now=new Date();
+  $('hNo').textContent='H-'+(2600+Math.floor(rnd()*900));
+  $('hDate').textContent=fmtDL(now);
+  $('hPvStatus').textContent='整理済';
+  $('hPvAI').style.display='block';
+  $('hPvGuess').textContent=cat.n;
+  $('hPvStaff').textContent=cat.staff;
+  $('hPvDur').textContent=cat.dur;
+  $('hPvDocs').innerHTML=cat.docs.map(d=>`<li>📎 ${esc(d)}</li>`).join('');
+  const lis=[...$('hPvDocs').querySelectorAll('li')];
+  lis.forEach((li,i)=>setTimeout(()=>li.classList.add('in'),120*i));
+  btn.textContent='⚡ AIでヒアリングを整理';btn.disabled=false;
+  setTimeout(()=>$('hHint').classList.remove('show'),2200);
+  showToast('ヒアリング内容をAIが整理しました（分野：'+cat.n+'）');
+});
+
+/* ============ AI受付 ============ */
+const SAMPLES=[
+  '先月退職した会社から3年分の残業代が支払われていません。請求できますか。',
+  '父が亡くなり、実家の名義変更（相続登記）をしたいです。何から始めればいいですか。',
+  '夫と離婚を考えています。慰謝料と養育費について相談したいです。',
+  '交差点で追突されてむち打ちになりました。保険会社との示談が不安です。',
+  'カードローンの返済が苦しく、督促状も届いています。債務整理は可能ですか。',
+  '飲食店を開業したいのですが、必要な営業許可と会社設立について教えてください。',
+];
+function renderSampleChips(){
+  $('sampleChips').innerHTML=SAMPLES.map((s,i)=>`<span class="sc" data-i="${i}">${esc(s.slice(0,16))}…</span>`).join('');
+  $('sampleChips').querySelectorAll('.sc').forEach(c=>c.onclick=()=>{$('aiText').value=SAMPLES[+c.dataset.i];});
+}
+function nextSlotLabel(){
+  // 直近で空きのある枠を探す（デモ）
+  for(let d=0;d<5;d++){
+    const slots=slotState[d]||slotData(d);slotState[d]=slots;
+    for(const s of slots){if(!s.closed&&s.booked<s.cap){
+      const dt=s.date;const label=d===0?'本日':d===1?'明日':`${dt.getMonth()+1}/${dt.getDate()}`;
+      return `${label}（${WD[dt.getDay()]}）${s.time}〜`;
+    }}
+  }
+  return '明日（'+WD[(TODAY.getDay()+1)%7]+'）14:00〜';
+}
+let lastAI=null;
+$('aiRun').addEventListener('click',async()=>{
+  const text=$('aiText').value.trim();
+  if(!text){showToast('相談内容を入力してください（サンプルでもOK）');return;}
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 受付中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},110);
+  await new Promise(r=>setTimeout(r,1150));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+
+  const cat=classify(text);
+  const slotLabel=nextSlotLabel();
+  lastAI={cat,slotLabel};
+  $('rCat').innerHTML=`<span style="color:${cat.color}">${esc(cat.n)}</span>`;
+  $('rStaff').textContent=cat.staff;
+  $('rSlot').innerHTML=esc(slotLabel)+' <small>来所</small>';
+  $('rDur').innerHTML=esc(cat.dur);
+  $('rDocs').innerHTML=cat.docs.map(d=>`<li>📎 ${esc(d)}</li>`).join('');
+  $('genResult').classList.add('show');
+  const lis=[...$('rDocs').querySelectorAll('li')];
+  lis.forEach((li,i)=>setTimeout(()=>li.classList.add('in'),140*i));
+  btn.disabled=false;btn.textContent='⚡ AIで受付・自動振り分け';
+  showToast('AIが受付しました（分野：'+cat.n+'）');
+});
+$('aiReset').addEventListener('click',()=>{
+  $('aiText').value='';$('genResult').classList.remove('show');$('aiOrb').textContent='🤖';
+  $('baAfterT').textContent='— ';$('baAfterList').style.opacity='.4';
+});
+$('aiBook').addEventListener('click',()=>{
+  if(!lastAI)return;
+  const no='RSV-'+(202600+bookings.length+1);
+  const d=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+1);
+  bookings.push({
+    no,name:'AI受付の相談者',type:'個人',cat:lastAI.cat.n,catColor:lastAI.cat.color,
+    staff:lastAI.cat.staff,dur:lastAI.cat.dur,date:d,time:'14:00',way:'来所',wayIcon:'🏢',status:'pending'
+  });
+  $('navPending').textContent=bookings.filter(b=>b.status==='pending').length;
+  showToast('仮予約 '+no+' を作成しました（予約一覧に追加）');
+  setTimeout(()=>go('list'),700);
+});
+
+/* ============ INIT ============ */
+renderHearingCats();renderHearingPaper();renderChips();renderDayChips();renderSampleChips();renderDash();
+$('navPending').textContent=bookings.filter(b=>b.status==='pending').length;
+</script>
+</body>
+</html>

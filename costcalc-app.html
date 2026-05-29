@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜原価計算マシン（製品別原価管理システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cf0;--purple-soft:#efeaff;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+.backlink{font-size:12px;color:var(--sb-ink-2);text-decoration:none}
+.backlink:hover{color:#fff}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:88px 1fr 64px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-fill.g{background:linear-gradient(90deg,var(--green),#3dd9a0)}
+.bar-fill.a{background:linear-gradient(90deg,var(--amber),#f0b454)}
+.bar-fill.r{background:linear-gradient(90deg,var(--red),#f07878)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut */
+.donut-wrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.donut{position:relative;width:140px;height:140px;flex-shrink:0}
+.donut svg{transform:rotate(-90deg)}
+.donut .ctr{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.donut .ctr b{font-size:22px;font-weight:900;line-height:1}
+.donut .ctr span{font-size:10.5px;color:var(--ink-3);font-weight:700}
+.legend{flex:1;min-width:160px;display:flex;flex-direction:column;gap:9px}
+.legend .li{display:flex;align-items:center;gap:9px;font-size:12.5px}
+.legend .li .sw{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.legend .li .nm{color:var(--ink-2);font-weight:600}
+.legend .li .vl{margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.good{background:var(--green-soft);color:var(--green)}
+.st.ok{background:var(--brand-soft);color:var(--brand)}
+.st.warn{background:var(--amber-soft);color:var(--amber)}
+.st.bad{background:var(--red-soft);color:var(--red)}
+.tag2{display:inline-flex;align-items:center;font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;background:var(--soft);color:var(--ink-2)}
+
+/* progress mini bar in cell */
+.mini{display:flex;align-items:center;gap:8px}
+.mini .mt{height:7px;width:64px;border-radius:99px;background:var(--soft);overflow:hidden;flex-shrink:0}
+.mini .mf{height:100%;border-radius:99px}
+
+/* create / input form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--brand)}
+.line-head{display:grid;grid-template-columns:1fr 64px 80px 28px;gap:7px;font-size:11px;color:var(--ink-3);font-weight:700;padding:0 2px 6px}
+.line-row{display:grid;grid-template-columns:1fr 64px 80px 28px;gap:7px;margin-bottom:7px;align-items:center}
+.line-row input{padding:8px 9px;font-size:12.5px;border:1px solid var(--line-2);border-radius:8px;font-family:inherit;width:100%}
+.line-row .x{border:1px solid var(--line-2);background:var(--red-soft);color:var(--red);border-radius:7px;cursor:pointer;height:30px}
+.addline{width:100%;margin-top:3px;padding:9px;border:1px dashed var(--line-2);background:transparent;border-radius:8px;color:var(--brand);font-weight:700;font-size:12.5px;cursor:pointer}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* cost breakdown preview card */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:28px 30px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.pv-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
+.pv-title{font-size:21px;font-weight:900;letter-spacing:.18em;color:var(--brand-dk);border-bottom:3px solid var(--brand-dk);padding-bottom:5px}
+.pv-meta{text-align:right;font-size:11.5px;color:var(--ink-2)}
+.pv-meta .no{font-family:'Orbitron';color:var(--ink);font-weight:700}
+.pv-prod{font-size:18px;font-weight:900;border-bottom:1.5px solid #1a2233;display:inline-block;min-width:200px;padding-bottom:5px;margin-bottom:6px}
+.bigcost{background:var(--soft);border-left:5px solid var(--brand-dk);border-radius:6px;padding:13px 18px;margin:16px 0;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.bigcost .bc{text-align:center}
+.bigcost .bc .lab{font-size:10.5px;color:var(--ink-2);font-weight:700}
+.bigcost .bc .num{font-family:'Orbitron';font-size:21px;font-weight:700;color:var(--brand-dk)}
+.bigcost .bc .num.g{color:var(--green)}
+table.pv{width:100%;border-collapse:collapse;margin-bottom:12px}
+table.pv th{background:var(--brand-dk);color:#fff;font-size:11px;padding:8px 11px;text-align:left}
+table.pv th.r,table.pv td.r{text-align:right}
+table.pv td{padding:8px 11px;border-bottom:1px solid var(--line);font-size:12px}
+.pv-sums{margin-left:auto;width:260px}
+.pv-sums .r{display:flex;justify-content:space-between;padding:6px 10px;font-size:12px;color:var(--ink-2)}
+.pv-sums .r.g{background:var(--brand-dk);color:#fff;border-radius:6px;margin-top:5px;padding:9px 10px;font-weight:800}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:grid;grid-template-columns:1fr auto auto auto;align-items:center;gap:11px;padding:10px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+.gen-item .nm{display:flex;align-items:center;gap:9px;font-weight:700}
+.gen-item .ba-comp{font-size:11px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.gen-item .ba-comp s{color:var(--red);opacity:.7}
+.gen-item .ba-comp b{color:var(--green)}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* variance / waterfall */
+.varbar{display:flex;flex-direction:column;gap:14px}
+.var-row{display:grid;grid-template-columns:120px 1fr 96px;align-items:center;gap:12px;font-size:12.5px}
+.var-row .vl{color:var(--ink-2);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.var-track{position:relative;height:26px;background:var(--soft);border-radius:7px;overflow:hidden}
+.var-mid{position:absolute;left:50%;top:0;bottom:0;width:2px;background:var(--line-2)}
+.var-fill{position:absolute;top:4px;bottom:4px;border-radius:5px}
+.var-fill.over{background:linear-gradient(90deg,#f07878,var(--red));left:50%}
+.var-fill.under{background:linear-gradient(90deg,var(--green),#3dd9a0);right:50%}
+.var-row .vn{text-align:right;font-weight:800;font-variant-numeric:tabular-nums}
+.var-row .vn.over{color:var(--red)}.var-row .vn.under{color:var(--green)}
+
+/* materials grid extra */
+.mtag{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--soft);color:var(--ink-2)}
+.trend-up{color:var(--red);font-weight:800}
+.trend-dn{color:var(--green);font-weight:800}
+.trend-flat{color:var(--ink-3);font-weight:700}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.note{font-size:11px;color:var(--ink-3);margin-top:6px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">原価計算マシン<small>技マシン｜製品別原価管理</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="prod"><span class="i">🍱</span>製品別原価</a>
+      <a data-v="mat"><span class="i">🥬</span>材料費</a>
+      <a data-v="labor"><span class="i">👷</span>労務費</a>
+      <a data-v="var"><span class="i">📉</span>差異分析<span class="badge" id="navVar">0</span></a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI自動計算</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。数値・製品はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">2026年5月の原価状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>製品別 原価率ランキング</h3><span class="more">原価率が高い順</span></div>
+            <div class="pb"><div class="bars" id="rateBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>原価の内訳</h3><span class="more">今月</span></div>
+            <div class="pb"><div class="donut-wrap" id="donutWrap"></div></div>
+          </div>
+        </div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>月次の平均原価率 推移</h3><span class="more">過去6ヶ月</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PRODUCT COST -->
+      <section class="view" id="v-prod">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="製品名・カテゴリで検索"></div>
+          <div class="chips" id="catChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>製品名</th><th>カテゴリ</th><th class="r">販売価格</th><th class="r">材料費</th><th class="r">労務費</th><th class="r">製造原価</th><th>原価率</th><th>判定</th></tr></thead>
+          <tbody id="prodRows"></tbody>
+        </table>
+      </section>
+
+      <!-- MATERIALS -->
+      <section class="view" id="v-mat">
+        <div class="kpis" id="matKpis"></div>
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="qMat" placeholder="材料名で検索"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>材料名</th><th>カテゴリ</th><th>仕入先</th><th class="r">単価</th><th>単位</th><th class="r">今月使用量</th><th class="r">材料費</th><th>価格変動</th></tr></thead>
+          <tbody id="matRows"></tbody>
+        </table>
+      </section>
+
+      <!-- LABOR -->
+      <section class="view" id="v-labor">
+        <div class="kpis" id="laborKpis"></div>
+        <div class="create-grid">
+          <div class="formcard">
+            <div style="font-size:14px;font-weight:800;margin-bottom:12px">⚙️ 労務費レートの設定</div>
+            <div class="fg"><label>製品（工程）を選択</label>
+              <select id="lProd"></select></div>
+            <label style="font-size:12px;font-weight:700;color:var(--ink-2)">工程ごとの作業時間と時給</label>
+            <div class="line-head" style="margin-top:7px"><div>工程</div><div>分</div><div>時給</div><div></div></div>
+            <div id="lLines"></div>
+            <button class="addline" id="lAdd">＋ 工程を追加</button>
+            <div class="aihint" id="lAiHint">✨ AIが類似工程の標準時給を提案しました</div>
+            <div class="linkrow" style="margin-top:16px">
+              <button class="btn primary" id="lApply" style="flex:1;justify-content:center">⚡ 労務費を再計算して反映</button>
+            </div>
+            <div class="note">工程の標準時間×時給で1個あたりの労務費を算出します。</div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>工程別 労務費の積み上げ</h3><span class="more" id="lProdName">—</span></div>
+            <div class="pb"><div class="bars" id="laborBars"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VARIANCE -->
+      <section class="view" id="v-var">
+        <div class="kpis" id="varKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>標準原価 vs 実際原価（差異）</h3>
+            <span class="more">プラス=超過（赤）／マイナス=節減（緑）</span></div>
+          <div class="pb"><div class="varbar" id="varBars"></div></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>製品名</th><th class="r">標準原価</th><th class="r">実際原価</th><th class="r">差異額</th><th class="r">差異率</th><th>要因</th><th>判定</th></tr></thead>
+          <tbody id="varRows"></tbody>
+        </table>
+      </section>
+
+      <!-- AI AUTO CALC -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">実績データから製品別の原価を自動計算</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">今月の仕入・製造・勤怠の実績 <b>312件</b> を取り込み、製品ごとの最新原価をAIが自動で計算し直します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで一括再計算する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">3時間20分</div>
+              <ul>
+                <li>📑 仕入伝票と勤怠を1件ずつ集計</li>
+                <li>⌨️ Excelで製品別に原価を手計算</li>
+                <li>🧮 原価率・差異を電卓で照合</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 実績データを自動で取り込み</li>
+                <li>📄 製品別の原価を一括で再計算</li>
+                <li>📉 原価率・差異まで自動で更新</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ 再計算された製品別原価（Before → After）</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const TODAY=new Date();
+const ym=d=>d.getMonth()+1;
+
+/* 材料マスタ：単価・単位・仕入先・価格変動 */
+const MATERIALS=[
+  {n:'大分県産 ほうれん草',cat:'青果',sup:'豊後おおいた青果',unit:'kg',price:480,used:62,trend:8.2},
+  {n:'地鶏もも肉（豊後)',cat:'精肉',sup:'大分ミート',unit:'kg',price:1280,used:38,trend:3.1},
+  {n:'関アジ（鮮魚）',cat:'鮮魚',sup:'大分海鮮市場',unit:'尾',price:620,used:120,trend:-2.4},
+  {n:'国産 コシヒカリ',cat:'穀物',sup:'JAおおいた',unit:'kg',price:540,used:140,trend:1.0},
+  {n:'カットキャベツ',cat:'青果',sup:'豊後おおいた青果',unit:'kg',price:210,used:88,trend:12.5},
+  {n:'豚バラスライス',cat:'精肉',sup:'大分ミート',unit:'kg',price:980,used:46,trend:0},
+  {n:'業務用 サラダ油',cat:'調味',sup:'大分食品商事',unit:'L',price:380,used:55,trend:5.4},
+  {n:'木綿豆腐',cat:'加工',sup:'都町とうふ店',unit:'丁',price:90,used:210,trend:0},
+  {n:'カットねぎ',cat:'青果',sup:'豊後おおいた青果',unit:'kg',price:340,used:30,trend:-1.2},
+  {n:'国産 鶏卵',cat:'加工',sup:'大分たまご',unit:'個',price:28,used:640,trend:6.8},
+  {n:'刺身用 サーモン',cat:'鮮魚',sup:'大分海鮮市場',unit:'kg',price:1750,used:34,trend:4.0},
+  {n:'味噌（合わせ)',cat:'調味',sup:'大分食品商事',unit:'kg',price:420,used:24,trend:0},
+];
+
+/* 製品マスタ：材料費・労務費・販売価格は計算で更新される */
+const PRODUCTS=[
+  {n:'日替わり幕の内弁当',cat:'弁当',price:780,mat:286,labor:120,std:392,act:406},
+  {n:'豊後地鶏の唐揚げ弁当',cat:'弁当',price:880,mat:352,labor:135,std:470,act:487},
+  {n:'関アジ海鮮丼',cat:'丼',price:1080,mat:486,labor:96,std:560,act:582},
+  {n:'季節野菜のサラダボウル',cat:'サラダ',price:680,mat:238,labor:88,std:312,act:326},
+  {n:'豚しょうが焼き定食',cat:'定食',price:920,mat:368,labor:142,std:498,act:510},
+  {n:'サーモンといくらの親子丼',cat:'丼',price:1280,mat:704,labor:108,std:798,act:812},
+  {n:'お惣菜3種盛り',cat:'惣菜',price:480,mat:182,labor:74,std:248,act:256},
+  {n:'温泉卵うどん',cat:'麺',price:580,mat:174,labor:96,std:262,act:270},
+  {n:'豆腐とねぎの味噌汁',cat:'汁物',price:180,mat:54,labor:32,std:84,act:86},
+  {n:'介護施設向け やわらか食セット',cat:'介護食',price:640,mat:262,labor:168,std:418,act:452},
+];
+
+/* 工程別労務費（製品ごと） */
+const PROCESSES={
+  '日替わり幕の内弁当':[{n:'仕込み',min:6,wage:1100},{n:'調理',min:9,wage:1200},{n:'盛付・包装',min:5,wage:1050}],
+  '豊後地鶏の唐揚げ弁当':[{n:'下処理',min:7,wage:1100},{n:'揚げ調理',min:8,wage:1250},{n:'盛付・包装',min:6,wage:1050}],
+  '関アジ海鮮丼':[{n:'魚の下処理',min:5,wage:1300},{n:'盛付',min:4,wage:1100}],
+  '季節野菜のサラダボウル':[{n:'洗浄・カット',min:5,wage:1050},{n:'盛付',min:4,wage:1050}],
+  '豚しょうが焼き定食':[{n:'仕込み',min:6,wage:1100},{n:'調理',min:9,wage:1200},{n:'盛付',min:5,wage:1050}],
+  'サーモンといくらの親子丼':[{n:'魚の下処理',min:6,wage:1300},{n:'盛付',min:4,wage:1100}],
+  'お惣菜3種盛り':[{n:'調理',min:5,wage:1100},{n:'盛付',min:3,wage:1050}],
+  '温泉卵うどん':[{n:'茹で調理',min:6,wage:1100},{n:'盛付',min:3,wage:1050}],
+  '豆腐とねぎの味噌汁':[{n:'調理',min:3,wage:1050}],
+  '介護施設向け やわらか食セット':[{n:'仕込み',min:8,wage:1150},{n:'ミキサー加工',min:10,wage:1250},{n:'盛付・形成',min:7,wage:1100}],
+};
+
+let SEED=4242;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+const pct=n=>n.toFixed(1)+'%';
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function rate(p){return p.price>0?(p.act/p.price*100):0;}            // 原価率
+function margin(p){return p.price>0?((p.price-p.act)/p.price*100):0;} // 粗利率
+function varAmt(p){return p.act-p.std;}                              // 差異額
+function rateClass(r){return r>=65?'bad':r>=55?'warn':'good';}
+function rateLabel(r){return r>=65?'要改善':r>=55?'やや高':'良好';}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function avgRate(){return PRODUCTS.reduce((s,p)=>s+rate(p),0)/PRODUCTS.length;}
+function avgMargin(){return PRODUCTS.reduce((s,p)=>s+margin(p),0)/PRODUCTS.length;}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','2026年'+ym(TODAY)+'月の原価状況'],
+  prod:['製品別原価','製品ごとの原価・原価率を管理します'],
+  mat:['材料費','材料の単価・使用量・価格変動を管理します'],
+  labor:['労務費','工程ごとの作業時間と時給から労務費を算出します'],
+  var:['差異分析','標準原価と実際原価の差を見える化します'],
+  ai:['AI自動計算','実績データから製品別の原価を自動計算します']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='dash'?'<button class="btn" onclick="go(\'var\')">📉 差異分析</button><button class="btn primary" onclick="go(\'ai\')">⚡ AI自動計算</button>'
+    : (v==='prod'||v==='var')?'<button class="btn primary" onclick="go(\'ai\')">⚡ AIで再計算</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='prod')renderProd();
+  if(v==='mat')renderMat();
+  if(v==='labor')renderLabor();
+  if(v==='var')renderVar();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const aR=avgRate(),aM=avgMargin();
+  const totVar=PRODUCTS.reduce((s,p)=>s+Math.abs(varAmt(p)),0);
+  const need=PRODUCTS.filter(p=>rate(p)>=65).length;
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','平均原価率',pct(aR),'10製品平均',aR<60?'up':'warn',aR<60?'良好水準':'目標60%')}
+    ${kpi('#16b877','平均粗利率',pct(aM),'',aM>=40?'up':'warn','前月比 +1.8pt')}
+    ${kpi('#e3941f','標準差異 合計',yen(totVar),'実績−標準','warn','要因を確認')}
+    ${kpi('#e24a4a','要改善 製品',need+'件',' ',need?'down':'up',need?'原価率65%超':'なし')}`;
+  // 製品別原価率ランキング（高い順 上位7）
+  const sorted=[...PRODUCTS].sort((a,b)=>rate(b)-rate(a)).slice(0,7);
+  $('rateBars').innerHTML=sorted.map(p=>{const r=rate(p);const cl=r>=65?'r':r>=55?'a':'g';
+    return `<div class="bar-row"><span class="mlabel">${esc(p.n)}</span>
+      <div class="bar-track"><div class="bar-fill ${cl}" style="width:0" data-w="${Math.round(r)}"></div></div>
+      <span class="mval">${pct(r)}</span></div>`;}).join('');
+  setTimeout(()=>document.querySelectorAll('#rateBars .bar-fill').forEach(b=>b.style.width=Math.min(100,+b.dataset.w)+'%'),60);
+  // 原価の内訳ドーナツ（材料費／労務費／製造間接費）
+  const matT=PRODUCTS.reduce((s,p)=>s+p.mat,0);
+  const labT=PRODUCTS.reduce((s,p)=>s+p.labor,0);
+  const ohT=PRODUCTS.reduce((s,p)=>s+Math.max(0,p.act-p.mat-p.labor),0);
+  renderDonut([
+    {nm:'材料費',v:matT,c:'#2f6df0'},
+    {nm:'労務費',v:labT,c:'#16b877'},
+    {nm:'製造間接費',v:ohT,c:'#e3941f'},
+  ]);
+  // 月次の平均原価率推移（決定的なダミー）
+  const base=[61.4,60.8,60.1,59.6,58.9,Math.round(aR*10)/10];
+  const months=[];for(let k=5;k>=0;k--){const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1);months.push(d.getMonth()+1+'月');}
+  $('trendBars').innerHTML=months.map((m,i)=>`
+    <div class="bar-row"><span class="mlabel">${m}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(base[i])}"></div></div>
+      <span class="mval">${base[i].toFixed(1)}%</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=+b.dataset.w+'%'),60);
+  // activity
+  const acts=[
+    {i:'⚡',c:'#e6f8f0',t:'AI自動計算で 10製品の原価を再計算（充足率100%）',m:'たった今'},
+    {i:'🥬',c:'#fdf3e2',t:'カットキャベツ の仕入単価が +12.5% 上昇',m:'30分前'},
+    {i:'📉',c:'#fdeaea',t:'介護食セット の差異が標準を ¥34 超過',m:'1時間前'},
+    {i:'👷',c:'#e6f8f0',t:'唐揚げ弁当 の揚げ工程の標準時間を更新',m:'今日 9:20'},
+    {i:'✅',c:'#eaf1ff',t:'関アジ海鮮丼 の原価率が目標内に改善',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+function renderDonut(data){
+  const tot=data.reduce((s,d)=>s+d.v,0)||1;
+  const R=58,C=2*Math.PI*R;let off=0;
+  const segs=data.map(d=>{const len=d.v/tot*C;const s=`<circle r="${R}" cx="70" cy="70" fill="none" stroke="${d.c}" stroke-width="22" stroke-dasharray="${len} ${C-len}" stroke-dashoffset="${-off}"/>`;off+=len;return s;}).join('');
+  $('donutWrap').innerHTML=`
+    <div class="donut"><svg width="140" height="140">${segs}</svg>
+      <div class="ctr"><b>${yen(tot)}</b><span>原価合計/個</span></div></div>
+    <div class="legend">${data.map(d=>`<div class="li"><span class="sw" style="background:${d.c}"></span><span class="nm">${d.nm}</span><span class="vl">${Math.round(d.v/tot*100)}%</span></div>`).join('')}</div>`;
+}
+
+/* ============ PRODUCT COST ============ */
+let catFilter='all';
+function renderCatChips(){
+  const cats=['all',...new Set(PRODUCTS.map(p=>p.cat))];
+  const labels={all:'すべて'};
+  $('catChips').innerHTML=cats.map(c=>`<button class="chip ${c===catFilter?'on':''}" data-c="${esc(c)}">${esc(labels[c]||c)}</button>`).join('');
+  $('catChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{catFilter=c.dataset.c;renderCatChips();renderProd();});
+}
+function renderProd(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=PRODUCTS.filter(p=>catFilter==='all'||p.cat===catFilter)
+    .filter(p=>!q||(p.n+p.cat).toLowerCase().includes(q))
+    .sort((a,b)=>rate(b)-rate(a));
+  $('prodRows').innerHTML=rows.length?rows.map(p=>{
+    const r=rate(p),cl=rateClass(r),fill=r>=65?'var(--red)':r>=55?'var(--amber)':'var(--green)';
+    return `<tr>
+      <td><b>${esc(p.n)}</b></td><td><span class="tag2">${esc(p.cat)}</span></td>
+      <td class="r tnum">${yen(p.price)}</td><td class="r tnum" style="color:var(--ink-2)">${yen(p.mat)}</td>
+      <td class="r tnum" style="color:var(--ink-2)">${yen(p.labor)}</td><td class="r tnum"><b>${yen(p.act)}</b></td>
+      <td><div class="mini"><div class="mt"><div class="mf" style="width:${Math.min(100,r)}%;background:${fill}"></div></div><b class="tnum">${pct(r)}</b></div></td>
+      <td><span class="st ${cl}">${rateLabel(r)}</span></td></tr>`;}).join('')
+    :'<tr><td colspan="8" class="empty-cell">該当する製品がありません</td></tr>';
+}
+$('q').addEventListener('input',renderProd);
+
+/* ============ MATERIALS ============ */
+function renderMat(){
+  const totMat=MATERIALS.reduce((s,m)=>s+m.price*m.used,0);
+  const rising=MATERIALS.filter(m=>m.trend>0).length;
+  const top=[...MATERIALS].sort((a,b)=>b.price*b.used-a.price*a.used)[0];
+  $('matKpis').innerHTML=`
+    ${kpi('#2f6df0','今月の材料費 合計',yen(totMat),MATERIALS.length+'品目','warn','前月比 +4.2%')}
+    ${kpi('#e24a4a','値上がり中',rising+'品目','要価格交渉','down','仕入単価↑')}
+    ${kpi('#16b877','最大コスト材料',esc(top.n).length>9?esc(top.n).slice(0,9)+'…':esc(top.n),yen(top.price*top.used),'up','使用量大')}
+    ${kpi('#e3941f','平均単価変動','+'+(MATERIALS.reduce((s,m)=>s+m.trend,0)/MATERIALS.length).toFixed(1)+'<small>%</small>','3ヶ月','warn','上昇傾向')}`;
+  renderMatRows();
+}
+function renderMatRows(){
+  const q=($('qMat').value||'').toLowerCase();
+  const rows=MATERIALS.filter(m=>!q||m.n.toLowerCase().includes(q));
+  $('matRows').innerHTML=rows.length?rows.map(m=>{
+    const t=m.trend, cls=t>0?'trend-up':t<0?'trend-dn':'trend-flat', sign=t>0?'▲ +':t<0?'▼ ':'― ';
+    return `<tr>
+      <td><b>${esc(m.n)}</b></td><td><span class="mtag">${esc(m.cat)}</span></td><td style="color:var(--ink-2)">${esc(m.sup)}</td>
+      <td class="r tnum">${yen(m.price)}</td><td style="color:var(--ink-3)">/${esc(m.unit)}</td>
+      <td class="r tnum" style="color:var(--ink-2)">${m.used}${esc(m.unit)}</td>
+      <td class="r tnum"><b>${yen(m.price*m.used)}</b></td>
+      <td class="${cls}">${sign}${Math.abs(t).toFixed(1)}%</td></tr>`;}).join('')
+    :'<tr><td colspan="8" class="empty-cell">該当する材料がありません</td></tr>';
+}
+$('qMat').addEventListener('input',renderMatRows);
+
+/* ============ LABOR ============ */
+let curLaborProd=PRODUCTS[0].n;
+let lLines=[];
+function renderLaborSelect(){$('lProd').innerHTML=PRODUCTS.map(p=>`<option>${esc(p.n)}</option>`).join('');$('lProd').value=curLaborProd;}
+function loadLaborLines(){lLines=(PROCESSES[curLaborProd]||[]).map(p=>({n:p.n,min:p.min,wage:p.wage}));}
+function renderLaborKpis(){
+  const totLabor=PRODUCTS.reduce((s,p)=>s+p.labor,0);
+  const totMin=Object.values(PROCESSES).flat().reduce((s,p)=>s+p.min,0);
+  const avgWage=Math.round(Object.values(PROCESSES).flat().reduce((s,p)=>s+p.wage,0)/Object.values(PROCESSES).flat().length);
+  const maxP=[...PRODUCTS].sort((a,b)=>b.labor-a.labor)[0];
+  $('laborKpis').innerHTML=`
+    ${kpi('#16b877','労務費 合計/個',yen(totLabor),'10製品','up','標準時間ベース')}
+    ${kpi('#2f6df0','平均時給',yen(avgWage),'','up','適正水準')}
+    ${kpi('#e3941f','最も人手の製品',esc(maxP.n).length>9?esc(maxP.n).slice(0,9)+'…':esc(maxP.n),yen(maxP.labor)+'/個','warn','工程多')}
+    ${kpi('#7c5cf0','総標準作業時間',totMin+'<small>分</small>','全工程合計','up','自動集計')}`;
+}
+function renderLaborLines(){
+  $('lLines').innerHTML=lLines.map((l,i)=>`<div class="line-row" data-i="${i}">
+    <input class="ln" placeholder="工程名" value="${esc(l.n)}">
+    <input class="lm" type="number" min="0" value="${l.min}">
+    <input class="lw" type="number" min="0" value="${l.wage}">
+    <button class="x">✕</button></div>`).join('');
+  $('lLines').querySelectorAll('.line-row').forEach(row=>{
+    const i=+row.dataset.i;
+    const ln=row.querySelector('.ln'),lm=row.querySelector('.lm'),lw=row.querySelector('.lw');
+    ln.oninput=()=>{lLines[i].n=ln.value;if(ln.value&&!lLines[i].wage){lLines[i].wage=1100;lw.value=1100;$('lAiHint').classList.add('show');setTimeout(()=>$('lAiHint').classList.remove('show'),2000);}renderLaborBars();};
+    lm.oninput=()=>{lLines[i].min=+lm.value||0;renderLaborBars();};
+    lw.oninput=()=>{lLines[i].wage=+lw.value||0;renderLaborBars();};
+    row.querySelector('.x').onclick=()=>{lLines.splice(i,1);if(!lLines.length)lLines.push({n:'',min:0,wage:1100});renderLaborLines();renderLaborBars();};
+  });
+}
+function renderLaborBars(){
+  $('lProdName').textContent=curLaborProd;
+  const costs=lLines.map(l=>({n:l.n||'（工程）',c:Math.round((+l.min||0)/60*(+l.wage||0))}));
+  const mx=Math.max(...costs.map(c=>c.c),1);
+  const total=costs.reduce((s,c)=>s+c.c,0);
+  $('laborBars').innerHTML=costs.map(c=>`
+    <div class="bar-row"><span class="mlabel">${esc(c.n)}</span>
+      <div class="bar-track"><div class="bar-fill g" style="width:0" data-w="${Math.round(c.c/mx*100)}"></div></div>
+      <span class="mval">${yen(c.c)}</span></div>`).join('')
+    +`<div class="bar-row" style="border-top:1px solid var(--line);padding-top:10px;margin-top:4px"><span class="mlabel" style="font-weight:800;color:var(--ink)">合計（1個あたり）</span><div></div><span class="mval" style="color:var(--green);font-size:14px">${yen(total)}</span></div>`;
+  setTimeout(()=>document.querySelectorAll('#laborBars .bar-fill').forEach(b=>b.style.width=+b.dataset.w+'%'),60);
+}
+function renderLabor(){renderLaborKpis();renderLaborSelect();loadLaborLines();renderLaborLines();renderLaborBars();}
+$('lProd').addEventListener('change',()=>{curLaborProd=$('lProd').value;loadLaborLines();renderLaborLines();renderLaborBars();});
+$('lAdd').addEventListener('click',()=>{lLines.push({n:'',min:0,wage:1100});renderLaborLines();renderLaborBars();});
+$('lApply').addEventListener('click',()=>{
+  const total=lLines.reduce((s,l)=>s+Math.round((+l.min||0)/60*(+l.wage||0)),0);
+  const p=PRODUCTS.find(x=>x.n===curLaborProd);
+  if(p){const diff=total-p.labor;p.labor=total;p.act=Math.max(p.mat+p.labor, p.act+diff);}
+  PROCESSES[curLaborProd]=lLines.map(l=>({n:l.n,min:+l.min||0,wage:+l.wage||0}));
+  renderLaborKpis();showToast(curLaborProd+' の労務費を '+yen(total)+'/個 に更新しました');
+});
+
+/* ============ VARIANCE ============ */
+const VAR_CAUSE={
+  '日替わり幕の内弁当':'材料ロス',
+  '豊後地鶏の唐揚げ弁当':'鶏肉値上がり',
+  '関アジ海鮮丼':'歩留まり低下',
+  '季節野菜のサラダボウル':'野菜高騰',
+  '豚しょうが焼き定食':'標準内',
+  'サーモンといくらの親子丼':'仕入単価増',
+  'お惣菜3種盛り':'標準内',
+  '温泉卵うどん':'卵値上がり',
+  '豆腐とねぎの味噌汁':'標準内',
+  '介護施設向け やわらか食セット':'加工工数増',
+};
+function renderVar(){
+  const overs=PRODUCTS.filter(p=>varAmt(p)>0);
+  const totOver=overs.reduce((s,p)=>s+varAmt(p),0);
+  const worst=[...PRODUCTS].sort((a,b)=>varAmt(b)-varAmt(a))[0];
+  const within=PRODUCTS.filter(p=>Math.abs(varAmt(p)/p.std*100)<=2).length;
+  $('varKpis').innerHTML=`
+    ${kpi('#e24a4a','不利差異 合計',yen(totOver),overs.length+'製品で超過','down','要因分析')}
+    ${kpi('#e3941f','最大差異 製品',esc(worst.n).length>8?esc(worst.n).slice(0,8)+'…':esc(worst.n),'+'+yen(varAmt(worst)),'warn',esc(VAR_CAUSE[worst.n]||''))}
+    ${kpi('#16b877','標準内 製品',within+'件','差異±2%以内','up','管理良好')}
+    ${kpi('#2f6df0','平均差異率','+'+(PRODUCTS.reduce((s,p)=>s+varAmt(p)/p.std*100,0)/PRODUCTS.length).toFixed(1)+'<small>%</small>','','warn','許容範囲')}`;
+  // variance bars (中央線 基準)
+  const mx=Math.max(...PRODUCTS.map(p=>Math.abs(varAmt(p))),1);
+  $('varBars').innerHTML=[...PRODUCTS].sort((a,b)=>varAmt(b)-varAmt(a)).map(p=>{
+    const v=varAmt(p);const w=Math.abs(v)/mx*48; // 最大48%幅（半分基準）
+    const cls=v>=0?'over':'under';const sign=v>=0?'+':'';
+    return `<div class="var-row"><span class="vl">${esc(p.n)}</span>
+      <div class="var-track"><div class="var-mid"></div><div class="var-fill ${cls}" style="width:${w}%"></div></div>
+      <span class="vn ${cls}">${sign}${yen(v)}</span></div>`;}).join('');
+  // table
+  $('varRows').innerHTML=[...PRODUCTS].sort((a,b)=>varAmt(b)-varAmt(a)).map(p=>{
+    const v=varAmt(p);const vr=v/p.std*100;const ok=Math.abs(vr)<=2;
+    return `<tr>
+      <td><b>${esc(p.n)}</b></td><td class="r tnum" style="color:var(--ink-2)">${yen(p.std)}</td>
+      <td class="r tnum"><b>${yen(p.act)}</b></td>
+      <td class="r tnum ${v>0?'trend-up':'trend-dn'}">${v>0?'+':''}${yen(v)}</td>
+      <td class="r tnum ${v>0?'trend-up':'trend-dn'}">${vr>0?'+':''}${vr.toFixed(1)}%</td>
+      <td><span class="tag2">${esc(VAR_CAUSE[p.n]||'—')}</span></td>
+      <td><span class="st ${ok?'good':v>0?'bad':'ok'}">${ok?'標準内':v>0?'不利差異':'有利差異'}</span></td></tr>`;}).join('');
+  $('navVar').textContent=overs.filter(p=>varAmt(p)/p.std*100>2).length;
+}
+
+/* ============ AI AUTO CALC ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 計算中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,7);},120);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);$('baAfterT').textContent='7秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // Before/After: 実績取り込みで原価を再計算（材料費・労務費を ±数% 補正）
+  const results=PRODUCTS.map(p=>{
+    const beforeAct=p.act, beforeRate=rate(p);
+    const matAdj=Math.round(p.mat*(0.97+rnd()*0.08));   // 仕入実績反映
+    const labAdj=Math.round(p.labor*(0.96+rnd()*0.07)); // 勤怠実績反映
+    const oh=Math.max(0,p.act-p.mat-p.labor);
+    p.mat=matAdj;p.labor=labAdj;p.act=matAdj+labAdj+oh;
+    return {n:p.n,cat:p.cat,bA:beforeAct,aA:p.act,bR:beforeRate,aR:rate(p)};
+  });
+  $('genItems').innerHTML=results.map((r,i)=>`
+    <div class="gen-item" data-i="${i}">
+      <span class="nm"><span class="ck">✓</span>${esc(r.n)} <span class="tag2">${esc(r.cat)}</span></span>
+      <span class="ba-comp">原価 <s>${yen(r.bA)}</s> → <b>${yen(r.aA)}</b></span>
+      <span class="ba-comp">原価率 <s>${r.bR.toFixed(1)}%</s> → <b>${r.aR.toFixed(1)}%</b></span>
+      <span class="tnum" style="font-weight:800;color:${r.aA<=r.bA?'var(--green)':'var(--red)'}">${r.aA<=r.bA?'▼':'▲'}${yen(Math.abs(r.aA-r.bA))}</span>
+    </div>`).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,150));items[i].classList.add('in');}
+  btn.disabled=false;btn.textContent='⚡ もう一度再計算';
+  $('aiSub').innerHTML='実績を反映し、平均原価率は <b>'+avgRate().toFixed(1)+'%</b> に更新されました。各画面に自動で反映済みです。';
+  showToast(results.length+'製品の原価を自動で再計算しました');
+});
+
+/* ============ INIT ============ */
+renderCatChips();renderDash();
+$('navVar').textContent=PRODUCTS.filter(p=>varAmt(p)/p.std*100>2).length;
+</script>
+</body>
+</html>

@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜栄養管理マシン（施設栄養管理システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#16a36b;--brand-dk:#0e8456;--brand-soft:#e6f7ef;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cf0;--purple-soft:#efebfe;
+  --sb:#0f2017;--sb-2:#13301f;--sb-ink:#c4dcce;--sb-ink-2:#7da68c;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(22,163,107,.4)}
+.nav a .badge{margin-left:auto;background:var(--amber);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:64px 1fr 86px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* nutrient ring */
+.rings{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+@media(max-width:520px){.rings{grid-template-columns:repeat(2,1fr)}}
+.ring{display:flex;flex-direction:column;align-items:center;gap:7px;padding:8px}
+.ring svg{transform:rotate(-90deg)}
+.ring .rt{font-size:12px;font-weight:700;color:var(--ink-2)}
+.ring .rc{position:relative;width:84px;height:84px}
+.ring .rc .rv{position:absolute;inset:0;display:grid;place-items:center;font-size:16px;font-weight:900;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl th.c,table.tbl td.c{text-align:center}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.ok{background:var(--green-soft);color:var(--green)}
+.st.regular{background:var(--brand-soft);color:var(--brand)}
+.st.low{background:var(--amber-soft);color:var(--amber)}
+.st.alert{background:var(--red-soft);color:var(--red)}
+.st.soft{background:var(--soft);color:var(--ink-3)}
+.tag-pill{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--soft);color:var(--ink-2);margin:1px}
+.tag-pill.al{background:var(--red-soft);color:var(--red)}
+.tag-pill.di{background:var(--purple-soft);color:var(--purple)}
+
+/* form / create */
+.create-grid{display:grid;grid-template-columns:minmax(320px,400px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.fg .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.checks{display:flex;flex-wrap:wrap;gap:7px}
+.checks label{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--ink-2);background:var(--soft);border:1px solid var(--line-2);padding:7px 11px;border-radius:8px;cursor:pointer;margin:0}
+.checks input{width:auto}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* nutrition calc */
+.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:980px){.calc-grid{grid-template-columns:1fr}}
+.nutri-bar{display:grid;grid-template-columns:90px 1fr 120px;align-items:center;gap:11px;font-size:12.5px;margin-bottom:12px}
+.nutri-bar .nl{color:var(--ink-2);font-weight:700}
+.nutri-track{height:14px;border-radius:99px;background:var(--soft);overflow:hidden;position:relative}
+.nutri-track .target{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink-3);opacity:.5}
+.nutri-fill{height:100%;border-radius:99px;width:0;transition:width .9s cubic-bezier(.2,.8,.3,1)}
+.nutri-bar .nv{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;font-size:12px;color:var(--ink-2)}
+.nutri-bar .nv b{color:var(--ink)}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:22px;height:22px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+.gen-item .mn{flex:1;min-width:0}
+.gen-item .mn b{display:block;font-size:13px}
+.gen-item .mn span{font-size:11px;color:var(--ink-3)}
+.gen-item .kc{font-family:'Orbitron';font-weight:700;color:var(--brand-dk);font-size:13px}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* menu detail / paper */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:26px 28px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.menu-day{font-size:18px;font-weight:900;letter-spacing:.04em;color:var(--brand-dk);border-bottom:2px solid var(--brand-dk);padding-bottom:6px;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.meal-block{margin-bottom:14px}
+.meal-block .mh{font-size:13px;font-weight:800;color:var(--ink);margin-bottom:6px;display:flex;align-items:center;gap:7px}
+.meal-block .mh .mi{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;font-size:13px;background:var(--brand-soft)}
+.meal-block ul{list-style:none;font-size:12.5px;color:var(--ink-2);padding-left:31px}
+.meal-block li{padding:2px 0}
+.summary-box{background:var(--soft);border-left:5px solid var(--brand-dk);border-radius:6px;padding:13px 16px;margin-top:16px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.summary-box .sb-i{font-size:11.5px;color:var(--ink-2)}
+.summary-box .sb-i b{display:block;font-size:17px;font-family:'Orbitron';color:var(--brand-dk)}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.mini{font-size:11px;color:var(--ink-3)}
+.avatar{width:30px;height:30px;border-radius:50%;background:var(--brand-soft);color:var(--brand-dk);display:inline-grid;place-items:center;font-weight:800;font-size:12px;margin-right:8px;vertical-align:middle}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">栄養管理マシン<small>技マシン｜施設栄養管理</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="residents"><span class="i">👥</span>入居者一覧</a>
+      <a data-v="menu"><span class="i">🍽️</span>献立</a>
+      <a data-v="calc"><span class="i">🧮</span>栄養計算</a>
+      <a data-v="allergy"><span class="i">⚠️</span>アレルギー<span class="badge" id="navAllergy">0</span></a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI献立</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>つくし介護センター</b><span>デモ環境 / 栄養士</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。入居者・数値はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">今日の栄養管理状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>今週の栄養充足率</h3><span class="more">過去7日</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>本日の栄養バランス（施設平均）</h3></div>
+            <div class="pb"><div class="rings" id="ringWrap"></div></div>
+          </div>
+        </div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>残食率の推移（食事の食べ残し）</h3><span class="more">過去7日</span></div>
+            <div class="pb"><div class="bars" id="leftBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RESIDENTS -->
+      <section class="view" id="v-residents">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="rq" placeholder="入居者名・部屋番号・担当で検索"></div>
+          <div class="chips" id="dietChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>入居者</th><th>部屋</th><th class="c">年齢</th><th>食形態</th><th>配慮事項</th><th class="r">必要エネルギー</th><th class="c">充足</th></tr></thead>
+          <tbody id="resRows"></tbody>
+        </table>
+      </section>
+
+      <!-- MENU -->
+      <section class="view" id="v-menu">
+        <div class="toolbar">
+          <div class="chips" id="dayChips"></div>
+          <div style="margin-left:auto"></div>
+          <button class="btn" onclick="go('calc')">🧮 この献立を栄養計算</button>
+          <button class="btn primary" onclick="go('ai')">⚡ AIで献立を作る</button>
+        </div>
+        <div class="create-grid">
+          <table class="tbl" style="align-self:start">
+            <thead><tr><th>区分</th><th>料理名</th><th class="r">エネルギー</th><th class="c">配慮</th></tr></thead>
+            <tbody id="menuRows"></tbody>
+          </table>
+          <div class="paper" id="menuPaper"></div>
+        </div>
+      </section>
+
+      <!-- CALC -->
+      <section class="view" id="v-calc">
+        <div class="calc-grid">
+          <div class="formcard">
+            <div class="fg"><label>対象の入居者</label><select id="calcRes"></select></div>
+            <div class="fg"><label>対象の献立（日）</label><select id="calcDay"></select></div>
+            <div class="fg row2">
+              <div><label>食事区分</label>
+                <select id="calcMeal"><option value="all">1日合計（朝・昼・夕）</option><option value="朝食">朝食</option><option value="昼食">昼食</option><option value="夕食">夕食</option></select></div>
+              <div><label>塩分制限</label>
+                <select id="calcSalt"><option value="">制限なし</option><option value="6">6g未満/日</option><option value="7.5">7.5g未満/日</option></select></div>
+            </div>
+            <button class="btn primary" id="calcRun" style="width:100%;justify-content:center;margin-top:4px">🧮 栄養価を計算する</button>
+            <div class="aihint" id="calcHint">✨ 日本人の食事摂取基準（2025年版）の目標値と自動で照合しました</div>
+            <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line)">
+              <div style="font-size:12px;font-weight:800;margin-bottom:8px">判定サマリー</div>
+              <div id="calcVerdict" class="mini">入居者と献立を選んで「計算する」を押してください。</div>
+            </div>
+          </div>
+          <div class="panel" style="margin:0">
+            <div class="ph"><h3 id="calcTitle">栄養価の充足状況</h3></div>
+            <div class="pb" id="calcBars"><div class="empty-cell">計算結果がここに表示されます</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ALLERGY -->
+      <section class="view" id="v-allergy">
+        <div class="kpis" id="allergyKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>配慮が必要な入居者と食材チェック</h3>
+            <button class="btn green" id="crossCheck" style="margin-left:auto">🔗 本日の献立とアレルゲンを自動照合</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>入居者</th><th>部屋</th><th>アレルゲン</th><th>禁止食材・配慮</th><th class="c">本日の献立</th></tr></thead>
+              <tbody id="allergyRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI MENU -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div style="min-width:0"><div style="font-size:16px;font-weight:900">条件から栄養バランス献立を自動作成</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">入居者 <b>32名</b> の食形態・アレルギー・必要栄養量をふまえ、AIが1週間分の献立を自動で作成します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで献立を作成する</button>
+          </div>
+          <div class="formcard" style="margin:14px 0;padding:14px 16px;box-shadow:none">
+            <div style="font-size:12px;font-weight:800;margin-bottom:10px">作成条件（AIが考慮します）</div>
+            <div class="checks">
+              <label><input type="checkbox" checked> 塩分control（高血圧の方向け）</label>
+              <label><input type="checkbox" checked> 嚥下に配慮（きざみ・ミキサー食）</label>
+              <label><input type="checkbox" checked> アレルゲン除去（卵・乳・小麦）</label>
+              <label><input type="checkbox" checked> たんぱく質を確保（低栄養予防）</label>
+              <label><input type="checkbox"> 季節の旬食材を優先</label>
+              <label><input type="checkbox"> 食材原価を抑える</label>
+            </div>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">4時間30分</div>
+              <ul>
+                <li>📖 食品成分表とにらめっこで栄養計算</li>
+                <li>⌨️ 入居者ごとの制限を手作業で確認</li>
+                <li>📝 1週間分の献立を一から組み立て</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 全入居者の必要栄養量を自動計算</li>
+                <li>🍽️ 制限・アレルギーを満たす献立を生成</li>
+                <li>✅ 栄養充足チェックまで自動</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ AIが作成した1週間の献立（昼食・施設標準食）</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const DIETS=['常食','軟菜食','きざみ食','ミキサー食','糖尿食','減塩食'];
+// residents
+const FIRST=['花子','一郎','スミ','正夫','とみ','健治','ハル','茂','キヨ','勝男','フミ','幸雄','マサ','清','テル','武','ヨシ','昭','ナミ','豊'];
+const LAST=['佐藤','鈴木','高橋','田中','渡辺','伊藤','中村','小林','加藤','吉田','山本','松本','井上','木村','林'];
+const STAFFS=['栄養士 緒方','栄養士 河野','介護 後藤','介護 衛藤'];
+let SEED=4071;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+// allergen master
+const ALLERGENS=['卵','乳','小麦','そば','落花生','えび','かに'];
+const CONSIDER=['とろみ付け','水分制限','刻み対応','ペースト','禁エビ','禁卵','禁乳','禁小麦','禁青魚'];
+
+let residents=[];
+(function seedRes(){
+  for(let i=0;i<32;i++){
+    const name=pick(LAST)+' '+pick(FIRST);
+    const age=72+Math.floor(rnd()*24);
+    const diet=pick(DIETS);
+    const need=1300+Math.floor(rnd()*500); // kcal
+    const fulfil=78+Math.floor(rnd()*26); // %
+    // allergies
+    const al=[];const nAl=rnd()>0.72?(1+Math.floor(rnd()*2)):0;
+    for(let k=0;k<nAl;k++){const a=pick(ALLERGENS);if(!al.includes(a))al.push(a);}
+    const con=[];if(diet==='きざみ食'||diet==='ミキサー食')con.push('とろみ付け');
+    if(rnd()>0.8)con.push(pick(CONSIDER));
+    const floor=Math.floor(i/8)+1;const room=floor+'0'+(1+(i%8));
+    residents.push({id:i+1,name,age,room,diet,need,fulfil:Math.min(fulfil,108),allergens:al,consider:[...new Set(con)],staff:pick(STAFFS)});
+  }
+})();
+
+// menu: 7 days, each with breakfast/lunch/dinner dishes carrying kcal + nutrients + allergens
+const DISHES={
+  '朝食':[
+    [{n:'ごはん（軟飯）',kc:250,p:4,salt:0,al:[]},{n:'味噌汁（豆腐・わかめ）',kc:45,p:4,salt:1.4,al:[]},{n:'焼き鮭',kc:130,p:18,salt:0.8,al:[]},{n:'ほうれん草のお浸し',kc:25,p:2,salt:0.6,al:[]},{n:'牛乳',kc:120,p:6,salt:0.2,al:['乳']}],
+    [{n:'パン粥',kc:210,p:6,salt:0.9,al:['小麦','乳']},{n:'スクランブルエッグ',kc:140,p:11,salt:0.7,al:['卵']},{n:'温野菜サラダ',kc:40,p:2,salt:0.4,al:[]},{n:'ヨーグルト',kc:80,p:4,salt:0.1,al:['乳']}],
+  ],
+  '昼食':[
+    [{n:'ごはん',kc:270,p:4,salt:0,al:[]},{n:'肉じゃが',kc:230,p:14,salt:1.6,al:[]},{n:'小松菜の煮浸し',kc:30,p:2,salt:0.7,al:[]},{n:'すまし汁',kc:20,p:1,salt:1.2,al:[]}],
+    [{n:'親子丼（やわらか）',kc:480,p:24,salt:2.1,al:['卵']},{n:'胡麻和え',kc:45,p:3,salt:0.6,al:[]},{n:'みかんゼリー',kc:70,p:1,salt:0,al:[]}],
+    [{n:'うどん（やわらか）',kc:330,p:11,salt:2.4,al:['小麦']},{n:'天ぷら（さつまいも）',kc:160,p:2,salt:0.3,al:['小麦']},{n:'おひたし',kc:25,p:2,salt:0.5,al:[]}],
+  ],
+  '夕食':[
+    [{n:'ごはん',kc:270,p:4,salt:0,al:[]},{n:'煮魚（カレイ）',kc:150,p:20,salt:1.5,al:[]},{n:'筑前煮',kc:120,p:6,salt:1.3,al:[]},{n:'味噌汁（なめこ）',kc:40,p:3,salt:1.4,al:[]}],
+    [{n:'ごはん',kc:270,p:4,salt:0,al:[]},{n:'鶏の照り焼き',kc:220,p:22,salt:1.4,al:[]},{n:'白和え',kc:80,p:5,salt:0.7,al:[]},{n:'すまし汁',kc:20,p:1,salt:1.1,al:[]}],
+    [{n:'ごはん',kc:270,p:4,salt:0,al:[]},{n:'麻婆豆腐（減塩）',kc:200,p:15,salt:1.2,al:[]},{n:'中華風サラダ',kc:50,p:2,salt:0.5,al:['えび']},{n:'コーンスープ',kc:90,p:3,salt:0.9,al:['乳']}],
+  ],
+};
+const DAYS=['月','火','水','木','金','土','日'];
+let weekMenu=[];
+(function seedMenu(){
+  for(let d=0;d<7;d++){
+    weekMenu.push({
+      day:DAYS[d]+'曜日',
+      朝食:pick(DISHES['朝食']),
+      昼食:pick(DISHES['昼食']),
+      夕食:pick(DISHES['夕食']),
+    });
+  }
+})();
+// reference daily target (高齢者 施設標準)
+const TARGET={kc:1600,protein:60,salt:7.5,fiber:18,calcium:700};
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const num=n=>Math.round(n).toLocaleString();
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function dietBadge(d){const map={'常食':'regular','軟菜食':'regular','きざみ食':'low','ミキサー食':'low','糖尿食':'alert','減塩食':'low'};return `<span class="st ${map[d]||'soft'}">${esc(d)}</span>`;}
+function mealNut(dishes){let kc=0,p=0,salt=0;dishes.forEach(x=>{kc+=x.kc;p+=x.p;salt+=x.salt;});return {kc,p,salt};}
+function dayNut(m){const a=mealNut(m['朝食']),b=mealNut(m['昼食']),c=mealNut(m['夕食']);
+  return {kc:a.kc+b.kc+c.kc,p:a.p+b.p+c.p,salt:Math.round((a.salt+b.salt+c.salt)*10)/10};}
+function dayAllergens(m){const s=new Set();['朝食','昼食','夕食'].forEach(k=>m[k].forEach(x=>x.al.forEach(a=>s.add(a))));return [...s];}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','今日の栄養管理状況'],residents:['入居者一覧','入居者ごとの食形態・必要栄養量を管理します'],
+  menu:['献立','1週間の献立を確認・調整します'],calc:['栄養計算','献立の栄養価を食事摂取基準と照合します'],
+  allergy:['アレルギー','配慮が必要な入居者と食材の照合を管理します'],ai:['AI献立','条件から栄養バランス献立を自動で作ります']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='residents'?'<button class="btn primary" onclick="go(\'ai\')">⚡ AIで献立を作る</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'menu\')">🍽️ 献立を見る</button><button class="btn primary" onclick="go(\'ai\')">⚡ AI献立</button>'
+    : v==='menu'?'<button class="btn primary" onclick="go(\'calc\')">🧮 栄養計算へ</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='residents')renderRes();
+  if(v==='menu')renderMenu();
+  if(v==='calc')renderCalcSelects();
+  if(v==='allergy')renderAllergy();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function ring(label,val,color){
+  const r=34,c=2*Math.PI*r,off=c*(1-Math.min(val,120)/120);
+  return `<div class="ring"><div class="rc">
+    <svg width="84" height="84"><circle cx="42" cy="42" r="${r}" fill="none" stroke="var(--soft)" stroke-width="9"/>
+    <circle cx="42" cy="42" r="${r}" fill="none" stroke="${color}" stroke-width="9" stroke-linecap="round"
+      stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${c.toFixed(1)}" data-off="${off.toFixed(1)}" class="ring-arc"/></svg>
+    <div class="rv">${val}<small style="font-size:10px">%</small></div></div><div class="rt">${label}</div></div>`;
+}
+function renderDash(){
+  const avgFulfil=Math.round(residents.reduce((s,r)=>s+r.fulfil,0)/residents.length);
+  const careCount=residents.filter(r=>r.allergens.length||r.consider.length||r.diet==='糖尿食'||r.diet==='減塩食').length;
+  const lowFulfil=residents.filter(r=>r.fulfil<85).length;
+  const leftRate=11;
+  $('kpis').innerHTML=`
+    ${kpi('#16a36b','管理人数',residents.length+'<small>名</small>','全'+ (Math.floor(residents.length/8)+1) +'フロア','up','本日全員食事記録済')}
+    ${kpi('#0ea5b7','栄養充足率',avgFulfil+'<small>%</small>','施設平均',avgFulfil>=90?'up':'warn',lowFulfil+'名が要フォロー')}
+    ${kpi('#7c5cf0','要配慮食',careCount+'<small>名</small>','アレルギー・制限食','warn','献立で個別対応中')}
+    ${kpi('#e3941f','残食率',leftRate+'<small>%</small>','本日昼食','down','前週比 -3pt 改善')}`;
+  // weekly fulfil trend (7 days)
+  const days=['月','火','水','木','金','土','日'];
+  const fseries=[88,91,86,93,90,94,92];
+  const mx=100;
+  $('trendBars').innerHTML=days.map((d,i)=>`
+    <div class="bar-row"><span class="mlabel">${d}曜</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${fseries[i]}"></div></div>
+      <span class="mval">${fseries[i]}%</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // leftover (残食率) trend
+  const lseries=[16,14,15,12,13,11,11];
+  $('leftBars').innerHTML=days.map((d,i)=>`
+    <div class="bar-row"><span class="mlabel">${d}曜</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0;background:linear-gradient(90deg,var(--amber),#f0b95a)" data-w="${lseries[i]*4}"></div></div>
+      <span class="mval">${lseries[i]}%</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#leftBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // rings (today's average balance)
+  $('ringWrap').innerHTML=
+    ring('エネルギー',98,'#16a36b')+ring('たんぱく質',104,'#0ea5b7')+ring('塩分（目標内）',91,'#e3941f')+ring('カルシウム',86,'#7c5cf0');
+  setTimeout(()=>document.querySelectorAll('#ringWrap .ring-arc').forEach(a=>{a.style.transition='stroke-dashoffset 1s cubic-bezier(.2,.8,.3,1)';a.style.strokeDashoffset=a.dataset.off;}),80);
+  const acts=[
+    {i:'⚡',c:'#e6f8f0',t:'AI献立で 来週分の昼食 7日分を作成（充足率 平均96%）',m:'5分前'},
+    {i:'🍽️',c:'#e6f7ef',t:'本日の夕食 献立を確定しました',m:'1時間前'},
+    {i:'⚠️',c:'#fdeaea',t:'佐藤 花子 様の昼食に卵が含まれる可能性を検知・差し替え',m:'今日 10:20'},
+    {i:'📉',c:'#fdf3e2',t:'渡辺 正夫 様の摂取量が低下（充足率82%）要観察',m:'今日 9:05'},
+    {i:'🧮',c:'#efebfe',t:'32名分の栄養価を一括計算しました',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ RESIDENTS ============ */
+let filterDiet='all';
+function renderDietChips(){
+  const opts=[['all','すべて'],...DIETS.map(d=>[d,d]),['care','要配慮']];
+  $('dietChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterDiet?'on':''}" data-d="${esc(o[0])}">${esc(o[1])}</button>`).join('');
+  $('dietChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterDiet=c.dataset.d;renderDietChips();renderRes();});
+}
+function renderRes(){
+  const q=($('rq').value||'').toLowerCase();
+  let rows=residents.filter(r=>{
+    if(filterDiet==='all')return true;
+    if(filterDiet==='care')return r.allergens.length||r.consider.length;
+    return r.diet===filterDiet;
+  }).filter(r=>!q||(r.name+r.room+r.staff).toLowerCase().includes(q));
+  $('resRows').innerHTML=rows.length?rows.map(r=>{
+    const tags=[...r.allergens.map(a=>`<span class="tag-pill al">${esc(a)}</span>`),...r.consider.map(c=>`<span class="tag-pill di">${esc(c)}</span>`)].join('')||'<span class="mini">なし</span>';
+    const fcls=r.fulfil>=95?'ok':r.fulfil>=85?'regular':'low';
+    return `<tr>
+      <td><span class="avatar">${esc(r.name.slice(0,1))}</span><b>${esc(r.name)}</b></td>
+      <td class="mono" style="font-size:12px">${esc(r.room)}</td>
+      <td class="c tnum">${r.age}</td>
+      <td>${dietBadge(r.diet)}</td>
+      <td>${tags}</td>
+      <td class="r tnum">${num(r.need)} <span class="mini">kcal</span></td>
+      <td class="c"><span class="st ${fcls}">${r.fulfil}%</span></td></tr>`;
+  }).join(''):'<tr><td colspan="7" class="empty-cell">該当する入居者がいません</td></tr>';
+}
+$('rq').addEventListener('input',renderRes);
+
+/* ============ MENU ============ */
+let curDay=0;
+function renderDayChips(){
+  $('dayChips').innerHTML=weekMenu.map((m,i)=>`<button class="chip ${i===curDay?'on':''}" data-i="${i}">${esc(m.day)}</button>`).join('');
+  $('dayChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{curDay=+c.dataset.i;renderMenu();});
+}
+function renderMenu(){
+  renderDayChips();
+  const m=weekMenu[curDay];
+  let rows='';
+  ['朝食','昼食','夕食'].forEach(meal=>{
+    m[meal].forEach((d,idx)=>{
+      const al=d.al.length?d.al.map(a=>`<span class="tag-pill al">${esc(a)}</span>`).join(''):'<span class="mini">—</span>';
+      rows+=`<tr><td>${idx===0?'<b>'+esc(meal)+'</b>':''}</td><td>${esc(d.n)}</td><td class="r tnum">${d.kc} <span class="mini">kcal</span></td><td class="c">${al}</td></tr>`;
+    });
+  });
+  $('menuRows').innerHTML=rows;
+  // paper card
+  const dn=dayNut(m);
+  let blocks='';
+  const ic={'朝食':'🌅','昼食':'☀️','夕食':'🌙'};
+  ['朝食','昼食','夕食'].forEach(meal=>{
+    const mn=mealNut(m[meal]);
+    blocks+=`<div class="meal-block"><div class="mh"><span class="mi">${ic[meal]}</span>${esc(meal)} <span class="mini" style="margin-left:auto">${mn.kc}kcal / 塩分${(Math.round(mn.salt*10)/10)}g</span></div>
+      <ul>${m[meal].map(d=>`<li>・${esc(d.n)}</li>`).join('')}</ul></div>`;
+  });
+  $('menuPaper').innerHTML=`<div class="menu-day">🍽️ ${esc(m.day)}の献立 <span class="mini" style="margin-left:auto;font-weight:600">施設標準食</span></div>
+    ${blocks}
+    <div class="summary-box">
+      <div class="sb-i">1日エネルギー<b>${num(dn.kc)} kcal</b></div>
+      <div class="sb-i">たんぱく質<b>${dn.p} g</b></div>
+      <div class="sb-i">塩分<b>${dn.salt} g</b></div>
+      <div class="sb-i">目標達成<b>${Math.round(dn.kc/TARGET.kc*100)} %</b></div>
+    </div>`;
+}
+
+/* ============ NUTRITION CALC ============ */
+function renderCalcSelects(){
+  $('calcRes').innerHTML='<option value="">施設標準（高齢者目標値）</option>'+residents.slice(0,20).map(r=>`<option value="${r.id}">${esc(r.name)}（${esc(r.diet)}・${num(r.need)}kcal）</option>`).join('');
+  $('calcDay').innerHTML=weekMenu.map((m,i)=>`<option value="${i}">${esc(m.day)}</option>`).join('');
+}
+function nutriBar(label,val,target,unit,goodHigh){
+  const pct=Math.min(Math.round(val/target*100),140);
+  const ratio=val/target;
+  let color='var(--green)';
+  if(goodHigh){ if(ratio<0.85)color='var(--amber)'; if(ratio<0.7)color='var(--red)'; }
+  else { if(ratio>1.0)color='var(--amber)'; if(ratio>1.2)color='var(--red)'; }
+  const tpos=Math.min(100/1.4*100/100,100); // target marker at where target sits within 140% scale
+  const targetLeft=(100/140*100).toFixed(0); // target=100% within 140 scale
+  return `<div class="nutri-bar"><span class="nl">${label}</span>
+    <div class="nutri-track"><div class="target" style="left:${targetLeft}%"></div><div class="nutri-fill" style="width:0;background:${color}" data-w="${(pct/140*100).toFixed(1)}"></div></div>
+    <span class="nv"><b>${val}${unit}</b> / ${target}${unit}</span></div>`;
+}
+function runCalc(){
+  const resId=$('calcRes').value;
+  const dayIdx=+$('calcDay').value;
+  const meal=$('calcMeal').value;
+  const m=weekMenu[dayIdx];
+  let nut;
+  if(meal==='all')nut={...dayNut(m),fiber:Math.round(dayNut(m).kc/100),calcium:580};
+  else{const mn=mealNut(m[meal]);nut={kc:mn.kc,p:mn.p,salt:Math.round(mn.salt*10)/10,fiber:Math.round(mn.kc/100),calcium:Math.round(mn.kc/3)};}
+  // target scaling
+  let tgt={...TARGET};
+  if(resId){const r=residents.find(x=>x.id==resId);if(r){tgt.kc=r.need;tgt.protein=Math.round(r.need*0.16/4);}}
+  const saltLimit=$('calcSalt').value;if(saltLimit)tgt.salt=+saltLimit;
+  if(meal!=='all'){tgt.kc=Math.round(tgt.kc/3);tgt.protein=Math.round(tgt.protein/3);tgt.salt=Math.round(tgt.salt/3*10)/10;tgt.fiber=Math.round(tgt.fiber/3);tgt.calcium=Math.round(tgt.calcium/3);}
+  $('calcTitle').textContent=(resId?residents.find(x=>x.id==resId).name+' 様':'施設標準')+' / '+m.day+(meal==='all'?'（1日合計）':'（'+meal+'）');
+  $('calcBars').innerHTML=
+    nutriBar('エネルギー',nut.kc,tgt.kc,'kcal',true)+
+    nutriBar('たんぱく質',nut.p,tgt.protein,'g',true)+
+    nutriBar('塩分',nut.salt,tgt.salt,'g',false)+
+    nutriBar('食物繊維',nut.fiber,tgt.fiber,'g',true)+
+    nutriBar('カルシウム',nut.calcium,tgt.calcium,'mg',true);
+  setTimeout(()=>$('calcBars').querySelectorAll('.nutri-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // verdict
+  const issues=[];
+  if(nut.kc<tgt.kc*0.85)issues.push('エネルギーが不足ぎみ');
+  if(nut.p<tgt.protein*0.85)issues.push('たんぱく質が不足ぎみ');
+  if(nut.salt>tgt.salt)issues.push('塩分が目標を超過');
+  const ok=issues.length===0;
+  $('calcVerdict').innerHTML = ok
+    ? '<span class="st ok">適正</span> 食事摂取基準の目標値を満たしています。'
+    : '<span class="st low">要調整</span> '+issues.map(esc).join(' / ')+'。AI献立での見直しを推奨します。';
+  $('calcHint').classList.add('show');setTimeout(()=>$('calcHint').classList.remove('show'),2400);
+}
+$('calcRun').addEventListener('click',runCalc);
+
+/* ============ ALLERGY ============ */
+function renderAllergy(){
+  const care=residents.filter(r=>r.allergens.length||r.consider.length);
+  const todayAl=dayAllergens(weekMenu[0]);
+  const conflict=care.filter(r=>r.allergens.some(a=>todayAl.includes(a)));
+  $('allergyKpis').innerHTML=`
+    ${kpi('#7c5cf0','配慮対象者',care.length+'<small>名</small>','アレルギー・制限','warn','全員に個別献立')}
+    ${kpi('#e24a4a','本日の要注意',conflict.length+'<small>件</small>','献立にアレルゲン','down',conflict.length?'差し替え推奨':'問題なし')}
+    ${kpi('#0ea5b7','登録アレルゲン',[...new Set(care.flatMap(r=>r.allergens))].length+'<small>種</small>','管理中','up','自動照合 ON')}
+    ${kpi('#16a36b','本日 安全確認',(care.length-conflict.length)+'<small>名</small>','OK','up','照合完了')}`;
+  $('allergyRows').innerHTML=care.length?care.map(r=>{
+    const todayAl=dayAllergens(weekMenu[0]);
+    const hit=r.allergens.filter(a=>todayAl.includes(a));
+    const status=hit.length?`<span class="st alert">要差替 (${hit.map(esc).join('・')})</span>`:'<span class="st ok">安全</span>';
+    const al=r.allergens.map(a=>`<span class="tag-pill al">${esc(a)}</span>`).join('')||'<span class="mini">—</span>';
+    const con=r.consider.map(c=>`<span class="tag-pill di">${esc(c)}</span>`).join('')||'<span class="mini">—</span>';
+    return `<tr><td><span class="avatar">${esc(r.name.slice(0,1))}</span><b>${esc(r.name)}</b></td>
+      <td class="mono" style="font-size:12px">${esc(r.room)}</td><td>${al}</td><td>${con}</td><td class="c">${status}</td></tr>`;
+  }).join(''):'<tr><td colspan="5" class="empty-cell">配慮対象の入居者はいません</td></tr>';
+  $('navAllergy').textContent=conflict.length;
+}
+$('crossCheck').addEventListener('click',async()=>{
+  const btn=$('crossCheck');btn.textContent='🔗 照合中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,900));
+  // auto-resolve: clear conflicting allergens from today's menu by swapping (simulate)
+  const todayAl=dayAllergens(weekMenu[0]);
+  const before=residents.filter(r=>r.allergens.some(a=>todayAl.includes(a))).length;
+  // simulate swapping out the offending dishes
+  ['朝食','昼食','夕食'].forEach(meal=>{weekMenu[0][meal]=weekMenu[0][meal].map(d=>({...d,al:[]}));});
+  btn.textContent='🔗 本日の献立とアレルゲンを自動照合';btn.disabled=false;
+  renderAllergy();
+  showToast(before+'名のアレルゲンを検出し、該当料理を自動で差し替えました');
+});
+
+/* ============ AI MENU ============ */
+const AI_MENUS=[
+  {day:'月曜',n:'鶏むね肉の照り焼き定食（減塩）',sub:'軟菜・きざみ対応 / 卵乳不使用',kc:632},
+  {day:'火曜',n:'白身魚のあんかけ定食',sub:'嚥下配慮・とろみ付き',kc:598},
+  {day:'水曜',n:'豚肉と根菜の煮物定食',sub:'たんぱく質強化 / 食物繊維豊富',kc:651},
+  {day:'木曜',n:'豆腐ハンバーグ和風ソース',sub:'減塩・低脂質 / 卵不使用',kc:610},
+  {day:'金曜',n:'鮭のちゃんちゃん焼き風',sub:'カルシウム強化 / 旬の野菜',kc:625},
+  {day:'土曜',n:'親子煮（やわらか）定食',sub:'軟菜食 / 卵対応者は別調理',kc:588},
+  {day:'日曜',n:'五目あんかけ丼（ミキサー可）',sub:'全食形態対応 / 減塩',kc:642},
+];
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 作成中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},110);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  $('genItems').innerHTML=AI_MENUS.map((mn,i)=>
+    `<div class="gen-item" data-i="${i}"><span class="ck">✓</span>
+      <div class="mn"><b>${esc(mn.day)}・${esc(mn.n)}</b><span>${esc(mn.sub)}</span></div>
+      <span class="kc">${mn.kc}kcal</span></div>`).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,170));items[i].classList.add('in');}
+  // reflect into weekMenu lunch names (lightweight)
+  btn.disabled=false;btn.textContent='⚡ もう一度作成';
+  showToast('1週間分の昼食献立を自動生成しました（栄養充足 平均96%）');
+});
+
+/* ============ INIT ============ */
+renderDietChips();
+renderDash();
+renderCalcSelects();
+$('navAllergy').textContent=residents.filter(r=>r.allergens.some(a=>dayAllergens(weekMenu[0]).includes(a))).length;
+</script>
+</body>
+</html>

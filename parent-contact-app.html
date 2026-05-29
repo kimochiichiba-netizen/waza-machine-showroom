@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜保護者連絡マシン（保護者連絡システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cf0;--purple-soft:#efeaff;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut / read-rate ring */
+.ring-wrap{display:flex;align-items:center;gap:22px}
+.ring{--p:0;width:120px;height:120px;border-radius:50%;flex-shrink:0;
+  background:conic-gradient(var(--green) calc(var(--p)*1%),var(--soft) 0);display:grid;place-items:center;transition:--p 1.1s ease}
+.ring::after{content:"";position:absolute;width:84px;height:84px;border-radius:50%;background:var(--card)}
+.ring .rv{position:relative;z-index:2;font-size:24px;font-weight:900;color:var(--green)}
+.ring-legend{font-size:12.5px;color:var(--ink-2)}
+.ring-legend .lr{display:flex;align-items:center;gap:8px;padding:4px 0}
+.ring-legend .sw{width:11px;height:11px;border-radius:3px}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.done{background:var(--green-soft);color:var(--green)}
+.st.sent{background:var(--brand-soft);color:var(--brand)}
+.st.draft{background:var(--amber-soft);color:var(--amber)}
+.st.scheduled{background:var(--purple-soft);color:var(--purple)}
+.st.low{background:var(--red-soft);color:var(--red)}
+.st.tag{background:var(--soft);color:var(--ink-2)}
+.st.tag::before{display:none}
+
+/* mini read bar inside cells */
+.rbar{display:inline-flex;align-items:center;gap:8px;min-width:120px}
+.rbar .t{flex:1;height:7px;border-radius:99px;background:var(--soft);overflow:hidden}
+.rbar .f{height:100%;border-radius:99px;background:var(--green)}
+.rbar .p{font-size:11.5px;font-weight:800;color:var(--ink-2);width:34px;text-align:right}
+
+/* create / broadcast form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,440px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{min-height:96px;resize:vertical;line-height:1.7}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg .opt{flex:1;min-width:80px;padding:9px;border:1px solid var(--line-2);border-radius:9px;text-align:center;font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.seg .opt.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+.tonechip{display:inline-flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.tonechip button{padding:6px 11px;border-radius:99px;border:1px solid var(--line-2);background:var(--card);font-size:12px;font-weight:700;color:var(--ink-2);cursor:pointer}
+.tonechip button.on{background:var(--purple-soft);border-color:var(--purple);color:var(--purple)}
+
+/* phone preview */
+.phone{background:#fff;border:1px solid var(--line);border-radius:22px;padding:14px;box-shadow:var(--shadow);max-width:360px;margin:0 auto}
+.phone .bar{display:flex;align-items:center;gap:8px;padding:6px 6px 12px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.phone .bar .ic{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#06c755,#03a847);display:grid;place-items:center;color:#fff;font-weight:900;font-size:13px}
+.phone .bar b{font-size:13px}
+.phone .bar small{display:block;color:var(--ink-3);font-size:10.5px;font-weight:500}
+.bubble{background:#fff;border:1px solid var(--line);border-radius:4px 16px 16px 16px;padding:13px 15px;font-size:13px;color:#1a2233;white-space:pre-wrap;line-height:1.75;box-shadow:0 1px 3px rgba(16,24,40,.05)}
+.bubble.empty{color:#aab2c4;text-align:center}
+.phone .meta{font-size:10.5px;color:var(--ink-3);margin-top:8px;text-align:right}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-box{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-box.show{display:block;animation:fade .4s}
+.aiInput{display:grid;grid-template-columns:1fr;gap:10px;margin-top:14px;background:var(--soft);border-radius:12px;padding:16px}
+.aiInput textarea{width:100%;min-height:70px;border:1px solid var(--line-2);border-radius:9px;padding:11px 13px;font-family:inherit;font-size:13.5px;resize:vertical;line-height:1.7;background:#fff}
+.aiInput textarea:focus{outline:none;border-color:var(--brand)}
+.afterBubble{background:#fff;border:1px solid #bdebd4;border-radius:10px;padding:16px 18px;font-size:13px;white-space:pre-wrap;line-height:1.8;color:#163a2a;opacity:0;transform:translateY(8px);transition:all .5s}
+.afterBubble.in{opacity:1;transform:none}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900}
+
+/* detail / consult thread */
+.thread{display:flex;flex-direction:column;gap:12px}
+.msg{max-width:80%;padding:11px 15px;border-radius:14px;font-size:13px;line-height:1.7}
+.msg .who{font-size:10.5px;font-weight:800;margin-bottom:3px;opacity:.7}
+.msg.parent{align-self:flex-start;background:#fff;border:1px solid var(--line);border-bottom-left-radius:4px}
+.msg.staff{align-self:flex-end;background:var(--brand-soft);border:1px solid #cfe0ff;border-bottom-right-radius:4px}
+.msg .tm{font-size:10px;color:var(--ink-3);margin-top:5px;text-align:right}
+.reply-box{display:flex;gap:9px;margin-top:14px;align-items:flex-end}
+.reply-box textarea{flex:1;min-height:46px;border:1px solid var(--line-2);border-radius:10px;padding:10px 12px;font-family:inherit;font-size:13px;resize:vertical}
+.reply-box textarea:focus{outline:none;border-color:var(--brand)}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.section-h{font-size:13px;font-weight:800;color:var(--ink-2);margin:4px 0 10px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">保護者連絡マシン<small>技マシン｜保護者連絡</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">📋</span>連絡一覧</a>
+      <a data-v="broadcast"><span class="i">📣</span>一斉配信</a>
+      <a data-v="read"><span class="i">👀</span>既読状況</a>
+      <a data-v="consult"><span class="i">💬</span>個別相談<span class="badge" id="navConsult">0</span></a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">✨</span>AI文面生成</a>
+    </nav>
+    <div class="org">
+      <div class="av">桜</div>
+      <div><b>さくらだい保育園</b><span>デモ環境 / 主任</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。園児・保護者・数値はすべてサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">2026年5月の連絡状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>クラス別の既読率</h3><span class="more">今月の配信</span></div>
+            <div class="pb"><div class="bars" id="classBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>全体の既読率</h3></div>
+            <div class="pb">
+              <div class="ring-wrap">
+                <div class="ring" id="readRing" style="position:relative;display:grid;place-items:center"><span class="rv" id="ringVal">0%</span></div>
+                <div class="ring-legend">
+                  <div class="lr"><span class="sw" style="background:var(--green)"></span>既読 <b id="legRead">—</b></div>
+                  <div class="lr"><span class="sw" style="background:var(--soft)"></span>未読 <b id="legUnread">—</b></div>
+                  <div style="margin-top:8px;color:var(--ink-3)">配信した連絡を保護者がどれだけ開いたかを表します</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>未読が多い連絡（要フォロー）</h3><span class="more" onclick="go('read')">既読状況へ</span></div>
+            <div class="pb"><div class="acts" id="followActs"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="件名・クラス・種別で検索"></div>
+          <div class="chips" id="kindChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>件名</th><th>種別</th><th>対象</th><th>配信日時</th><th style="min-width:160px">既読率</th><th>状態</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- BROADCAST -->
+      <section class="view" id="v-broadcast">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>配信タイトル</label><input id="bTitle" placeholder="例：5月 親子遠足のお知らせ"></div>
+            <div class="fg"><label>種別</label>
+              <select id="bKind">
+                <option>お知らせ</option><option>行事</option><option>健康・感染症</option>
+                <option>持ち物・準備</option><option>緊急連絡</option><option>アンケート</option>
+              </select></div>
+            <div class="fg"><label>配信対象クラス</label>
+              <div class="seg" id="bSeg"></div></div>
+            <div class="fg"><label>連絡事項（要点だけでOK）</label>
+              <textarea id="bMemo" placeholder="例：6/15 親子遠足 高崎山 9時集合 弁当持参 雨天時は翌週に延期"></textarea>
+              <div class="tonechip" id="bTone"></div>
+              <div class="aihint" id="bAiHint">✨ AIが保護者向けのていねいな文面に整えました</div>
+            </div>
+            <div class="linkrow">
+              <button class="btn primary" id="bGen" style="flex:1;justify-content:center">✨ AIで文面を整える</button>
+            </div>
+            <div class="linkrow" style="margin-top:8px">
+              <button class="btn green" id="bSend" style="flex:1;justify-content:center">📣 この内容で一斉配信</button>
+              <button class="btn" id="bSample">サンプル</button>
+            </div>
+          </div>
+          <div>
+            <div class="section-h">保護者のスマホでの見え方（プレビュー）</div>
+            <div class="phone">
+              <div class="bar"><div class="ic">桜</div><div><b>さくらだい保育園</b><small id="pvTarget">配信対象：—</small></div></div>
+              <div class="bubble empty" id="pvBubble">← 左で連絡事項を入力すると、ここに保護者向けの文面が表示されます</div>
+              <div class="meta" id="pvMeta"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- READ STATUS -->
+      <section class="view" id="v-read">
+        <div class="kpis" id="readKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>配信ごとの既読状況</h3>
+            <button class="btn green" id="remindAll" style="margin-left:auto">🔔 未読の保護者へ一括リマインド</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>件名</th><th>対象</th><th class="r">配信数</th><th class="r">既読</th><th style="min-width:180px">既読率</th><th></th></tr></thead>
+              <tbody id="readRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- CONSULT -->
+      <section class="view" id="v-consult">
+        <div class="cols" style="grid-template-columns:300px 1fr">
+          <div class="panel">
+            <div class="ph"><h3>個別相談</h3></div>
+            <div class="pb" style="padding:8px"><div id="consultListEl"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3 id="consultName">相談を選択してください</h3><span class="more" id="consultMeta"></span></div>
+            <div class="pb">
+              <div class="thread" id="threadEl"><div class="empty-cell">左の一覧から保護者を選ぶと、やりとりが表示されます</div></div>
+              <div class="reply-box" id="replyBox" style="display:none">
+                <textarea id="replyText" placeholder="返信を入力（✨ボタンでAIが下書き）"></textarea>
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <button class="btn" id="replyAi" style="padding:8px 11px">✨ AI下書き</button>
+                  <button class="btn primary" id="replySend" style="padding:8px 11px">送信</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">✨</div>
+            <div><div style="font-size:16px;font-weight:900">メモ書きから保護者向けの文面を自動生成</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">先生が書いた箇条書きのメモを、保護者がそのまま読めるていねいな連絡文にAIが整えます。</div></div>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">35分</div>
+              <ul>
+                <li>📝 連絡帳・おたよりを毎回ゼロから作文</li>
+                <li>✍️ 敬語や言い回しに気をつかって何度も書き直し</li>
+                <li>🖨️ 印刷・配布、または1クラスずつ手で送信</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 メモを入れるだけで敬語の文面を自動生成</li>
+                <li>📄 種別・トーンに合わせて自動調整</li>
+                <li>✉️ そのまま全保護者へ一斉配信</li>
+              </ul>
+            </div>
+          </div>
+          <div class="aiInput">
+            <div style="font-size:12.5px;font-weight:800;color:var(--ink-2)">先生のメモ（箇条書きでOK）</div>
+            <textarea id="aiMemo">6/15 親子遠足 高崎山 9時 正門集合 お弁当と水筒 動きやすい服装 雨天は6/22に延期</textarea>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <span style="font-size:12px;color:var(--ink-2);font-weight:700">トーン：</span>
+              <div class="tonechip" id="aiTone"></div>
+              <button class="btn primary" id="aiRun" style="margin-left:auto">✨ AIで文面を生成する</button>
+            </div>
+          </div>
+          <div class="gen-box" id="genBox">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ AIが生成した保護者向け文面</div>
+            <div class="afterBubble" id="afterBubble"></div>
+            <div class="linkrow" style="margin-top:12px">
+              <button class="btn green" id="aiToBroadcast">📣 この文面で一斉配信へ</button>
+              <button class="btn" id="aiRegen">🔁 別のトーンで作り直す</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const CLASSES=['ひよこ組(0歳)','りす組(1歳)','うさぎ組(2歳)','こあら組(3歳)','きりん組(4歳)','ぞう組(5歳)'];
+const CLASS_SIZE={'ひよこ組(0歳)':9,'りす組(1歳)':12,'うさぎ組(2歳)':15,'こあら組(3歳)':18,'きりん組(4歳)':20,'ぞう組(5歳)':21};
+const KINDS=['お知らせ','行事','健康・感染症','持ち物・準備','緊急連絡','アンケート'];
+const KIND_ICON={'お知らせ':'📢','行事':'🎏','健康・感染症':'🩺','持ち物・準備':'🎒','緊急連絡':'🚨','アンケート':'📝'};
+const TONES=['ていねい','やわらかい','簡潔','緊急'];
+const TODAY=new Date();
+
+let SEED=4071;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+/* seed contact messages */
+const TITLE_BANK={
+  'お知らせ':['園だより 5月号の配信','給食メニュー変更のお知らせ','駐車場ご利用のお願い','保育参観 開催のご案内'],
+  '行事':['親子遠足のお知らせ','春の運動会 開催のご案内','お誕生日会のお知らせ','プール開き 日程のご案内'],
+  '健康・感染症':['手足口病 発生のお知らせ','登園前の検温のお願い','インフルエンザ流行注意','プール前の健康チェック'],
+  '持ち物・準備':['プール用品のご準備のお願い','着替えの補充のお願い','お昼寝布団の持ち帰り','水筒持参のお願い'],
+  '緊急連絡':['本日の臨時休園について','給食アレルギー対応の確認','警報発令に伴う引き渡しについて'],
+  'アンケート':['夏祭り 出欠アンケート','保護者会 参加可否のご回答','給食に関するアンケート']
+};
+let contacts=[];
+(function seed(){
+  for(let i=0;i<20;i++){
+    const kind=pick(KINDS);
+    const title=pick(TITLE_BANK[kind]);
+    const targetAll=rnd()>0.45;
+    const targets=targetAll?CLASSES.slice():[pick(CLASSES)];
+    const total=targets.reduce((s,c)=>s+CLASS_SIZE[c],0);
+    const daysAgo=Math.floor(rnd()*40);
+    const dt=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-daysAgo,8+Math.floor(rnd()*9),pick([0,15,30,45]));
+    let rate;
+    if(daysAgo<1)rate=0.3+rnd()*0.4; else if(daysAgo<3)rate=0.6+rnd()*0.3; else rate=0.82+rnd()*0.17;
+    if(kind==='緊急連絡')rate=Math.min(1,rate+0.1);
+    const read=Math.min(total,Math.round(total*rate));
+    let status;
+    if(daysAgo<0)status='scheduled';
+    else if(read/total<0.55)status='low';
+    else if(read>=total)status='done';
+    else status='sent';
+    contacts.push({id:'CT-'+(1001+i),title,kind,targets,targetAll,total,read,dt,status});
+  }
+  contacts.sort((a,b)=>b.dt-a.dt);
+})();
+
+/* consult threads */
+let consults=[
+  {id:'C1',parent:'山田 はると くん 保護者',cls:'こあら組(3歳)',unread:true,last:'お迎えの時間について相談です',
+   msgs:[{who:'parent',n:'山田さん',t:'いつもお世話になっております。来週から仕事の都合で、お迎えが18時頃になりそうです。延長保育は可能でしょうか？',tm:'今日 9:12'}]},
+  {id:'C2',parent:'佐藤 さくら ちゃん 保護者',cls:'きりん組(4歳)',unread:true,last:'発熱でお休みします',
+   msgs:[{who:'parent',n:'佐藤さん',t:'おはようございます。娘が朝から38.2度の熱があり、本日お休みさせていただきます。',tm:'今日 7:48'}]},
+  {id:'C3',parent:'鈴木 ゆうと くん 保護者',cls:'ぞう組(5歳)',unread:false,last:'ありがとうございました',
+   msgs:[
+     {who:'parent',n:'鈴木さん',t:'遠足の持ち物について、お弁当のおかずに制限はありますか？',tm:'昨日 16:20'},
+     {who:'staff',n:'保育士 田中',t:'お問い合わせありがとうございます。アレルギー対応のため、ナッツ類は避けていただけますと助かります。その他は特に制限ございません。',tm:'昨日 16:45'},
+     {who:'parent',n:'鈴木さん',t:'承知しました。ありがとうございました！',tm:'昨日 17:02'}
+   ]},
+  {id:'C4',parent:'高橋 めい ちゃん 保護者',cls:'うさぎ組(2歳)',unread:false,last:'おむつの補充をお願いします',
+   msgs:[
+     {who:'parent',n:'高橋さん',t:'おむつのストックが残り少ないと連絡帳にありました。明日まとめて持参すれば大丈夫でしょうか？',tm:'2日前 18:30'},
+     {who:'staff',n:'保育士 佐藤',t:'ご連絡ありがとうございます。明日のお持ち込みで問題ございません。よろしくお願いいたします。',tm:'2日前 18:55'}
+   ]}
+];
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const pct=(a,b)=>b?Math.round(a/b*100):0;
+const fmtDT=d=>(d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STLABEL={done:'完了',sent:'配信済',draft:'下書き',scheduled:'予約',low:'要フォロー'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]||s}</span>`;}
+function readBar(read,total){const p=pct(read,total);const col=p>=80?'var(--green)':p>=55?'var(--amber)':'var(--red)';
+  return `<span class="rbar"><span class="t"><span class="f" style="width:${p}%;background:${col}"></span></span><span class="p">${p}%</span></span>`;}
+function targetLabel(c){return c.targetAll?'全クラス':c.targets.join('・');}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+
+/* ============ ROUTING ============ */
+const TITLES={
+  dash:['ダッシュボード','2026年'+(TODAY.getMonth()+1)+'月の連絡状況'],
+  list:['連絡一覧','配信した連絡を管理します'],
+  broadcast:['一斉配信','メモを入れるとAIが文面を整えて全保護者へ配信します'],
+  read:['既読状況','保護者がどれだけ連絡を読んだかを確認します'],
+  consult:['個別相談','保護者からの個別メッセージに返信します'],
+  ai:['AI文面生成','先生のメモを保護者向けのていねいな文面に変換します']
+};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn primary" onclick="go(\'broadcast\')">＋ 新規配信</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">✨ AI文面生成</button><button class="btn primary" onclick="go(\'broadcast\')">＋ 新規配信</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='read')renderRead();
+  if(v==='consult')renderConsultList();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const tm=contacts.filter(c=>c.dt.getMonth()===TODAY.getMonth()&&c.dt.getFullYear()===TODAY.getFullYear());
+  const totalSent=tm.reduce((s,c)=>s+c.total,0);
+  const totalRead=tm.reduce((s,c)=>s+c.read,0);
+  const rate=pct(totalRead,totalSent);
+  const replies=consults.reduce((s,c)=>s+c.msgs.filter(m=>m.who==='parent').length,0);
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','今月の連絡',tm.length+'<small>件</small>','配信','up','前月比 +4件')}
+    ${kpi('#16b877','平均既読率',rate+'<small>%</small>','','up','+6pt（業界平均72%）')}
+    ${kpi('#7c5cf0','保護者からの返信',replies+'<small>件</small>',consults.filter(c=>c.unread).length+'件 未対応','warn','要返信')}
+    ${kpi('#e3941f','保護者満足度','4.6<small>/5.0</small>','回答118件','up','★高評価')}`;
+  // class bars (read rate per class this month)
+  const clsRate=CLASSES.map(cl=>{
+    const cc=tm.filter(c=>c.targets.includes(cl));
+    const t=cc.reduce((s,c)=>s+CLASS_SIZE[cl],0);
+    const r=cc.reduce((s,c)=>s+Math.round(c.read/c.total*CLASS_SIZE[cl]),0);
+    return {cl,p:pct(r,t)};
+  });
+  $('classBars').innerHTML=clsRate.map(x=>`
+    <div class="bar-row"><span class="mlabel" style="width:auto">${esc(x.cl)}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${x.p}"></div></div>
+      <span class="mval">${x.p}%</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#classBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // ring
+  $('legRead').textContent=totalRead+'名';$('legUnread').textContent=(totalSent-totalRead)+'名';
+  $('ringVal').textContent=rate+'%';
+  setTimeout(()=>{$('readRing').style.setProperty('--p',rate);},80);
+  // activity
+  const acts=[
+    {i:'👀',c:'#e6f8f0',t:'「親子遠足のお知らせ」の既読率が 92% に到達',m:'5分前'},
+    {i:'💬',c:'#efeaff',t:'佐藤さくらちゃん保護者 から欠席連絡が届きました',m:'今日 7:48'},
+    {i:'✨',c:'#e6f8f0',t:'AIがメモから「プール開き」の文面を生成',m:'今日 9:30'},
+    {i:'📣',c:'#eaf1ff',t:'全クラスへ「給食メニュー変更」を一斉配信',m:'今日 10:05'},
+    {i:'🔔',c:'#fdf3e2',t:'未読の保護者 14名へリマインドを送信',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${a.m}</div></div></div>`).join('');
+  // follow (low read rate)
+  const low=contacts.filter(c=>pct(c.read,c.total)<80).sort((a,b)=>pct(a.read,a.total)-pct(b.read,b.total)).slice(0,5);
+  $('followActs').innerHTML=low.length?low.map(c=>`<div class="act"><div class="ai" style="background:var(--red-soft)">${KIND_ICON[c.kind]}</div>
+    <div style="flex:1"><div class="at">${esc(c.title)}</div><div class="am">${targetLabel(c)} ・ 未読 ${c.total-c.read}名</div></div>
+    <div>${readBar(c.read,c.total)}</div></div>`).join('')
+    :'<div class="empty-cell">フォローが必要な連絡はありません 🎉</div>';
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ LIST ============ */
+let filterKind='all';
+function renderChips(){
+  const opts=[['all','すべて']].concat(KINDS.map(k=>[k,k]));
+  $('kindChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterKind?'on':''}" data-k="${esc(o[0])}">${esc(o[1])}</button>`).join('');
+  $('kindChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterKind=c.dataset.k;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=contacts.filter(c=>filterKind==='all'||c.kind===filterKind)
+    .filter(c=>!q||(c.title+c.kind+targetLabel(c)).toLowerCase().includes(q));
+  $('listRows').innerHTML=rows.length?rows.map(c=>`<tr onclick="openContact('${c.id}')">
+    <td><b>${KIND_ICON[c.kind]} ${esc(c.title)}</b></td>
+    <td><span class="st tag">${esc(c.kind)}</span></td>
+    <td style="color:var(--ink-2)">${esc(targetLabel(c))}</td>
+    <td style="color:var(--ink-2)" class="tnum">${fmtDT(c.dt)}</td>
+    <td>${readBar(c.read,c.total)}</td>
+    <td>${stBadge(c.status)}</td></tr>`).join('')
+    :'<tr><td colspan="6" class="empty-cell">該当する連絡がありません</td></tr>';
+}
+window.openContact=id=>{const c=contacts.find(x=>x.id===id);if(c)showToast(c.title+'（既読 '+c.read+'/'+c.total+'名）');};
+$('q').addEventListener('input',renderList);
+
+/* ============ READ STATUS ============ */
+function renderRead(){
+  const totalSent=contacts.reduce((s,c)=>s+c.total,0);
+  const totalRead=contacts.reduce((s,c)=>s+c.read,0);
+  const lowCnt=contacts.filter(c=>pct(c.read,c.total)<55).length;
+  const fullCnt=contacts.filter(c=>c.read>=c.total).length;
+  $('readKpis').innerHTML=`
+    ${kpi('#16b877','全体 既読率',pct(totalRead,totalSent)+'<small>%</small>','','up','良好')}
+    ${kpi('#2f6df0','配信総数',totalSent+'<small>通</small>',contacts.length+'件の連絡','up','')}
+    ${kpi('#e24a4a','未読 合計',(totalSent-totalRead)+'<small>名</small>',lowCnt+'件が要フォロー','down','リマインド推奨')}
+    ${kpi('#7c5cf0','全員既読 達成',fullCnt+'<small>件</small>','','up','100%到達')}`;
+  $('readRows').innerHTML=contacts.slice().sort((a,b)=>pct(a.read,a.total)-pct(b.read,b.total)).map(c=>`<tr>
+    <td><b>${KIND_ICON[c.kind]} ${esc(c.title)}</b></td>
+    <td style="color:var(--ink-2)">${esc(targetLabel(c))}</td>
+    <td class="r tnum">${c.total}</td>
+    <td class="r tnum"><b>${c.read}</b></td>
+    <td>${readBar(c.read,c.total)}</td>
+    <td class="r">${c.read<c.total?`<button class="btn" style="padding:6px 12px" onclick="remindOne('${c.id}')">🔔 リマインド</button>`:'<span class="st done">完了</span>'}</td></tr>`).join('');
+}
+window.remindOne=id=>{const c=contacts.find(x=>x.id===id);if(!c)return;const un=c.total-c.read;c.read=Math.min(c.total,c.read+Math.ceil(un*0.6));renderRead();showToast('未読の保護者へリマインドを送信しました（'+c.title+'）');};
+$('remindAll').addEventListener('click',async()=>{
+  const btn=$('remindAll');btn.textContent='🔔 送信中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,900));
+  let n=0;contacts.forEach(c=>{if(c.read<c.total){const un=c.total-c.read;c.read=Math.min(c.total,c.read+Math.ceil(un*0.5));n++;}});
+  btn.textContent='🔔 未読の保護者へ一括リマインド';btn.disabled=false;
+  renderRead();showToast(n+'件の連絡で未読の保護者へリマインドしました');
+});
+
+/* ============ BROADCAST ============ */
+let bTarget='all';let bToneSel='ていねい';
+function renderSeg(){
+  const opts=[['all','全クラス']].concat(CLASSES.map(c=>[c,c]));
+  $('bSeg').innerHTML=opts.map(o=>`<div class="opt ${o[0]===bTarget?'on':''}" data-t="${esc(o[0])}">${esc(o[1])}</div>`).join('');
+  $('bSeg').querySelectorAll('.opt').forEach(o=>o.onclick=()=>{bTarget=o.dataset.t;renderSeg();renderPreview();});
+}
+function renderToneChips(){
+  $('bTone').innerHTML=TONES.map(t=>`<button class="${t===bToneSel?'on':''}" data-t="${t}">${t}</button>`).join('');
+  $('bTone').querySelectorAll('button').forEach(b=>b.onclick=()=>{bToneSel=b.dataset.t;renderToneChips();});
+}
+function composeText(memo,kind,tone){
+  const m=(memo||'').trim();
+  if(!m)return '';
+  const greet=tone==='緊急'?'【緊急のお知らせ】\n保護者の皆さまへ\n':'保護者の皆さまへ\nいつもお世話になっております。さくらだい保育園です。\n';
+  const body=m.split(/[、,。\n]/).map(s=>s.trim()).filter(Boolean);
+  const bullets=body.map(b=>'・'+b).join('\n');
+  const close=tone==='簡潔'?'\nご確認をお願いいたします。'
+    :tone==='やわらかい'?'\nご不明な点がございましたら、お気軽に担任までお声かけくださいね。どうぞよろしくお願いいたします🌸'
+    :tone==='緊急'?'\n至急ご確認のうえ、ご対応をお願いいたします。'
+    :'\n何卒よろしくお願い申し上げます。\nご不明な点は担任までお問い合わせください。';
+  const head=KIND_ICON[kind]+' '+($('bTitle').value||kind);
+  return `${head}\n\n${greet}\n下記の通りご案内いたします。\n\n${bullets}\n${close}`;
+}
+function renderPreview(){
+  $('pvTarget').textContent='配信対象：'+(bTarget==='all'?'全クラス':bTarget);
+  const txt=composeText($('bMemo').value,$('bKind').value,bToneSel);
+  if(txt){$('pvBubble').className='bubble';$('pvBubble').textContent=txt;
+    const tgt=bTarget==='all'?CLASSES:[bTarget];const tot=tgt.reduce((s,c)=>s+CLASS_SIZE[c],0);
+    $('pvMeta').textContent='配信先 '+tot+'世帯 ・ '+new Date().getFullYear()+'/'+(TODAY.getMonth()+1)+'/'+TODAY.getDate();
+  }else{$('pvBubble').className='bubble empty';$('pvBubble').textContent='← 左で連絡事項を入力すると、ここに保護者向けの文面が表示されます';$('pvMeta').textContent='';}
+}
+$('bMemo').addEventListener('input',renderPreview);
+$('bTitle').addEventListener('input',renderPreview);
+$('bKind').addEventListener('change',renderPreview);
+$('bGen').addEventListener('click',async()=>{
+  if(!$('bMemo').value.trim()){showToast('連絡事項を入力してください');return;}
+  const btn=$('bGen');btn.textContent='✨ AIが整え中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,800));
+  renderPreview();
+  $('bAiHint').classList.add('show');setTimeout(()=>$('bAiHint').classList.remove('show'),2200);
+  btn.textContent='✨ AIで文面を整える';btn.disabled=false;
+  showToast('AIが保護者向けの文面に整えました');
+});
+$('bSample').addEventListener('click',()=>{
+  $('bTitle').value='5月 親子遠足のお知らせ';$('bKind').value='行事';bTarget='all';
+  $('bMemo').value='6/15 親子遠足 高崎山 9時 正門集合 お弁当と水筒持参 動きやすい服装 雨天時は6/22に延期';
+  renderSeg();renderPreview();
+});
+$('bSend').addEventListener('click',async()=>{
+  if(!$('bMemo').value.trim()||!$('bTitle').value.trim()){showToast('タイトルと連絡事項を入力してください');return;}
+  const btn=$('bSend');btn.textContent='📣 配信中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,900));
+  const tgt=bTarget==='all'?CLASSES.slice():[bTarget];
+  const total=tgt.reduce((s,c)=>s+CLASS_SIZE[c],0);
+  const now=new Date();
+  contacts.unshift({id:'CT-'+(1001+contacts.length),title:$('bTitle').value,kind:$('bKind').value,
+    targets:tgt,targetAll:bTarget==='all',total,read:Math.round(total*0.32),dt:now,status:'sent'});
+  btn.textContent='📣 この内容で一斉配信';btn.disabled=false;
+  showToast('「'+$('bTitle').value+'」を '+total+'世帯へ一斉配信しました');
+  $('bMemo').value='';$('bTitle').value='';renderPreview();
+  setTimeout(()=>go('list'),700);
+});
+
+/* ============ CONSULT ============ */
+let activeConsult=null;
+function renderConsultList(){
+  $('consultListEl').innerHTML=consults.map(c=>`
+    <a class="nav" style="display:block"><div data-c="${c.id}" class="act" style="border-bottom:1px solid var(--line);cursor:pointer;padding:11px 8px;border-radius:8px">
+      <div class="ai" style="background:${c.unread?'var(--purple-soft)':'var(--soft)'}">${c.unread?'🔴':'💬'}</div>
+      <div style="flex:1;min-width:0"><div class="at" style="font-size:12.5px">${esc(c.parent)}</div>
+      <div class="am" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(c.last)}</div></div></div></a>`).join('');
+  $('consultListEl').querySelectorAll('[data-c]').forEach(el=>el.onclick=()=>openConsult(el.dataset.c));
+  $('navConsult').textContent=consults.filter(c=>c.unread).length;
+}
+function openConsult(id){
+  activeConsult=consults.find(c=>c.id===id);if(!activeConsult)return;
+  activeConsult.unread=false;
+  $('consultName').textContent=activeConsult.parent;
+  $('consultMeta').textContent=activeConsult.cls;
+  renderThread();
+  $('replyBox').style.display='flex';
+  renderConsultList();
+}
+function renderThread(){
+  $('threadEl').innerHTML=activeConsult.msgs.map(m=>`
+    <div class="msg ${m.who}"><div class="who">${esc(m.n)}</div>${esc(m.t)}<div class="tm">${esc(m.tm)}</div></div>`).join('');
+  $('threadEl').scrollTop=$('threadEl').scrollHeight;
+}
+$('replyAi').addEventListener('click',async()=>{
+  if(!activeConsult)return;
+  const btn=$('replyAi');btn.textContent='✨…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,700));
+  const lastParent=[...activeConsult.msgs].reverse().find(m=>m.who==='parent');
+  const txt=lastParent&&/熱|発熱|休/.test(lastParent.t)
+      ?'ご連絡ありがとうございます。お大事になさってください。登園の際は平熱に戻ってから24時間ほど様子をみていただけますと安心です。何かございましたらいつでもご相談ください。'
+    :lastParent&&/お迎え|延長|時間/.test(lastParent.t)
+      ?'お問い合わせありがとうございます。18時までの延長保育は承っております。事前申請で当日でも対応可能ですので、ご都合に合わせてお気軽にご利用ください。'
+      :'お問い合わせいただきありがとうございます。確認のうえ、改めてご案内いたします。ご不明な点がございましたらお気軽にお声かけください。';
+  $('replyText').value=txt;
+  btn.textContent='✨ AI下書き';btn.disabled=false;
+  showToast('AIが返信の下書きを作成しました');
+});
+$('replySend').addEventListener('click',()=>{
+  if(!activeConsult)return;const t=$('replyText').value.trim();if(!t){showToast('返信を入力してください');return;}
+  activeConsult.msgs.push({who:'staff',n:'保育士（あなた）',t,tm:'たった今'});
+  activeConsult.last=t;$('replyText').value='';renderThread();showToast('保護者へ返信を送信しました');
+});
+
+/* ============ AI ============ */
+let aiToneSel='ていねい';
+function renderAiTone(){
+  $('aiTone').innerHTML=TONES.map(t=>`<button class="${t===aiToneSel?'on':''}" data-t="${t}">${t}</button>`).join('');
+  $('aiTone').querySelectorAll('button').forEach(b=>b.onclick=()=>{aiToneSel=b.dataset.t;renderAiTone();});
+}
+async function runAi(){
+  const memo=$('aiMemo').value.trim();
+  if(!memo){showToast('メモを入力してください');return;}
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='✨ 生成中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent=Math.min(s,6)+'秒';},150);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);$('baAfterT').textContent='6秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  const txt=composeAiText(memo,aiToneSel);
+  $('genBox').classList.add('show');
+  const bub=$('afterBubble');bub.classList.remove('in');bub.textContent=txt;
+  setTimeout(()=>bub.classList.add('in'),40);
+  btn.disabled=false;btn.textContent='✨ もう一度生成';
+  showToast('AIが保護者向けの文面を生成しました（'+aiToneSel+'）');
+}
+function composeAiText(memo,tone){
+  const greet=tone==='緊急'?'【緊急のお知らせ】\n保護者の皆さまへ'
+    :'保護者の皆さまへ\nいつもお世話になっております。さくらだい保育園です。';
+  const body=memo.split(/[、,。\n\s]+/).map(s=>s.trim()).filter(Boolean);
+  const bullets=body.map(b=>'・'+b).join('\n');
+  const close=tone==='簡潔'?'ご確認をお願いいたします。'
+    :tone==='やわらかい'?'ご不明な点がございましたら、お気軽に担任までお声かけくださいね。どうぞよろしくお願いいたします🌸'
+    :tone==='緊急'?'至急ご確認のうえ、ご対応をお願いいたします。'
+    :'当日は気をつけてご参加ください。\nご不明な点は担任までお問い合わせください。何卒よろしくお願い申し上げます。';
+  return `${greet}\n\n下記の通りご案内いたします。\n\n${bullets}\n\n${close}`;
+}
+$('aiRun').addEventListener('click',runAi);
+$('aiRegen').addEventListener('click',()=>{const i=TONES.indexOf(aiToneSel);aiToneSel=TONES[(i+1)%TONES.length];renderAiTone();runAi();});
+$('aiToBroadcast').addEventListener('click',()=>{
+  $('bMemo').value=$('aiMemo').value;$('bTitle').value=$('bTitle').value||'お知らせ';bToneSel=aiToneSel;
+  go('broadcast');renderSeg();renderToneChips();renderPreview();showToast('生成した文面を一斉配信画面へ送りました');
+});
+
+/* ============ INIT ============ */
+renderChips();renderSeg();renderToneChips();renderAiTone();renderPreview();renderDash();renderConsultList();
+$('navConsult').textContent=consults.filter(c=>c.unread).length;
+</script>
+</body>
+</html>

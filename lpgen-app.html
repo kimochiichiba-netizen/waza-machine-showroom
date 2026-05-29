@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜LP生成マシン（ランディングページ自動生成）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#7c3aed;--brand-dk:#6321d4;--brand-soft:#f1eafe;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#d946ef;--pink:#ec4899;
+  --sb:#1a1230;--sb-2:#241640;--sb-ink:#cfc6e4;--sb-ink-2:#8a82a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#a78bfa,#ec4899,#f0abfc,#a78bfa);
+  display:grid;place-items:center;color:#1a0b30;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(124,58,237,.4)}
+.nav a .badge{margin-left:auto;background:var(--pink);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--pink));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut / funnel */
+.funnel{display:flex;flex-direction:column;gap:9px}
+.fn-row{display:grid;grid-template-columns:90px 1fr 64px;align-items:center;gap:10px;font-size:12.5px}
+.fn-row .fl{color:var(--ink-2);font-weight:600}
+.fn-track{height:26px;border-radius:7px;background:var(--soft);overflow:hidden;position:relative}
+.fn-fill{height:100%;border-radius:7px;background:linear-gradient(90deg,var(--brand),var(--pink));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1);display:flex;align-items:center;padding-left:10px;color:#fff;font-weight:800;font-size:11.5px}
+.fn-row .fv{text-align:right;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.pub{background:var(--green-soft);color:var(--green)}
+.st.test{background:var(--brand-soft);color:var(--brand)}
+.st.draft{background:var(--amber-soft);color:var(--amber)}
+.st.stop{background:var(--soft);color:var(--ink-3)}
+.thumb{width:46px;height:30px;border-radius:5px;flex-shrink:0;background:linear-gradient(135deg,var(--brand),var(--pink));display:grid;place-items:center;color:#fff;font-size:13px}
+
+/* create form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,400px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:64px;line-height:1.5}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.toneopts{display:flex;gap:6px;flex-wrap:wrap}
+.toneopts .to{padding:7px 12px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.toneopts .to.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* LP preview (browser mock) */
+.lpmock{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:var(--shadow)}
+.lpbar{background:var(--soft);border-bottom:1px solid var(--line);padding:9px 14px;display:flex;align-items:center;gap:8px}
+.lpbar .dots{display:flex;gap:5px}
+.lpbar .dots span{width:9px;height:9px;border-radius:50%}
+.lpbar .url{flex:1;background:#fff;border:1px solid var(--line-2);border-radius:6px;font-size:11px;color:var(--ink-3);padding:4px 10px;font-family:'Orbitron'}
+.lpbody{max-height:560px;overflow-y:auto}
+.lp-hero{padding:38px 30px;text-align:center;background:linear-gradient(160deg,#f5efff,#fdf0f9)}
+.lp-hero .ey{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--brand);background:var(--brand-soft);padding:4px 12px;border-radius:99px;margin-bottom:12px}
+.lp-hero h2{font-size:25px;font-weight:900;line-height:1.35;letter-spacing:-.01em;color:var(--ink)}
+.lp-hero p{font-size:13px;color:var(--ink-2);margin-top:12px;max-width:440px;margin-left:auto;margin-right:auto}
+.lp-cta{display:inline-block;margin-top:18px;background:linear-gradient(90deg,var(--brand),var(--pink));color:#fff;font-weight:800;font-size:14px;padding:13px 30px;border-radius:11px;box-shadow:0 8px 22px rgba(124,58,237,.32)}
+.lp-sec{padding:26px 30px;border-top:1px solid var(--line)}
+.lp-sec h3{font-size:16px;font-weight:900;text-align:center;margin-bottom:4px}
+.lp-sec .lead{font-size:12px;color:var(--ink-3);text-align:center;margin-bottom:18px}
+.lp-feats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:620px){.lp-feats{grid-template-columns:1fr}}
+.lp-feat{background:var(--soft);border:1px solid var(--line);border-radius:11px;padding:16px;text-align:center}
+.lp-feat .fi{font-size:24px}
+.lp-feat b{display:block;font-size:13px;margin:8px 0 4px}
+.lp-feat span{font-size:11.5px;color:var(--ink-2);line-height:1.5}
+.lp-voice{display:flex;gap:11px;padding:14px;background:var(--soft);border-radius:11px;margin-bottom:10px}
+.lp-voice .va{width:38px;height:38px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,var(--brand),var(--pink));display:grid;place-items:center;color:#fff;font-weight:800}
+.lp-voice .vt{font-size:12px;color:var(--ink-2);line-height:1.55}
+.lp-voice .vn{font-size:11px;color:var(--ink-3);font-weight:700;margin-top:5px}
+.lp-faq{border:1px solid var(--line);border-radius:9px;padding:13px 15px;margin-bottom:8px}
+.lp-faq b{font-size:12.5px;display:block;margin-bottom:4px}
+.lp-faq span{font-size:11.5px;color:var(--ink-2)}
+.lp-final{padding:34px 30px;text-align:center;background:linear-gradient(160deg,#241640,#3a2168);color:#fff}
+.lp-final h3{font-size:19px;font-weight:900}
+.lp-final p{font-size:12px;color:#cfc6e4;margin-top:8px}
+.lp-empty{padding:70px 30px;text-align:center;color:var(--ink-3);font-size:13px}
+.struct-tag{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;color:var(--brand);background:var(--brand-soft);padding:3px 9px;border-radius:6px;margin-bottom:10px}
+
+/* AB analysis */
+.ab-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:760px){.ab-grid{grid-template-columns:1fr}}
+.ab-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow);position:relative}
+.ab-card.win{border-color:var(--green);box-shadow:0 0 0 2px var(--green-soft),var(--shadow)}
+.ab-card .abh{display:flex;align-items:center;gap:9px;margin-bottom:14px}
+.ab-card .abh .lab{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-weight:900;color:#fff}
+.ab-card .abh b{font-size:14px}
+.ab-card .winbadge{position:absolute;top:-10px;right:16px;background:var(--green);color:#fff;font-size:11px;font-weight:800;padding:3px 11px;border-radius:99px;box-shadow:0 4px 10px rgba(22,184,119,.3)}
+.ab-metric{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px}
+.ab-metric:last-child{border-bottom:0}
+.ab-metric .ml{color:var(--ink-2);font-weight:600}
+.ab-metric .mv{font-weight:900;font-variant-numeric:tabular-nums}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900}
+
+/* AI before/after copy compare */
+.copy-cmp{display:grid;grid-template-columns:1fr 50px 1fr;gap:0;margin-top:18px;align-items:stretch;display:none}
+.copy-cmp.show{display:grid;animation:fade .4s}
+@media(max-width:760px){.copy-cmp{grid-template-columns:1fr}}
+.copy-cmp .cc{padding:16px;border-radius:12px}
+.copy-cmp .cbefore{background:#f6f6f9;border:1px solid var(--line)}
+.copy-cmp .cafter{background:var(--brand-soft);border:1px solid #d9c7fa}
+.copy-cmp .cc .cl{font-size:11px;font-weight:800;margin-bottom:9px;display:inline-block;padding:3px 9px;border-radius:6px}
+.copy-cmp .cbefore .cl{background:#e7e9ef;color:#6b7280}
+.copy-cmp .cafter .cl{background:#e2d4fb;color:var(--brand)}
+.copy-cmp .ch{font-size:15px;font-weight:900;line-height:1.4;margin-bottom:8px}
+.copy-cmp .cbefore .ch{color:#7a8499}
+.copy-cmp .cp{font-size:12px;line-height:1.6}
+.copy-cmp .arrow{display:grid;place-items:center;font-size:22px;color:var(--brand)}
+@media(max-width:760px){.copy-cmp .arrow{transform:rotate(90deg)}}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#a78bfa,#ec4899);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(124,58,237,.4)}50%{box-shadow:0 0 40px rgba(236,72,153,.55)}}
+
+/* publish */
+.pub-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:860px){.pub-grid{grid-template-columns:1fr}}
+.pubcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.urlbox{display:flex;gap:8px;align-items:center;background:var(--soft);border:1px solid var(--line-2);border-radius:9px;padding:9px 12px;font-size:12.5px;margin-top:8px}
+.urlbox .u{flex:1;font-family:'Orbitron';color:var(--brand-dk);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qr{width:96px;height:96px;border-radius:10px;background:
+  repeating-conic-gradient(#1a1230 0 25%,#fff 0 50%) 0 0/14px 14px;
+  border:5px solid #fff;box-shadow:var(--shadow);margin:10px auto 0}
+.toggle{width:44px;height:25px;border-radius:99px;background:var(--line-2);position:relative;cursor:pointer;transition:all .2s;flex-shrink:0}
+.toggle::after{content:"";position:absolute;top:2.5px;left:2.5px;width:20px;height:20px;border-radius:50%;background:#fff;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle.on{background:var(--green)}
+.toggle.on::after{left:21.5px}
+.setrow{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.setrow:last-child{border-bottom:0}
+.setrow .sl{flex:1}
+.setrow .sl b{font-weight:700}
+.setrow .sl span{display:block;font-size:11px;color:var(--ink-3)}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">LP生成マシン<small>技マシン｜LP自動生成</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">📄</span>LP一覧</a>
+      <a data-v="create"><span class="i">✏️</span>新規作成</a>
+      <a data-v="ab"><span class="i">🧪</span>AB分析<span class="badge" id="navAb">0</span></a>
+      <a data-v="pub"><span class="i">🚀</span>公開</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI生成</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。LP・数値・お客様の声はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">公開中LPの成果サマリー</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>月次のPV推移</h3><span class="more">過去6ヶ月</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>コンバージョン ファネル</h3><span class="more">全LP合計・今月</span></div>
+            <div class="pb"><div class="funnel" id="funnel"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>CV率トップLP</h3></div>
+            <div class="pb"><div class="bars" id="topLp"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="LP名・商材・業種で検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>LP</th><th>業種</th><th class="r">PV</th><th class="r">CV</th><th class="r">CV率</th><th>更新日</th><th>状態</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- CREATE -->
+      <section class="view" id="v-create">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>商材・サービス名</label><input id="cName" placeholder="例：訪問介護サービス すこやか"></div>
+            <div class="fg"><label>業種</label>
+              <select id="cType"></select></div>
+            <div class="fg"><label>ターゲット顧客</label><input id="cTarget" placeholder="例：在宅介護に悩むご家族"></div>
+            <div class="fg"><label>強み・特徴（カンマ区切りでOK）</label>
+              <textarea id="cMerit" placeholder="例：24時間対応, 経験10年以上のスタッフ, 大分市内最短30分"></textarea></div>
+            <div class="fg"><label>トーン</label>
+              <div class="toneopts" id="cTone"></div></div>
+            <div class="aihint" id="cAiHint">✨ AIが業種に合わせた構成テンプレートを提案しました</div>
+            <div class="linkrow" style="margin-top:16px">
+              <button class="btn primary" id="cGen" style="flex:1;justify-content:center">⚡ AIでLPを生成</button>
+              <button class="btn" id="cSample">サンプル</button>
+            </div>
+          </div>
+          <div>
+            <div class="lpmock">
+              <div class="lpbar"><div class="dots"><span style="background:#ff5f56"></span><span style="background:#ffbd2e"></span><span style="background:#27c93f"></span></div>
+                <div class="url" id="cUrl">waza-lp.jp/preview</div></div>
+              <div class="lpbody" id="cPreview">
+                <div class="lp-empty" id="cEmpty">← 左で商材を入力し「AIでLPを生成」を押すと、<br>ここに完成イメージが組み上がります。</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AB ANALYSIS -->
+      <section class="view" id="v-ab">
+        <div class="toolbar">
+          <div class="search" style="flex:0 0 auto;min-width:240px">
+            <select id="abSel" style="width:100%;padding:10px 13px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)"></select>
+          </div>
+          <div style="margin-left:auto;color:var(--ink-3);font-size:12.5px" id="abPeriod">検証期間：直近14日</div>
+        </div>
+        <div class="ab-grid" id="abGrid"></div>
+        <div class="panel" style="margin-top:16px">
+          <div class="ph"><h3>AIの分析コメント</h3><span class="st pub" style="margin-left:auto">統計的有意</span></div>
+          <div class="pb" id="abComment" style="font-size:13px;color:var(--ink-2);line-height:1.7"></div>
+        </div>
+      </section>
+
+      <!-- PUBLISH -->
+      <section class="view" id="v-pub">
+        <div class="pub-grid">
+          <div class="pubcard">
+            <div style="font-size:14px;font-weight:800;margin-bottom:4px">公開するLPを選択</div>
+            <div style="font-size:12px;color:var(--ink-3);margin-bottom:12px">独自ドメイン・SSL・スマホ最適化は自動で適用されます。</div>
+            <div class="fg"><label>対象LP</label><select id="pubSel"></select></div>
+            <div class="urlbox"><span style="color:var(--ink-3)">🔗</span><span class="u" id="pubUrl">—</span>
+              <button class="btn" id="pubCopy" style="padding:6px 11px">コピー</button></div>
+            <div style="margin-top:16px">
+              <div class="setrow"><div class="sl"><b>独自ドメインで公開</b><span>waza-lp.jp のサブドメイン</span></div><div class="toggle on" data-set="dom"></div></div>
+              <div class="setrow"><div class="sl"><b>SSL（暗号化）</b><span>https:// で安全に配信</span></div><div class="toggle on" data-set="ssl"></div></div>
+              <div class="setrow"><div class="sl"><b>検索エンジンに登録</b><span>SEO用メタ情報を自動生成</span></div><div class="toggle on" data-set="seo"></div></div>
+              <div class="setrow"><div class="sl"><b>アクセス解析</b><span>PV・CVを自動計測</span></div><div class="toggle on" data-set="ana"></div></div>
+            </div>
+            <button class="btn primary" id="pubGo" style="width:100%;justify-content:center;margin-top:16px">🚀 このLPを公開する</button>
+          </div>
+          <div class="pubcard">
+            <div style="font-size:14px;font-weight:800;margin-bottom:4px">公開ステータス</div>
+            <div style="font-size:12px;color:var(--ink-3);margin-bottom:12px">QRコードはチラシや名刺にそのまま使えます。</div>
+            <div style="text-align:center"><div class="qr"></div>
+              <div style="font-size:11px;color:var(--ink-3);margin-top:8px">スマホで読み取ってプレビュー</div></div>
+            <div style="margin-top:16px">
+              <div class="ab-metric"><span class="ml">公開状態</span><span class="mv" id="pubState" style="color:var(--green)">公開中</span></div>
+              <div class="ab-metric"><span class="ml">最終公開</span><span class="mv" id="pubLast">本日 10:42</span></div>
+              <div class="ab-metric"><span class="ml">表示速度スコア</span><span class="mv" style="color:var(--green)">98 / 100</span></div>
+              <div class="ab-metric"><span class="ml">スマホ最適化</span><span class="mv" style="color:var(--green)">合格</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI GENERATE -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">商材情報から、売れるLPの文章と構成を自動生成</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">商材は <b>「訪問介護サービス すこやか」</b>。キャッチコピー・特徴・お客様の声・FAQまで、AIが一気に書き上げます。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで生成する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">3日</div>
+              <ul>
+                <li>📝 構成案をゼロから考える</li>
+                <li>✍️ 制作会社にコピー作成を依頼</li>
+                <li>💸 外注費 15〜40万円・修正に往復</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 業種に合った構成を自動設計</li>
+                <li>📄 キャッチ・本文・声・FAQを生成</li>
+                <li>✨ そのまま公開・修正も即反映</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- before/after copy compare -->
+          <div class="copy-cmp" id="copyCmp">
+            <div class="cc cbefore">
+              <span class="cl">😓 ありがちな見出し</span>
+              <div class="ch">訪問介護サービス すこやかのご案内</div>
+              <div class="cp" style="color:#7a8499">サービス内容や料金については、お気軽にお問い合わせください。スタッフ一同、心よりお待ちしております。</div>
+            </div>
+            <div class="arrow">→</div>
+            <div class="cc cafter">
+              <span class="cl">⚡ AIが生成した見出し</span>
+              <div class="ch" id="ccHead">—</div>
+              <div class="cp" id="ccBody">—</div>
+            </div>
+          </div>
+
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ 生成されたLPの構成（セクション）</div>
+            <div id="genItems"></div>
+            <div class="linkrow" style="margin-top:14px">
+              <button class="btn primary" id="aiToPreview" style="justify-content:center">👀 プレビューで確認</button>
+              <button class="btn" id="aiToList">LP一覧に保存</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const TYPES=['医療','介護','青果卸','建設','飲食','運送','農業','士業','美容','小売'];
+const TONES=['誠実・信頼','親しみ・やさしい','プロ・力強い','高級・上質'];
+
+const TODAY=new Date();
+let SEED=4081;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+const STATUSES=['pub','pub','test','draft','pub','stop','test'];
+
+/* seed LPs */
+const LPNAMES=[
+  ['訪問介護サービス すこやか','介護'],['大分中央クリニック 採用','医療'],['豊後おおいた青果 定期便','青果卸'],
+  ['匠建設 注文住宅','建設'],['海鮮居酒屋 大分港','飲食'],['まごころ運送 法人向け','運送'],
+  ['おおいた完熟トマト農園','農業'],['都町ひまわり税理士事務所','士業'],['美容室 Lumiere 別府','美容'],
+  ['みらい歯科 矯正特設','医療'],['つくし介護センター 入居相談','介護'],['大分海鮮市場 ふるさと便','飲食'],
+];
+let lps=[];
+(function seed(){
+  for(let i=0;i<LPNAMES.length;i++){
+    const pv=1200+Math.floor(rnd()*14000);
+    const cvr=(1.4+rnd()*7.6);
+    const cv=Math.round(pv*cvr/100);
+    const d=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-Math.floor(rnd()*40));
+    let st=pick(STATUSES);
+    const ab=rnd()>0.55;
+    lps.push({id:'LP-'+(2026+i),name:LPNAMES[i][0],type:LPNAMES[i][1],pv,cv,cvr:+cvr.toFixed(1),upd:d,status:st,ab});
+  }
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const num=n=>Math.round(n).toLocaleString();
+const fmtD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STLABEL={pub:'公開中',test:'AB検証中',draft:'下書き',stop:'停止中'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]}</span>`;}
+function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','公開中LPの成果サマリー'],list:['LP一覧','作成したLPを管理します'],
+  create:['新規作成','商材を入力するとAIがLPを組み上げます'],ab:['AB分析','2パターンを比べて勝ちパターンを判定'],
+  pub:['公開','ワンクリックでLPを世界へ公開します'],ai:['AI生成','商材情報からLPの文章と構成を自動生成']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn primary" onclick="go(\'create\')">＋ 新規作成</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI生成</button><button class="btn primary" onclick="go(\'create\')">＋ 新規作成</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='ab')renderAb();
+  if(v==='pub')renderPub();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const pubs=lps.filter(l=>l.status==='pub'||l.status==='test');
+  const totalPv=lps.reduce((s,l)=>s+l.pv,0);
+  const totalCv=lps.reduce((s,l)=>s+l.cv,0);
+  const avgCvr=(totalCv/totalPv*100);
+  $('kpis').innerHTML=`
+    ${kpi('#7c3aed','公開中のLP',pubs.length+'<small>件</small>',lps.length+'件 作成','up','+3件 今月')}
+    ${kpi('#16b877','平均CV率',avgCvr.toFixed(1)+'<small>%</small>','','up','前月比 +1.2pt')}
+    ${kpi('#ec4899','今月の総PV',num(totalPv),'','up','+18%')}
+    ${kpi('#e3941f','平均作成時間','42<small>秒</small>',' ','up','外注比 99%短縮')}`;
+  // trend (PV)
+  const months=[];for(let k=5;k>=0;k--){const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1);months.push(d);}
+  const base=[18,26,31,44,52,68];
+  const sums=months.map((m,i)=>Math.round((base[i]+rnd()*6)*1000));
+  const mx=Math.max(...sums,1);
+  $('trendBars').innerHTML=months.map((m,i)=>`
+    <div class="bar-row"><span class="mlabel">${m.getMonth()+1}月</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(sums[i]/mx*100)}"></div></div>
+      <span class="mval">${num(sums[i])}</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // activity
+  const acts=[
+    {i:'🎉',c:'#e6f8f0',t:'「訪問介護サービス すこやか」から 資料請求が3件',m:'12分前'},
+    {i:'🚀',c:'#f1eafe',t:'「おおいた完熟トマト農園」を公開しました',m:'1時間前'},
+    {i:'⚡',c:'#f1eafe',t:'AI生成で「匠建設 注文住宅」のLPを作成（42秒）',m:'今日 9:30'},
+    {i:'🧪',c:'#fdf3e2',t:'「大分中央クリニック 採用」のAB検証でBが勝利',m:'今日 8:50'},
+    {i:'📈',c:'#e6f8f0',t:'「海鮮居酒屋 大分港」のCV率が4.8%→6.1%に改善',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${a.t}</div><div class="am">${a.m}</div></div></div>`).join('');
+  // funnel
+  const visits=totalPv;const scroll=Math.round(visits*0.62);const cta=Math.round(visits*0.18);const conv=totalCv;
+  const fdata=[['訪問',visits,100],['本文まで閲覧',scroll,Math.round(scroll/visits*100)],['CTAクリック',cta,Math.round(cta/visits*100)],['コンバージョン',conv,Math.round(conv/visits*100)]];
+  $('funnel').innerHTML=fdata.map(f=>`<div class="fn-row"><span class="fl">${f[0]}</span>
+    <div class="fn-track"><div class="fn-fill" style="width:0" data-w="${f[2]}">${f[2]}%</div></div>
+    <span class="fv">${num(f[1])}</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#funnel .fn-fill').forEach(b=>b.style.width=Math.max(b.dataset.w,8)+'%'),80);
+  // top LP by cvr
+  const top=[...lps].sort((a,b)=>b.cvr-a.cvr).slice(0,5);const tmx=Math.max(...top.map(t=>t.cvr),1);
+  $('topLp').innerHTML=top.map(t=>`<div class="bar-row"><span class="mlabel" style="width:auto;grid-column:1;font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.name.slice(0,7))}</span>
+    <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(t.cvr/tmx*100)}"></div></div>
+    <span class="mval">${t.cvr}%</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#topLp .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),100);
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ LIST ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['pub','公開中'],['test','AB検証中'],['draft','下書き'],['stop','停止中']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=lps.filter(l=>filterStatus==='all'||l.status===filterStatus)
+    .filter(l=>!q||(l.name+l.type+l.id).toLowerCase().includes(q))
+    .sort((a,b)=>b.upd-a.upd);
+  $('listRows').innerHTML=rows.length?rows.map(l=>`<tr onclick="openLp('${esc(l.id)}')">
+    <td><div style="display:flex;align-items:center;gap:10px"><div class="thumb">LP</div><div><b>${esc(l.name)}</b><div style="font-size:11px;color:var(--ink-3)" class="mono">${esc(l.id)}</div></div></div></td>
+    <td><span class="st" style="background:var(--soft);color:var(--ink-2)">${esc(l.type)}</span></td>
+    <td class="r tnum">${num(l.pv)}</td><td class="r tnum">${num(l.cv)}</td>
+    <td class="r tnum"><b style="color:${l.cvr>=5?'var(--green)':l.cvr>=3?'var(--ink)':'var(--amber)'}">${l.cvr}%</b></td>
+    <td style="color:var(--ink-2)">${fmtD(l.upd)}</td><td>${stBadge(l.status)}</td></tr>`).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当するLPがありません</td></tr>';
+}
+window.openLp=id=>{const l=lps.find(x=>x.id===id);if(l){$('abSel').value=id;go('ab');}};
+$('q').addEventListener('input',renderList);
+
+/* ============ AB ANALYSIS ============ */
+function renderAbSelect(){
+  const cand=lps.filter(l=>l.ab||l.status==='test');
+  const list=cand.length?cand:lps.slice(0,5);
+  $('abSel').innerHTML=list.map(l=>`<option value="${esc(l.id)}">${esc(l.name)}</option>`).join('');
+  $('navAb').textContent=lps.filter(l=>l.status==='test').length;
+}
+function renderAb(){
+  const id=$('abSel').value||$('abSel').options[0]?.value;
+  const l=lps.find(x=>x.id===id)||lps[0];
+  // derive A/B numbers
+  const baseCvr=l.cvr;const pvA=Math.round(l.pv*0.5),pvB=l.pv-pvA;
+  const cvrA=+(baseCvr*0.86).toFixed(1);const cvrB=+(baseCvr*1.14).toFixed(1);
+  const cvA=Math.round(pvA*cvrA/100),cvB=Math.round(pvB*cvrB/100);
+  const winB=cvrB>=cvrA;
+  const cards=[
+    {lab:'A',col:'#8a94a6',head:'現行パターン',sub:'既存の見出し',pv:pvA,cv:cvA,cvr:cvrA,bounce:'58%',stay:'0:41',win:!winB},
+    {lab:'B',col:'#7c3aed',head:'AI改善パターン',sub:'AIが書き換えた見出し',pv:pvB,cv:cvB,cvr:cvrB,bounce:'46%',stay:'1:12',win:winB},
+  ];
+  $('abGrid').innerHTML=cards.map(c=>`
+    <div class="ab-card ${c.win?'win':''}">
+      ${c.win?'<div class="winbadge">👑 勝ちパターン</div>':''}
+      <div class="abh"><div class="lab" style="background:${c.col}">${c.lab}</div>
+        <div><b>${c.head}</b><div style="font-size:11px;color:var(--ink-3)">${c.sub}</div></div></div>
+      <div class="ab-metric"><span class="ml">PV</span><span class="mv tnum">${num(c.pv)}</span></div>
+      <div class="ab-metric"><span class="ml">CV数</span><span class="mv tnum">${num(c.cv)}</span></div>
+      <div class="ab-metric"><span class="ml">CV率</span><span class="mv tnum" style="color:${c.win?'var(--green)':'var(--ink)'}">${c.cvr}%</span></div>
+      <div class="ab-metric"><span class="ml">直帰率</span><span class="mv tnum">${c.bounce}</span></div>
+      <div class="ab-metric"><span class="ml">平均滞在</span><span class="mv tnum">${c.stay}</span></div>
+    </div>`).join('');
+  const lift=((cvrB-cvrA)/cvrA*100);
+  $('abComment').innerHTML=`AIが書き換えた <b>パターンB</b> は、現行 <b>パターンA</b> に対しCV率が <b style="color:var(--green)">+${lift.toFixed(0)}%</b>（${cvrA}% → ${cvrB}%）改善しました。
+    直帰率も58%→46%に下がっており、見出しを「課題への共感」型に変えたことが効いています。<br>
+    👉 提案：<b>パターンBを本番に採用</b>すると、このまま月間で約 <b>${num(Math.round((cvB-cvA)/pvB*pvB*1))}件</b> のCV増が見込めます。「公開」画面から切り替えできます。`;
+}
+$('abSel').addEventListener('change',renderAb);
+
+/* ============ PUBLISH ============ */
+function slugify(name){
+  const map={'医療':'clinic','介護':'care','青果卸':'vege','建設':'build','飲食':'food','運送':'logi','農業':'farm','士業':'legal','美容':'beauty','小売':'shop'};
+  const l=lps.find(x=>x.name===name);
+  return (map[l?.type]||'lp')+'-'+(l?l.id.toLowerCase().replace('lp-',''):'demo');
+}
+function renderPubSelect(){
+  $('pubSel').innerHTML=lps.map(l=>`<option value="${esc(l.id)}">${esc(l.name)}</option>`).join('');
+}
+function renderPub(){
+  const id=$('pubSel').value||$('pubSel').options[0]?.value;
+  const l=lps.find(x=>x.id===id)||lps[0];
+  $('pubUrl').textContent='https://waza-lp.jp/'+slugify(l.name);
+  const live=l.status==='pub'||l.status==='test';
+  $('pubState').textContent=live?'公開中':'未公開';
+  $('pubState').style.color=live?'var(--green)':'var(--ink-3)';
+  $('pubLast').textContent=live?fmtD(l.upd)+' 10:42':'—';
+}
+$('pubSel').addEventListener('change',renderPub);
+$('pubCopy').addEventListener('click',()=>{const u=$('pubUrl').textContent;
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(u).catch(()=>{});}
+  showToast('URLをコピーしました');});
+document.querySelectorAll('.toggle').forEach(t=>t.addEventListener('click',()=>{t.classList.toggle('on');
+  showToast((t.classList.contains('on')?'有効化':'無効化')+'しました');}));
+$('pubGo').addEventListener('click',async()=>{
+  const btn=$('pubGo');btn.textContent='🚀 公開処理中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,850));
+  const id=$('pubSel').value;const l=lps.find(x=>x.id===id);if(l)l.status='pub';
+  btn.textContent='🚀 このLPを公開する';btn.disabled=false;
+  renderPub();showToast((l?l.name:'LP')+' を公開しました 🎉');
+});
+
+/* ============ CREATE ============ */
+function renderTypeSelect(){$('cType').innerHTML='<option value="">選択してください</option>'+TYPES.map(t=>`<option>${t}</option>`).join('');}
+let curTone=TONES[0];
+function renderTones(){
+  $('cTone').innerHTML=TONES.map(t=>`<button class="to ${t===curTone?'on':''}" data-t="${esc(t)}">${esc(t)}</button>`).join('');
+  $('cTone').querySelectorAll('.to').forEach(b=>b.onclick=()=>{curTone=b.dataset.t;renderTones();});
+}
+$('cType').addEventListener('change',()=>{
+  if($('cType').value){$('cAiHint').classList.add('show');setTimeout(()=>$('cAiHint').classList.remove('show'),2200);}
+});
+$('cName').addEventListener('input',()=>{$('cUrl').textContent='waza-lp.jp/preview';});
+
+function buildLpHtml(name,type,target,merits,tone){
+  const heads={
+    '医療':['その不調、ひとりで悩まないで。','地域に根ざした、あなたの「かかりつけ」。'],
+    '介護':['ご家族の「もう限界」に、寄り添うプロがいます。','介護のお悩み、まず話すことから始めませんか。'],
+    '青果卸':['朝採れの鮮度を、そのまま厨房へ。','仕入れの手間とコスト、まとめて解決。'],
+    '建設':['「建てて終わり」じゃない、一生のお付き合い。','後悔しない家づくり、はじめの一歩を。'],
+    '飲食':['今夜、ちょっと贅沢しませんか。','地元の旬を、いちばん美味しい瞬間で。'],
+    '運送':['「運ぶ」を、もっとスマートに。','急ぎの荷物も、まかせて安心。'],
+    '農業':['土の力で育てた、本物の味を食卓へ。','顔の見える農家から、まっすぐ届けます。'],
+    '士業':['「気づいたときには手遅れ」を防ぎます。','むずかしい手続き、ぜんぶおまかせください。'],
+    '美容':['なりたい自分に、いちばん近い場所。','髪の悩み、今日で卒業しませんか。'],
+    '小売':['探していたもの、ここにあります。','毎日が、ちょっと豊かになる。'],
+  };
+  const hh=(heads[type]||['お客様の「困った」を、まるごと解決。','選ばれ続けるには、理由があります。']);
+  const head=tone.includes('やさしい')?hh[0]:hh[1];
+  const sub=`${target||'お客様'}のための「${name||'当サービス'}」。${type||''}のプロが、あなたのお悩みに本気で向き合います。`;
+  const mlist=(merits&&merits.length?merits:['豊富な実績','安心の料金体系','地域密着のサポート']);
+  const ficons=['✅','⭐','🛡️','⚡','🤝','📞','🏆','💡','🌿'];
+  const feats=mlist.slice(0,3).map((m,i)=>({i:ficons[i%ficons.length],b:m,s:`${m}だから、はじめての方にも選ばれています。`}));
+  while(feats.length<3){const def=['豊富な実績','安心の料金体系','地域密着サポート'];feats.push({i:ficons[feats.length],b:def[feats.length],s:'多くのお客様にご支持いただいています。'});}
+  const voices=[
+    {n:`${type||''}を利用・40代`,t:`「迷っていたのが嘘みたい。最初の不安が一気に消えました。${name||'こちら'}にお願いして本当によかったです。」`},
+    {n:`${target||'利用者'}・50代`,t:'「対応がとにかく丁寧で早い。家族みんなが安心できました。知人にも紹介しています。」'},
+  ];
+  const faqs=[
+    {q:'はじめてでも大丈夫ですか？',a:'はい。専門スタッフが一から丁寧にご案内しますので、ご安心ください。'},
+    {q:'料金はどのくらいですか？',a:'ご状況に合わせた明確なお見積りを無料でご提示します。追加費用は事前にご説明します。'},
+    {q:'相談だけでも可能ですか？',a:'もちろんです。お電話・フォームから、お気軽にお問い合わせください。'},
+  ];
+  return `
+    <div class="lp-hero">
+      <span class="ey">${esc(type||'PR')} ／ ${esc(tone)}</span>
+      <h2>${esc(head)}</h2>
+      <p>${esc(sub)}</p>
+      <span class="lp-cta">無料で相談してみる →</span>
+    </div>
+    <div class="lp-sec">
+      <span class="struct-tag">📐 セクション：特徴・強み</span>
+      <h3>選ばれる3つの理由</h3>
+      <div class="lead">${esc(name||'当サービス')}が${esc(target||'お客様')}に支持される理由</div>
+      <div class="lp-feats">
+        ${feats.map(f=>`<div class="lp-feat"><div class="fi">${f.i}</div><b>${esc(f.b)}</b><span>${esc(f.s)}</span></div>`).join('')}
+      </div>
+    </div>
+    <div class="lp-sec">
+      <span class="struct-tag">📐 セクション：お客様の声</span>
+      <h3>ご利用者さまの声</h3>
+      <div class="lead">実際にご利用いただいた方の感想です</div>
+      ${voices.map(v=>`<div class="lp-voice"><div class="va">${esc(v.n.slice(0,1))}</div><div><div class="vt">${esc(v.t)}</div><div class="vn">${esc(v.n)}</div></div></div>`).join('')}
+    </div>
+    <div class="lp-sec">
+      <span class="struct-tag">📐 セクション：よくある質問</span>
+      <h3>よくあるご質問</h3>
+      <div class="lead">ご不安なことは、お気軽にどうぞ</div>
+      ${faqs.map(f=>`<div class="lp-faq"><b>Q. ${esc(f.q)}</b><span>A. ${esc(f.a)}</span></div>`).join('')}
+    </div>
+    <div class="lp-final">
+      <h3>まずは無料相談から。</h3>
+      <p>${esc(name||'当サービス')}が、${esc(target||'あなた')}の力になります。お気軽にご連絡ください。</p>
+      <div style="margin-top:16px"><span class="lp-cta">今すぐ問い合わせる →</span></div>
+    </div>`;
+}
+function getMerits(){return ($('cMerit').value||'').split(/[,、\n]/).map(s=>s.trim()).filter(Boolean);}
+
+$('cGen').addEventListener('click',async()=>{
+  const name=$('cName').value.trim();const type=$('cType').value;
+  if(!name||!type){showToast('商材名と業種を入力してください');return;}
+  const btn=$('cGen');btn.textContent='⚡ AIが執筆中…';btn.disabled=true;
+  $('cPreview').innerHTML='<div class="lp-empty" id="cEmpty">⚙️ AIがコピーと構成を生成しています…</div>';
+  await new Promise(r=>setTimeout(r,1000));
+  const html=buildLpHtml(name,type,$('cTarget').value.trim(),getMerits(),curTone);
+  $('cPreview').innerHTML=html;
+  $('cUrl').textContent='waza-lp.jp/'+ (({'医療':'clinic','介護':'care','青果卸':'vege','建設':'build','飲食':'food','運送':'logi','農業':'farm','士業':'legal','美容':'beauty','小売':'shop'})[type]||'lp') +'-new';
+  btn.textContent='⚡ AIでLPを生成';btn.disabled=false;
+  showToast('LPを生成しました。プレビューをご確認ください');
+});
+$('cSample').addEventListener('click',()=>{
+  $('cName').value='訪問介護サービス すこやか';$('cType').value='介護';
+  $('cTarget').value='在宅介護に悩むご家族';
+  $('cMerit').value='24時間365日対応, 経験10年以上の有資格スタッフ, 大分市内最短30分でお伺い';
+  curTone='親しみ・やさしい';renderTones();
+  $('cGen').click();
+});
+
+/* ============ AI GENERATE ============ */
+const AI_SECTIONS=['ファーストビュー（キャッチコピー）','課題への共感パート','選ばれる3つの理由','お客様の声（2件）','料金・サービス内容','よくある質問（FAQ）','申し込みフォーム導線（CTA）'];
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 生成中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent=Math.min(s*6,42)+'秒';},90);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);$('baAfterT').textContent='42秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // copy compare reveal
+  $('ccHead').textContent='ご家族の「もう限界」に、寄り添うプロがいます。';
+  $('ccBody').textContent='大分市内最短30分・24時間365日対応。在宅介護に悩むご家族を、経験10年以上の有資格スタッフが本気で支えます。まずは無料相談から。';
+  $('copyCmp').classList.add('show');
+  // section list
+  $('genItems').innerHTML=AI_SECTIONS.map((sec,i)=>`<div class="gen-item" data-i="${i}"><span class="ck">✓</span><b style="flex:1">${esc(sec)}</b><span style="color:var(--ink-3);font-size:12px">生成完了</span></div>`).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,170));items[i].classList.add('in');}
+  btn.disabled=false;btn.textContent='⚡ もう一度生成';
+  showToast(items.length+'セクションのLPを生成しました');
+});
+$('aiToPreview').addEventListener('click',()=>{
+  $('cName').value='訪問介護サービス すこやか';$('cType').value='介護';
+  $('cTarget').value='在宅介護に悩むご家族';
+  $('cMerit').value='24時間365日対応, 経験10年以上の有資格スタッフ, 大分市内最短30分でお伺い';
+  curTone='親しみ・やさしい';renderTones();
+  go('create');
+  $('cPreview').innerHTML=buildLpHtml($('cName').value,'介護',$('cTarget').value,getMerits(),curTone);
+  $('cUrl').textContent='waza-lp.jp/care-new';
+});
+$('aiToList').addEventListener('click',()=>{
+  const now=new Date();const id='LP-'+(2026+lps.length);
+  lps.unshift({id,name:'訪問介護サービス すこやか（AI生成）',type:'介護',pv:0,cv:0,cvr:0,upd:now,status:'draft',ab:false});
+  renderPubSelect();renderAbSelect();
+  showToast('LP一覧に下書きとして保存しました');
+  setTimeout(()=>go('list'),700);
+});
+
+/* ============ INIT ============ */
+renderTypeSelect();renderTones();renderChips();renderPubSelect();renderAbSelect();renderPub();renderDash();
+$('navAb').textContent=lps.filter(l=>l.status==='test').length;
+</script>
+</body>
+</html>

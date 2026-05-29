@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜出荷管理マシン（農業・青果 出荷最適化システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f8f4;--card:#ffffff;--soft:#eef3ec;--line:#e4ece0;--line-2:#d4dfce;
+  --ink:#1d2b22;--ink-2:#516153;--ink-3:#869384;
+  --brand:#2e9e57;--brand-dk:#1f7a40;--brand-soft:#e7f6ed;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--gold:#d4a017;
+  --sb:#10241a;--sb-2:#173524;--sb-ink:#c2d4c6;--sb-ink-2:#7d9384;
+  --shadow:0 1px 2px rgba(16,40,24,.04),0 4px 16px rgba(16,40,24,.05);
+  --shadow-lg:0 18px 50px rgba(16,40,24,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#7be29a,#37e2b8,#d4e364,#7be29a);
+  display:grid;place-items:center;color:#04140a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(46,158,87,.4)}
+.nav a .badge{margin-left:auto;background:var(--amber);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px;flex-wrap:wrap}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+.panel + .panel,.cols + .panel,.panel + .cols{margin-top:16px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:62px 1fr 90px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* grade donut */
+.grade-wrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.donut{--p:0;--ga:0;--gb:0;--gc:0;width:128px;height:128px;border-radius:50%;flex-shrink:0;
+  background:conic-gradient(var(--gold) calc(var(--ga)*1%),var(--brand) 0 calc((var(--ga)+var(--gb))*1%),var(--sky) 0 calc((var(--ga)+var(--gb)+var(--gc))*1%),#c2d4c6 0);
+  display:grid;place-items:center;position:relative;transition:all .8s}
+.donut::after{content:"";position:absolute;width:84px;height:84px;border-radius:50%;background:var(--card)}
+.donut .dc{position:relative;z-index:1;text-align:center}
+.donut .dc b{font-size:20px;font-weight:900;display:block;line-height:1}
+.donut .dc span{font-size:10.5px;color:var(--ink-3);font-weight:700}
+.legend{display:flex;flex-direction:column;gap:8px;font-size:12.5px}
+.legend .lg{display:flex;align-items:center;gap:8px}
+.legend .lg .sw{width:11px;height:11px;border-radius:3px}
+.legend .lg b{font-weight:800}
+.legend .lg span{color:var(--ink-3);margin-left:auto;padding-left:14px;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.shipped{background:var(--green-soft);color:var(--green)}
+.st.ready{background:var(--brand-soft);color:var(--brand)}
+.st.picking{background:var(--amber-soft);color:var(--amber)}
+.st.hold{background:var(--red-soft);color:var(--red)}
+.st.harvested{background:var(--soft);color:var(--ink-3)}
+
+/* grade badge */
+.gd{display:inline-flex;align-items:center;justify-content:center;min-width:26px;font-size:11.5px;font-weight:900;padding:3px 9px;border-radius:7px}
+.gd.s{background:#fbf0d0;color:#a87a08}
+.gd.a{background:var(--brand-soft);color:var(--brand-dk)}
+.gd.b{background:#e2f0f5;color:#0d7e8c}
+.gd.c{background:var(--soft);color:var(--ink-2)}
+
+/* create / form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--brand)}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* preview card (slip) */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:30px 32px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.pv-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}
+.pv-title{font-size:23px;font-weight:900;letter-spacing:.22em;color:var(--brand-dk);border-bottom:3px solid var(--brand-dk);padding-bottom:5px}
+.pv-meta{text-align:right;font-size:11.5px;color:var(--ink-2)}
+.pv-meta .no{font-family:'Orbitron';color:var(--ink);font-weight:700}
+.pv-cust{font-size:18px;font-weight:900;border-bottom:1.5px solid #1a2233;display:inline-block;min-width:200px;padding-bottom:5px;margin-bottom:8px}
+.pv-total{background:var(--soft);border-left:5px solid var(--brand-dk);border-radius:6px;padding:13px 18px;margin:16px 0;display:flex;justify-content:space-between;align-items:center}
+.pv-total .a{font-family:'Orbitron';font-size:22px;font-weight:700;color:var(--brand-dk)}
+table.pv{width:100%;border-collapse:collapse;margin-bottom:12px}
+table.pv th{background:var(--brand-dk);color:#fff;font-size:11px;padding:8px 10px;text-align:left}
+table.pv th.r,table.pv td.r{text-align:right}
+table.pv td{padding:8px 10px;border-bottom:1px solid var(--line);font-size:12px}
+
+/* AI generate / before-after */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ai-inputs{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0 4px}
+@media(max-width:680px){.ai-inputs{grid-template-columns:1fr}}
+.ai-card{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--soft)}
+.ai-card h4{font-size:12px;font-weight:800;color:var(--ink-2);margin-bottom:10px;display:flex;align-items:center;gap:7px}
+.ai-card .row{display:flex;justify-content:space-between;font-size:12.5px;padding:4px 0;color:var(--ink-2)}
+.ai-card .row b{color:var(--ink);font-weight:800}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s;flex-wrap:wrap}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+.gen-item .delta{font-size:11px;font-weight:800;color:var(--green);background:var(--green-soft);padding:2px 8px;border-radius:6px}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#7be29a,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(123,226,154,.55)}}
+
+/* market cards */
+.mkt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:980px){.mkt-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.mkt-grid{grid-template-columns:1fr}}
+.mkt{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
+.mkt .h{display:flex;align-items:center;gap:9px;margin-bottom:12px}
+.mkt .h .ico{width:34px;height:34px;border-radius:9px;background:var(--brand-soft);display:grid;place-items:center;font-size:16px}
+.mkt .h b{font-size:14px;font-weight:800}
+.mkt .h small{display:block;font-size:11px;color:var(--ink-3)}
+.mkt .stat{display:flex;justify-content:space-between;padding:6px 0;font-size:12.5px;border-top:1px solid var(--line);color:var(--ink-2)}
+.mkt .stat b{color:var(--ink);font-weight:800}
+
+/* price list */
+.price-trend{font-size:11.5px;font-weight:800;padding:2px 8px;border-radius:6px}
+.price-trend.up{background:var(--green-soft);color:var(--green)}
+.price-trend.down{background:var(--red-soft);color:var(--red)}
+.price-trend.flat{background:var(--soft);color:var(--ink-3)}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.note{font-size:11.5px;color:var(--ink-3);margin-top:10px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">出荷管理マシン<small>技マシン｜農業・青果 出荷最適化</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">📦</span>出荷一覧</a>
+      <a data-v="grade"><span class="i">🥬</span>等級選別<span class="badge" id="navPicking">0</span></a>
+      <a data-v="market"><span class="i">🏪</span>市場別</a>
+      <a data-v="price"><span class="i">💴</span>価格</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI最適出荷</a>
+    </nav>
+    <div class="org">
+      <div class="av">豊</div>
+      <div><b>豊後おおいた農園</b><span>デモ環境 / 出荷管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。収穫量・市況・取引市場はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">本日の出荷状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>品目別 本日の出荷量</h3><span class="more">本日</span></div>
+            <div class="pb"><div class="bars" id="cropBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>等級の構成比</h3></div>
+            <div class="pb">
+              <div class="grade-wrap">
+                <div class="donut" id="gradeDonut"><div class="dc"><b id="gradeTopPct">0%</b><span>秀＋優</span></div></div>
+                <div class="legend" id="gradeLegend"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>出荷先市場の内訳</h3><span class="more">本日</span></div>
+            <div class="pb"><div class="bars" id="marketBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="ロット番号・品目・出荷先で検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>ロット番号</th><th>品目</th><th>等級</th><th class="r">数量</th><th>出荷先市場</th><th class="r">想定単価</th><th class="r">想定売上</th><th>状態</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+        <div class="note">※ ロットをクリックすると詳細を表示します（デモでは状態を次の段階へ進めます）。</div>
+      </section>
+
+      <!-- GRADE / 等級選別 -->
+      <section class="view" id="v-grade">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>品目</label><select id="gCrop"></select></div>
+            <div class="fg"><label>収穫ロット（kg）</label><input id="gQty" type="number" min="0" placeholder="例：500"></div>
+            <div class="fg"><label>選別補助 AIカメラ画像（デモ）</label>
+              <select id="gMode">
+                <option value="auto">AIカメラで自動判定（推奨）</option>
+                <option value="manual">手動入力</option>
+              </select></div>
+            <div class="linkrow" style="margin-top:8px">
+              <button class="btn primary" id="gRun" style="flex:1;justify-content:center">🥬 AIで等級選別する</button>
+              <button class="btn" id="gSample">サンプル</button>
+            </div>
+            <div class="aihint" id="gHint">✨ AIカメラが傷・色・サイズから等級を自動振り分けしました</div>
+            <div class="note">秀＝最高品質 / 優＝高品質 / 良＝標準 / 加工＝加工用。等級が上がるほど単価が高くなります。</div>
+          </div>
+          <div>
+            <div class="panel">
+              <div class="ph"><h3>選別結果</h3><span class="more" id="gResultMeta">未選別</span></div>
+              <div class="pb">
+                <div class="grade-wrap" style="margin-bottom:18px">
+                  <div class="donut" id="gDonut"><div class="dc"><b id="gDonutPct">—</b><span>秀＋優</span></div></div>
+                  <div class="legend" id="gResultLegend"><div style="color:var(--ink-3);font-size:12.5px">左で品目と収穫量を入れて「AIで等級選別する」を押してください。</div></div>
+                </div>
+                <table class="tbl" style="box-shadow:none">
+                  <thead><tr><th>等級</th><th class="r">数量</th><th class="r">想定単価</th><th class="r">想定売上</th><th>推奨出荷先</th></tr></thead>
+                  <tbody id="gRows"><tr><td colspan="5" class="empty-cell">選別待ち</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MARKET / 市場別 -->
+      <section class="view" id="v-market">
+        <div class="mkt-grid" id="mktCards"></div>
+        <div class="panel" style="margin-top:18px">
+          <div class="ph"><h3>市場別 出荷ロット</h3></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>出荷先市場</th><th>品目</th><th>等級</th><th class="r">数量</th><th class="r">想定単価</th><th class="r">想定売上</th></tr></thead>
+              <tbody id="mktRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- PRICE / 価格 -->
+      <section class="view" id="v-price">
+        <div class="kpis" id="priceKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>本日の市況（卸売価格・1kgあたり）</h3>
+            <button class="btn green" id="priceRefresh" style="margin-left:auto">🔄 市況を最新に更新</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>品目</th><th class="r">大分市場</th><th class="r">福岡市場</th><th class="r">直売所</th><th class="r">本日の最高値市場</th><th>前日比</th></tr></thead>
+              <tbody id="priceRows"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="note">※ 市況は架空のサンプルです。「市況を最新に更新」で当日の変動を疑似的に反映します。</div>
+      </section>
+
+      <!-- AI 最適出荷 -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div style="min-width:200px"><div style="font-size:16px;font-weight:900">収穫データ × 市況から「最適な出荷先」をAIが提案</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">本日の収穫 <b>6品目</b> と各市場の市況を突き合わせ、売上が最大になる出荷先・等級配分をAIが計算します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで最適出荷を計算する</button>
+          </div>
+
+          <div class="ai-inputs">
+            <div class="ai-card">
+              <h4>🌾 本日の収穫データ</h4>
+              <div id="aiHarvest"></div>
+            </div>
+            <div class="ai-card">
+              <h4>📈 本日の市況（最高値の市場）</h4>
+              <div id="aiQuote"></div>
+            </div>
+          </div>
+
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">1時間20分</div>
+              <ul>
+                <li>📞 市場ごとに電話・FAXで相場を確認</li>
+                <li>🧮 等級と数量を電卓で配分</li>
+                <li>🚚 勘で出荷先を決めて伝票を手書き</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 全市場の市況を自動取得</li>
+                <li>📊 等級×市場で売上最大の配分を計算</li>
+                <li>🧾 出荷伝票まで自動作成</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="gen-list" id="genList">
+            <div style="display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px">
+              <div style="font-size:13px;font-weight:800">✅ AIの最適出荷プラン</div>
+              <div id="genSummary" style="margin-left:auto;font-size:12.5px;color:var(--ink-2)"></div>
+            </div>
+            <div id="genItems"></div>
+            <div class="linkrow" style="margin-top:12px">
+              <button class="btn green" id="aiApply">🧾 このプランで出荷伝票を作成</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const MARKETS=[
+  {name:'大分中央卸売市場',icon:'🏪',type:'地方卸売',area:'大分市'},
+  {name:'福岡青果市場',icon:'🚛',type:'中央卸売',area:'福岡市'},
+  {name:'道の駅・直売所',icon:'🛒',type:'直売',area:'大分県内'},
+  {name:'業務用（ホテル・飲食）',icon:'🍽️',type:'業務卸',area:'別府・大分'},
+];
+// 品目マスタ：等級ごとの基準単価(円/kg)
+const CROPS=[
+  {n:'トマト',  emoji:'🍅', base:{S:520,A:380,B:260,C:150}},
+  {n:'いちご',  emoji:'🍓', base:{S:2200,A:1500,B:980,C:520}},
+  {n:'ピーマン',emoji:'🫑', base:{S:430,A:320,B:220,C:130}},
+  {n:'なす',    emoji:'🍆', base:{S:380,A:280,B:190,C:110}},
+  {n:'きゅうり',emoji:'🥒', base:{S:340,A:250,B:170,C:100}},
+  {n:'白ねぎ',  emoji:'🌿', base:{S:480,A:360,B:240,C:140}},
+  {n:'ほうれん草',emoji:'🥬',base:{S:620,A:460,B:300,C:160}},
+];
+const GRADES=['S','A','B','C'];
+const GRADE_LABEL={S:'秀',A:'優',B:'良',C:'加工'};
+const STATUSES=['shipped','shipped','ready','picking','harvested','ready','shipped'];
+const STLABEL={shipped:'出荷済',ready:'出荷準備',picking:'選別中',harvested:'収穫済',hold:'保留'};
+
+// 市場ごとの相場係数（直売は秀A高め、業務はB安定、福岡は全体高め等）
+const MKT_FACTOR={
+  '大分中央卸売市場':{S:1.00,A:1.00,B:1.00,C:1.00},
+  '福岡青果市場':    {S:1.08,A:1.06,B:1.02,C:0.98},
+  '道の駅・直売所':  {S:1.18,A:1.14,B:0.96,C:0.80},
+  '業務用（ホテル・飲食）':{S:0.96,A:1.02,B:1.10,C:1.06},
+};
+
+const TODAY=new Date();
+let SEED=20260530;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+/* ---- 市況（品目×市場の1kg単価）を生成 ---- */
+let QUOTE={}; // QUOTE[crop][market] = price
+function buildQuote(){
+  QUOTE={};
+  CROPS.forEach(c=>{
+    QUOTE[c.n]={};
+    MARKETS.forEach(m=>{
+      const f=MKT_FACTOR[m.name].A; // 代表値(優等級)で市況を表現
+      const jitter=0.90+rnd()*0.22;
+      QUOTE[c.n][m.name]=Math.round(c.base.A*f*jitter/10)*10;
+    });
+  });
+}
+buildQuote();
+let priceTrend={}; // 前日比
+CROPS.forEach(c=>{priceTrend[c.n]=Math.round((rnd()*16-7));});
+
+/* ---- 出荷ロットを生成 ---- */
+let lots=[];
+(function seed(){
+  let n=0;
+  for(let i=0;i<26;i++){
+    const c=pick(CROPS);
+    const g=GRADES[Math.floor(Math.pow(rnd(),1.4)*4)]; // S寄りやや少なめ
+    const m=pick(MARKETS);
+    const qty=20+Math.floor(rnd()*180); // kg
+    const unit=Math.round(c.base[g]*MKT_FACTOR[m.name][g]/10)*10;
+    let stt=pick(STATUSES);
+    lots.push({
+      no:'LOT-'+(2605000+(++n)),
+      crop:c.n,emoji:c.emoji,grade:g,market:m.name,
+      qty,unit,sales:qty*unit,status:stt,
+    });
+  }
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+const kg=n=>Math.round(n).toLocaleString()+'kg';
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function gBadge(g){return `<span class="gd ${g.toLowerCase()}">${GRADE_LABEL[g]}</span>`;}
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]||s}</span>`;}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+
+/* ============ ROUTING ============ */
+const TITLES={
+  dash:['ダッシュボード','本日 '+(TODAY.getMonth()+1)+'月'+TODAY.getDate()+'日の出荷状況'],
+  list:['出荷一覧','収穫から出荷までのロットを管理します'],
+  grade:['等級選別','AIカメラで収穫物を等級ごとに自動振り分け'],
+  market:['市場別','出荷先市場ごとの数量・売上を管理します'],
+  price:['価格','市場ごとの卸売価格（市況）を確認します'],
+  ai:['AI最適出荷','収穫×市況から売上が最大になる出荷先を提案します'],
+};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn primary" onclick="go(\'grade\')">🥬 等級選別へ</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI最適出荷</button><button class="btn primary" onclick="go(\'grade\')">🥬 等級選別</button>'
+    : v==='grade'?'<button class="btn" onclick="go(\'ai\')">⚡ AI最適出荷</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='market')renderMarket();
+  if(v==='price')renderPrice();
+  if(v==='ai')renderAiInputs();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function gradeDist(list){
+  const d={S:0,A:0,B:0,C:0};list.forEach(l=>{d[l.grade]+=l.qty;});return d;
+}
+function renderDash(){
+  const todayLots=lots; // デモ上は全件を本日扱い
+  const totalQty=todayLots.reduce((s,l)=>s+l.qty,0);
+  const totalSales=todayLots.reduce((s,l)=>s+l.sales,0);
+  const avgUnit=totalQty?Math.round(totalSales/totalQty):0;
+  const dist=gradeDist(todayLots);
+  const topPct=Math.round((dist.S+dist.A)/totalQty*100);
+  $('kpis').innerHTML=`
+    ${kpi('#2e9e57','本日の出荷量',kg(totalQty),todayLots.length+'ロット','up','前日比 +8%')}
+    ${kpi('#d4a017','平均単価',yen(avgUnit)+'<small>/kg</small>','','up','市況やや高')}
+    ${kpi('#0ea5b7','秀＋優 比率',topPct+'<small>%</small>','高品質','up','+3pt')}
+    ${kpi('#16b877','想定売上',yen(totalSales),'本日','up','目標達成見込み')}`;
+
+  // 品目別 本日の出荷量
+  const byCrop={};todayLots.forEach(l=>{byCrop[l.crop]=(byCrop[l.crop]||0)+l.qty;});
+  const cropArr=CROPS.map(c=>({n:c.emoji+' '+c.n,v:byCrop[c.n]||0})).sort((a,b)=>b.v-a.v);
+  const mxC=Math.max(...cropArr.map(c=>c.v),1);
+  $('cropBars').innerHTML=cropArr.map(c=>`
+    <div class="bar-row"><span class="mlabel">${esc(c.n)}</span>
+      <div class="bar-track"><div class="bar-fill" data-w="${Math.round(c.v/mxC*100)}"></div></div>
+      <span class="mval">${kg(c.v)}</span></div>`).join('');
+
+  // 等級ドーナツ
+  const ga=Math.round(dist.S/totalQty*100), gb=Math.round(dist.A/totalQty*100), gc=Math.round(dist.B/totalQty*100), gd=100-ga-gb-gc;
+  const donut=$('gradeDonut');
+  donut.style.setProperty('--ga',ga);donut.style.setProperty('--gb',gb);donut.style.setProperty('--gc',gc);
+  $('gradeTopPct').textContent=topPct+'%';
+  const legendData=[['#d4a017','秀',dist.S],['#2e9e57','優',dist.A],['#0ea5b7','良',dist.B],['#c2d4c6','加工',dist.C]];
+  $('gradeLegend').innerHTML=legendData.map(x=>`<div class="lg"><span class="sw" style="background:${x[0]}"></span><b>${x[1]}</b><span>${kg(x[2])}</span></div>`).join('');
+
+  // 市場別
+  const byMkt={};todayLots.forEach(l=>{byMkt[l.market]=(byMkt[l.market]||0)+l.sales;});
+  const mktArr=MARKETS.map(m=>({n:m.name,v:byMkt[m.name]||0})).sort((a,b)=>b.v-a.v);
+  const mxM=Math.max(...mktArr.map(m=>m.v),1);
+  $('marketBars').innerHTML=mktArr.map(m=>`
+    <div class="bar-row"><span class="mlabel" style="font-size:11.5px">${esc(m.n.slice(0,6))}</span>
+      <div class="bar-track"><div class="bar-fill" data-w="${Math.round(m.v/mxM*100)}" style="background:linear-gradient(90deg,var(--gold),var(--brand))"></div></div>
+      <span class="mval">${yen(m.v)}</span></div>`).join('');
+
+  setTimeout(()=>document.querySelectorAll('#v-dash .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+
+  // activity
+  const acts=[
+    {i:'🚚',c:'#e6f8f0',t:'福岡青果市場 へ いちご(秀) 80kg を出荷',m:'12分前'},
+    {i:'🥬',c:'#e7f6ed',t:'AIカメラで トマト 500kg を等級選別（秀22%）',m:'45分前'},
+    {i:'⚡',c:'#e6f8f0',t:'AI最適出荷で 想定売上 +12.4% の配分を提案',m:'今日 7:40'},
+    {i:'📈',c:'#fdf3e2',t:'直売所のいちご相場が前日比 +9% に上昇',m:'今日 6:30'},
+    {i:'🌾',c:'#eef3ec',t:'本日の収穫データ 6品目を取り込みました',m:'今日 6:00'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ LIST ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['harvested','収穫済'],['picking','選別中'],['ready','出荷準備'],['shipped','出荷済']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
+}
+$('q').addEventListener('input',renderList);
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=lots.filter(l=>filterStatus==='all'||l.status===filterStatus)
+    .filter(l=>!q||(l.crop+l.market+l.no+GRADE_LABEL[l.grade]).toLowerCase().includes(q));
+  $('listRows').innerHTML=rows.length?rows.map(l=>`<tr onclick="advance('${esc(l.no)}')">
+    <td class="mono" style="font-size:12px">${esc(l.no)}</td>
+    <td><b>${esc(l.emoji)} ${esc(l.crop)}</b></td>
+    <td>${gBadge(l.grade)}</td>
+    <td class="r tnum">${kg(l.qty)}</td>
+    <td style="color:var(--ink-2)">${esc(l.market)}</td>
+    <td class="r tnum">${yen(l.unit)}<small style="color:var(--ink-3)">/kg</small></td>
+    <td class="r tnum"><b>${yen(l.sales)}</b></td>
+    <td>${stBadge(l.status)}</td></tr>`).join('')
+    :'<tr><td colspan="8" class="empty-cell">該当する出荷ロットがありません</td></tr>';
+  $('navPicking').textContent=lots.filter(l=>l.status==='picking'||l.status==='harvested').length;
+}
+const FLOW={harvested:'picking',picking:'ready',ready:'shipped',shipped:'shipped'};
+window.advance=no=>{const l=lots.find(x=>x.no===no);if(l){if(l.status==='shipped'){showToast(no+' は既に出荷済です');return;}l.status=FLOW[l.status];renderList();showToast(no+' を「'+STLABEL[l.status]+'」に進めました');}};
+
+/* ============ MARKET ============ */
+function renderMarket(){
+  $('mktCards').innerHTML=MARKETS.map(m=>{
+    const ls=lots.filter(l=>l.market===m.name);
+    const qty=ls.reduce((s,l)=>s+l.qty,0);
+    const sales=ls.reduce((s,l)=>s+l.sales,0);
+    const avg=qty?Math.round(sales/qty):0;
+    return `<div class="mkt">
+      <div class="h"><div class="ico">${m.icon}</div><div><b>${esc(m.name)}</b><small>${esc(m.type)} ・ ${esc(m.area)}</small></div></div>
+      <div class="stat"><span>出荷量</span><b>${kg(qty)}</b></div>
+      <div class="stat"><span>想定売上</span><b>${yen(sales)}</b></div>
+      <div class="stat"><span>平均単価</span><b>${yen(avg)}/kg</b></div>
+      <div class="stat"><span>ロット数</span><b>${ls.length}件</b></div>
+    </div>`;
+  }).join('');
+  let rows=[...lots].sort((a,b)=>a.market.localeCompare(b.market,'ja')||b.sales-a.sales);
+  $('mktRows').innerHTML=rows.map(l=>`<tr>
+    <td style="color:var(--ink-2)">${esc(l.market)}</td>
+    <td><b>${esc(l.emoji)} ${esc(l.crop)}</b></td>
+    <td>${gBadge(l.grade)}</td>
+    <td class="r tnum">${kg(l.qty)}</td>
+    <td class="r tnum">${yen(l.unit)}</td>
+    <td class="r tnum"><b>${yen(l.sales)}</b></td></tr>`).join('');
+}
+
+/* ============ PRICE ============ */
+function renderPrice(){
+  const allUnits=lots.map(l=>l.unit);
+  const avg=Math.round(allUnits.reduce((s,u)=>s+u,0)/(allUnits.length||1));
+  const ups=CROPS.filter(c=>priceTrend[c.n]>0).length;
+  const downs=CROPS.filter(c=>priceTrend[c.n]<0).length;
+  // 最高値市場をいちごで例示
+  $('priceKpis').innerHTML=`
+    ${kpi('#d4a017','全品目 平均単価',yen(avg)+'<small>/kg</small>','本日','up','市況やや高')}
+    ${kpi('#16b877','値上がり品目',ups+'<small>品目</small>','','up','直売所が好調')}
+    ${kpi('#e24a4a','値下がり品目',downs+'<small>品目</small>','','down','要注意')}
+    ${kpi('#0ea5b7','最高値の市場','直売所','いちご 秀','up','大分中央比 +18%')}`;
+  $('priceRows').innerHTML=CROPS.map(c=>{
+    const oita=QUOTE[c.n]['大分中央卸売市場'];
+    const fukuoka=QUOTE[c.n]['福岡青果市場'];
+    const choku=QUOTE[c.n]['道の駅・直売所'];
+    const best=[['大分市場',oita],['福岡市場',fukuoka],['直売所',choku]].sort((a,b)=>b[1]-a[1])[0];
+    const t=priceTrend[c.n];
+    const cls=t>0?'up':t<0?'down':'flat';
+    const arrow=t>0?'▲':t<0?'▼':'—';
+    return `<tr>
+      <td><b>${esc(c.emoji)} ${esc(c.n)}</b></td>
+      <td class="r tnum">${yen(oita)}</td>
+      <td class="r tnum">${yen(fukuoka)}</td>
+      <td class="r tnum">${yen(choku)}</td>
+      <td class="r tnum"><b>${esc(best[0])}</b> ${yen(best[1])}</td>
+      <td><span class="price-trend ${cls}">${arrow} ${Math.abs(t)}%</span></td></tr>`;
+  }).join('');
+}
+$('priceRefresh').addEventListener('click',async()=>{
+  const btn=$('priceRefresh');btn.textContent='🔄 取得中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,700));
+  buildQuote();CROPS.forEach(c=>{priceTrend[c.n]=Math.round((rnd()*18-8));});
+  btn.textContent='🔄 市況を最新に更新';btn.disabled=false;
+  renderPrice();showToast('各市場の市況を最新に更新しました');
+});
+
+/* ============ GRADE 等級選別 ============ */
+function renderCropSelect(){
+  $('gCrop').innerHTML='<option value="">選択してください</option>'+CROPS.map(c=>`<option>${c.emoji} ${c.n}</option>`).join('');
+}
+function bestMarketFor(cropName,grade){
+  let best=null,bestP=-1;
+  MARKETS.forEach(m=>{
+    const c=CROPS.find(x=>x.n===cropName);
+    const p=Math.round(c.base[grade]*MKT_FACTOR[m.name][grade]);
+    if(p>bestP){bestP=p;best=m.name;}
+  });
+  return {market:best,unit:bestP};
+}
+$('gSample').addEventListener('click',()=>{$('gCrop').value='🍅 トマト';$('gQty').value=500;});
+$('gRun').addEventListener('click',async()=>{
+  const cropRaw=$('gCrop').value;const qty=+$('gQty').value||0;
+  const crop=CROPS.find(c=>cropRaw.includes(c.n));
+  if(!crop||qty<=0){showToast('品目と収穫量(kg)を入力してください');return;}
+  const btn=$('gRun');btn.textContent='🥬 AI判定中…';btn.disabled=true;
+  $('gHint').classList.add('show');
+  await new Promise(r=>setTimeout(r,900));
+  // 等級配分（やや秀少なめのリアルな配分）
+  const ratios={S:0.22,A:0.40,B:0.28,C:0.10};
+  const dist={};let acc=0;
+  GRADES.forEach((g,i)=>{dist[g]=(i===GRADES.length-1)?(qty-acc):Math.round(qty*ratios[g]);acc+=dist[g];});
+  // ドーナツ
+  const ga=Math.round(dist.S/qty*100),gb=Math.round(dist.A/qty*100),gc=Math.round(dist.B/qty*100);
+  const donut=$('gDonut');donut.style.setProperty('--ga',ga);donut.style.setProperty('--gb',gb);donut.style.setProperty('--gc',gc);
+  $('gDonutPct').textContent=Math.round((dist.S+dist.A)/qty*100)+'%';
+  const legendData=[['#d4a017','秀',dist.S],['#2e9e57','優',dist.A],['#0ea5b7','良',dist.B],['#c2d4c6','加工',dist.C]];
+  $('gResultLegend').innerHTML=legendData.map(x=>`<div class="lg"><span class="sw" style="background:${x[0]}"></span><b>${x[1]}</b><span>${kg(x[2])}</span></div>`).join('');
+  let total=0;
+  $('gRows').innerHTML=GRADES.map(g=>{
+    const bm=bestMarketFor(crop.n,g);const sales=dist[g]*bm.unit;total+=sales;
+    return `<tr><td>${gBadge(g)}</td><td class="r tnum">${kg(dist[g])}</td><td class="r tnum">${yen(bm.unit)}<small style="color:var(--ink-3)">/kg</small></td><td class="r tnum"><b>${yen(sales)}</b></td><td style="color:var(--ink-2)">${esc(bm.market)}</td></tr>`;
+  }).join('');
+  $('gResultMeta').textContent=crop.emoji+' '+crop.n+' '+kg(qty)+' → 想定売上 '+yen(total);
+  btn.textContent='🥬 AIで等級選別する';btn.disabled=false;
+  // 出荷ロットへ反映（出荷準備として追加）
+  GRADES.forEach(g=>{
+    if(dist[g]<=0)return;const bm=bestMarketFor(crop.n,g);
+    lots.unshift({no:'LOT-'+(2605000+lots.length+1),crop:crop.n,emoji:crop.emoji,grade:g,market:bm.market,qty:dist[g],unit:bm.unit,sales:dist[g]*bm.unit,status:'ready'});
+  });
+  $('navPicking').textContent=lots.filter(l=>l.status==='picking'||l.status==='harvested').length;
+  showToast(crop.n+' '+kg(qty)+' を等級選別し、出荷一覧に追加しました');
+  setTimeout(()=>$('gHint').classList.remove('show'),2200);
+});
+
+/* ============ AI 最適出荷 ============ */
+let aiPlan=[];
+function todayHarvest(){
+  // 本日収穫の代表6品目（固定 + ジッタ）
+  return CROPS.slice(0,6).map((c,i)=>({crop:c.n,emoji:c.emoji,qty:120+((i*73)%260)}));
+}
+function renderAiInputs(){
+  const hv=todayHarvest();
+  $('aiHarvest').innerHTML=hv.map(h=>`<div class="row"><span>${esc(h.emoji)} ${esc(h.crop)}</span><b>${kg(h.qty)}</b></div>`).join('');
+  $('aiQuote').innerHTML=CROPS.slice(0,6).map(c=>{
+    const entries=MARKETS.map(m=>[m.name,QUOTE[c.n][m.name]]).sort((a,b)=>b[1]-a[1]);
+    const best=entries[0];
+    return `<div class="row"><span>${esc(c.emoji)} ${esc(c.n)}</span><b>${esc(best[0].slice(0,6))} ${yen(best[1])}/kg</b></div>`;
+  }).join('');
+}
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 計算中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},110);
+  await new Promise(r=>setTimeout(r,1150));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+
+  const hv=todayHarvest();
+  aiPlan=hv.map(h=>{
+    const crop=CROPS.find(c=>c.n===h.crop);
+    // before: 全量を大分中央へ優等級扱いで出した場合
+    const beforeUnit=Math.round(crop.base.A*MKT_FACTOR['大分中央卸売市場'].A);
+    const beforeSales=h.qty*beforeUnit;
+    // after: 等級配分し、各等級を最高値市場へ
+    const ratios={S:0.22,A:0.40,B:0.28,C:0.10};
+    let afterSales=0;const breakdown=[];
+    GRADES.forEach(g=>{
+      const q=Math.round(h.qty*ratios[g]);const bm=bestMarketFor(crop.n,g);
+      afterSales+=q*bm.unit;breakdown.push({g,q,market:bm.market,unit:bm.unit});
+    });
+    // メイン出荷先＝最高値の等級が向かう市場
+    const main=breakdown.slice().sort((a,b)=>b.q*b.unit-a.q*a.unit)[0];
+    const delta=Math.round((afterSales/beforeSales-1)*100);
+    return {emoji:h.emoji,crop:h.crop,qty:h.qty,beforeSales,afterSales,delta,mainMarket:main.market};
+  });
+
+  const beforeTotal=aiPlan.reduce((s,p)=>s+p.beforeSales,0);
+  const afterTotal=aiPlan.reduce((s,p)=>s+p.afterSales,0);
+  const totalDelta=Math.round((afterTotal/beforeTotal-1)*100);
+
+  $('genItems').innerHTML=aiPlan.map((p,i)=>`<div class="gen-item" data-i="${i}">
+    <span class="ck">✓</span>
+    <b style="flex:1;min-width:120px">${esc(p.emoji)} ${esc(p.crop)} ${kg(p.qty)}</b>
+    <span style="color:var(--ink-3);font-size:12px">→ ${esc(p.mainMarket)}</span>
+    <span class="tnum" style="font-weight:800">${yen(p.afterSales)}</span>
+    <span class="delta">+${p.delta}%</span></div>`).join('');
+  $('genSummary').innerHTML=`従来配分 ${yen(beforeTotal)} → <b style="color:var(--green)">AI最適 ${yen(afterTotal)}（+${totalDelta}%）</b>`;
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,170));items[i].classList.add('in');}
+  btn.disabled=false;btn.textContent='⚡ もう一度計算';
+  showToast('AIが最適出荷プランを計算しました（売上 +'+totalDelta+'%）');
+});
+$('aiApply').addEventListener('click',()=>{
+  if(!aiPlan.length){showToast('先にAIで計算してください');return;}
+  aiPlan.forEach(p=>{
+    const crop=CROPS.find(c=>c.n===p.crop);const ratios={S:0.22,A:0.40,B:0.28,C:0.10};
+    GRADES.forEach(g=>{
+      const q=Math.round(p.qty*ratios[g]);if(q<=0)return;const bm=bestMarketFor(crop.n,g);
+      lots.unshift({no:'LOT-'+(2605000+lots.length+1),crop:crop.n,emoji:crop.emoji,grade:g,market:bm.market,qty:q,unit:bm.unit,sales:q*bm.unit,status:'ready'});
+    });
+  });
+  $('navPicking').textContent=lots.filter(l=>l.status==='picking'||l.status==='harvested').length;
+  showToast('最適プランから出荷伝票を作成し、出荷一覧に追加しました');
+  setTimeout(()=>go('list'),750);
+});
+
+/* ============ INIT ============ */
+renderCropSelect();renderChips();renderDash();
+$('navPicking').textContent=lots.filter(l=>l.status==='picking'||l.status==='harvested').length;
+</script>
+</body>
+</html>

@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜源泉徴収マシン（源泉徴収税 管理システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 92px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut */
+.donut-wrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.donut{width:138px;height:138px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;position:relative}
+.donut::after{content:"";position:absolute;width:88px;height:88px;border-radius:50%;background:var(--card)}
+.donut .dc{position:relative;z-index:1;text-align:center}
+.donut .dc b{font-size:18px;font-weight:900;display:block;line-height:1}
+.donut .dc span{font-size:10.5px;color:var(--ink-3);font-weight:700}
+.legend{display:flex;flex-direction:column;gap:8px;font-size:12.5px;flex:1;min-width:150px}
+.legend .lg{display:flex;align-items:center;gap:8px}
+.legend .lg .sw{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.legend .lg .lgn{color:var(--ink-2);font-weight:600}
+.legend .lg .lgv{margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.paid{background:var(--green-soft);color:var(--green)}
+.st.scheduled{background:var(--brand-soft);color:var(--brand)}
+.st.draft{background:var(--soft);color:var(--ink-3)}
+.st.overdue{background:var(--red-soft);color:var(--red)}
+.st.pending{background:var(--amber-soft);color:var(--amber)}
+.tag-cat{font-size:11px;font-weight:800;padding:3px 9px;border-radius:7px;background:var(--soft);color:var(--ink-2)}
+
+/* create form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--brand)}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* calc breakdown */
+.calc-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:0;box-shadow:var(--shadow);overflow:hidden}
+.calc-card .ch{padding:15px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.calc-card .ch h3{font-size:15px;font-weight:800}
+.calc-card .ch .pill{margin-left:auto;font-size:11px;font-weight:800;padding:4px 11px;border-radius:99px;background:var(--brand-soft);color:var(--brand)}
+.calc-body{padding:20px}
+.calc-step{display:flex;align-items:center;gap:12px;padding:13px 16px;border:1px solid var(--line);border-radius:11px;margin-bottom:10px;background:var(--soft)}
+.calc-step .num{width:26px;height:26px;border-radius:8px;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:900;font-size:13px;flex-shrink:0}
+.calc-step .cl{font-size:12.5px;color:var(--ink-2);font-weight:600}
+.calc-step .cv{margin-left:auto;font-weight:900;font-variant-numeric:tabular-nums;font-size:15px}
+.calc-step.final{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border-color:#bdebd4}
+.calc-step.final .num{background:var(--green)}
+.calc-step.final .cv{color:var(--green);font-size:18px;font-family:'Orbitron'}
+.calc-note{font-size:11px;color:var(--ink-3);margin-top:6px;line-height:1.5}
+.payslip{font-size:12px;color:var(--ink-2);line-height:1.8}
+.payslip .pr{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed var(--line)}
+.payslip .pr b{color:var(--ink)}
+.payslip .pr.g{border-bottom:0;border-top:2px solid var(--ink);margin-top:4px;padding-top:8px;font-size:14px}
+
+/* paper preview (支払調書) */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:30px 32px;box-shadow:var(--shadow);font-size:12px;color:#1a2233}
+.pv-title{font-size:18px;font-weight:900;letter-spacing:.18em;text-align:center;border:2px solid #1a2233;padding:8px 0;margin-bottom:18px}
+.pv-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.pv-box{border:1px solid var(--line-2);border-radius:6px;padding:11px 13px}
+.pv-box .bl{font-size:10px;color:var(--ink-3);font-weight:700;margin-bottom:3px}
+.pv-box .bv{font-size:13.5px;font-weight:800}
+table.pv{width:100%;border-collapse:collapse;margin-bottom:8px}
+table.pv th{background:#1a2233;color:#fff;font-size:10.5px;padding:8px 10px;text-align:left}
+table.pv th.r,table.pv td.r{text-align:right}
+table.pv td{padding:9px 10px;border:1px solid var(--line-2);font-size:12px}
+table.pv .tax{color:var(--red);font-weight:800}
+.pv-foot{font-size:10.5px;color:var(--ink-2);margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900}
+.gen-sum{margin-top:14px;display:none;grid-template-columns:repeat(3,1fr);gap:12px}
+.gen-sum.show{display:grid;animation:fade .4s}
+.gen-sum .gs{background:var(--soft);border:1px solid var(--line);border-radius:11px;padding:14px}
+.gen-sum .gs .gl{font-size:11px;color:var(--ink-3);font-weight:700}
+.gen-sum .gs .gv{font-size:20px;font-weight:900;margin-top:4px;font-variant-numeric:tabular-nums}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto;flex-shrink:0}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.sec-title{font-size:13px;font-weight:800;color:var(--ink-2);margin:4px 0 12px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">源泉徴収マシン<small>技マシン｜源泉税 管理</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="record"><span class="i">📄</span>支払調書</a>
+      <a data-v="calc"><span class="i">🧮</span>源泉計算</a>
+      <a data-v="pay"><span class="i">🏛️</span>納付管理<span class="badge" id="navDue">0</span></a>
+      <a data-v="year"><span class="i">📈</span>年間集計</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI計算</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。報酬・税額・支払先はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">2026年5月の源泉徴収状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>月次の源泉徴収額 推移</h3><span class="more">過去6ヶ月</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>報酬区分の内訳</h3></div>
+            <div class="pb"><div class="donut-wrap"><div class="donut" id="donut"><div class="dc"><b id="donutTotal">¥0</b><span>今年累計</span></div></div><div class="legend" id="donutLegend"></div></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>納付スケジュール</h3><span class="more" onclick="go('pay')">納付管理へ</span></div>
+            <div class="pb"><div class="acts" id="schedule"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RECORDS (支払調書) -->
+      <section class="view" id="v-record">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="支払先・区分・番号で検索"></div>
+          <div class="chips" id="catChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>調書番号</th><th>支払先</th><th>報酬の区分</th><th class="r">支払金額</th><th class="r">源泉税額</th><th>支払日</th><th>状態</th></tr></thead>
+          <tbody id="recordRows"></tbody>
+        </table>
+      </section>
+
+      <!-- CALC (源泉計算) -->
+      <section class="view" id="v-calc">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="sec-title">📝 支払内容を入力</div>
+            <div class="fg"><label>支払先</label><select id="kPayee"></select></div>
+            <div class="fg"><label>報酬の区分（区分により税率が変わります）</label>
+              <select id="kCat"></select></div>
+            <div class="fg"><label>支払金額（税抜・報酬額）</label><input id="kAmt" type="number" min="0" placeholder="例：300000"></div>
+            <div class="fg-row">
+              <div class="fg"><label>消費税の扱い</label><select id="kTaxMode"><option value="exc">税抜で別記（推奨）</option><option value="inc">税込支払額</option></select></div>
+              <div class="fg"><label>支払日</label><input id="kDate" type="date"></div>
+            </div>
+            <div class="aihint" id="kAiHint">✨ 区分に応じてAIが税率を自動セットしました</div>
+            <div class="linkrow" style="margin-top:16px">
+              <button class="btn primary" id="kCalc" style="flex:1;justify-content:center">⚡ AIで源泉税を計算して登録</button>
+              <button class="btn" id="kSample">サンプル</button>
+            </div>
+            <div class="calc-note" style="margin-top:12px">※ 復興特別所得税（2.1%）を含む実効税率で自動計算します。司法書士等の一部区分は1回あたりの定額控除に対応。</div>
+          </div>
+          <div>
+            <div class="calc-card" style="margin-bottom:16px">
+              <div class="ch"><h3>🧮 源泉徴収税の計算過程</h3><span class="pill" id="kRatePill">税率 —</span></div>
+              <div class="calc-body" id="calcSteps">
+                <div class="empty-cell">← 支払金額を入力すると、計算過程がここに表示されます</div>
+              </div>
+            </div>
+            <div class="calc-card">
+              <div class="ch"><h3>📄 支払調書プレビュー</h3></div>
+              <div class="calc-body">
+                <div class="paper">
+                  <div class="pv-title">報酬・料金等の支払調書</div>
+                  <div class="pv-grid">
+                    <div class="pv-box"><div class="bl">支払を受ける者</div><div class="bv" id="pvPayee">—</div></div>
+                    <div class="pv-box"><div class="bl">区分</div><div class="bv" id="pvCat">—</div></div>
+                  </div>
+                  <table class="pv">
+                    <thead><tr><th>細目</th><th class="r">支払金額</th><th class="r">源泉徴収税額</th></tr></thead>
+                    <tbody><tr><td id="pvDetail">報酬</td><td class="r tnum" id="pvAmt">¥0</td><td class="r tnum tax" id="pvTax">¥0</td></tr></tbody>
+                  </table>
+                  <div class="pv-foot">支払者：株式会社気持ち市場（大分市都町）／ 上記の通り相違ないことを証明します。<span id="pvDate"></span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PAYMENT (納付管理) -->
+      <section class="view" id="v-pay">
+        <div class="kpis" id="payKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>源泉所得税の納付一覧（毎月10日まで）</h3>
+            <button class="btn green" id="autoPay" style="margin-left:auto">🏛️ e-Tax 納付データを自動作成</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>納付対象月</th><th class="r">対象件数</th><th class="r">納付税額</th><th>納付期限</th><th>状態</th><th></th></tr></thead>
+              <tbody id="payRows"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="calc-note" style="margin-top:10px">※ 給与の支給人員が常時10人未満の場合は「納期の特例」で年2回（7月・1月）にまとめて納付できます。デモでは毎月納付で表示しています。</div>
+      </section>
+
+      <!-- YEAR (年間集計) -->
+      <section class="view" id="v-year">
+        <div class="kpis" id="yearKpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>支払先別 年間源泉徴収額（支払調書 提出対象）</h3><span class="more">2026年</span></div>
+            <div class="pb" style="padding:0">
+              <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+                <thead><tr><th>支払先</th><th>主な区分</th><th class="r">年間支払額</th><th class="r">年間源泉額</th><th>提出</th></tr></thead>
+                <tbody id="yearRows"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>区分別 年間集計</h3></div>
+            <div class="pb"><div class="bars" id="yearBars"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI CALC -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">支払データから源泉税を一括計算・調書作成</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">今月の外注・報酬の支払データ <b>14件</b> から、区分判定・源泉税計算・支払調書をAIが自動で作成します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで一括計算する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">3時間20分</div>
+              <ul>
+                <li>📚 報酬区分ごとの税率を国税庁サイトで確認</li>
+                <li>🖩 1件ずつ電卓で源泉税を計算・端数処理</li>
+                <li>📝 支払調書を様式に手書き・転記ミスの確認</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 区分を自動判定し正しい税率を適用</li>
+                <li>🧮 復興特別所得税込みで一括自動計算</li>
+                <li>📄 支払調書・納付データまで自動生成</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ 計算・作成された支払調書</div>
+            <div id="genItems"></div>
+            <div class="gen-sum" id="genSum">
+              <div class="gs"><div class="gl">計算件数</div><div class="gv tnum" id="gsCount">0件</div></div>
+              <div class="gs"><div class="gl">支払金額 合計</div><div class="gv tnum" id="gsAmt">¥0</div></div>
+              <div class="gs"><div class="gl">源泉税額 合計</div><div class="gv tnum" id="gsTax" style="color:var(--red)">¥0</div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const PAYEES=[
+  {name:'designerまつもと（個人）',type:'デザイナー'},
+  {name:'フリーランス田中（ライター）',type:'ライター'},
+  {name:'山田税理士事務所',type:'税理士'},
+  {name:'おおいた司法書士法人',type:'司法書士'},
+  {name:'カメラマン佐藤（個人）',type:'カメラマン'},
+  {name:'翻訳者リン（個人）',type:'翻訳'},
+  {name:'講師 鈴木花子',type:'講師'},
+  {name:'Webエンジニア高橋（個人）',type:'エンジニア'},
+  {name:'社会保険労務士 中村',type:'社労士'},
+  {name:'モデル 渡辺（個人）',type:'モデル'},
+];
+/* 報酬区分マスタ：rate=基本税率, recovery込み実効はコードで計算, deduct=1回あたり定額控除（円） */
+const CATS=[
+  {k:'genshi',label:'原稿料・デザイン料・講演料',rate:0.10,deduct:0,note:'100万円超の部分は20%（デモは100万円以下で計算）'},
+  {k:'design',label:'デザイン報酬',rate:0.10,deduct:0,note:'100万円超の部分は20%'},
+  {k:'zeirishi',label:'税理士・弁護士・会計士の報酬',rate:0.10,deduct:0,note:'100万円超の部分は20%'},
+  {k:'shihou',label:'司法書士・土地家屋調査士の報酬',rate:0.10,deduct:10000,note:'1回の支払につき1万円を控除して計算'},
+  {k:'sharoshi',label:'社会保険労務士の報酬',rate:0.10,deduct:0,note:'100万円超の部分は20%'},
+  {k:'gento',label:'原稿・翻訳・通訳料',rate:0.10,deduct:0,note:'100万円超の部分は20%'},
+  {k:'model',label:'モデル・外交員等の報酬',rate:0.10,deduct:0,note:'100万円超の部分は20%'},
+];
+const RECOVERY=1.021; // 復興特別所得税 2.1%
+const TODAY=new Date();
+function ym(d){return (d.getMonth()+1)}
+
+/* 源泉税計算（復興特別所得税込み・端数切り捨て） */
+function calcWithholding(amount,catKey){
+  const cat=CATS.find(c=>c.k===catKey)||CATS[0];
+  const base=Math.max(0,amount-cat.deduct);
+  let tax;
+  if(base<=1000000){tax=base*cat.rate*RECOVERY;}
+  else{tax=(1000000*cat.rate + (base-1000000)*0.20)*RECOVERY;}
+  return {tax:Math.floor(tax),base,cat,effRate:cat.rate*RECOVERY};
+}
+
+let SEED=4071;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+const STATUSES=['paid','paid','scheduled','draft','paid','scheduled'];
+let records=[];
+(function seed(){
+  for(let i=0;i<24;i++){
+    const p=pick(PAYEES);
+    const cat=pick(CATS);
+    const amt=(2+Math.floor(rnd()*48))*10000 + Math.floor(rnd()*5)*5000; // 2万〜50万前後
+    const {tax}=calcWithholding(amt,cat.k);
+    const pay=new Date(TODAY.getFullYear(),TODAY.getMonth()-Math.floor(rnd()*5),1+Math.floor(rnd()*26));
+    let stt=pick(STATUSES);
+    records.push({no:'PR-'+(2026000+i+1),payee:p.name,catKey:cat.k,catLabel:cat.label,amt,tax,pay,status:stt});
+  }
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+const fmtD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtDL=d=>d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate();
+const fmtDJ=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STLABEL={paid:'納付済',scheduled:'納付予定',draft:'下書き',overdue:'期限超過',pending:'計算済'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]||s}</span>`;}
+function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function thisYear(d){return d.getFullYear()===TODAY.getFullYear();}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function catShort(label){return label.split('・')[0];}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','2026年'+ym(TODAY)+'月の源泉徴収状況'],record:['支払調書','報酬・料金の支払と源泉税を管理します'],
+  calc:['源泉計算','報酬を入力するとAIが源泉税を自動計算します'],pay:['納付管理','源泉所得税の納付状況を管理します'],
+  year:['年間集計','支払先別・区分別の年間集計と支払調書の提出管理'],ai:['AI計算','支払データから源泉税を一括計算・調書作成します']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='record'?'<button class="btn primary" onclick="go(\'calc\')">＋ 源泉計算する</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI一括計算</button><button class="btn primary" onclick="go(\'calc\')">＋ 源泉計算する</button>'
+    : v==='year'?'<button class="btn primary" onclick="submitRecords()">📤 支払調書を一括提出</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='record')renderRecords();
+  if(v==='pay')renderPay();
+  if(v==='year')renderYear();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const tm=records.filter(i=>thisMonth(i.pay));
+  const tmTax=tm.reduce((s,i)=>s+i.tax,0);
+  const yr=records.filter(i=>thisYear(i.pay));
+  const yrTax=yr.reduce((s,i)=>s+i.tax,0);
+  // 納付期限：翌月10日
+  const dueDate=new Date(TODAY.getFullYear(),TODAY.getMonth()+1,10);
+  const daysLeft=Math.max(0,Math.ceil((dueDate-TODAY)/86400000));
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','今月の源泉徴収額',yen(tmTax),tm.length+'件','up','前月比 +8%')}
+    ${kpi('#e3941f','次回の納付期限',fmtD(dueDate),'残り'+daysLeft+'日','warn','翌月10日まで')}
+    ${kpi('#0ea5b7','今月の対象件数',tm.length+'<small>件</small>',' ','up','源泉対象の報酬')}
+    ${kpi('#16b877','年間累計 源泉額',yen(yrTax),yr.length+'件','up','2026年')}`;
+  // trend
+  const months=[];for(let k=5;k>=0;k--){const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1);months.push(d);}
+  const sums=months.map(m=>records.filter(i=>i.pay.getMonth()===m.getMonth()&&i.pay.getFullYear()===m.getFullYear()).reduce((s,i)=>s+i.tax,0));
+  const mx=Math.max(...sums,1);
+  $('trendBars').innerHTML=months.map((m,i)=>`
+    <div class="bar-row"><span class="mlabel">${m.getMonth()+1}月</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(sums[i]/mx*100)}"></div></div>
+      <span class="mval">${yen(sums[i])}</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // donut: 区分別内訳（年間）
+  renderDonut(yr,yrTax);
+  // activity
+  const acts=[
+    {i:'🧮',c:'#eaf1ff',t:'山田税理士事務所 への報酬 ¥330,000 の源泉税 ¥33,693 を計算',m:'5分前'},
+    {i:'🏛️',c:'#e6f8f0',t:'4月分の源泉所得税 ¥86,420 を e-Tax で納付完了',m:'今日 9:30'},
+    {i:'⚡',c:'#e6f8f0',t:'AI一括計算で 9件の支払調書を作成（区分判定100%）',m:'今日 8:45'},
+    {i:'⚠️',c:'#fdf3e2',t:'5月分の納付期限（6/10）が近づいています',m:'今日 8:00'},
+    {i:'📄',c:'#eaf1ff',t:'おおいた司法書士法人 の支払調書を作成（1万円控除を自動適用）',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${a.m}</div></div></div>`).join('');
+  // schedule (next 3 months)
+  const sch=[];for(let k=-1;k<=2;k++){const m=new Date(TODAY.getFullYear(),TODAY.getMonth()+k,1);
+    const t=records.filter(i=>i.pay.getMonth()===m.getMonth()&&i.pay.getFullYear()===m.getFullYear()).reduce((s,i)=>s+i.tax,0);
+    const due=new Date(m.getFullYear(),m.getMonth()+1,10);
+    const done=due<TODAY;
+    sch.push({m,t,due,done});}
+  $('schedule').innerHTML=sch.map(s=>`<div class="act"><div class="ai" style="background:${s.done?'#e6f8f0':'#fdf3e2'}">${s.done?'✅':'🗓️'}</div>
+    <div style="flex:1"><div class="at">${s.m.getMonth()+1}月分 源泉所得税 ${yen(s.t)}</div><div class="am">納付期限 ${fmtDL(s.due)}</div></div>
+    <div style="font-weight:800;font-size:12px;color:${s.done?'var(--green)':'var(--amber)'}">${s.done?'納付済':'予定'}</div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub&&sub.trim()?sub+' ・ ':''}${d}</div></div>`;}
+
+const DONUT_COLORS=['#2f6df0','#16b877','#e3941f','#0ea5b7','#9b6ef0','#e24a4a','#5b8def'];
+function renderDonut(rows,total){
+  // group by catLabel short
+  const groups={};
+  rows.forEach(r=>{const k=catShort(r.catLabel);groups[k]=(groups[k]||0)+r.tax;});
+  const entries=Object.entries(groups).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  $('donutTotal').textContent=yen(total);
+  let acc=0;const stops=[];
+  entries.forEach((e,i)=>{const pct=total?e[1]/total*100:0;const start=acc;acc+=pct;stops.push(`${DONUT_COLORS[i%DONUT_COLORS.length]} ${start}% ${acc}%`);});
+  $('donut').style.background=`conic-gradient(${stops.join(',')||'var(--soft) 0 100%'})`;
+  $('donutLegend').innerHTML=entries.map((e,i)=>`<div class="lg"><span class="sw" style="background:${DONUT_COLORS[i%DONUT_COLORS.length]}"></span>
+    <span class="lgn">${esc(e[0])}</span><span class="lgv">${yen(e[1])}</span></div>`).join('') || '<div style="color:var(--ink-3)">データなし</div>';
+}
+
+/* ============ RECORDS ============ */
+let filterCat='all';
+function renderChips(){
+  const opts=[['all','すべて'],['paid','納付済'],['scheduled','納付予定'],['draft','下書き']];
+  $('catChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterCat?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('catChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterCat=c.dataset.s;renderChips();renderRecords();});
+}
+function renderRecords(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=records.filter(i=>filterCat==='all'||i.status===filterCat)
+    .filter(i=>!q||(i.payee+i.catLabel+i.no).toLowerCase().includes(q))
+    .sort((a,b)=>b.pay-a.pay);
+  $('recordRows').innerHTML=rows.length?rows.map(i=>`<tr>
+    <td class="mono" style="font-size:12px">${esc(i.no)}</td><td><b>${esc(i.payee)}</b></td>
+    <td><span class="tag-cat">${esc(catShort(i.catLabel))}</span></td>
+    <td class="r tnum">${yen(i.amt)}</td><td class="r tnum"><b style="color:var(--red)">${yen(i.tax)}</b></td>
+    <td style="color:var(--ink-2)">${fmtDL(i.pay)}</td><td>${stBadge(i.status)}</td></tr>`).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する支払調書がありません</td></tr>';
+}
+$('q').addEventListener('input',renderRecords);
+
+/* ============ CALC ============ */
+function renderPayeeSelect(){$('kPayee').innerHTML='<option value="">選択してください</option>'+PAYEES.map(p=>`<option>${p.name}</option>`).join('');}
+function renderCatSelect(){$('kCat').innerHTML=CATS.map((c,i)=>`<option value="${c.k}"${i===0?' selected':''}>${c.label}</option>`).join('');}
+function renderCalc(){
+  const amt=+$('kAmt').value||0;
+  const catKey=$('kCat').value;
+  const taxMode=$('kTaxMode').value;
+  // 税込支払額が入った場合は税抜換算（10%）
+  const reward = taxMode==='inc'? Math.round(amt/1.1) : amt;
+  const r=calcWithholding(reward,catKey);
+  $('kRatePill').textContent='税率 '+(r.cat.rate*100)+'%＋復興2.1%';
+  if(!amt){
+    $('calcSteps').innerHTML='<div class="empty-cell">← 支払金額を入力すると、計算過程がここに表示されます</div>';
+    $('pvPayee').textContent='—';$('pvCat').textContent='—';$('pvDetail').textContent='報酬';
+    $('pvAmt').textContent='¥0';$('pvTax').textContent='¥0';
+    return;
+  }
+  const steps=[];
+  steps.push(['1','対象となる報酬額'+(taxMode==='inc'?'（税込¥'+amt.toLocaleString()+'→税抜換算）':'（税抜）'),yen(reward)]);
+  if(r.cat.deduct>0)steps.push(['2','1回あたりの控除額（'+r.cat.label.split('・')[0]+'）',yen(-r.cat.deduct)]);
+  steps.push([r.cat.deduct>0?'3':'2','課税対象 × '+(r.cat.rate*100)+'%',yen(r.base*r.cat.rate)]);
+  steps.push([r.cat.deduct>0?'4':'3','復興特別所得税（×2.1%）','+'+yen(r.base*r.cat.rate*0.021)]);
+  $('calcSteps').innerHTML=steps.map(s=>`<div class="calc-step"><span class="num">${s[0]}</span><span class="cl">${esc(s[1])}</span><span class="cv tnum">${s[2]}</span></div>`).join('')
+    +`<div class="calc-step final"><span class="num">✓</span><span class="cl" style="color:var(--ink);font-weight:800">源泉徴収税額（1円未満切り捨て）</span><span class="cv tnum">${yen(r.tax)}</span></div>
+      <div class="calc-step" style="background:var(--brand-soft);border-color:#bcd0fb"><span class="num" style="background:var(--brand)">¥</span><span class="cl" style="color:var(--brand-dk);font-weight:800">支払先への 差引支払額</span><span class="cv tnum" style="color:var(--brand-dk)">${yen((taxMode==='inc'?amt:reward)-r.tax)}</span></div>
+      <div class="calc-note">${esc(r.cat.note)}</div>`;
+  // paper preview
+  $('pvPayee').textContent=$('kPayee').value||'（支払先 未選択）';
+  $('pvCat').textContent=r.cat.label;
+  $('pvDetail').textContent=catShort(r.cat.label);
+  $('pvAmt').textContent=yen(reward);
+  $('pvTax').textContent=yen(r.tax);
+  $('pvDate').textContent=$('kDate').value?'（支払日 '+$('kDate').value.replace(/-/g,'/')+'）':'';
+}
+['kAmt','kCat','kTaxMode','kPayee','kDate'].forEach(id=>{
+  $(id).addEventListener('input',()=>{renderCalc();});
+  $(id).addEventListener('change',()=>{
+    if(id==='kCat'){$('kAiHint').classList.add('show');setTimeout(()=>$('kAiHint').classList.remove('show'),2000);}
+    renderCalc();
+  });
+});
+$('kSample').addEventListener('click',()=>{
+  $('kPayee').value='山田税理士事務所';$('kCat').value='zeirishi';$('kAmt').value=330000;$('kTaxMode').value='inc';
+  const d=new Date();$('kDate').value=d.toISOString().slice(0,10);
+  renderCalc();$('kAiHint').classList.add('show');setTimeout(()=>$('kAiHint').classList.remove('show'),2000);
+});
+$('kCalc').addEventListener('click',async()=>{
+  const amt=+$('kAmt').value||0;
+  if(!$('kPayee').value||!amt){showToast('支払先と支払金額を入力してください');return;}
+  const btn=$('kCalc');btn.textContent='⚡ AIが計算中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,800));
+  const taxMode=$('kTaxMode').value;const reward=taxMode==='inc'?Math.round(amt/1.1):amt;
+  const r=calcWithholding(reward,$('kCat').value);
+  const pay=$('kDate').value?new Date($('kDate').value):new Date();
+  records.push({no:'PR-'+(2026000+records.length+1),payee:$('kPayee').value,catKey:r.cat.k,catLabel:r.cat.label,amt:reward,tax:r.tax,pay,status:'draft'});
+  btn.textContent='⚡ AIで源泉税を計算して登録';btn.disabled=false;
+  showToast('源泉税 '+yen(r.tax)+' を計算し支払調書を登録しました');
+  updateBadge();
+  setTimeout(()=>go('record'),700);
+});
+
+/* ============ PAYMENT ============ */
+function monthBuckets(){
+  const map={};
+  records.forEach(r=>{const key=r.pay.getFullYear()+'-'+r.pay.getMonth();(map[key]=map[key]||{y:r.pay.getFullYear(),m:r.pay.getMonth(),tax:0,cnt:0,recs:[]});map[key].tax+=r.tax;map[key].cnt++;map[key].recs.push(r);});
+  return Object.values(map).sort((a,b)=>(b.y-a.y)||(b.m-a.m));
+}
+function bucketStatus(b){
+  const due=new Date(b.y,b.m+1,10);
+  if(b.recs.every(r=>r.status==='paid'))return 'paid';
+  if(due<TODAY)return 'overdue';
+  return 'scheduled';
+}
+function renderPay(){
+  const buckets=monthBuckets();
+  const unpaidTax=buckets.filter(b=>bucketStatus(b)!=='paid').reduce((s,b)=>s+b.tax,0);
+  const overdue=buckets.filter(b=>bucketStatus(b)==='overdue');
+  const dueDate=new Date(TODAY.getFullYear(),TODAY.getMonth()+1,10);
+  const daysLeft=Math.max(0,Math.ceil((dueDate-TODAY)/86400000));
+  $('payKpis').innerHTML=`
+    ${kpi('#e3941f','未納付 合計',yen(unpaidTax),buckets.filter(b=>bucketStatus(b)!=='paid').length+'ヶ月分','warn','要納付')}
+    ${kpi('#e24a4a','期限超過',overdue.length+'<small>件</small>',yen(overdue.reduce((s,b)=>s+b.tax,0)),overdue.length?'down':'up',overdue.length?'至急納付':'なし')}
+    ${kpi('#2f6df0','次回納付期限',fmtD(dueDate),'残り'+daysLeft+'日','warn','翌月10日')}
+    ${kpi('#16b877','年間納付済',yen(records.filter(r=>r.status==='paid'&&thisYear(r.pay)).reduce((s,r)=>s+r.tax,0)),'','up','2026年')}`;
+  $('payRows').innerHTML=buckets.map(b=>{
+    const st=bucketStatus(b);const due=new Date(b.y,b.m+1,10);
+    const btn=st==='paid'?'<span style="color:var(--green);font-weight:800;font-size:12px">✓ 納付済</span>'
+      :`<button class="btn green" style="padding:6px 12px" onclick="payMonth(${b.y},${b.m})">納付する</button>`;
+    return `<tr><td><b>${b.y}年${b.m+1}月分</b></td><td class="r tnum">${b.cnt}件</td>
+      <td class="r tnum"><b style="color:var(--red)">${yen(b.tax)}</b></td>
+      <td style="color:var(--ink-2)">${fmtDL(due)}</td><td>${stBadge(st)}</td><td class="r">${btn}</td></tr>`;
+  }).join('')||'<tr><td colspan="6" class="empty-cell">納付対象がありません 🎉</td></tr>';
+  updateBadge();
+}
+window.payMonth=(y,m)=>{records.forEach(r=>{if(r.pay.getFullYear()===y&&r.pay.getMonth()===m)r.status='paid';});renderPay();showToast(y+'年'+(m+1)+'月分の源泉所得税を納付済にしました');};
+$('autoPay').addEventListener('click',async()=>{
+  const btn=$('autoPay');btn.textContent='🏛️ 納付データ作成中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,950));
+  // mark current/past due months as paid
+  let n=0;monthBuckets().forEach(b=>{const due=new Date(b.y,b.m+1,10);if(due<=TODAY){b.recs.forEach(r=>{if(r.status!=='paid'){r.status='paid';n++;}});}});
+  btn.textContent='🏛️ e-Tax 納付データを自動作成';btn.disabled=false;
+  renderPay();showToast('e-Tax用の納付データを作成し '+n+'件を納付済にしました');
+});
+
+/* ============ YEAR ============ */
+function renderYear(){
+  const yr=records.filter(r=>thisYear(r.pay));
+  const totalAmt=yr.reduce((s,r)=>s+r.amt,0);
+  const totalTax=yr.reduce((s,r)=>s+r.tax,0);
+  // 支払調書 提出対象：同一支払先で年間 一定額超（区分により異なるがデモは5万円超を対象表示）
+  const byPayee={};
+  yr.forEach(r=>{(byPayee[r.payee]=byPayee[r.payee]||{amt:0,tax:0,cats:{}});byPayee[r.payee].amt+=r.amt;byPayee[r.payee].tax+=r.tax;byPayee[r.payee].cats[catShort(r.catLabel)]=(byPayee[r.payee].cats[catShort(r.catLabel)]||0)+1;});
+  const payeeRows=Object.entries(byPayee).sort((a,b)=>b[1].tax-a[1].tax);
+  const submitTargets=payeeRows.filter(p=>p[1].amt>50000).length;
+  $('yearKpis').innerHTML=`
+    ${kpi('#2f6df0','年間 支払金額',yen(totalAmt),yr.length+'件','up','2026年累計')}
+    ${kpi('#e24a4a','年間 源泉徴収額',yen(totalTax),'','up','納付ベース')}
+    ${kpi('#0ea5b7','支払先数',payeeRows.length+'<small>先</small>',' ','up','延べ取引')}
+    ${kpi('#e3941f','調書 提出対象',submitTargets+'<small>件</small>','5万円超','warn','1/31まで')}`;
+  $('yearRows').innerHTML=payeeRows.map(([name,d])=>{
+    const mainCat=Object.entries(d.cats).sort((a,b)=>b[1]-a[1])[0][0];
+    const need=d.amt>50000;
+    return `<tr><td><b>${esc(name)}</b></td><td><span class="tag-cat">${esc(mainCat)}</span></td>
+      <td class="r tnum">${yen(d.amt)}</td><td class="r tnum"><b style="color:var(--red)">${yen(d.tax)}</b></td>
+      <td>${need?'<span class="st pending">提出要</span>':'<span class="st draft">対象外</span>'}</td></tr>`;
+  }).join('');
+  // 区分別 bars
+  const byCat={};
+  yr.forEach(r=>{const k=catShort(r.catLabel);byCat[k]=(byCat[k]||0)+r.tax;});
+  const cats=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
+  const mx=Math.max(...cats.map(c=>c[1]),1);
+  $('yearBars').innerHTML=cats.map(c=>`
+    <div class="bar-row" style="grid-template-columns:84px 1fr 92px"><span class="mlabel" style="font-size:11.5px">${esc(c[0])}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(c[1]/mx*100)}"></div></div>
+      <span class="mval">${yen(c[1])}</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#yearBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+}
+window.submitRecords=()=>{showToast('支払調書を e-Tax 形式で一括出力しました（提出対象を自動抽出）');};
+
+/* ============ AI CALC ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 計算中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},120);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // generate 7 records
+  const targets=[];
+  for(let i=0;i<7;i++){const p=PAYEES[(i+2)%PAYEES.length];const cat=CATS[i%CATS.length];
+    const amt=(3+Math.floor(rnd()*40))*10000;const {tax}=calcWithholding(amt,cat.k);
+    targets.push({p,cat,amt,tax});}
+  $('genItems').innerHTML=targets.map((t,i)=>`<div class="gen-item" data-i="${i}"><span class="ck">✓</span>
+    <b style="flex:1">${esc(t.p.name)}</b><span style="color:var(--ink-3);font-size:11.5px">${esc(catShort(t.cat.label))}</span>
+    <span class="tnum" style="font-size:12px;color:var(--ink-2)">${yen(t.amt)}</span>
+    <span class="tnum" style="font-weight:800;color:var(--red);min-width:74px;text-align:right">源泉 ${yen(t.tax)}</span></div>`).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  let sumAmt=0,sumTax=0;
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,180));items[i].classList.add('in');
+    const t=targets[i];const now=new Date();
+    records.push({no:'PR-'+(2026000+records.length+1),payee:t.p.name,catKey:t.cat.k,catLabel:t.cat.label,amt:t.amt,tax:t.tax,pay:now,status:'draft'});
+    sumAmt+=t.amt;sumTax+=t.tax;
+  }
+  $('gsCount').textContent=items.length+'件';$('gsAmt').textContent=yen(sumAmt);$('gsTax').textContent=yen(sumTax);
+  $('genSum').classList.add('show');
+  btn.disabled=false;btn.textContent='⚡ もう一度計算';
+  updateBadge();
+  showToast(items.length+'件の源泉税を計算し支払調書を作成しました');
+});
+
+/* ============ INIT ============ */
+function updateBadge(){
+  const buckets=monthBuckets();
+  const due=buckets.filter(b=>{const d=new Date(b.y,b.m+1,10);return !b.recs.every(r=>r.status==='paid');}).length;
+  $('navDue').textContent=due;
+}
+renderPayeeSelect();renderCatSelect();renderCalc();renderChips();renderDash();updateBadge();
+</script>
+</body>
+</html>

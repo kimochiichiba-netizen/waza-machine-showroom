@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜バックアップ監視マシン（バックアップ監視システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cf0;--purple-soft:#efeafd;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn.small{padding:6px 12px;font-size:12px}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--green),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-fill.warn{background:linear-gradient(90deg,var(--amber),#f0b755)}
+.bar-fill.bad{background:linear-gradient(90deg,var(--red),#f07a7a)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut / success ring */
+.ring-wrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.ring{width:128px;height:128px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;
+  background:conic-gradient(var(--green) 0 var(--rdeg,0deg),var(--soft) var(--rdeg,0deg) 360deg);transition:background 1s cubic-bezier(.2,.8,.3,1)}
+.ring .hole{width:96px;height:96px;border-radius:50%;background:var(--card);display:grid;place-items:center;text-align:center}
+.ring .hole b{font-size:25px;font-weight:900;line-height:1;color:var(--green)}
+.ring .hole span{font-size:10.5px;color:var(--ink-3);font-weight:700}
+.ring-legend{flex:1;min-width:140px}
+.lg-row{display:flex;align-items:center;gap:9px;padding:6px 0;font-size:12.5px;border-bottom:1px solid var(--line)}
+.lg-row:last-child{border-bottom:0}
+.lg-row .sw{width:10px;height:10px;border-radius:3px}
+.lg-row .lg-v{margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums}
+
+/* heatmap */
+.heat{display:flex;flex-direction:column;gap:5px}
+.heat-row{display:grid;grid-template-columns:128px 1fr;align-items:center;gap:10px}
+.heat-row .hl{font-size:12px;color:var(--ink-2);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.heat-cells{display:grid;grid-template-columns:repeat(14,1fr);gap:4px}
+.hc{aspect-ratio:1;border-radius:4px;background:var(--soft);cursor:pointer;transition:transform .12s}
+.hc:hover{transform:scale(1.25);box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.hc.ok{background:var(--green)}
+.hc.warn{background:var(--amber)}
+.hc.bad{background:var(--red)}
+.heat-legend{display:flex;gap:16px;font-size:11.5px;color:var(--ink-2);margin-top:12px;align-items:center;flex-wrap:wrap}
+.heat-legend .li{display:flex;align-items:center;gap:6px}
+.heat-legend .sw{width:11px;height:11px;border-radius:3px}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.ok{background:var(--green-soft);color:var(--green)}
+.st.running{background:var(--brand-soft);color:var(--brand)}
+.st.warn{background:var(--amber-soft);color:var(--amber)}
+.st.fail{background:var(--red-soft);color:var(--red)}
+.st.skip{background:var(--soft);color:var(--ink-3)}
+.bar-mini{height:7px;border-radius:99px;background:var(--soft);overflow:hidden;width:90px;display:inline-block;vertical-align:middle}
+.bar-mini > i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--green),var(--sky))}
+.bar-mini > i.warn{background:linear-gradient(90deg,var(--amber),#f0b755)}
+.bar-mini > i.bad{background:linear-gradient(90deg,var(--red),#f07a7a)}
+
+/* form card */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--brand)}
+.fg-2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+
+/* restore test result paper */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:26px 28px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.rt-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;border-bottom:2px solid var(--green);padding-bottom:12px}
+.rt-head .ttl{font-size:18px;font-weight:900;letter-spacing:.06em;color:var(--green)}
+.rt-head .meta{text-align:right;font-size:11px;color:var(--ink-2)}
+.rt-head .meta .no{font-family:'Orbitron';color:var(--ink);font-weight:700}
+.rt-step{display:flex;align-items:center;gap:11px;padding:10px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:12.5px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.rt-step.in{opacity:1;transform:none}
+.rt-step .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+.rt-step .tm{margin-left:auto;font-family:'Orbitron';font-size:12px;color:var(--ink-2)}
+.rt-summary{background:var(--green-soft);border-left:5px solid var(--green);border-radius:6px;padding:13px 16px;margin-top:14px;display:none}
+.rt-summary.show{display:block;animation:fade .4s}
+.rt-summary b{font-size:15px;color:var(--green)}
+
+/* AI generate (Before/After) */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+
+/* AI log console */
+.console{background:#0c1424;border:1px solid #1c2842;border-radius:11px;padding:14px 16px;font-family:'Orbitron','Courier New',monospace;
+  font-size:11.5px;color:#9fb3d8;max-height:210px;overflow-y:auto;margin-top:8px}
+.console .ln{padding:2px 0;opacity:0;animation:lnin .25s forwards;white-space:pre-wrap;word-break:break-all}
+@keyframes lnin{to{opacity:1}}
+.console .ln .t{color:#5b6c8f}
+.console .ln.ok{color:#5fe0a3}
+.console .ln.warn{color:#f0c062}
+.console .ln.bad{color:#f08585}
+.console .ln.ai{color:#7fb0ff}
+
+/* AI finding card */
+.finding{border:1px solid var(--line);border-radius:11px;padding:16px;margin-bottom:10px;opacity:0;transform:translateY(8px);transition:all .45s}
+.finding.in{opacity:1;transform:none}
+.finding.bad{border-left:4px solid var(--red)}
+.finding.warn{border-left:4px solid var(--amber)}
+.finding .fh{display:flex;align-items:center;gap:9px;font-weight:800;font-size:13.5px;margin-bottom:7px}
+.finding .fh .pill{font-size:10px;font-weight:800;padding:2px 8px;border-radius:99px}
+.finding .fh .pill.bad{background:var(--red-soft);color:var(--red)}
+.finding .fh .pill.warn{background:var(--amber-soft);color:var(--amber)}
+.finding .frow{display:flex;gap:8px;font-size:12.5px;color:var(--ink-2);padding:3px 0}
+.finding .frow b{color:var(--ink);min-width:74px;flex-shrink:0;font-weight:700}
+.finding .notify{margin-top:9px;background:var(--soft);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--ink-2)}
+.finding .notify .nh{font-weight:800;color:var(--ink);margin-bottom:3px;display:flex;align-items:center;gap:6px}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* progress for capacity */
+.cap-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+@media(max-width:760px){.cap-grid{grid-template-columns:1fr}}
+.cap-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.cap-card .ct{font-size:13px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.cap-card .sub{font-size:11.5px;color:var(--ink-3);margin-bottom:13px}
+.cap-bar{height:14px;border-radius:99px;background:var(--soft);overflow:hidden}
+.cap-bar > i{display:block;height:100%;border-radius:99px;width:0;transition:width 1s cubic-bezier(.2,.8,.3,1);background:linear-gradient(90deg,var(--green),var(--sky))}
+.cap-bar > i.warn{background:linear-gradient(90deg,var(--amber),#f0b755)}
+.cap-bar > i.bad{background:linear-gradient(90deg,var(--red),#f07a7a)}
+.cap-meta{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-2);margin-top:8px}
+.cap-meta b{color:var(--ink);font-weight:800}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">バックアップ監視マシン<small>技マシン｜バックアップ監視</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="jobs"><span class="i">🗂️</span>ジョブ一覧</a>
+      <a data-v="result"><span class="i">✅</span>成否</a>
+      <a data-v="cap"><span class="i">💾</span>容量</a>
+      <a data-v="restore"><span class="i">🔄</span>復旧テスト</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI監視<span class="badge" id="navFail">0</span></a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。サーバー名・数値はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">本日のバックアップ稼働状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div>
+            <div class="panel">
+              <div class="ph"><h3>直近14日のバックアップ成否</h3><span class="more">緑=成功 / 黄=警告 / 赤=失敗</span></div>
+              <div class="pb">
+                <div class="heat" id="heat"></div>
+                <div class="heat-legend">
+                  <div class="li"><span class="sw" style="background:var(--green)"></span>成功</div>
+                  <div class="li"><span class="sw" style="background:var(--amber)"></span>警告（遅延・一部失敗）</div>
+                  <div class="li"><span class="sw" style="background:var(--red)"></span>失敗</div>
+                  <div class="li"><span class="sw" style="background:var(--soft)"></span>未実施</div>
+                </div>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="ph"><h3>ジョブ別 成功率</h3><span class="more">過去30日</span></div>
+              <div class="pb"><div class="bars" id="rateBars"></div></div>
+            </div>
+          </div>
+          <div>
+            <div class="panel">
+              <div class="ph"><h3>本日の成功率</h3></div>
+              <div class="pb">
+                <div class="ring-wrap">
+                  <div class="ring" id="ring"><div class="hole"><div><b id="ringV">0%</b><span>本日成功率</span></div></div></div>
+                  <div class="ring-legend" id="ringLegend"></div>
+                </div>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="ph"><h3>最近のアクティビティ</h3></div>
+              <div class="pb"><div class="acts" id="acts"></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- JOBS -->
+      <section class="view" id="v-jobs">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="ジョブ名・サーバー・対象で検索"></div>
+          <div class="chips" id="jobChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>ジョブ名</th><th>対象サーバー</th><th>スケジュール</th><th class="r">容量</th><th>最終実行</th><th>所要</th><th>状態</th></tr></thead>
+          <tbody id="jobRows"></tbody>
+        </table>
+      </section>
+
+      <!-- RESULT (成否) -->
+      <section class="view" id="v-result">
+        <div class="kpis" id="resKpis"></div>
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="rq" placeholder="ジョブ・サーバーで検索"></div>
+          <div class="chips" id="resChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>実行日時</th><th>ジョブ名</th><th>対象サーバー</th><th class="r">容量</th><th class="r">所要</th><th>結果</th><th>メッセージ</th></tr></thead>
+          <tbody id="resRows"></tbody>
+        </table>
+      </section>
+
+      <!-- CAPACITY -->
+      <section class="view" id="v-cap">
+        <div class="kpis" id="capKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>保存先ストレージの使用状況</h3><span class="more">しきい値 85% で警告</span></div>
+          <div class="pb"><div class="cap-grid" id="capCards"></div></div>
+        </div>
+        <div class="panel">
+          <div class="ph"><h3>容量の増加見込み（AI予測）</h3></div>
+          <div class="pb"><div class="bars" id="capForecast"></div>
+            <div style="font-size:11.5px;color:var(--ink-2);margin-top:12px">💡 現在の増加ペースでは、メインNASは <b id="capFullDays">—</b> で上限に達する見込みです。早めの増設または古い世代の削除を推奨します。</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RESTORE TEST -->
+      <section class="view" id="v-restore">
+        <div class="create-grid">
+          <div class="formcard">
+            <div style="font-size:14px;font-weight:900;margin-bottom:4px">復旧テストを実行</div>
+            <div style="font-size:11.5px;color:var(--ink-3);margin-bottom:14px">バックアップから実際に復元できるかを安全な検証領域で確認します。「取れているつもり」を防ぎます。</div>
+            <div class="fg"><label>テスト対象のバックアップ</label>
+              <select id="rtTarget"></select></div>
+            <div class="fg-2">
+              <div class="fg"><label>復元先</label>
+                <select id="rtDest"><option>検証用サンドボックス</option><option>一時ステージング領域</option></select></div>
+              <div class="fg"><label>検証レベル</label>
+                <select id="rtLevel"><option>標準（整合性＋起動確認）</option><option>簡易（整合性のみ）</option><option>完全（業務動作まで）</option></select></div>
+            </div>
+            <div class="fg"><label>検証担当</label>
+              <select id="rtStaff"><option>佐藤（情シス）</option><option>田中（情シス）</option><option>鈴木（情シス）</option></select></div>
+            <div class="linkrow" style="margin-top:6px">
+              <button class="btn primary" id="rtRun" style="flex:1;justify-content:center">🔄 復旧テストを実行</button>
+              <button class="btn" id="rtSample">サンプル</button>
+            </div>
+            <div style="margin-top:16px;border-top:1px solid var(--line);padding-top:13px">
+              <div style="font-size:12px;font-weight:800;color:var(--ink-2);margin-bottom:8px">過去のテスト履歴</div>
+              <div id="rtHistory"></div>
+            </div>
+          </div>
+          <div>
+            <div class="paper" id="rtPaper">
+              <div class="rt-head">
+                <div class="ttl">復旧テスト 結果レポート</div>
+                <div class="meta"><div>レポート番号：<span class="no" id="rtNo">—</span></div><div>実施日時：<span id="rtDate">—</span></div></div>
+              </div>
+              <div id="rtSteps">
+                <div style="text-align:center;color:#aab2c4;padding:40px 0">← 左で対象を選び「復旧テストを実行」を押してください。<br>復元の各ステップをここで実演します。</div>
+              </div>
+              <div class="rt-summary" id="rtSummary"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI MONITOR -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">AIがバックアップログを読み解いて異常を検知</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">本日の実行ログ <b id="aiLogN">248行</b> をAIが解析し、失敗・異常の検知 → 原因の推定 → 担当者への通知まで自動で行います。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで監視・解析する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">毎朝 45分</div>
+              <ul>
+                <li>📜 サーバーごとにログを開いて目視確認</li>
+                <li>🔎 失敗行を探して原因を調べる</li>
+                <li>📞 担当者へ電話・メールで連絡</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 全ログを自動で巡回・解析</li>
+                <li>🧠 失敗を検知し原因をAIが推定</li>
+                <li>✉️ 担当者へ通知文を自動作成・送付</li>
+              </ul>
+            </div>
+          </div>
+          <div class="console" id="console" style="display:none"></div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">🧠 AIが検知した異常と推定原因（通知ドラフト付き）</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const SERVERS=[
+  {name:'本社ファイルサーバー',host:'fs01.kimochi.local',type:'ファイル'},
+  {name:'基幹DBサーバー',host:'db01.kimochi.local',type:'DB'},
+  {name:'グループウェア',host:'gw01.kimochi.local',type:'アプリ'},
+  {name:'会計システム',host:'kaikei01.kimochi.local',type:'DB'},
+  {name:'電子カルテ連携サーバー',host:'karte01.kimochi.local',type:'DB'},
+  {name:'WebサイトVPS',host:'web01.vps.jp',type:'Web'},
+  {name:'共有NAS（拠点）',host:'nas-oita.local',type:'ファイル'},
+  {name:'メールサーバー',host:'mail01.kimochi.local',type:'メール'},
+];
+const SCHEDULES=['毎日 02:00','毎日 03:30','毎日 01:00','毎時','平日 22:00','毎日 04:00','週次 日曜 23:00','毎日 00:30'];
+const STORES=[
+  {name:'メインNAS（社内）',cap:8192,used:7250},
+  {name:'バックアップNAS（拠点）',cap:6144,used:3120},
+  {name:'クラウドストレージ（S3）',cap:10240,used:4480},
+  {name:'外部HDD（世代保管）',cap:4096,used:3550},
+];
+
+const TODAY=new Date();
+let SEED=4040;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+/* ----- jobs (latest status per job) ----- */
+const JOB_STATUSES=['ok','ok','ok','ok','ok','warn','fail','ok','running','skip'];
+let jobs=[];
+(function seedJobs(){
+  SERVERS.forEach((s,idx)=>{
+    const sch=SCHEDULES[idx];
+    const sizeGB=(8+Math.floor(rnd()*240));
+    let stt=pick(JOB_STATUSES);
+    if(idx===0)stt='ok'; if(idx===1)stt='fail'; if(idx===4)stt='warn'; if(idx===6)stt='running';
+    const dur=10+Math.floor(rnd()*180); // minutes
+    const lastH=Math.floor(rnd()*22);
+    const last=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate(),lastH,Math.floor(rnd()*59));
+    const rate=stt==='fail'?70+Math.floor(rnd()*18):stt==='warn'?86+Math.floor(rnd()*8):95+Math.floor(rnd()*5);
+    jobs.push({
+      id:'JOB-'+String(idx+1).padStart(3,'0'),
+      name:s.type+'バックアップ（'+s.name+'）',
+      server:s.name,host:s.host,type:s.type,schedule:sch,
+      sizeGB,dur,last,status:stt,rate:Math.min(rate,100)
+    });
+  });
+})();
+
+/* ----- run history (成否) ----- */
+const MSGS={
+  ok:['正常終了','差分バックアップ完了','整合性チェックOK','全世代の検証に成功'],
+  warn:['想定より所要時間が超過','一部ファイルがロック中でスキップ','空き容量がしきい値に接近'],
+  fail:['宛先ストレージに接続できません','空き容量不足で中断','認証エラー（資格情報の期限切れ）','対象DBがロックされ取得失敗'],
+  skip:['前ジョブ実行中のためスキップ','メンテナンスウィンドウ外'],
+};
+let runs=[];
+(function seedRuns(){
+  const dist=['ok','ok','ok','ok','ok','ok','warn','ok','fail','ok','ok','warn','ok','skip','ok'];
+  for(let d=0;d<14;d++){
+    const day=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-d);
+    jobs.forEach((j,ji)=>{
+      // each job runs roughly daily
+      let stt=pick(dist);
+      if(j.id==='JOB-002'&&d<2)stt='fail';        // DB server failing recently
+      if(j.id==='JOB-005'&&d<3&&rnd()>0.5)stt='warn';
+      if(stt==='running')stt='ok';
+      const t=new Date(day.getFullYear(),day.getMonth(),day.getDate(),2,Math.floor(rnd()*55));
+      const dur=Math.max(4,j.dur+Math.floor((rnd()-0.5)*40));
+      const size=Math.max(1,Math.round(j.sizeGB*(0.85+rnd()*0.3)));
+      runs.push({when:t,job:j.name,jobId:j.id,server:j.server,size,dur,status:stt,msg:pick(MSGS[stt]||MSGS.ok)});
+    });
+  }
+  runs.sort((a,b)=>b.when-a.when);
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmtDT=d=>(d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+const fmtFull=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日 '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+const gb=n=>n>=1024?(n/1024).toFixed(1)+' TB':Math.round(n)+' GB';
+const mins=m=>m>=60?Math.floor(m/60)+'時間'+(m%60?(m%60)+'分':''):m+'分';
+const STLABEL={ok:'成功',running:'実行中',warn:'警告',fail:'失敗',skip:'スキップ'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]||s}</span>`;}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function todayRuns(){return runs.filter(r=>r.when.getDate()===TODAY.getDate()&&r.when.getMonth()===TODAY.getMonth());}
+
+/* ============ ROUTING ============ */
+const TITLES={
+  dash:['ダッシュボード','本日のバックアップ稼働状況'],
+  jobs:['ジョブ一覧','登録済みのバックアップジョブを管理します'],
+  result:['成否','日々のバックアップ結果（成功・失敗）の記録'],
+  cap:['容量','保存先ストレージの使用量と増加予測'],
+  restore:['復旧テスト','バックアップから本当に復元できるかを検証します'],
+  ai:['AI監視','ログをAIが解析し、失敗検知・原因推定・通知まで自動化']
+};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='dash'?'<button class="btn" onclick="go(\'restore\')">🔄 復旧テスト</button><button class="btn primary" onclick="go(\'ai\')">⚡ AI監視</button>'
+    : v==='jobs'?'<button class="btn primary" onclick="go(\'ai\')">⚡ AIで一括チェック</button>'
+    : v==='result'?'<button class="btn" onclick="go(\'ai\')">⚡ 失敗をAI解析</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='jobs')renderJobs();
+  if(v==='result')renderResult();
+  if(v==='cap')renderCap();
+  if(v==='restore')renderRestore();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const tr=todayRuns();
+  const okN=tr.filter(r=>r.status==='ok').length;
+  const failN=tr.filter(r=>r.status==='fail').length;
+  const warnN=tr.filter(r=>r.status==='warn').length;
+  const rate=tr.length?Math.round(okN/tr.length*100):100;
+  const totUsed=STORES.reduce((s,x)=>s+x.used,0),totCap=STORES.reduce((s,x)=>s+x.cap,0);
+  const usePct=Math.round(totUsed/totCap*100);
+  const okJobs=jobs.filter(j=>j.status!=='fail'&&j.status!=='warn').length;
+  const recover=Math.round(okJobs/jobs.length*100);
+  $('kpis').innerHTML=`
+    ${kpi('#16b877','本日の成功率',rate+'<small>%</small>',tr.length+'件 実行',rate>=95?'up':rate>=80?'warn':'down',rate>=95?'良好':'要確認')}
+    ${kpi('#e24a4a','直近の失敗',failN+'<small>件</small>',warnN+'件 警告',failN?'down':'up',failN?'要対応':'問題なし')}
+    ${kpi('#e3941f','容量使用',usePct+'<small>%</small>',gb(totUsed)+' / '+gb(totCap),usePct>=85?'down':'warn','しきい値85%')}
+    ${kpi('#2f6df0','復旧可能性',recover+'<small>%</small>',okJobs+'/'+jobs.length+' ジョブ',recover>=90?'up':'warn','検証済み')}`;
+
+  // heatmap: rows = jobs, cells = last 14 days
+  const days=[];for(let d=13;d>=0;d--){days.push(new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-d));}
+  $('heat').innerHTML=jobs.map(j=>{
+    const cells=days.map(day=>{
+      const r=runs.find(x=>x.jobId===j.id&&x.when.getDate()===day.getDate()&&x.when.getMonth()===day.getMonth());
+      const cls=!r?'':r.status==='ok'?'ok':r.status==='warn'?'warn':r.status==='fail'?'bad':'';
+      const lbl=r?`${esc(j.server)} ${day.getMonth()+1}/${day.getDate()}：${STLABEL[r.status]}`:`${esc(j.server)} ${day.getMonth()+1}/${day.getDate()}：未実施`;
+      return `<div class="hc ${cls}" title="${lbl}"></div>`;
+    }).join('');
+    return `<div class="heat-row"><div class="hl" title="${esc(j.server)}">${esc(j.server)}</div><div class="heat-cells">${cells}</div></div>`;
+  }).join('');
+
+  // rate bars per job
+  const sorted=[...jobs].sort((a,b)=>a.rate-b.rate);
+  $('rateBars').innerHTML=sorted.map(j=>{
+    const cls=j.rate>=95?'':j.rate>=85?'warn':'bad';
+    return `<div class="bar-row"><span class="mlabel" title="${esc(j.server)}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(j.type)}</span>
+      <div class="bar-track"><div class="bar-fill ${cls}" style="width:0" data-w="${j.rate}"></div></div>
+      <span class="mval">${j.rate}%</span></div>`;
+  }).join('');
+  setTimeout(()=>document.querySelectorAll('#rateBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+
+  // ring
+  const ring=$('ring');
+  setTimeout(()=>{ring.style.setProperty('--rdeg',(rate*3.6)+'deg');},80);
+  $('ringV').textContent=rate+'%';
+  $('ringLegend').innerHTML=`
+    <div class="lg-row"><span class="sw" style="background:var(--green)"></span>成功<span class="lg-v" style="color:var(--green)">${okN}</span></div>
+    <div class="lg-row"><span class="sw" style="background:var(--amber)"></span>警告<span class="lg-v" style="color:var(--amber)">${warnN}</span></div>
+    <div class="lg-row"><span class="sw" style="background:var(--red)"></span>失敗<span class="lg-v" style="color:var(--red)">${failN}</span></div>
+    <div class="lg-row"><span class="sw" style="background:var(--soft)"></span>合計<span class="lg-v">${tr.length}</span></div>`;
+
+  // activity
+  const acts=[
+    {i:'❌',c:'#fdeaea',t:'基幹DBサーバー のバックアップが失敗（宛先ストレージ未接続）',m:'今日 03:32'},
+    {i:'⚡',c:'#e6f8f0',t:'AI監視が失敗1件を検知し、情シス 佐藤 へ通知を送付',m:'今日 03:33'},
+    {i:'⚠️',c:'#fdf3e2',t:'電子カルテ連携サーバー が想定より所要時間を超過',m:'今日 02:48'},
+    {i:'✅',c:'#e6f8f0',t:'本社ファイルサーバー 差分バックアップ 正常終了（128GB）',m:'今日 02:14'},
+    {i:'🔄',c:'#eaf1ff',t:'共有NAS（拠点）の復旧テストに成功（整合性100%）',m:'昨日 18:20'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${a.t}</div><div class="am">${a.m}</div></div></div>`).join('');
+}
+
+/* ============ JOBS ============ */
+let jobFilter='all';
+function renderJobChips(){
+  const opts=[['all','すべて'],['ok','成功'],['running','実行中'],['warn','警告'],['fail','失敗'],['skip','スキップ']];
+  $('jobChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===jobFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('jobChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{jobFilter=c.dataset.s;renderJobChips();renderJobs();});
+}
+function renderJobs(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=jobs.filter(j=>jobFilter==='all'||j.status===jobFilter)
+    .filter(j=>!q||(j.name+j.server+j.host+j.type).toLowerCase().includes(q));
+  $('jobRows').innerHTML=rows.length?rows.map(j=>`<tr>
+    <td><b>${esc(j.type)}</b><div style="font-size:11px;color:var(--ink-3)" class="mono">${esc(j.id)}</div></td>
+    <td>${esc(j.server)}<div style="font-size:11px;color:var(--ink-3)" class="mono">${esc(j.host)}</div></td>
+    <td style="color:var(--ink-2)">${esc(j.schedule)}</td>
+    <td class="r tnum">${gb(j.sizeGB)}</td>
+    <td style="color:var(--ink-2)">${fmtDT(j.last)}</td>
+    <td style="color:var(--ink-2)">${mins(j.dur)}</td>
+    <td>${stBadge(j.status)}</td></tr>`).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当するジョブがありません</td></tr>';
+}
+$('q').addEventListener('input',renderJobs);
+
+/* ============ RESULT (成否) ============ */
+let resFilter='all';
+function renderResKpis(){
+  const tot=runs.length;
+  const ok=runs.filter(r=>r.status==='ok').length;
+  const fail=runs.filter(r=>r.status==='fail').length;
+  const warn=runs.filter(r=>r.status==='warn').length;
+  $('resKpis').innerHTML=`
+    ${kpi('#2f6df0','記録数（14日）',tot+'<small>件</small>','','up','全ジョブ')}
+    ${kpi('#16b877','成功',ok+'<small>件</small>',Math.round(ok/tot*100)+'%','up','安定')}
+    ${kpi('#e3941f','警告',warn+'<small>件</small>','','warn','要監視')}
+    ${kpi('#e24a4a','失敗',fail+'<small>件</small>','',fail?'down':'up',fail?'要対応':'なし')}`;
+}
+function renderResChips(){
+  const opts=[['all','すべて'],['ok','成功'],['warn','警告'],['fail','失敗'],['skip','スキップ']];
+  $('resChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===resFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('resChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{resFilter=c.dataset.s;renderResChips();renderResult();});
+}
+function renderResult(){
+  renderResKpis();
+  const q=($('rq').value||'').toLowerCase();
+  let rows=runs.filter(r=>resFilter==='all'||r.status===resFilter)
+    .filter(r=>!q||(r.job+r.server).toLowerCase().includes(q)).slice(0,80);
+  $('resRows').innerHTML=rows.length?rows.map(r=>`<tr>
+    <td style="color:var(--ink-2)" class="tnum">${fmtDT(r.when)}</td>
+    <td><b>${esc(r.server)}</b></td>
+    <td style="color:var(--ink-2)" class="mono" style="font-size:11px">${esc(r.jobId)}</td>
+    <td class="r tnum">${gb(r.size)}</td>
+    <td class="r tnum" style="color:var(--ink-2)">${mins(r.dur)}</td>
+    <td>${stBadge(r.status)}</td>
+    <td style="color:var(--ink-2)">${esc(r.msg)}</td></tr>`).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する記録がありません</td></tr>';
+}
+$('rq').addEventListener('input',renderResult);
+
+/* ============ CAPACITY ============ */
+function renderCap(){
+  const totUsed=STORES.reduce((s,x)=>s+x.used,0),totCap=STORES.reduce((s,x)=>s+x.cap,0);
+  const usePct=Math.round(totUsed/totCap*100);
+  const over=STORES.filter(s=>s.used/s.cap>=0.85).length;
+  $('capKpis').innerHTML=`
+    ${kpi('#2f6df0','総容量',gb(totCap),'','up',STORES.length+'拠点')}
+    ${kpi('#16b877','使用中',gb(totUsed),usePct+'%','warn','全体')}
+    ${kpi('#e3941f','空き容量',gb(totCap-totUsed),'',(totCap-totUsed)<1024?'down':'warn','残り')}
+    ${kpi('#e24a4a','要注意ストレージ',over+'<small>台</small>','85%超',over?'down':'up',over?'増設検討':'余裕あり')}`;
+  $('capCards').innerHTML=STORES.map(s=>{
+    const p=Math.round(s.used/s.cap*100);
+    const cls=p>=90?'bad':p>=85?'warn':'';
+    return `<div class="cap-card"><div class="ct">💾 ${esc(s.name)}</div>
+      <div class="sub">${gb(s.used)} / ${gb(s.cap)} 使用</div>
+      <div class="cap-bar"><i class="${cls}" style="width:0" data-w="${p}"></i></div>
+      <div class="cap-meta"><span>使用率 <b style="color:${p>=85?'var(--red)':'var(--ink)'}">${p}%</b></span><span>空き <b>${gb(s.cap-s.used)}</b></span></div></div>`;
+  }).join('');
+  setTimeout(()=>document.querySelectorAll('#capCards .cap-bar > i').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+
+  // forecast: next 6 months main NAS
+  const main=STORES[0];const growth=180; // GB/month
+  const months=[];for(let k=0;k<6;k++){const d=new Date(TODAY.getFullYear(),TODAY.getMonth()+k,1);months.push(d);}
+  const mx=main.cap;
+  let monthsToFull=Math.max(0,Math.ceil((main.cap-main.used)/growth));
+  $('capForecast').innerHTML=months.map((m,i)=>{
+    const proj=Math.min(main.used+growth*i,main.cap);
+    const p=Math.round(proj/mx*100);
+    const cls=p>=100?'bad':p>=85?'warn':'';
+    return `<div class="bar-row"><span class="mlabel">${m.getMonth()+1}月</span>
+      <div class="bar-track"><div class="bar-fill ${cls}" style="width:0" data-w="${p}"></div></div>
+      <span class="mval">${gb(proj)}</span></div>`;
+  }).join('');
+  setTimeout(()=>document.querySelectorAll('#capForecast .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  const full=new Date(TODAY.getFullYear(),TODAY.getMonth()+monthsToFull,1);
+  $('capFullDays').textContent=monthsToFull<=0?'まもなく':('約'+monthsToFull+'ヶ月後（'+(full.getMonth()+1)+'月頃）');
+}
+
+/* ============ RESTORE TEST ============ */
+const RT_HISTORY=[
+  {no:'RT-2026-041',target:'共有NAS（拠点）',date:'5/29 18:20',result:'ok',int:'100%'},
+  {no:'RT-2026-040',target:'本社ファイルサーバー',date:'5/22 17:05',result:'ok',int:'100%'},
+  {no:'RT-2026-039',target:'会計システム',date:'5/15 19:40',result:'warn',int:'98%'},
+];
+function renderRestore(){
+  $('rtTarget').innerHTML=jobs.map(j=>`<option value="${esc(j.id)}">${esc(j.server)}（最新世代）</option>`).join('');
+  $('rtHistory').innerHTML=RT_HISTORY.map(h=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);font-size:12px">
+    <span class="mono" style="font-size:11px;color:var(--ink-3)">${esc(h.no)}</span>
+    <span style="flex:1;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(h.target)}</span>
+    <span style="color:var(--ink-3);font-size:11px">${esc(h.date)}</span>
+    ${stBadge(h.result)}</div>`).join('');
+}
+$('rtSample').addEventListener('click',()=>{
+  $('rtTarget').value='JOB-002';$('rtLevel').value='完全（業務動作まで）';
+  showToast('サンプル設定を入力しました（基幹DB・完全検証）');
+});
+let rtCount=42;
+$('rtRun').addEventListener('click',async()=>{
+  const sel=$('rtTarget');const label=sel.options[sel.selectedIndex].text;
+  const btn=$('rtRun');btn.disabled=true;btn.textContent='🔄 検証中…';
+  const now=new Date();const no='RT-2026-'+String(rtCount++).padStart(3,'0');
+  $('rtNo').textContent=no;$('rtDate').textContent=fmtFull(now);
+  $('rtSummary').classList.remove('show');
+  const steps=[
+    ['バックアップ世代の選択と読み込み','0:00:04'],
+    ['アーカイブの整合性チェック（チェックサム照合）','0:00:11'],
+    ['検証用サンドボックスへ復元','0:01:32'],
+    ['復元データのマウント・起動確認','0:00:21'],
+    ['業務動作テスト（ログイン・主要画面）','0:00:18'],
+    ['検証領域のクリーンアップ','0:00:06'],
+  ];
+  $('rtSteps').innerHTML=steps.map((s,i)=>`<div class="rt-step" data-i="${i}"><span class="ck">✓</span><span style="flex:1">${esc(s[0])}</span><span class="tm">${esc(s[1])}</span></div>`).join('');
+  const els=[...$('rtSteps').querySelectorAll('.rt-step')];
+  for(let i=0;i<els.length;i++){await new Promise(r=>setTimeout(r,420));els[i].classList.add('in');}
+  await new Promise(r=>setTimeout(r,300));
+  $('rtSummary').innerHTML=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:5px">✅ <b>復元に成功しました</b></div>
+    <div style="font-size:12px;color:var(--ink-2)">対象：${esc(label)}<br>整合性：100% ／ 復元所要：2分32秒 ／ 業務動作：正常<br>このバックアップは「いざという時に確実に戻せる」状態です。</div>`;
+  $('rtSummary').classList.add('show');
+  RT_HISTORY.unshift({no,target:label.replace('（最新世代）',''),date:fmtDT(now),result:'ok',int:'100%'});
+  renderRestore();
+  btn.disabled=false;btn.textContent='🔄 復旧テストを実行';
+  showToast('復旧テスト '+no+' が成功しました（整合性100%）');
+});
+
+/* ============ AI MONITOR ============ */
+function logLine(cls,txt){
+  const c=$('console');const t=new Date();
+  const ts=String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')+':'+String(t.getSeconds()).padStart(2,'0');
+  const div=document.createElement('div');div.className='ln '+(cls||'');
+  div.innerHTML=`<span class="t">[${ts}]</span> ${esc(txt)}`;
+  c.appendChild(div);c.scrollTop=c.scrollHeight;
+}
+const AI_FINDINGS=[
+  {sev:'bad',job:'基幹DBサーバー',jobId:'JOB-002',
+   detect:'本日 03:32 のバックアップが「失敗」で終了（連続2日）',
+   cause:'宛先ストレージ（バックアップNAS）への接続が拒否されています。ログのエラーコードと前回正常時との差分から、NAS側の資格情報（保存先パスワード）が期限切れになった可能性が高いと推定。',
+   action:'NASの接続資格情報を再設定 → ジョブを手動再実行',
+   to:'情シス 佐藤 さん（電子カルテ連携の責任者）',
+   subject:'【至急】基幹DBバックアップ 連続失敗のお知らせ'},
+  {sev:'warn',job:'電子カルテ連携サーバー',jobId:'JOB-005',
+   detect:'所要時間が平常の1.8倍に増加（48分→86分）',
+   cause:'対象データが急増しており、深夜のバックアップ枠を超過しつつあります。月初の患者データ取り込みと時間帯が重複していると推定。',
+   action:'開始時刻を30分前倒し、または差分バックアップへ切替',
+   to:'情シス 田中 さん',
+   subject:'【注意】電子カルテ連携 バックアップ遅延の傾向'},
+  {sev:'warn',job:'メインNAS（保存先）',jobId:'STORE',
+   detect:'保存先ストレージの使用率が 88% に到達',
+   cause:'世代保管の自動削除が効いておらず、古い世代が蓄積。現ペースで約5ヶ月後に上限到達と予測。',
+   action:'保管世代数を見直し、または容量増設を計画',
+   to:'情シス 鈴木 さん',
+   subject:'【注意】メインNAS 空き容量の警告（88%）'},
+];
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 解析中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  $('genList').classList.remove('show');$('genItems').innerHTML='';
+  const c=$('console');c.style.display='block';c.innerHTML='';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,6);},120);
+
+  const logs=[
+    ['ai','AI監視エンジンを起動しました。本日の実行ログ 248行を読み込みます…'],
+    ['','fs01.kimochi.local … 差分バックアップ 正常終了（128GB / 14分）'],
+    ['ok','OK  本社ファイルサーバー：整合性チェック合格'],
+    ['','db01.kimochi.local … 接続試行 3/3 失敗'],
+    ['bad','FAIL 基幹DBサーバー：宛先ストレージに接続できません（連続2日目）'],
+    ['ai','→ AIが原因を推定中… エラーコードと過去ログを照合'],
+    ['','karte01.kimochi.local … 完了（所要 86分 / 平常比 1.8倍）'],
+    ['warn','WARN 電子カルテ連携：所要時間の超過を検知'],
+    ['','保存先ストレージ メインNAS … 使用率 88% を検出'],
+    ['warn','WARN 容量しきい値（85%）を超過'],
+    ['ai','→ 3件の異常を検知。担当者向け通知ドラフトを生成します…'],
+  ];
+  for(let i=0;i<logs.length;i++){await new Promise(r=>setTimeout(r,260));logLine(logs[i][0],logs[i][1]);}
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+
+  $('genItems').innerHTML=AI_FINDINGS.map((f,i)=>`
+    <div class="finding ${f.sev}" data-i="${i}">
+      <div class="fh"><span class="pill ${f.sev}">${f.sev==='bad'?'失敗':'警告'}</span>${esc(f.job)} <span class="mono" style="font-size:11px;color:var(--ink-3);font-weight:600">${esc(f.jobId)}</span></div>
+      <div class="frow"><b>検知内容</b><span>${esc(f.detect)}</span></div>
+      <div class="frow"><b>推定原因</b><span>${esc(f.cause)}</span></div>
+      <div class="frow"><b>推奨対応</b><span>${esc(f.action)}</span></div>
+      <div class="notify">
+        <div class="nh">✉️ 自動生成された通知ドラフト → ${esc(f.to)}</div>
+        <div style="font-weight:700;color:var(--ink)">件名：${esc(f.subject)}</div>
+        <div style="margin-top:3px">${esc(f.job)}にて${esc(f.detect)}。推定原因は「${esc(f.cause)}」です。${esc(f.action)}をお願いします。（技マシン AI監視 自動送信）</div>
+      </div>
+    </div>`).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.finding')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,300));items[i].classList.add('in');}
+  $('navFail').textContent=AI_FINDINGS.filter(f=>f.sev==='bad').length;
+  btn.disabled=false;btn.textContent='⚡ もう一度解析する';
+  showToast(AI_FINDINGS.length+'件の異常を検知し、担当者へ通知を送付しました');
+});
+
+/* ============ INIT ============ */
+renderJobChips();renderResChips();renderDash();
+$('navFail').textContent=jobs.filter(j=>j.status==='fail').length;
+</script>
+</body>
+</html>

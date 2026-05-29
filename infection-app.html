@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜感染対策チェックマシン（感染対策管理システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#0ea5b7;--brand-dk:#0a8593;--brand-soft:#e3f6f8;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#2f6df0;--purple:#7c5cf0;--purple-soft:#efeaff;
+  --sb:#0c1a26;--sb-2:#10283a;--sb-ink:#bcd4dc;--sb-ink-2:#6f8aa0;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(14,165,183,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.nav a .badge.amber{background:var(--amber)}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn.red{background:var(--red);border-color:var(--red);color:#fff}
+.btn.red:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:62px 1fr 64px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut gauge */
+.gauge-wrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.gauge{position:relative;width:128px;height:128px;flex-shrink:0}
+.gauge svg{transform:rotate(-90deg)}
+.gauge .gv{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.gauge .gv b{font-size:26px;font-weight:900;line-height:1}
+.gauge .gv span{font-size:11px;color:var(--ink-3);font-weight:700}
+.gleg{flex:1;min-width:160px}
+.gleg .lr{display:flex;align-items:center;gap:9px;font-size:12.5px;padding:5px 0}
+.gleg .lr .lc{width:10px;height:10px;border-radius:3px}
+.gleg .lr b{margin-left:auto;font-weight:800}
+
+/* ward heat */
+.wards{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px}
+.ward{border:1px solid var(--line);border-radius:11px;padding:12px;background:var(--card)}
+.ward .wn{font-size:12px;font-weight:800}
+.ward .ws{font-size:10.5px;color:var(--ink-3);margin-bottom:8px}
+.ward .lvl{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;padding:3px 9px;border-radius:99px}
+.ward .lvl.safe{background:var(--green-soft);color:var(--green)}
+.ward .lvl.watch{background:var(--amber-soft);color:var(--amber)}
+.ward .lvl.alert{background:var(--red-soft);color:var(--red)}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl th.c,table.tbl td.c{text-align:center}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.ok{background:var(--green-soft);color:var(--green)}
+.st.done{background:var(--brand-soft);color:var(--brand)}
+.st.pend{background:var(--soft);color:var(--ink-3)}
+.st.ng{background:var(--red-soft);color:var(--red)}
+.st.warn{background:var(--amber-soft);color:var(--amber)}
+.st.fever{background:var(--red-soft);color:var(--red)}
+.st.recovered{background:var(--green-soft);color:var(--green)}
+.st.obs{background:var(--amber-soft);color:var(--amber)}
+
+/* create form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--brand)}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.seg{display:flex;gap:7px}
+.seg button{flex:1;padding:9px;border:1px solid var(--line-2);background:var(--card);border-radius:9px;font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.seg button.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+.seg button.on.danger{background:var(--red-soft);border-color:var(--red);color:var(--red)}
+.aihint{font-size:11.5px;color:var(--green);margin-top:8px;opacity:0;transition:opacity .3s;font-weight:700;display:flex;gap:6px;align-items:flex-start;background:var(--green-soft);padding:0 0;border-radius:9px;max-height:0;overflow:hidden}
+.aihint.show{opacity:1;padding:10px 12px;max-height:120px;margin-top:10px}
+
+/* check sheet preview */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:26px 28px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.pv-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px}
+.pv-title{font-size:21px;font-weight:900;letter-spacing:.12em;color:var(--brand-dk);border-bottom:3px solid var(--brand-dk);padding-bottom:5px}
+.pv-meta{text-align:right;font-size:11.5px;color:var(--ink-2)}
+.pv-meta .no{font-family:'Orbitron';color:var(--ink);font-weight:700}
+.pv-vital{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}
+.pv-vital .vc{background:var(--soft);border-radius:9px;padding:11px;text-align:center}
+.pv-vital .vc .vl{font-size:10.5px;color:var(--ink-3);font-weight:700}
+.pv-vital .vc .vv{font-family:'Orbitron';font-size:20px;font-weight:700;margin-top:3px}
+.pv-vital .vc.hi .vv{color:var(--red)}
+.pv-check{margin:6px 0}
+.pv-check .ci{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px dashed var(--line);font-size:12px}
+.pv-check .ci .cm{margin-left:auto;font-weight:800}
+.pv-check .ci .cm.y{color:var(--green)}.pv-check .ci .cm.n{color:var(--red)}
+.pv-risk{border-radius:9px;padding:13px 15px;margin-top:14px;display:flex;align-items:center;gap:12px}
+.pv-risk.low{background:var(--green-soft);border-left:5px solid var(--green)}
+.pv-risk.mid{background:var(--amber-soft);border-left:5px solid var(--amber)}
+.pv-risk.high{background:var(--red-soft);border-left:5px solid var(--red)}
+.pv-risk .rb{font-family:'Orbitron';font-size:24px;font-weight:700}
+.pv-risk.low .rb{color:var(--green)}.pv-risk.mid .rb{color:var(--amber)}.pv-risk.high .rb{color:var(--red)}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item.alert{border-color:#f6c9c9;background:var(--red-soft)}
+.gen-item .ck{width:22px;height:22px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+.gen-item.alert .ck{background:var(--red)}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#0ea5b7);display:grid;place-items:center;font-size:26px;margin:0 auto;flex-shrink:0}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(14,165,183,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* AI scan log */
+.scanlog{margin-top:18px;border-top:1px solid var(--line);padding-top:14px;display:none}
+.scanlog.show{display:block;animation:fade .4s}
+.scanline{font-family:'Orbitron','Zen Kaku Gothic New';font-size:12px;color:var(--ink-2);padding:5px 0;opacity:0;transform:translateY(4px);transition:all .3s;display:flex;gap:9px;align-items:center}
+.scanline.in{opacity:1;transform:none}
+.scanline .sc{color:var(--green);font-weight:900}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+.toast.bad .ck{background:var(--red)}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.tagpill{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:6px;background:var(--soft);color:var(--ink-2)}
+.report-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:980px){.report-grid{grid-template-columns:1fr}}
+.repcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.repcard h3{font-size:14.5px;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}
+.stat-row:last-child{border-bottom:0}
+.stat-row b{font-weight:800}
+.progress{height:8px;border-radius:99px;background:var(--soft);overflow:hidden;width:120px}
+.progress > i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky))}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">感染対策チェックマシン<small>技マシン｜感染対策管理</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="check"><span class="i">📝</span>チェック記録</a>
+      <a data-v="fever"><span class="i">🌡️</span>発熱者<span class="badge" id="navFever">0</span></a>
+      <a data-v="measure"><span class="i">🛡️</span>対策状況<span class="badge amber" id="navMeasure">0</span></a>
+      <a data-v="report"><span class="i">📈</span>レポート</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">🤖</span>AI監視</a>
+    </nav>
+    <div class="org">
+      <div class="av">大</div>
+      <div><b>大分中央ケアセンター</b><span>デモ環境 / 感染対策委員</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。利用者・職員・数値はすべてサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">本日の感染対策状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>体温チェック実施件数（過去7日）</h3><span class="more">1日2回測定</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>本日の対策遵守率</h3></div>
+            <div class="pb"><div class="gauge-wrap">
+              <div class="gauge" id="gauge"></div>
+              <div class="gleg" id="gleg"></div>
+            </div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>病棟・フロア別 警戒レベル</h3><span class="more" onclick="go('measure')">対策状況へ</span></div>
+            <div class="pb"><div class="wards" id="wardHeat"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CHECK LIST -->
+      <section class="view" id="v-check">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="利用者・職員・病棟で検索"></div>
+          <div class="chips" id="checkChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>記録番号</th><th>対象者</th><th>区分</th><th>病棟/フロア</th><th class="r">体温</th><th>症状</th><th>記録時刻</th><th>判定</th></tr></thead>
+          <tbody id="checkRows"></tbody>
+        </table>
+      </section>
+
+      <!-- FEVER -->
+      <section class="view" id="v-fever">
+        <div class="kpis" id="feverKpis"></div>
+        <div class="create-grid">
+          <div class="formcard">
+            <div style="font-size:14px;font-weight:900;margin-bottom:14px;display:flex;align-items:center;gap:8px">🌡️ 体調記録を入力</div>
+            <div class="fg"><label>対象者</label>
+              <select id="cTarget"></select></div>
+            <div class="fg-row">
+              <div class="fg"><label>体温（℃）</label><input id="cTemp" type="number" step="0.1" min="34" max="42" placeholder="例：37.8"></div>
+              <div class="fg"><label>SpO₂（%）</label><input id="cSpo2" type="number" min="80" max="100" placeholder="例：97"></div>
+            </div>
+            <div class="fg"><label>主な症状（複数選択可）</label>
+              <div class="chips" id="symChips" style="margin-top:2px"></div></div>
+            <div class="fg"><label>本人の様子</label>
+              <div class="seg" id="condSeg">
+                <button data-c="good" class="on">いつも通り</button>
+                <button data-c="tired">だるさあり</button>
+                <button data-c="bad" >元気がない</button>
+              </div></div>
+            <div class="aihint" id="cAiHint"></div>
+            <div class="linkrow" style="margin-top:16px">
+              <button class="btn primary" id="cSave" style="flex:1;justify-content:center">🤖 AI判定して記録</button>
+              <button class="btn" id="cSample">サンプル</button>
+            </div>
+          </div>
+          <div>
+            <div class="paper" id="cPaper">
+              <div class="pv-top">
+                <div class="pv-title">体調チェック票</div>
+                <div class="pv-meta"><div>記録番号：<span class="no" id="pNo">—</span></div><div>記録日時：<span id="pDate">—</span></div><div>記録者：AI感染対策アシスト</div></div>
+              </div>
+              <div style="font-size:16px;font-weight:900" id="pTarget">対象者：—</div>
+              <div class="tagpill" id="pTargetMeta" style="margin-top:4px">区分 / 病棟</div>
+              <div class="pv-vital" id="pVital"></div>
+              <div style="font-size:11px;font-weight:800;color:var(--ink-2);margin-top:4px">確認項目</div>
+              <div class="pv-check" id="pCheck"></div>
+              <div class="pv-risk low" id="pRisk">
+                <div><div style="font-size:11px;font-weight:800;color:var(--ink-2)">AIクラスター予兆リスク</div>
+                <div style="font-size:12px;color:var(--ink-2)" id="pRiskNote">体調記録を入力するとAIが判定します</div></div>
+                <div class="rb" id="pRiskScore" style="margin-left:auto">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MEASURE -->
+      <section class="view" id="v-measure">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="mq" placeholder="対策項目・担当・病棟で検索"></div>
+          <div class="chips" id="measureChips"></div>
+          <button class="btn green" id="measureAll" style="margin-left:auto">✓ 本日分を一括チェック</button>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>対策項目</th><th>対象病棟</th><th>担当</th><th>頻度</th><th class="c">遵守率</th><th>最終実施</th><th>状態</th><th></th></tr></thead>
+          <tbody id="measureRows"></tbody>
+        </table>
+      </section>
+
+      <!-- REPORT -->
+      <section class="view" id="v-report">
+        <div class="kpis" id="reportKpis"></div>
+        <div class="report-grid">
+          <div class="repcard">
+            <h3>🌡️ 発熱・症状の発生件数（過去7日）</h3>
+            <div class="bars" id="repBars"></div>
+          </div>
+          <div class="repcard">
+            <h3>🛡️ 対策項目別 遵守率</h3>
+            <div id="repCompliance"></div>
+          </div>
+        </div>
+        <div class="report-grid" style="margin-top:16px">
+          <div class="repcard">
+            <h3>🏥 病棟別 発熱者数</h3>
+            <div id="repWard"></div>
+          </div>
+          <div class="repcard">
+            <h3>📋 行政提出用サマリー</h3>
+            <div class="stat-row"><span>報告対象期間</span><b id="repPeriod">—</b></div>
+            <div class="stat-row"><span>体調チェック延べ実施数</span><b id="repChecks">—</b></div>
+            <div class="stat-row"><span>発熱者（37.5℃以上）</span><b id="repFevers">—</b></div>
+            <div class="stat-row"><span>経過観察中の利用者</span><b id="repObs">—</b></div>
+            <div class="stat-row"><span>感染対策遵守率（平均）</span><b id="repAvg">—</b></div>
+            <div class="linkrow" style="margin-top:16px">
+              <button class="btn primary" id="repExport" style="flex:1;justify-content:center">📄 AIで月次レポートを作成</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI MONITOR -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">体調記録からクラスター予兆を自動検知</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">本日の体調記録 <b id="aiCount">0</b>件 を、AIが病棟・症状・時系列で解析し、集団感染の予兆をいち早く見つけます。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">🤖 AIで一括解析する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">1時間30分</div>
+              <ul>
+                <li>📑 各病棟の体温表を紙で回収</li>
+                <li>🔢 Excelに手入力して集計</li>
+                <li>👀 担当者の経験頼りで予兆を判断</li>
+                <li>⏰ 気づいた時には複数名に拡大</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 全記録を自動で取り込み解析</li>
+                <li>📊 病棟×症状×時系列を相関分析</li>
+                <li>🚨 予兆を検知したら即アラート</li>
+                <li>✅ 早期隔離で拡大を未然に防ぐ</li>
+              </ul>
+            </div>
+          </div>
+          <div class="scanlog" id="scanlog">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">🔎 AI解析ログ</div>
+            <div id="scanLines"></div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">📋 AI検知結果</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const WARDS=['東棟2F','東棟3F','西棟2F','西棟3F','デイサービス','管理棟'];
+const RESIDENTS=[
+  {name:'山田 太郎',type:'利用者',ward:'東棟2F',age:84},
+  {name:'佐藤 花子',type:'利用者',ward:'東棟2F',age:79},
+  {name:'鈴木 一郎',type:'利用者',ward:'東棟3F',age:88},
+  {name:'高橋 美代',type:'利用者',ward:'東棟3F',age:91},
+  {name:'田中 茂',type:'利用者',ward:'西棟2F',age:76},
+  {name:'伊藤 久子',type:'利用者',ward:'西棟2F',age:83},
+  {name:'渡辺 清',type:'利用者',ward:'西棟3F',age:87},
+  {name:'中村 とし',type:'利用者',ward:'西棟3F',age:90},
+  {name:'小林 武',type:'利用者',ward:'デイサービス',age:72},
+  {name:'加藤 春美',type:'利用者',ward:'デイサービス',age:80},
+  {name:'松本 看護師',type:'職員',ward:'東棟2F',age:34},
+  {name:'井上 介護士',type:'職員',ward:'東棟3F',age:28},
+  {name:'木村 介護士',type:'職員',ward:'西棟2F',age:41},
+  {name:'林 看護師',type:'職員',ward:'西棟3F',age:37},
+];
+const SYMPTOMS=['発熱','咳','のどの痛み','倦怠感','下痢','嘔吐','味覚異常','なし'];
+const MEASURE_DEFS=[
+  {name:'手指消毒（各居室入口）',ward:'全棟',staff:'各フロア担当',freq:'随時'},
+  {name:'共用部の換気（2時間毎）',ward:'全棟',staff:'松本 看護師',freq:'2時間毎'},
+  {name:'ドアノブ・手すり消毒',ward:'東棟2F',staff:'井上 介護士',freq:'1日3回'},
+  {name:'ドアノブ・手すり消毒',ward:'西棟2F',staff:'木村 介護士',freq:'1日3回'},
+  {name:'職員の検温・健康観察',ward:'全棟',staff:'感染対策委員',freq:'出勤時'},
+  {name:'面会者の体温・問診記録',ward:'管理棟',staff:'受付',freq:'随時'},
+  {name:'食堂テーブルの消毒',ward:'デイサービス',staff:'加藤 春美',freq:'毎食後'},
+  {name:'リネン・寝具の交換',ward:'東棟3F',staff:'井上 介護士',freq:'週2回'},
+  {name:'個人防護具（PPE）在庫確認',ward:'管理棟',staff:'感染対策委員',freq:'毎日'},
+];
+
+const TODAY=new Date();
+let SEED=20260530;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+/* seed check records (体調チェック) */
+let records=[];
+(function seed(){
+  let cnt=0;
+  for(let day=6;day>=0;day--){
+    const base=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-day);
+    const n=10+Math.floor(rnd()*6);
+    for(let k=0;k<n;k++){
+      const r=pick(RESIDENTS);
+      let temp=36.2+rnd()*0.9; // normal
+      let syms=['なし'];
+      const roll=rnd();
+      if(roll>0.92){temp=37.6+rnd()*1.4;syms=[pick(['発熱','咳','のどの痛み']),'倦怠感'];}
+      else if(roll>0.82){temp=37.0+rnd()*0.5;syms=[pick(['倦怠感','咳','下痢'])];}
+      temp=Math.round(temp*10)/10;
+      const spo2=temp>=37.5?94+Math.floor(rnd()*4):96+Math.floor(rnd()*4);
+      const hh=(day===0)?(7+Math.floor(rnd()*10)):(rnd()>0.5?8:16);
+      const mm=Math.floor(rnd()*60);
+      const at=new Date(base.getFullYear(),base.getMonth(),base.getDate(),hh,mm);
+      // judgement
+      let judge='ok';
+      if(temp>=37.5)judge='fever';
+      else if(temp>=37.0||(syms[0]!=='なし'))judge='obs';
+      records.push({no:'CHK-'+String(20260000+(++cnt)).slice(-6),target:r.name,type:r.type,ward:r.ward,age:r.age,temp,spo2,syms,at,judge});
+    }
+  }
+  records.sort((a,b)=>b.at-a.at);
+})();
+
+/* seed measures with compliance */
+let measures=MEASURE_DEFS.map((m,i)=>{
+  const comp=70+Math.floor(rnd()*31);
+  const doneToday=rnd()>0.35;
+  const last=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-(doneToday?0:1+Math.floor(rnd()*2)),8+Math.floor(rnd()*9),Math.floor(rnd()*60));
+  return {id:i,name:m.name,ward:m.ward,staff:m.staff,freq:m.freq,comp,doneToday,last};
+});
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmtT=d=>('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+const fmtDT=d=>(d.getMonth()+1)+'/'+d.getDate()+' '+fmtT(d);
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日 '+fmtT(d);
+const JLABEL={ok:'異常なし',obs:'経過観察',fever:'発熱要対応'};
+function jBadge(j){const cls=j==='ok'?'ok':j==='fever'?'fever':'obs';return `<span class="st ${cls}">${JLABEL[j]}</span>`;}
+function isToday(d){return d.getFullYear()===TODAY.getFullYear()&&d.getMonth()===TODAY.getMonth()&&d.getDate()===TODAY.getDate();}
+function showToast(m,bad){$('toastMsg').textContent=m;$('toast').classList.toggle('bad',!!bad);$('toast').querySelector('.ck').textContent=bad?'!':'✓';$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2800);}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','本日の感染対策状況'],check:['チェック記録','利用者・職員の体調チェック履歴'],
+  fever:['発熱者','37.5℃以上・経過観察対象の管理'],measure:['対策状況','感染対策の実施状況と遵守率'],
+  report:['レポート','感染対策の集計と行政提出用サマリー'],ai:['AI監視','クラスター予兆をAIが自動検知']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='dash'?'<button class="btn" onclick="go(\'ai\')">🤖 AI監視</button><button class="btn primary" onclick="go(\'fever\')">📝 体調を記録</button>'
+    : v==='check'?'<button class="btn primary" onclick="go(\'fever\')">＋ 体調を記録</button>'
+    : v==='fever'?'<button class="btn" onclick="go(\'check\')">記録一覧へ</button>'
+    : v==='report'?'<button class="btn primary" onclick="go(\'ai\')">🤖 AI解析</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='check')renderCheck();
+  if(v==='fever')renderFever();
+  if(v==='measure')renderMeasure();
+  if(v==='report')renderReport();
+  if(v==='ai')$('aiCount').textContent=records.filter(r=>isToday(r.at)).length;
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ DASHBOARD ============ */
+function wardLevel(ward){
+  const todays=records.filter(r=>r.ward===ward&&isToday(r.at));
+  const fever=todays.filter(r=>r.judge==='fever').length;
+  const obs=todays.filter(r=>r.judge==='obs').length;
+  if(fever>=2)return 'alert';if(fever>=1||obs>=2)return 'watch';return 'safe';
+}
+function renderDash(){
+  const todays=records.filter(r=>isToday(r.at));
+  const fevers=records.filter(r=>r.judge==='fever'&&isToday(r.at)).length;
+  const compAvg=Math.round(measures.reduce((s,m)=>s+m.comp,0)/measures.length);
+  const alertWards=WARDS.filter(w=>wardLevel(w)==='alert').length;
+  const watchWards=WARDS.filter(w=>wardLevel(w)==='watch').length;
+  const lvl=alertWards?'警戒':watchWards?'注意':'平常';
+  $('kpis').innerHTML=`
+    ${kpi('#0ea5b7','本日のチェック実施',todays.length+'<small>件</small>',RESIDENTS.length+'名対象','up','実施率 高')}
+    ${kpi('#e24a4a','発熱者（本日）',fevers+'<small>名</small>','37.5℃以上',fevers?'down':'up',fevers?'要隔離対応':'なし')}
+    ${kpi('#16b877','対策遵守率',compAvg+'<small>%</small>','本日平均','up','+3pt（前週比）')}
+    ${kpi(lvl==='警戒'?'#e24a4a':lvl==='注意'?'#e3941f':'#16b877','施設警戒度',lvl,(alertWards+watchWards)+'病棟が要注意',lvl==='平常'?'up':'warn',lvl==='警戒'?'クラスター警戒':lvl==='注意'?'観察強化':'安定')}`;
+  // trend: checks per day past 7
+  const days=[];for(let k=6;k>=0;k--){days.push(new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-k));}
+  const counts=days.map(d=>records.filter(r=>r.at.getFullYear()===d.getFullYear()&&r.at.getMonth()===d.getMonth()&&r.at.getDate()===d.getDate()).length);
+  const mx=Math.max(...counts,1);
+  $('trendBars').innerHTML=days.map((d,i)=>`
+    <div class="bar-row"><span class="mlabel">${d.getMonth()+1}/${d.getDate()}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(counts[i]/mx*100)}"></div></div>
+      <span class="mval">${counts[i]}件</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // gauge: compliance
+  renderGauge(compAvg);
+  // ward heat
+  $('wardHeat').innerHTML=WARDS.map(w=>{
+    const lv=wardLevel(w);const t=records.filter(r=>r.ward===w&&isToday(r.at)).length;
+    const lbl=lv==='alert'?'要警戒':lv==='watch'?'注意':'平常';
+    return `<div class="ward"><div class="wn">${esc(w)}</div><div class="ws">本日 ${t}件チェック</div><span class="lvl ${lv}">${lbl}</span></div>`;
+  }).join('');
+  // activity
+  const recent=records.slice(0,1)[0];
+  const acts=[
+    {i:'🚨',c:'#fdeaea',t:'AI監視：東棟2Fで発熱2名を検知。クラスター予兆の可能性',m:'今日 9:42'},
+    {i:'🌡️',c:'#fdeaea',t:(recent?esc(recent.target):'山田 太郎')+' を発熱（'+(recent?recent.temp:37.9)+'℃）で記録',m:'今日 9:38'},
+    {i:'🛡️',c:'#e6f8f0',t:'共用部の換気（2時間毎）を実施チェック',m:'今日 9:00'},
+    {i:'✅',c:'#e3f6f8',t:'職員14名の出勤時検温を完了',m:'今日 8:30'},
+    {i:'📄',c:'#e3f6f8',t:'昨日分の感染対策レポートをAIが自動作成',m:'昨日 18:00'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${a.t}</div><div class="am">${a.m}</div></div></div>`).join('');
+}
+function renderGauge(pct){
+  const R=54,C=2*Math.PI*R,off=C*(1-pct/100);
+  const col=pct>=90?'#16b877':pct>=75?'#e3941f':'#e24a4a';
+  $('gauge').innerHTML=`<svg width="128" height="128" viewBox="0 0 128 128">
+    <circle cx="64" cy="64" r="${R}" fill="none" stroke="#eef1f6" stroke-width="14"/>
+    <circle cx="64" cy="64" r="${R}" fill="none" stroke="${col}" stroke-width="14" stroke-linecap="round"
+      stroke-dasharray="${C}" stroke-dashoffset="${C}" style="transition:stroke-dashoffset 1.1s cubic-bezier(.2,.8,.3,1)" id="gaugeArc"/>
+  </svg><div class="gv"><b>${pct}<span style="font-size:14px">%</span></b><span>遵守率</span></div>`;
+  setTimeout(()=>{const a=document.getElementById('gaugeArc');if(a)a.style.strokeDashoffset=off;},80);
+  const done=measures.filter(m=>m.doneToday).length;
+  $('gleg').innerHTML=`
+    <div class="lr"><span class="lc" style="background:#16b877"></span>本日 実施済の対策<b>${done}項目</b></div>
+    <div class="lr"><span class="lc" style="background:#e3941f"></span>未実施の対策<b>${measures.length-done}項目</b></div>
+    <div class="lr"><span class="lc" style="background:#0ea5b7"></span>登録対策の合計<b>${measures.length}項目</b></div>
+    <div style="font-size:11.5px;color:var(--ink-3);margin-top:8px">90%以上で良好。下回ると担当へ自動リマインドします。</div>`;
+}
+
+/* ============ CHECK LIST ============ */
+let checkFilter='all';
+function renderCheckChips(){
+  const opts=[['all','すべて'],['ok','異常なし'],['obs','経過観察'],['fever','発熱要対応'],['today','本日のみ']];
+  $('checkChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===checkFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('checkChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{checkFilter=c.dataset.s;renderCheckChips();renderCheck();});
+}
+function renderCheck(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=records.filter(r=>{
+    if(checkFilter==='today')return isToday(r.at);
+    if(checkFilter!=='all')return r.judge===checkFilter;
+    return true;
+  }).filter(r=>!q||(r.target+r.ward+r.type+r.no).toLowerCase().includes(q));
+  $('checkRows').innerHTML=rows.length?rows.map(r=>`<tr>
+    <td class="mono" style="font-size:11px">${esc(r.no)}</td>
+    <td><b>${esc(r.target)}</b></td>
+    <td><span class="tagpill">${esc(r.type)}</span></td>
+    <td style="color:var(--ink-2)">${esc(r.ward)}</td>
+    <td class="r tnum" style="${r.temp>=37.5?'color:var(--red);font-weight:800':''}">${r.temp.toFixed(1)}℃</td>
+    <td style="color:var(--ink-2);font-size:12px">${esc(r.syms.join('・'))}</td>
+    <td style="color:var(--ink-2)">${fmtDT(r.at)}</td>
+    <td>${jBadge(r.judge)}</td></tr>`).join('')
+    :'<tr><td colspan="8" class="empty-cell">該当する記録がありません</td></tr>';
+}
+
+/* ============ FEVER ============ */
+let symSel=new Set(['なし']);
+let condSel='good';
+function renderSymChips(){
+  $('symChips').innerHTML=SYMPTOMS.map(s=>`<button class="chip ${symSel.has(s)?'on':''}" data-s="${esc(s)}">${esc(s)}</button>`).join('');
+  $('symChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
+    const s=c.dataset.s;
+    if(s==='なし'){symSel=new Set(['なし']);}
+    else{symSel.delete('なし');if(symSel.has(s))symSel.delete(s);else symSel.add(s);if(!symSel.size)symSel.add('なし');}
+    renderSymChips();renderCheckPreview();
+  });
+}
+function renderTargetSelect(){$('cTarget').innerHTML='<option value="">選択してください</option>'+RESIDENTS.map(r=>`<option value="${esc(r.name)}">${esc(r.name)}（${esc(r.ward)}）</option>`).join('');}
+function aiJudge(temp,spo2,syms,cond){
+  let score=5;
+  if(temp>=38.5)score+=55;else if(temp>=37.5)score+=42;else if(temp>=37.0)score+=20;
+  if(spo2&&spo2<94)score+=18;else if(spo2&&spo2<96)score+=8;
+  const real=syms.filter(s=>s!=='なし');
+  score+=real.length*7;
+  if(real.includes('発熱'))score+=5;if(real.includes('味覚異常'))score+=6;
+  if(cond==='bad')score+=12;else if(cond==='tired')score+=5;
+  return Math.max(2,Math.min(99,Math.round(score)));
+}
+function clusterContext(target){
+  const r=RESIDENTS.find(x=>x.name===target);
+  if(!r)return null;
+  const wardFevers=records.filter(x=>x.ward===r.ward&&isToday(x.at)&&x.judge==='fever').length;
+  return {ward:r.ward,wardFevers};
+}
+function renderFever(){
+  const fevers=records.filter(r=>r.judge==='fever');
+  const todayFever=fevers.filter(r=>isToday(r.at));
+  const obs=records.filter(r=>r.judge==='obs'&&isToday(r.at));
+  const wardsHit=[...new Set(todayFever.map(r=>r.ward))];
+  $('feverKpis').innerHTML=`
+    ${kpi('#e24a4a','本日の発熱者',todayFever.length+'<small>名</small>','37.5℃以上',todayFever.length?'down':'up',todayFever.length?'隔離・受診検討':'なし')}
+    ${kpi('#e3941f','経過観察中',obs.length+'<small>名</small>','微熱・症状あり','warn','観察継続')}
+    ${kpi('#7c5cf0','発熱の出た病棟',wardsHit.length+'<small>病棟</small>',wardsHit.join('・')||'なし',wardsHit.length>1?'warn':'up',wardsHit.length>1?'拡大に注意':'局所')}
+    ${kpi('#16b877','回復・解熱',records.filter(r=>r.judge==='fever'&&!isToday(r.at)).length+'<small>名</small>','直近7日累計','up','経過良好')}`;
+  $('navFever').textContent=todayFever.length;
+}
+
+/* live preview of input form */
+function renderCheckPreview(){
+  const name=$('cTarget').value;
+  const r=RESIDENTS.find(x=>x.name===name);
+  const temp=parseFloat($('cTemp').value);
+  const spo2=parseInt($('cSpo2').value,10);
+  $('pTarget').textContent='対象者：'+(name||'—');
+  $('pTargetMeta').textContent=r?`${r.type} / ${r.ward} / ${r.age}歳`:'区分 / 病棟';
+  const tHi=!isNaN(temp)&&temp>=37.5;
+  const sHi=!isNaN(spo2)&&spo2<95;
+  $('pVital').innerHTML=`
+    <div class="vc ${tHi?'hi':''}"><div class="vl">体温</div><div class="vv">${isNaN(temp)?'—':temp.toFixed(1)}<span style="font-size:12px">℃</span></div></div>
+    <div class="vc ${sHi?'hi':''}"><div class="vl">SpO₂</div><div class="vv">${isNaN(spo2)?'—':spo2}<span style="font-size:12px">%</span></div></div>
+    <div class="vc"><div class="vl">様子</div><div class="vv" style="font-size:14px;font-family:inherit;font-weight:800;padding-top:6px">${condSel==='good'?'良好':condSel==='tired'?'だるさ':'要注意'}</div></div>`;
+  const syms=[...symSel];
+  const checks=[
+    ['発熱（37.5℃以上）',!isNaN(temp)&&temp>=37.5],
+    ['呼吸器症状（咳・のど）',syms.includes('咳')||syms.includes('のどの痛み')],
+    ['消化器症状（下痢・嘔吐）',syms.includes('下痢')||syms.includes('嘔吐')],
+    ['全身倦怠感・元気のなさ',syms.includes('倦怠感')||condSel!=='good'],
+    ['SpO₂低下（95%未満）',!isNaN(spo2)&&spo2<95],
+  ];
+  $('pCheck').innerHTML=checks.map(c=>`<div class="ci"><span>${esc(c[0])}</span><span class="cm ${c[1]?'n':'y'}">${c[1]?'該当あり':'なし'}</span></div>`).join('');
+}
+
+/* symptom chips initial fill */
+renderSymChips();
+$('condSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  condSel=b.dataset.c;
+  $('condSeg').querySelectorAll('button').forEach(x=>{x.classList.toggle('on',x===b);x.classList.toggle('danger',x===b&&b.dataset.c==='bad');});
+  renderCheckPreview();
+});
+$('cTarget').addEventListener('change',renderCheckPreview);
+$('cTemp').addEventListener('input',renderCheckPreview);
+$('cSpo2').addEventListener('input',renderCheckPreview);
+$('cSample').addEventListener('click',()=>{
+  $('cTarget').value='佐藤 花子';$('cTemp').value='37.9';$('cSpo2').value='94';
+  symSel=new Set(['発熱','咳','倦怠感']);renderSymChips();
+  condSel='tired';$('condSeg').querySelectorAll('button').forEach(x=>{x.classList.toggle('on',x.dataset.c==='tired');x.classList.remove('danger');});
+  renderCheckPreview();
+});
+$('cSave').addEventListener('click',async()=>{
+  const name=$('cTarget').value;
+  const temp=parseFloat($('cTemp').value);
+  if(!name||isNaN(temp)){showToast('対象者と体温を入力してください',true);return;}
+  const spo2=parseInt($('cSpo2').value,10)||(temp>=37.5?94:97);
+  const syms=[...symSel];
+  const r=RESIDENTS.find(x=>x.name===name);
+  const btn=$('cSave');btn.textContent='🤖 AIが判定中…';btn.disabled=true;
+  await new Promise(res=>setTimeout(res,800));
+  const score=aiJudge(temp,spo2,syms,condSel);
+  const judge=temp>=37.5?'fever':(temp>=37.0||syms.some(s=>s!=='なし')||condSel!=='good')?'obs':'ok';
+  // record
+  const now=new Date();const no='CHK-'+String(20260000+records.length+1).slice(-6);
+  $('pNo').textContent=no;$('pDate').textContent=fmtDL(now);
+  records.unshift({no,target:name,type:r?r.type:'利用者',ward:r?r.ward:'—',age:r?r.age:0,temp,spo2,syms,at:now,judge});
+  // risk box
+  const ctx=clusterContext(name);
+  const cls=score>=55?'high':score>=30?'mid':'low';
+  $('pRisk').className='pv-risk '+cls;
+  $('pRiskScore').textContent=score;
+  let note;
+  if(cls==='high'){note=`要警戒。${ctx&&ctx.wardFevers>=1?`同じ${ctx.ward}で本日すでに発熱者あり。`:''}個室隔離・受診・濃厚接触者の確認を推奨します。`;}
+  else if(cls==='mid'){note='経過観察を推奨。2時間後に再検温し、症状の悪化に注意してください。';}
+  else{note='現時点でクラスターの予兆は低いです。通常の健康観察を継続してください。';}
+  $('pRiskNote').textContent=note;
+  // ai hint
+  $('cAiHint').innerHTML=`✨ <div>AI判定：<b>${JLABEL[judge]}</b>（予兆リスク ${score}/100）<br>${esc(note)}</div>`;
+  $('cAiHint').classList.add('show');
+  btn.textContent='🤖 AI判定して記録';btn.disabled=false;
+  renderCheckPreview();renderFever();renderDash();
+  $('navFever').textContent=records.filter(r=>r.judge==='fever'&&isToday(r.at)).length;
+  showToast(no+' を記録しました（AI判定：'+JLABEL[judge]+'）',judge==='fever');
+});
+
+/* ============ MEASURE ============ */
+let measureFilter='all';
+function renderMeasureChips(){
+  const opts=[['all','すべて'],['done','本日実施済'],['pend','未実施'],['low','遵守率 低']];
+  $('measureChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===measureFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('measureChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{measureFilter=c.dataset.s;renderMeasureChips();renderMeasure();});
+}
+function measureState(m){return m.doneToday?'done':(m.last&&isToday(m.last)?'done':'pend');}
+function renderMeasure(){
+  const q=($('mq').value||'').toLowerCase();
+  let rows=measures.filter(m=>{
+    if(measureFilter==='done')return m.doneToday;
+    if(measureFilter==='pend')return !m.doneToday;
+    if(measureFilter==='low')return m.comp<80;
+    return true;
+  }).filter(m=>!q||(m.name+m.ward+m.staff).toLowerCase().includes(q));
+  $('measureRows').innerHTML=rows.length?rows.map(m=>{
+    const stt=m.doneToday?'done':'pend';
+    const col=m.comp>=90?'var(--green)':m.comp>=80?'var(--brand)':'var(--amber)';
+    return `<tr>
+      <td><b>${esc(m.name)}</b></td>
+      <td style="color:var(--ink-2)">${esc(m.ward)}</td>
+      <td style="color:var(--ink-2)">${esc(m.staff)}</td>
+      <td><span class="tagpill">${esc(m.freq)}</span></td>
+      <td class="c"><div style="display:flex;align-items:center;gap:8px;justify-content:center">
+        <div class="progress"><i style="width:${m.comp}%;background:${col}"></i></div><b class="tnum">${m.comp}%</b></div></td>
+      <td style="color:var(--ink-2)">${fmtDT(m.last)}</td>
+      <td><span class="st ${stt==='done'?'done':'pend'}">${stt==='done'?'実施済':'未実施'}</span></td>
+      <td class="r">${m.doneToday?'<span style="color:var(--ink-3);font-size:12px">完了</span>':`<button class="btn green" style="padding:6px 12px" onclick="doMeasure(${m.id})">実施</button>`}</td></tr>`;
+  }).join('')
+    :'<tr><td colspan="8" class="empty-cell">該当する対策項目がありません</td></tr>';
+  $('navMeasure').textContent=measures.filter(m=>!m.doneToday).length;
+}
+window.doMeasure=id=>{const m=measures.find(x=>x.id===id);if(m){m.doneToday=true;m.last=new Date();m.comp=Math.min(100,m.comp+2);renderMeasure();showToast(m.name+' を実施チェックしました');}};
+$('measureAll').addEventListener('click',async()=>{
+  const btn=$('measureAll');btn.textContent='✓ 記録中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,700));
+  let n=0;measures.forEach(m=>{if(!m.doneToday){m.doneToday=true;m.last=new Date();m.comp=Math.min(100,m.comp+2);n++;}});
+  btn.textContent='✓ 本日分を一括チェック';btn.disabled=false;
+  renderMeasure();renderDash();showToast('本日分の対策 '+n+'項目を一括チェックしました');
+});
+
+/* ============ REPORT ============ */
+function renderReport(){
+  const days=[];for(let k=6;k>=0;k--){days.push(new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-k));}
+  const feverByDay=days.map(d=>records.filter(r=>r.judge!=='ok'&&r.at.getFullYear()===d.getFullYear()&&r.at.getMonth()===d.getMonth()&&r.at.getDate()===d.getDate()).length);
+  const totalChecks=records.length;
+  const totalFever=records.filter(r=>r.judge==='fever').length;
+  const totalObs=records.filter(r=>r.judge==='obs').length;
+  const compAvg=Math.round(measures.reduce((s,m)=>s+m.comp,0)/measures.length);
+  $('reportKpis').innerHTML=`
+    ${kpi('#0ea5b7','延べチェック数',totalChecks+'<small>件</small>','過去7日','up','記録率 高')}
+    ${kpi('#e24a4a','発熱件数',totalFever+'<small>件</small>','過去7日',totalFever>5?'down':'warn','要報告')}
+    ${kpi('#e3941f','経過観察件数',totalObs+'<small>件</small>','過去7日','warn','観察継続')}
+    ${kpi('#16b877','平均遵守率',compAvg+'<small>%</small>','全対策平均','up','良好')}`;
+  const mx=Math.max(...feverByDay,1);
+  $('repBars').innerHTML=days.map((d,i)=>{
+    const col=feverByDay[i]>=3?'linear-gradient(90deg,#e24a4a,#e3941f)':'linear-gradient(90deg,#e3941f,#f0b14a)';
+    return `<div class="bar-row"><span class="mlabel">${d.getMonth()+1}/${d.getDate()}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0;background:${col}" data-w="${Math.round(feverByDay[i]/mx*100)}"></div></div>
+      <span class="mval">${feverByDay[i]}件</span></div>`;
+  }).join('');
+  setTimeout(()=>document.querySelectorAll('#repBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // compliance per measure
+  $('repCompliance').innerHTML=[...measures].sort((a,b)=>a.comp-b.comp).map(m=>{
+    const col=m.comp>=90?'var(--green)':m.comp>=80?'var(--brand)':'var(--amber)';
+    return `<div class="stat-row"><span style="flex:1">${esc(m.name)}<br><span style="font-size:11px;color:var(--ink-3)">${esc(m.ward)}</span></span>
+      <div style="display:flex;align-items:center;gap:9px"><div class="progress"><i style="width:${m.comp}%;background:${col}"></i></div><b class="tnum" style="width:38px;text-align:right">${m.comp}%</b></div></div>`;
+  }).join('');
+  // ward fever
+  $('repWard').innerHTML=WARDS.map(w=>{
+    const f=records.filter(r=>r.ward===w&&r.judge==='fever').length;
+    const o=records.filter(r=>r.ward===w&&r.judge==='obs').length;
+    const lv=wardLevel(w);
+    return `<div class="stat-row"><span>${esc(w)} <span class="st ${lv==='alert'?'fever':lv==='watch'?'obs':'ok'}" style="margin-left:6px">${lv==='alert'?'要警戒':lv==='watch'?'注意':'平常'}</span></span>
+      <b>発熱${f}件 / 観察${o}件</b></div>`;
+  }).join('');
+  // summary
+  const p0=days[0],p1=days[6];
+  $('repPeriod').textContent=`${p0.getMonth()+1}/${p0.getDate()}〜${p1.getMonth()+1}/${p1.getDate()}`;
+  $('repChecks').textContent=totalChecks+'件';
+  $('repFevers').textContent=totalFever+'件';
+  $('repObs').textContent=totalObs+'名';
+  $('repAvg').textContent=compAvg+'%';
+}
+document.addEventListener('click',e=>{
+  if(e.target&&e.target.id==='repExport'){
+    const btn=e.target;btn.textContent='📄 AIが作成中…';btn.disabled=true;
+    setTimeout(()=>{btn.textContent='📄 AIで月次レポートを作成';btn.disabled=false;showToast('行政提出用の月次感染対策レポートを生成しました');},1100);
+  }
+});
+
+/* ============ AI MONITOR ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='🤖 解析中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='🔎';
+  $('baAfterList').style.opacity='1';
+  $('scanlog').classList.add('show');$('scanLines').innerHTML='';$('genList').classList.remove('show');$('genItems').innerHTML='';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent=Math.min(s,9)+'秒';},120);
+  // scan log lines
+  const todays=records.filter(r=>isToday(r.at));
+  const logs=[
+    `本日の体調記録 ${todays.length}件 を読み込み`,
+    `病棟 ${WARDS.length}箇所 × 症状8種を相関分析`,
+    `体温・SpO₂・時系列の異常パターンを照合`,
+    `濃厚接触マップを生成し拡大経路を推定`,
+  ];
+  const lineEls=logs.map(l=>{const d=document.createElement('div');d.className='scanline';d.innerHTML=`<span class="sc">▸</span>${esc(l)}`;$('scanLines').appendChild(d);return d;});
+  for(let i=0;i<lineEls.length;i++){await new Promise(r=>setTimeout(r,300));lineEls[i].classList.add('in');}
+  await new Promise(r=>setTimeout(r,400));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // build detections per ward
+  const dets=WARDS.map(w=>{
+    const tws=records.filter(r=>r.ward===w&&isToday(r.at));
+    const fever=tws.filter(r=>r.judge==='fever');
+    const obs=tws.filter(r=>r.judge==='obs');
+    let level,msg,alert;
+    if(fever.length>=2){level='クラスター予兆';alert=true;msg=`発熱${fever.length}名（${fever.map(x=>x.target).join('・')}）。同一病棟での同時多発を検知。早期隔離・全数検温を強く推奨。`;}
+    else if(fever.length===1){level='要観察';alert=false;msg=`発熱1名（${fever[0].target}）。濃厚接触者の追加検温と経過観察を推奨。`;}
+    else if(obs.length>=2){level='軽微な兆候';alert=false;msg=`微熱・症状${obs.length}名。現時点で集団感染の予兆は低い。観察を継続。`;}
+    else{level='異常なし';alert=false;msg='本日の記録に集団感染の予兆は検出されませんでした。';}
+    return {ward:w,level,msg,alert,fever:fever.length,obs:obs.length};
+  });
+  dets.sort((a,b)=>(b.alert?1:0)-(a.alert?1:0)||b.fever-a.fever);
+  $('genItems').innerHTML=dets.map((d,i)=>`<div class="gen-item ${d.alert?'alert':''}" data-i="${i}">
+    <span class="ck">${d.alert?'!':'✓'}</span>
+    <div style="flex:1"><b>${esc(d.ward)}</b>　<span class="st ${d.alert?'fever':d.fever?'obs':'ok'}">${esc(d.level)}</span>
+    <div style="font-size:12px;color:var(--ink-2);margin-top:3px">${esc(d.msg)}</div></div></div>`).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  let alertCount=0;
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,200));items[i].classList.add('in');if(dets[i].alert)alertCount++;}
+  btn.disabled=false;btn.textContent='🤖 もう一度解析';
+  if(alertCount)showToast(alertCount+'病棟でクラスター予兆を検知しました（要対応）',true);
+  else showToast('解析完了：集団感染の予兆は検出されませんでした');
+});
+
+/* ============ INIT ============ */
+renderTargetSelect();renderCheckPreview();
+renderCheckChips();renderMeasureChips();
+$('q').addEventListener('input',renderCheck);
+$('mq').addEventListener('input',renderMeasure);
+renderDash();
+$('navFever').textContent=records.filter(r=>r.judge==='fever'&&isToday(r.at)).length;
+$('navMeasure').textContent=measures.filter(m=>!m.doneToday).length;
+$('aiCount').textContent=records.filter(r=>isToday(r.at)).length;
+</script>
+</body>
+</html>

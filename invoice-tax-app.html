@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜インボイス対応マシン（適格請求書 自動判定）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cf0;--purple-soft:#efeaff;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:14px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.nav a .badge.amber{background:var(--amber)}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn.sm{padding:6px 12px;font-size:12px}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}.kpi .d.info{color:var(--brand)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel+.panel{margin-top:16px}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:62px 1fr 64px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-fill.green{background:linear-gradient(90deg,var(--green),#37e29a)}
+.bar-fill.amber{background:linear-gradient(90deg,var(--amber),#f0b860)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut */
+.donut-wrap{display:flex;align-items:center;gap:22px}
+.donut{flex-shrink:0}
+.legend{flex:1;display:flex;flex-direction:column;gap:9px}
+.legend .lg{display:flex;align-items:center;gap:9px;font-size:12.5px}
+.legend .lg .sw{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.legend .lg b{margin-left:auto;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px;vertical-align:middle}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px;white-space:nowrap}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.ok{background:var(--green-soft);color:var(--green)}
+.st.warn{background:var(--amber-soft);color:var(--amber)}
+.st.ng{background:var(--red-soft);color:var(--red)}
+.st.todo{background:var(--soft);color:var(--ink-3)}
+.st.proc{background:var(--brand-soft);color:var(--brand)}
+/* small tax badge */
+.tx{display:inline-flex;align-items:center;font-size:11px;font-weight:800;padding:3px 9px;border-radius:7px;white-space:nowrap}
+.tx.t10{background:var(--brand-soft);color:var(--brand-dk)}
+.tx.t8{background:var(--amber-soft);color:#b9740f}
+.tx.tfree{background:var(--soft);color:var(--ink-2)}
+.tx.tmix{background:var(--purple-soft);color:var(--purple)}
+.regno{font-family:'Orbitron',sans-serif;font-size:11.5px;letter-spacing:.02em}
+.regno.bad{color:var(--red)}
+
+/* detail / form */
+.two-col{display:grid;grid-template-columns:1.4fr 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.two-col{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--brand)}
+.fg .hint{font-size:11px;color:var(--ink-3);margin-top:4px}
+.checkbar{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--line);border-radius:11px;margin-bottom:10px;background:var(--soft)}
+.checkbar .res{margin-left:auto;font-weight:800;font-size:13px}
+
+/* register match tool */
+.reg-tool{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;box-shadow:var(--shadow);max-width:760px}
+.reg-input{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.reg-input .fg{flex:1;min-width:220px;margin-bottom:0}
+.reg-result{margin-top:18px;border-top:1px solid var(--line);padding-top:18px;display:none}
+.reg-result.show{display:block;animation:fade .35s}
+.reg-card{border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.reg-card.ok{border-color:#bdebd4;background:linear-gradient(180deg,var(--green-soft),#f3fdf8)}
+.reg-card.ng{border-color:#f3c7c7;background:linear-gradient(180deg,var(--red-soft),#fff6f6)}
+.reg-card .rh{display:flex;align-items:center;gap:11px;font-size:15px;font-weight:900;margin-bottom:12px}
+.reg-card .rh .ico{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-size:18px;flex-shrink:0}
+.reg-card.ok .rh .ico{background:var(--green);color:#fff}
+.reg-card.ng .rh .ico{background:var(--red);color:#fff}
+.reg-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px 18px;font-size:13px}
+@media(max-width:560px){.reg-grid{grid-template-columns:1fr}}
+.reg-grid .k{color:var(--ink-3);font-size:11px;font-weight:700}
+.reg-grid .vv{font-weight:700;margin-top:1px}
+
+/* tax category cards */
+.tax-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+@media(max-width:760px){.tax-grid{grid-template-columns:1fr}}
+.tax-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.tax-card .tch{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.tax-card .tch .rate{font-family:'Orbitron',sans-serif;font-size:22px;font-weight:700}
+.tax-card .tch h4{font-size:14px;font-weight:800}
+.tax-card .desc{font-size:12.5px;color:var(--ink-2);margin-bottom:12px}
+.tax-card .stat{display:flex;justify-content:space-between;font-size:12.5px;padding:7px 0;border-top:1px solid var(--line)}
+.tax-card .stat b{font-variant-numeric:tabular-nums}
+
+/* paper / invoice preview */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:26px 28px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.pv-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px}
+.pv-title{font-size:21px;font-weight:900;letter-spacing:.2em;color:var(--brand-dk);border-bottom:3px solid var(--brand-dk);padding-bottom:5px}
+.pv-meta{text-align:right;font-size:11px;color:var(--ink-2)}
+.pv-meta .no{font-family:'Orbitron';color:var(--ink);font-weight:700}
+.pv-from{font-size:11.5px;color:var(--ink-2);margin-bottom:6px}
+.pv-from .reg{font-family:'Orbitron';font-size:11px}
+table.pv{width:100%;border-collapse:collapse;margin:12px 0}
+table.pv th{background:var(--brand-dk);color:#fff;font-size:10.5px;padding:7px 9px;text-align:left}
+table.pv th.r,table.pv td.r{text-align:right}
+table.pv th.c,table.pv td.c{text-align:center}
+table.pv td{padding:7px 9px;border-bottom:1px solid var(--line);font-size:11.5px}
+.pv-sums{margin-left:auto;width:250px;margin-top:6px}
+.pv-sums .r{display:flex;justify-content:space-between;padding:5px 10px;font-size:11.5px;color:var(--ink-2)}
+.pv-sums .r.g{background:var(--brand-dk);color:#fff;border-radius:6px;margin-top:5px;padding:8px 10px;font-weight:800}
+
+/* AI judge stage */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+.gen-item .ck.ok{background:var(--green)}.gen-item .ck.warn{background:var(--amber)}.gen-item .ck.ng{background:var(--red)}
+.gen-item .nm{flex:1;font-weight:700}
+.gen-item .sub{color:var(--ink-3);font-size:11px}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto;flex-shrink:0}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* before/after judge result table */
+.judge-cmp{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+@media(max-width:760px){.judge-cmp{grid-template-columns:1fr}}
+.jc{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.jc .jh{padding:10px 14px;font-size:12px;font-weight:800;border-bottom:1px solid var(--line)}
+.jc.b .jh{background:#f1f2f6;color:#6b7280}
+.jc.a .jh{background:var(--green-soft);color:var(--green)}
+.jc .jrow{display:flex;justify-content:space-between;padding:9px 14px;font-size:12.5px;border-bottom:1px solid var(--line)}
+.jc .jrow:last-child{border-bottom:0}
+.jc .jrow span:first-child{color:var(--ink-3)}
+.jc .jrow b{font-weight:800}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.muted{color:var(--ink-2)}
+.note{font-size:11.5px;color:var(--ink-3);margin-top:8px;line-height:1.5}
+.flagrow{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-2);margin:5px 0}
+.flagrow .fi{width:18px;text-align:center}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">インボイス対応マシン<small>技マシン｜適格請求書 管理</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">📥</span>受領請求書<span class="badge amber" id="navCheck">0</span></a>
+      <a data-v="reg"><span class="i">🔎</span>登録番号照合</a>
+      <a data-v="tax"><span class="i">🧮</span>税区分</a>
+      <a data-v="archive"><span class="i">🗄️</span>保存（電帳法）</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI判定（一括）</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 経理担当</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。登録番号・取引先・金額はすべてサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">2026年5月のインボイス対応状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>受領請求書の判定内訳</h3><span class="more">今月</span></div>
+            <div class="pb">
+              <div class="donut-wrap">
+                <svg class="donut" id="donut" width="150" height="150" viewBox="0 0 42 42"></svg>
+                <div class="legend" id="donutLegend"></div>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="ph"><h3>月次の受領件数と適格率</h3><span class="more">過去6ヶ月</span></div>
+          <div class="pb"><div class="bars" id="trendBars"></div></div>
+        </div>
+      </section>
+
+      <!-- LIST (受領請求書) -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="取引先・件名・登録番号で検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr>
+            <th>受領日</th><th>取引先</th><th>件名</th><th>登録番号</th><th>税区分</th>
+            <th class="r">金額(税込)</th><th>判定</th>
+          </tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+        <div class="note">※「判定」は登録番号の照合と税区分の整合をAIが自動チェックした結果です。要確認の請求書は仕入税額控除の可否に影響します。</div>
+      </section>
+
+      <!-- REGISTER NO. MATCH -->
+      <section class="view" id="v-reg">
+        <div class="reg-tool">
+          <h3 style="font-size:15px;font-weight:900;margin-bottom:4px">適格請求書発行事業者 登録番号 照合</h3>
+          <div class="note" style="margin-top:0;margin-bottom:16px">登録番号（T＋13桁）を入力すると、国税庁の公表データ（デモ）と照合し、事業者名・登録状況・登録年月日を確認します。</div>
+          <div class="reg-input">
+            <div class="fg"><label>登録番号</label><input id="regInput" placeholder="例：T1234567890123" maxlength="14" autocomplete="off"></div>
+            <button class="btn primary" id="regBtn">🔎 照合する</button>
+            <button class="btn" id="regSample">サンプル入力</button>
+          </div>
+          <div class="reg-result" id="regResult"></div>
+          <div style="margin-top:20px">
+            <div style="font-size:12px;font-weight:800;color:var(--ink-2);margin-bottom:8px">よく照合する取引先</div>
+            <table class="tbl">
+              <thead><tr><th>取引先</th><th>登録番号</th><th>状態</th><th></th></tr></thead>
+              <tbody id="regList"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAX CATEGORY -->
+      <section class="view" id="v-tax">
+        <div class="kpis" id="taxKpis"></div>
+        <div class="tax-grid" id="taxCards"></div>
+        <div class="panel" style="margin-top:16px">
+          <div class="ph"><h3>税区分の自動仕訳（今月の受領分）</h3><span class="more">控除対象のみ集計</span></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>取引先</th><th>件名</th><th>税区分</th><th class="r">税抜</th><th class="r">消費税</th><th>控除</th></tr></thead>
+              <tbody id="taxRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ARCHIVE (電帳法保存) -->
+      <section class="view" id="v-archive">
+        <div class="kpis" id="archKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>電子帳簿保存法 対応の保存状況</h3>
+            <button class="btn green sm" id="archScan" style="margin-left:auto">🔒 タイムスタンプ一括付与</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>受領日</th><th>取引先</th><th class="r">金額</th><th>原本</th><th>タイムスタンプ</th><th>検索要件</th></tr></thead>
+              <tbody id="archRows"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="note">※電子取引データは「真実性（タイムスタンプ等）」「可視性（検索要件＝取引年月日・金額・取引先で検索可能）」を満たして保存する必要があります。本マシンは受領時に自動で要件を満たします。</div>
+      </section>
+
+      <!-- AI JUDGE -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div style="flex:1;min-width:200px"><div style="font-size:16px;font-weight:900">受領した請求書を一括でインボイス判定</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">今月の受領請求書 <b id="aiCnt">0件</b> について、登録番号の照合・税区分の自動仕分け・適格判定をAIがまとめて行います。</div></div>
+            <button class="btn primary" id="aiRun">⚡ AIで一括判定する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">1時間50分</div>
+              <ul>
+                <li>🔎 国税庁サイトで登録番号を1件ずつ検索</li>
+                <li>🧮 軽減税率(8%)か標準(10%)かを目視で仕分け</li>
+                <li>📋 控除可否を判断し、台帳へ手入力</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 登録番号を自動照合（公表データと突合）</li>
+                <li>🧮 明細ごとに税区分を自動判定（8%/10%）</li>
+                <li>✅ 控除可否と要確認をフラグ付けして台帳化</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ AI判定の結果</div>
+            <div id="genItems"></div>
+            <div class="judge-cmp" id="judgeCmp" style="display:none">
+              <div class="jc b"><div class="jh">😓 Before（手作業の状態）</div>
+                <div class="jrow"><span>判定時間</span><b id="cmpBT">—</b></div>
+                <div class="jrow"><span>照合済みの登録番号</span><b id="cmpBR">0件</b></div>
+                <div class="jrow"><span>税区分の自動仕分け</span><b>なし（目視）</b></div>
+                <div class="jrow"><span>控除もれリスク</span><b style="color:var(--red)">高</b></div>
+              </div>
+              <div class="jc a"><div class="jh">⚡ After（技マシン）</div>
+                <div class="jrow"><span>判定時間</span><b id="cmpAT" style="color:var(--green)">—</b></div>
+                <div class="jrow"><span>照合済みの登録番号</span><b id="cmpAR" style="color:var(--green)">—</b></div>
+                <div class="jrow"><span>税区分の自動仕分け</span><b style="color:var(--green)">全件 自動</b></div>
+                <div class="jrow"><span>控除もれリスク</span><b style="color:var(--green)">低（要確認のみ表示）</b></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ HELPERS (先に定義) ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const TODAY=new Date(2026,4,30); // 2026/05/30 固定（デモの再現性）
+const ym=d=>(d.getMonth()+1);
+const fmtSlash=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtFull=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+let SEED=7777;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+/* ============ DATA ============ */
+// 取引先（仕入先）マスタ：登録番号と適格事業者かどうか
+const VENDORS=[
+  {name:'豊後おおいた青果',type:'青果卸',reg:'T7012345678901',ok:true,since:'2023年10月1日'},
+  {name:'大分中央医療材料',type:'医療資材',reg:'T2030045600789',ok:true,since:'2023年10月1日'},
+  {name:'みどり食品工業',type:'食品製造',reg:'T6011223344556',ok:true,since:'2023年10月1日'},
+  {name:'都町オフィスサプライ',type:'事務用品',reg:'T9088776655443',ok:true,since:'2024年4月1日'},
+  {name:'別府クリーンサービス',type:'清掃',reg:'T3055667788990',ok:true,since:'2023年10月1日'},
+  {name:'カワシュクダ運送',type:'運送',reg:'T1099887766554',ok:true,since:'2023年10月1日'},
+  {name:'個人農家 佐藤青果園',type:'農産物',reg:'',ok:false,since:''}, // 免税事業者（登録なし）
+  {name:'まごころ手芸店',type:'雑貨',reg:'',ok:false,since:''}, // 免税事業者
+  {name:'おおいたソフトウェア',type:'システム',reg:'T4077889900112',ok:true,since:'2023年10月1日'},
+  {name:'大分電力サービス',type:'光熱費',reg:'T5066554433221',ok:true,since:'2023年10月1日'},
+];
+// 品目（軽減税率8%＝飲食料品 / 標準10%）
+const GOODS=[
+  {n:'野菜セット（業務用）',price:9800,rate:8},
+  {n:'精肉・鮮魚 詰合せ',price:14000,rate:8},
+  {n:'米（30kg）',price:11000,rate:8},
+  {n:'弁当・惣菜（会議用）',price:6800,rate:8},
+  {n:'飲料水・お茶 ケース',price:3200,rate:8},
+  {n:'医療用ガーゼ・消耗品',price:22000,rate:10},
+  {n:'コピー用紙・文具一式',price:8400,rate:10},
+  {n:'清掃業務 月額',price:33000,rate:10},
+  {n:'配送費（定期便）',price:18000,rate:10},
+  {n:'システム保守 月額',price:50000,rate:10},
+  {n:'電気料金',price:42000,rate:10},
+  {n:'事務机・椅子',price:38000,rate:10},
+];
+
+// 受領請求書を生成
+let bills=[];
+(function seed(){
+  const subs=['月分 お仕入れ','定期便 ご請求','保守費 ご請求','消耗品 ご請求','スポット ご請求'];
+  for(let i=0;i<26;i++){
+    const v=pick(VENDORS);
+    const nLines=1+Math.floor(rnd()*3);
+    const lines=[];let sub8=0,sub10=0;
+    for(let j=0;j<nLines;j++){
+      const g=pick(GOODS);const qty=1+Math.floor(rnd()*3);
+      lines.push({n:g.n,q:qty,p:g.price,rate:g.rate});
+      if(g.rate===8)sub8+=qty*g.price;else sub10+=qty*g.price;
+    }
+    const tax8=Math.round(sub8*0.08),tax10=Math.round(sub10*0.10);
+    const sub=sub8+sub10,tax=tax8+tax10,grand=sub+tax;
+    // 受領日：過去3ヶ月のいずれか
+    const recv=new Date(TODAY.getFullYear(),TODAY.getMonth()-Math.floor(rnd()*3),1+Math.floor(rnd()*27));
+    // 税区分ラベル
+    let taxCat;
+    if(sub8>0&&sub10>0)taxCat='mix';else if(sub8>0)taxCat='t8';else taxCat='t10';
+    // 判定：登録あり=ok / 登録なし=要確認(ng相当=控除不可) / たまにproc(未処理)
+    let judge;
+    if(!v.ok)judge='ng';            // 免税事業者→控除不可（要確認）
+    else if(rnd()<0.12)judge='warn'; // たまに記載不備で要確認
+    else judge='ok';
+    // 一部は未処理(これからAI判定する分)
+    const pending=thisMonth(recv)&&rnd()<0.4;
+    bills.push({
+      id:'B-'+(202600+i+1),
+      vendor:v.name,vtype:v.type,reg:v.reg,vok:v.ok,vsince:v.since,
+      subject:pick(subs),lines,sub8,sub10,tax8,tax10,sub,tax,grand,
+      recv,taxCat,
+      judge:pending?'proc':judge,
+      pending,
+      stamped:!pending&&rnd()>0.25,   // タイムスタンプ付与済み
+      searchable:true
+    });
+  }
+})();
+
+const JUDGE_LABEL={ok:'適格',warn:'要確認',ng:'控除不可',proc:'未判定'};
+const TAX_LABEL={t10:'標準10%',t8:'軽減8%',tfree:'非課税',mix:'混在(8/10)'};
+function judgeBadge(j){const cls={ok:'ok',warn:'warn',ng:'ng',proc:'proc'}[j];return `<span class="st ${cls}">${JUDGE_LABEL[j]}</span>`;}
+function taxBadge(t){return `<span class="tx ${t}">${TAX_LABEL[t]}</span>`;}
+function regCell(b){
+  if(!b.reg)return '<span class="regno bad">登録なし</span>';
+  return `<span class="regno">${esc(b.reg)}</span>`;
+}
+
+/* ============ ROUTING ============ */
+const TITLES={
+  dash:['ダッシュボード','2026年'+ym(TODAY)+'月のインボイス対応状況'],
+  list:['受領請求書','仕入先から受領した請求書の適格判定を管理します'],
+  reg:['登録番号照合','適格請求書発行事業者かどうかを照合します'],
+  tax:['税区分','軽減税率(8%)・標準(10%)の自動仕分けと控除集計'],
+  archive:['保存（電帳法）','電子帳簿保存法の要件を満たして保存します'],
+  ai:['AI判定（一括）','受領した請求書をまとめてインボイス判定します']
+};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn" onclick="go(\'reg\')">🔎 登録番号照合</button><button class="btn primary" onclick="go(\'ai\')">⚡ AI一括判定</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'reg\')">🔎 登録番号照合</button><button class="btn primary" onclick="go(\'ai\')">⚡ AI一括判定</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='reg')renderReg();
+  if(v==='tax')renderTax();
+  if(v==='archive')renderArch();
+  if(v==='ai')renderAiHead();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const tm=bills.filter(b=>thisMonth(b.recv));
+  const okCnt=tm.filter(b=>b.judge==='ok').length;
+  const checkCnt=tm.filter(b=>b.judge==='warn'||b.judge==='ng'||b.judge==='proc').length;
+  // 控除可能額：適格請求書(ok)の消費税合計
+  const deductible=bills.filter(b=>b.judge==='ok').reduce((s,b)=>s+b.tax,0);
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','今月の受領',tm.length+'<small>件</small>',yen(tm.reduce((s,b)=>s+b.grand,0)),'info','前月比 +8%')}
+    ${kpi('#16b877','適格 件数',okCnt+'<small>件</small>','',okCnt?'up':'warn','控除OK')}
+    ${kpi('#e3941f','要確認',checkCnt+'<small>件</small>','','warn',checkCnt?'対応が必要':'なし')}
+    ${kpi('#7c5cf0','控除可能額',yen(deductible),'','info','適格分の消費税')}`;
+
+  // donut: 判定内訳（全件）
+  const counts={ok:0,warn:0,ng:0,proc:0};
+  bills.forEach(b=>counts[b.judge]++);
+  const segs=[
+    {k:'ok',label:'適格（控除OK）',color:'#16b877',v:counts.ok},
+    {k:'proc',label:'未判定',color:'#2f6df0',v:counts.proc},
+    {k:'warn',label:'要確認',color:'#e3941f',v:counts.warn},
+    {k:'ng',label:'控除不可（免税事業者）',color:'#e24a4a',v:counts.ng},
+  ].filter(s=>s.v>0);
+  const total=segs.reduce((s,x)=>s+x.v,0)||1;
+  let off=0;let circles='';
+  segs.forEach(s=>{
+    const len=s.v/total*100;
+    circles+=`<circle cx="21" cy="21" r="15.915" fill="transparent" stroke="${s.color}" stroke-width="6"
+      stroke-dasharray="${len} ${100-len}" stroke-dashoffset="${25-off}"></circle>`;
+    off+=len;
+  });
+  $('donut').innerHTML=`<circle cx="21" cy="21" r="15.915" fill="transparent" stroke="#eef1f7" stroke-width="6"></circle>${circles}
+    <text x="21" y="20" text-anchor="middle" font-size="7" font-weight="900" fill="#1d2733">${total}</text>
+    <text x="21" y="26" text-anchor="middle" font-size="3.4" fill="#8a94a6">件 受領</text>`;
+  $('donutLegend').innerHTML=segs.map(s=>`<div class="lg"><span class="sw" style="background:${s.color}"></span>${s.label}<b>${s.v}件</b></div>`).join('');
+
+  // activity
+  const acts=[
+    {i:'⚡',c:'#e6f8f0',t:'AI一括判定で 9件を処理（適格7・要確認2）',m:'たった今'},
+    {i:'🔴',c:'#fdeaea',t:'個人農家 佐藤青果園 は登録番号なし（仕入税額控除の対象外）',m:'今日 10:22'},
+    {i:'🔎',c:'#eaf1ff',t:'豊後おおいた青果 の登録番号 T7012… を照合（有効）',m:'今日 9:40'},
+    {i:'🧮',c:'#efeaff',t:'みどり食品工業 の明細を 軽減8%／標準10% に自動仕分け',m:'今日 9:05'},
+    {i:'🔒',c:'#e6f8f0',t:'受領請求書 6件にタイムスタンプを付与（電帳法 保存完了）',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${a.m}</div></div></div>`).join('');
+
+  // trend bars: 月別受領件数 + 適格率
+  const months=[];for(let k=5;k>=0;k--){months.push(new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1));}
+  const data=months.map(m=>{
+    const inM=bills.filter(b=>b.recv.getMonth()===m.getMonth()&&b.recv.getFullYear()===m.getFullYear());
+    const ok=inM.filter(b=>b.judge==='ok').length;
+    return {cnt:inM.length,rate:inM.length?Math.round(ok/inM.length*100):0};
+  });
+  const mxCnt=Math.max(...data.map(d=>d.cnt),1);
+  $('trendBars').innerHTML=months.map((m,i)=>`
+    <div class="bar-row"><span class="mlabel">${m.getFullYear()}/${m.getMonth()+1}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(data[i].cnt/mxCnt*100)}"></div></div>
+      <span class="mval">${data[i].cnt}件</span></div>
+    <div class="bar-row"><span class="mlabel" style="font-size:10.5px;color:var(--ink-3)">　適格率</span>
+      <div class="bar-track"><div class="bar-fill green" style="width:0" data-w="${data[i].rate}"></div></div>
+      <span class="mval" style="color:var(--green)">${data[i].rate}%</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+}
+
+/* ============ LIST (受領請求書) ============ */
+let filterJudge='all';
+function renderChips(){
+  const opts=[['all','すべて'],['ok','適格'],['proc','未判定'],['warn','要確認'],['ng','控除不可']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterJudge?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterJudge=c.dataset.s;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=bills.filter(b=>filterJudge==='all'||b.judge===filterJudge)
+    .filter(b=>!q||(b.vendor+b.subject+b.reg+b.id).toLowerCase().includes(q))
+    .sort((a,b)=>b.recv-a.recv);
+  $('listRows').innerHTML=rows.length?rows.map(b=>`<tr onclick="openBill('${esc(b.id)}')">
+    <td class="muted">${fmtSlash(b.recv)}</td>
+    <td><b>${esc(b.vendor)}</b><div style="font-size:11px;color:var(--ink-3)">${esc(b.vtype)}</div></td>
+    <td class="muted">${esc(b.subject)}</td>
+    <td>${regCell(b)}</td>
+    <td>${taxBadge(b.taxCat)}</td>
+    <td class="r tnum"><b>${yen(b.grand)}</b></td>
+    <td>${judgeBadge(b.judge)}</td></tr>`).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する請求書がありません</td></tr>';
+}
+$('q').addEventListener('input',renderList);
+window.openBill=id=>{
+  const b=bills.find(x=>x.id===id);if(!b)return;
+  const msg=b.judge==='ng'?'登録番号がないため仕入税額控除の対象外です'
+    :b.judge==='warn'?'記載内容に不備の可能性があります（要確認）'
+    :b.judge==='proc'?'まだAI判定していません（AI一括判定で処理できます）'
+    :'適格請求書です（仕入税額控除OK）';
+  showToast(b.id+'：'+msg);
+};
+
+/* ============ REGISTER NO. MATCH ============ */
+function renderReg(){
+  $('regList').innerHTML=VENDORS.filter(v=>v.reg).map(v=>`<tr onclick="quickReg('${esc(v.reg)}')">
+    <td><b>${esc(v.name)}</b></td><td><span class="regno">${esc(v.reg)}</span></td>
+    <td><span class="st ok">登録あり</span></td>
+    <td class="r"><button class="btn sm" onclick="event.stopPropagation();quickReg('${esc(v.reg)}')">照合</button></td></tr>`).join('')
+    +VENDORS.filter(v=>!v.reg).map(v=>`<tr>
+    <td><b>${esc(v.name)}</b></td><td><span class="regno bad">登録なし（免税事業者）</span></td>
+    <td><span class="st ng">控除不可</span></td><td></td></tr>`).join('');
+}
+window.quickReg=no=>{ $('regInput').value=no; doReg(); $('v-reg').scrollIntoView({behavior:'smooth'});};
+function doReg(){
+  const raw=($('regInput').value||'').trim().toUpperCase().replace(/[\s-]/g,'');
+  const box=$('regResult');
+  // 形式チェック：T + 13桁
+  const valid=/^T\d{13}$/.test(raw);
+  const vendor=VENDORS.find(v=>v.reg===raw);
+  if(!valid){
+    box.innerHTML=`<div class="reg-card ng">
+      <div class="rh"><div class="ico">✕</div>形式が正しくありません</div>
+      <div style="font-size:12.5px;color:var(--ink-2)">登録番号は「T」＋数字13桁です。入力値：<b class="regno">${esc(raw||'（空欄）')}</b></div>
+      <div class="note">例：T1234567890123 のように入力してください。</div></div>`;
+    box.classList.add('show');return;
+  }
+  if(vendor){
+    box.innerHTML=`<div class="reg-card ok">
+      <div class="rh"><div class="ico">✓</div>適格請求書発行事業者として登録されています</div>
+      <div class="reg-grid">
+        <div><div class="k">登録番号</div><div class="vv regno">${esc(vendor.reg)}</div></div>
+        <div><div class="k">事業者名</div><div class="vv">${esc(vendor.name)}</div></div>
+        <div><div class="k">業種</div><div class="vv">${esc(vendor.vtype||vendor.type)}</div></div>
+        <div><div class="k">登録年月日</div><div class="vv">${esc(vendor.since)}</div></div>
+        <div><div class="k">登録状況</div><div class="vv" style="color:var(--green)">有効</div></div>
+        <div><div class="k">仕入税額控除</div><div class="vv" style="color:var(--green)">対象（控除OK）</div></div>
+      </div>
+      <div class="note">✅ この事業者からの請求書は適格請求書として仕入税額控除の対象になります。</div></div>`;
+  }else{
+    box.innerHTML=`<div class="reg-card ng">
+      <div class="rh"><div class="ico">!</div>該当する登録事業者が見つかりません</div>
+      <div style="font-size:12.5px;color:var(--ink-2)">入力番号：<b class="regno">${esc(raw)}</b>（デモの公表データには存在しません）</div>
+      <div class="note">⚠️ 登録が確認できない場合、原則として仕入税額控除はできません。取引先に登録番号をご確認ください。</div></div>`;
+  }
+  box.classList.add('show');
+}
+$('regBtn').addEventListener('click',doReg);
+$('regInput').addEventListener('keydown',e=>{if(e.key==='Enter')doReg();});
+$('regSample').addEventListener('click',()=>{$('regInput').value='T7012345678901';doReg();});
+
+/* ============ TAX CATEGORY ============ */
+function renderTax(){
+  const all=bills;
+  const sub8=all.reduce((s,b)=>s+b.sub8,0),tax8=all.reduce((s,b)=>s+b.tax8,0);
+  const sub10=all.reduce((s,b)=>s+b.sub10,0),tax10=all.reduce((s,b)=>s+b.tax10,0);
+  const dedTax=all.filter(b=>b.judge==='ok').reduce((s,b)=>s+b.tax,0);
+  const ndedTax=all.filter(b=>b.judge==='ng').reduce((s,b)=>s+b.tax,0);
+  $('taxKpis').innerHTML=`
+    ${kpi('#e3941f','軽減8% 対象',yen(sub8),'飲食料品など','warn','消費税 '+yen(tax8))}
+    ${kpi('#2f6df0','標準10% 対象',yen(sub10),'上記以外','info','消費税 '+yen(tax10))}
+    ${kpi('#16b877','控除可能 消費税',yen(dedTax),'適格分のみ','up','申告に反映')}
+    ${kpi('#e24a4a','控除不可 消費税',yen(ndedTax),'免税事業者分','down','控除できない')}`;
+  $('taxCards').innerHTML=`
+    <div class="tax-card">
+      <div class="tch"><span class="tx t8 rate">8%</span><h4>軽減税率（飲食料品・新聞）</h4></div>
+      <div class="desc">お米・野菜・精肉・弁当・飲料など、人の飲食に供する飲食料品が対象。テイクアウトは8%、店内飲食は10%。</div>
+      <div class="stat"><span>対象 税抜合計</span><b>${yen(sub8)}</b></div>
+      <div class="stat"><span>消費税(8%)</span><b>${yen(tax8)}</b></div>
+      <div class="stat"><span>該当 明細数</span><b>${all.reduce((s,b)=>s+b.lines.filter(l=>l.rate===8).length,0)}件</b></div>
+    </div>
+    <div class="tax-card">
+      <div class="tch"><span class="tx t10 rate">10%</span><h4>標準税率（上記以外すべて）</h4></div>
+      <div class="desc">事務用品・医療資材・清掃・配送・システム保守・光熱費など、飲食料品以外の課税仕入れが対象。</div>
+      <div class="stat"><span>対象 税抜合計</span><b>${yen(sub10)}</b></div>
+      <div class="stat"><span>消費税(10%)</span><b>${yen(tax10)}</b></div>
+      <div class="stat"><span>該当 明細数</span><b>${all.reduce((s,b)=>s+b.lines.filter(l=>l.rate===10).length,0)}件</b></div>
+    </div>`;
+  // 控除対象（ok）の今月分を表示
+  const rows=bills.filter(b=>b.judge==='ok').sort((a,b)=>b.recv-a.recv);
+  $('taxRows').innerHTML=rows.map(b=>`<tr onclick="openBill('${esc(b.id)}')">
+    <td><b>${esc(b.vendor)}</b></td><td class="muted">${esc(b.subject)}</td>
+    <td>${taxBadge(b.taxCat)}</td>
+    <td class="r tnum">${yen(b.sub)}</td>
+    <td class="r tnum">${yen(b.tax)}</td>
+    <td><span class="st ok">控除可</span></td></tr>`).join('')
+    ||'<tr><td colspan="6" class="empty-cell">控除対象の請求書がありません</td></tr>';
+}
+
+/* ============ ARCHIVE (電帳法) ============ */
+function renderArch(){
+  const tm=bills.filter(b=>thisMonth(b.recv));
+  const stamped=bills.filter(b=>b.stamped).length;
+  const unst=bills.filter(b=>!b.stamped).length;
+  $('archKpis').innerHTML=`
+    ${kpi('#2f6df0','保存対象',bills.length+'<small>件</small>','電子取引データ','info','電帳法 対応')}
+    ${kpi('#16b877','タイムスタンプ済',stamped+'<small>件</small>','','up','真実性 確保')}
+    ${kpi('#e3941f','未付与',unst+'<small>件</small>','','warn',unst?'一括付与できます':'完了')}
+    ${kpi('#7c5cf0','検索要件',bills.length+'<small>件</small>','日付/金額/取引先','info','可視性 確保')}`;
+  $('archRows').innerHTML=bills.sort((a,b)=>b.recv-a.recv).map(b=>`<tr>
+    <td class="muted">${fmtSlash(b.recv)}</td>
+    <td><b>${esc(b.vendor)}</b></td>
+    <td class="r tnum">${yen(b.grand)}</td>
+    <td><span class="st ok">PDF保存</span></td>
+    <td>${b.stamped?'<span class="st ok">付与済</span>':'<span class="st todo">未付与</span>'}</td>
+    <td><span class="st ok">対応済</span></td></tr>`).join('');
+}
+$('archScan').addEventListener('click',async()=>{
+  const btn=$('archScan');btn.textContent='🔒 付与中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,900));
+  let n=0;bills.forEach(b=>{if(!b.stamped){b.stamped=true;n++;}});
+  btn.textContent='🔒 タイムスタンプ一括付与';btn.disabled=false;
+  renderArch();showToast(n+'件にタイムスタンプを付与しました（電帳法 真実性の要件を充足）');
+});
+
+/* ============ AI JUDGE ============ */
+function renderAiHead(){
+  const pending=bills.filter(b=>b.judge==='proc');
+  $('aiCnt').textContent=pending.length+'件';
+}
+$('aiRun').addEventListener('click',async()=>{
+  const pending=bills.filter(b=>b.judge==='proc');
+  if(!pending.length){showToast('未判定の請求書はありません');return;}
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 判定中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},110);
+  await new Promise(r=>setTimeout(r,1150));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+
+  // 判定確定：登録あり→ok / なし→ng / たまにwarn
+  let okN=0,warnN=0,ngN=0;
+  pending.forEach(b=>{
+    if(!b.vok){b.judge='ng';ngN++;}
+    else if(rnd()<0.18){b.judge='warn';warnN++;}
+    else {b.judge='ok';okN++;}
+  });
+
+  $('genItems').innerHTML=pending.map((b,i)=>{
+    const cls=b.judge==='ok'?'ok':b.judge==='ng'?'ng':'warn';
+    const mark=b.judge==='ok'?'✓':b.judge==='ng'?'✕':'!';
+    const note=b.judge==='ok'?'登録番号 照合OK・税区分 '+TAX_LABEL[b.taxCat]
+      :b.judge==='ng'?'登録なし（免税事業者）→ 仕入税額控除の対象外'
+      :'記載不備の可能性 → 取引先に確認が必要';
+    return `<div class="gen-item" data-i="${i}">
+      <span class="ck ${cls}">${mark}</span>
+      <div class="nm">${esc(b.vendor)}<div class="sub">${esc(note)}</div></div>
+      <span class="tx ${b.taxCat}">${TAX_LABEL[b.taxCat]}</span>
+      <span class="tnum" style="font-weight:800">${yen(b.grand)}</span></div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,160));items[i].classList.add('in');}
+
+  // before/after 比較を埋める
+  const bMin=Math.max(6,pending.length*12);
+  $('cmpBT').textContent=Math.floor(bMin/60)?Math.floor(bMin/60)+'時間'+(bMin%60)+'分':bMin+'分';
+  $('cmpAT').textContent='9秒';
+  $('cmpBR').textContent='0件（未照合）';
+  $('cmpAR').textContent=(okN+warnN)+'件';
+  $('judgeCmp').style.display='grid';
+
+  btn.disabled=false;btn.textContent='⚡ もう一度判定';
+  $('navCheck').textContent=bills.filter(b=>b.judge==='warn'||b.judge==='ng'||b.judge==='proc').length;
+  renderAiHead();
+  showToast(pending.length+'件を判定（適格'+okN+'・要確認'+warnN+'・控除不可'+ngN+'）');
+});
+
+/* ============ INIT ============ */
+renderChips();
+renderDash();
+$('navCheck').textContent=bills.filter(b=>b.judge==='warn'||b.judge==='ng'||b.judge==='proc').length;
+</script>
+</body>
+</html>

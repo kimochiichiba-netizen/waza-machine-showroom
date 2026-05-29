@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜タスク管理マシン（プロジェクト・タスク自動化）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cf0;--purple-soft:#efeafe;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.nav a .badge.amber{background:var(--amber)}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn.sm{padding:6px 12px;font-size:12px}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:64px 1fr 70px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-fill.g{background:linear-gradient(90deg,var(--green),#5fd6a8)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut */
+.donut-wrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.donut{--p:0;width:130px;height:130px;border-radius:50%;flex-shrink:0;
+  background:conic-gradient(var(--green) 0 calc(var(--p)*1%),var(--soft) 0);
+  display:grid;place-items:center;position:relative;transition:--p 1s}
+.donut::after{content:"";position:absolute;width:92px;height:92px;border-radius:50%;background:var(--card)}
+.donut .dc{position:relative;z-index:1;text-align:center}
+.donut .dc b{font-size:26px;font-weight:900;display:block;line-height:1}
+.donut .dc span{font-size:11px;color:var(--ink-3);font-weight:700}
+.leg{display:flex;flex-direction:column;gap:9px;font-size:12.5px}
+.leg .lr{display:flex;align-items:center;gap:8px;font-weight:600;color:var(--ink-2)}
+.leg .lr .sw{width:11px;height:11px;border-radius:3px}
+.leg .lr b{margin-left:auto;color:var(--ink);font-weight:800}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px;vertical-align:middle}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.done{background:var(--green-soft);color:var(--green)}
+.st.doing{background:var(--brand-soft);color:var(--brand)}
+.st.todo{background:var(--soft);color:var(--ink-3)}
+.st.late{background:var(--red-soft);color:var(--red)}
+.pri{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;padding:3px 9px;border-radius:7px}
+.pri.high{background:var(--red-soft);color:var(--red)}
+.pri.mid{background:var(--amber-soft);color:var(--amber)}
+.pri.low{background:var(--soft);color:var(--ink-3)}
+.av-sm{width:24px;height:24px;border-radius:50%;display:inline-grid;place-items:center;color:#fff;font-size:11px;font-weight:800;flex-shrink:0}
+.assignee{display:inline-flex;align-items:center;gap:7px;font-weight:600}
+.duecell{font-weight:700}
+.duecell.warn{color:var(--amber)}.duecell.late{color:var(--red)}
+
+/* progress mini bar */
+.pbar{height:8px;border-radius:99px;background:var(--soft);overflow:hidden;min-width:90px}
+.pbar > i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky))}
+
+/* ===== KANBAN ===== */
+.kanban{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:start}
+@media(max-width:880px){.kanban{grid-template-columns:1fr}}
+.kcol{background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:12px;min-height:140px}
+.kcol.over{outline:2px dashed var(--brand);outline-offset:-2px;background:var(--brand-soft)}
+.kcol .kh{display:flex;align-items:center;gap:8px;padding:4px 6px 12px;font-weight:800;font-size:13.5px}
+.kcol .kh .kdot{width:9px;height:9px;border-radius:3px}
+.kcol .kh .cnt{margin-left:auto;background:var(--card);border:1px solid var(--line-2);color:var(--ink-2);font-size:11px;font-weight:800;padding:1px 9px;border-radius:99px}
+.kcard{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:12px 13px;margin-bottom:10px;box-shadow:var(--shadow);cursor:grab;transition:box-shadow .15s,transform .1s}
+.kcard:hover{box-shadow:0 8px 22px rgba(16,24,40,.1)}
+.kcard.drag{opacity:.4}
+.kcard .kt{font-weight:700;font-size:13px;margin-bottom:7px;line-height:1.4}
+.kcard .kmeta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.kcard .ktag{font-size:10.5px;font-weight:700;color:var(--ink-3);background:var(--soft);padding:2px 8px;border-radius:6px}
+.kcard .kfoot{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:11.5px;color:var(--ink-2)}
+.kcard .kfoot .due{margin-left:auto;font-weight:700}
+.kempty{color:var(--ink-3);font-size:12px;text-align:center;padding:14px 0}
+
+/* create form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:70px}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* by-assignee */
+.member-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.mcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow)}
+.mcard .mhead{display:flex;align-items:center;gap:11px;margin-bottom:13px}
+.mcard .mhead .av-lg{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;color:#fff;font-weight:900;font-size:16px}
+.mcard .mhead b{font-size:14.5px;font-weight:800}
+.mcard .mhead span{font-size:11.5px;color:var(--ink-3);display:block}
+.mstat{display:flex;gap:8px;margin-bottom:12px}
+.mstat .ms{flex:1;text-align:center;background:var(--soft);border-radius:9px;padding:9px 4px}
+.mstat .ms b{font-size:18px;font-weight:900;display:block;line-height:1}
+.mstat .ms span{font-size:10.5px;color:var(--ink-3);font-weight:700}
+.mtask{font-size:12.5px;padding:8px 0;border-top:1px solid var(--line);display:flex;align-items:center;gap:8px}
+.mtask .mdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.mload{font-size:11px;font-weight:700;margin-top:10px;display:flex;align-items:center;gap:7px}
+
+/* progress view */
+.proj-row{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:15px 18px;margin-bottom:12px;box-shadow:var(--shadow)}
+.proj-row .pr-top{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.proj-row .pr-top b{font-size:14.5px;font-weight:800}
+.proj-row .pr-top .pr-pct{margin-left:auto;font-family:'Orbitron';font-weight:700;font-size:18px;color:var(--brand-dk)}
+.proj-row .pr-bar{height:11px;border-radius:99px;background:var(--soft);overflow:hidden}
+.proj-row .pr-bar > i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.proj-row .pr-meta{display:flex;gap:18px;margin-top:9px;font-size:11.5px;color:var(--ink-2);flex-wrap:wrap}
+.proj-row .pr-meta span b{color:var(--ink)}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ai-input{display:grid;grid-template-columns:1fr auto;gap:12px;margin:16px 0 8px;align-items:end}
+@media(max-width:680px){.ai-input{grid-template-columns:1fr}}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:10px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+.gen-item .gt{flex:1;font-weight:700}
+.gen-item .gass{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink-2);font-weight:600}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto;flex-shrink:0}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">タスク管理マシン<small>技マシン｜タスク自動化</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">✅</span>タスク一覧<span class="badge amber" id="navDue">0</span></a>
+      <a data-v="board"><span class="i">🗂️</span>プロジェクト</a>
+      <a data-v="member"><span class="i">👥</span>担当別</a>
+      <a data-v="progress"><span class="i">📈</span>進捗</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI自動割振</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。タスク・担当者はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">2026年5月のタスク状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>担当者ごとのタスク負荷</h3><span class="more">進行中タスク数</span></div>
+            <div class="pb"><div class="bars" id="loadBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>全体の進捗状況</h3></div>
+            <div class="pb">
+              <div class="donut-wrap">
+                <div class="donut" id="donut"><div class="dc"><b id="donutPct">0%</b><span>完了率</span></div></div>
+                <div class="leg" id="donutLeg"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>期限が近いタスク</h3><span class="more" onclick="go('list')">一覧へ</span></div>
+            <div class="pb"><div class="acts" id="dueSoon"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="タスク名・担当者・プロジェクトで検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>タスク</th><th>プロジェクト</th><th>担当</th><th>優先度</th><th>期限</th><th>状態</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- KANBAN / PROJECT -->
+      <section class="view" id="v-board">
+        <div class="toolbar">
+          <div class="chips" id="projChips" style="flex:1"></div>
+          <button class="btn primary" onclick="go('create')">＋ タスク追加</button>
+        </div>
+        <div class="kanban" id="kanban"></div>
+        <div style="font-size:11.5px;color:var(--ink-3);margin-top:12px">💡 カードはドラッグ＆ドロップで列を移動できます（状態が自動で更新されます）。</div>
+      </section>
+
+      <!-- MEMBER -->
+      <section class="view" id="v-member">
+        <div class="member-grid" id="memberGrid"></div>
+      </section>
+
+      <!-- PROGRESS -->
+      <section class="view" id="v-progress">
+        <div class="kpis" id="progKpis"></div>
+        <div id="progRows"></div>
+      </section>
+
+      <!-- CREATE -->
+      <section class="view" id="v-create">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>タスク名</label><input id="cTitle" placeholder="例：5月度シフト表を作成"></div>
+            <div class="fg"><label>説明（任意）</label><textarea id="cDesc" placeholder="作業内容のメモ"></textarea></div>
+            <div class="fg2">
+              <div class="fg"><label>プロジェクト</label><select id="cProj"></select></div>
+              <div class="fg"><label>担当者</label><select id="cAssignee"></select></div>
+            </div>
+            <div class="fg2">
+              <div class="fg"><label>優先度</label><select id="cPri"><option value="mid">中</option><option value="high">高</option><option value="low">低</option></select></div>
+              <div class="fg"><label>期限</label><input id="cDue" type="date"></div>
+            </div>
+            <div class="aihint" id="cAiHint">✨ AIが内容から最適な担当者・優先度を提案しました</div>
+            <div class="linkrow" style="margin-top:8px">
+              <button class="btn primary" id="cCreate" style="flex:1;justify-content:center">⚡ AIで仕分けして登録</button>
+              <button class="btn" id="cSample">サンプル</button>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>新規タスク プレビュー</h3></div>
+            <div class="pb">
+              <div class="kcard" style="cursor:default;margin:0">
+                <div class="kt" id="pvTitle">（タスク名を入力してください）</div>
+                <div style="font-size:12px;color:var(--ink-2);margin-bottom:10px" id="pvDesc"></div>
+                <div class="kmeta">
+                  <span class="ktag" id="pvProj">プロジェクト未設定</span>
+                  <span class="pri mid" id="pvPri">優先度 中</span>
+                </div>
+                <div class="kfoot">
+                  <span class="assignee" id="pvAssignee">未割当</span>
+                  <span class="due" id="pvDue">期限未設定</span>
+                </div>
+              </div>
+              <div style="font-size:11.5px;color:var(--ink-3);margin-top:16px;border-top:1px solid var(--line);padding-top:12px">
+                登録すると「タスク一覧」と「プロジェクト」のかんばんボードに即時反映されます。
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI AUTO ASSIGN -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">依頼文からタスクを自動分解・最適割当</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">ざっくりした依頼を貼り付けるだけで、AIが作業を細かいタスクに分解し、負荷とスキルを見て最適な担当者へ自動で割り振ります。</div></div>
+          </div>
+          <div class="ai-input">
+            <div class="fg" style="margin:0"><label>やりたいこと・依頼内容</label>
+              <textarea id="aiReq" style="min-height:64px">来月の新クリニック開院に向けて準備を進めたい。スタッフのシフト作成、備品の発注、ホームページの開院案内ページ、近隣への挨拶状の送付までお願い。</textarea>
+            </div>
+            <button class="btn primary" id="aiRun" style="height:44px">⚡ AIで分解・割当</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">45分</div>
+              <ul>
+                <li>📝 依頼を読んで作業を洗い出し</li>
+                <li>🧮 誰が空いているか手で確認</li>
+                <li>⌨️ 1件ずつタスク表へ手入力</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 依頼を自動でタスクに分解</li>
+                <li>⚖️ 負荷・スキルで最適担当を判定</li>
+                <li>📌 期限・優先度まで自動セット</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ 自動生成・割当されたタスク</div>
+            <div id="genItems"></div>
+            <div style="margin-top:12px"><button class="btn green" id="aiApply">このタスクを一覧に登録する</button></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const MEMBERS=[
+  {name:'佐藤 健太',short:'佐',color:'#2f6df0',role:'リーダー',skills:['企画','医療']},
+  {name:'田中 美咲',short:'田',color:'#16b877',role:'介護担当',skills:['介護','事務']},
+  {name:'鈴木 大輔',short:'鈴',color:'#e3941f',role:'営業',skills:['営業','配送']},
+  {name:'高橋 由香',short:'高',color:'#7c5cf0',role:'制作',skills:['制作','HP']},
+  {name:'渡辺 翔',short:'渡',color:'#0ea5b7',role:'事務',skills:['事務','経理']},
+];
+const PROJECTS=[
+  {name:'大分中央クリニック 開院支援'},
+  {name:'青果定期便の運用改善'},
+  {name:'介護施設シフト自動化'},
+  {name:'吉原 HP制作'},
+  {name:'社内業務の自動化'},
+];
+const TASK_NAMES=[
+  '5月度シフト表を作成','備品の発注リストを確認','請求書の送付状況をチェック','HPの開院案内ページを更新',
+  '近隣への挨拶状を発送','配送ルートの最適化を検討','介護記録の月次集計','スタッフ研修の資料準備',
+  '在庫データの棚卸し','新規取引先へ見積りを送付','野菜セットの献立を更新','問い合わせフォームの動作確認',
+  'クリニック向け提案書を作成','SNS投稿の月間計画','補助金申請の書類整理','顧客アンケートを集計',
+  '緊急：保健所提出書類の確認','レセプト請求のチェック','配送スタッフのシフト調整','HP保守の月次レポート',
+];
+const TAGS=['企画','事務','制作','営業','配送','医療','介護'];
+const TODAY=new Date(2026,4,30); // 2026-05-30
+const STATUSES=['todo','doing','done','doing','done','todo','done'];
+const PRIS=['high','mid','mid','low','high','mid','low'];
+
+let SEED=2026;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+let UID=1;
+let tasks=[];
+(function seed(){
+  for(let i=0;i<22;i++){
+    const m=MEMBERS[Math.floor(rnd()*MEMBERS.length)];
+    const p=PROJECTS[Math.floor(rnd()*PROJECTS.length)];
+    let status=pick(STATUSES);
+    const offset=Math.floor(rnd()*22)-9; // -9 .. +12 days
+    const due=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+offset);
+    // overdue if past & not done
+    if(status!=='done'&&due<TODAY&&rnd()>0.45)status='late';
+    tasks.push({
+      id:UID++,title:TASK_NAMES[i%TASK_NAMES.length],desc:'',proj:p.name,
+      assignee:m.name,pri:pick(PRIS),due,status,tag:pick(TAGS)
+    });
+  }
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmtD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+const ymd=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const STLABEL={todo:'未着手',doing:'進行中',done:'完了',late:'遅延'};
+const PRLABEL={high:'高',mid:'中',low:'低'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]}</span>`;}
+function priBadge(p){return `<span class="pri ${p}">優先度 ${PRLABEL[p]}</span>`;}
+function mem(name){return MEMBERS.find(m=>m.name===name)||{short:'？',color:'#8a94a6',role:'',skills:[]};}
+function avatar(name,size){const m=mem(name);const s=size||'av-sm';return `<span class="${s}" style="background:${m.color}">${m.short}</span>`;}
+function assigneeCell(name){const m=mem(name);return `<span class="assignee">${avatar(name)}${esc(name)}</span>`;}
+function dayDiff(d){return Math.round((d-TODAY)/86400000);}
+function dueClass(t){if(t.status==='done')return '';const dd=dayDiff(t.due);if(dd<0||t.status==='late')return 'late';if(dd<=2)return 'warn';return '';}
+function dueText(t){const dd=dayDiff(t.due);if(t.status==='done')return fmtD(t.due);if(dd<0)return fmtD(t.due)+'（'+(-dd)+'日超過）';if(dd===0)return '本日まで';if(dd<=2)return fmtD(t.due)+'（あと'+dd+'日）';return fmtD(t.due);}
+function isDueSoon(t){return t.status!=='done'&&dayDiff(t.due)<=2;}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+
+/* ============ ROUTING ============ */
+const TITLES={
+  dash:['ダッシュボード','2026年5月のタスク状況'],
+  list:['タスク一覧','全タスクの検索・絞り込み・状態管理'],
+  board:['プロジェクト','かんばんボードで進捗をひと目で把握'],
+  member:['担当別','メンバーごとの担当タスクと負荷'],
+  progress:['進捗','プロジェクト別の完了率と遅延'],
+  create:['タスク追加','入力するとAIが担当・優先度を提案します'],
+  ai:['AI自動割振','依頼文からタスクを自動分解・最適割当']
+};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML =
+    v==='list'?'<button class="btn primary" onclick="go(\'create\')">＋ タスク追加</button>'
+    : v==='board'?'<button class="btn" onclick="go(\'ai\')">⚡ AI自動割振</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI自動割振</button><button class="btn primary" onclick="go(\'create\')">＋ タスク追加</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='board')renderBoard();
+  if(v==='member')renderMember();
+  if(v==='progress')renderProgress();
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+function renderDash(){
+  const doing=tasks.filter(t=>t.status==='doing').length;
+  const dueSoon=tasks.filter(isDueSoon).length;
+  const done=tasks.filter(t=>t.status==='done').length;
+  const late=tasks.filter(t=>t.status==='late').length;
+  const pct=Math.round(done/tasks.length*100);
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','進行中タスク',doing+'<small>件</small>',tasks.length+'件中','up','順調に進行中')}
+    ${kpi('#e3941f','期限間近',dueSoon+'<small>件</small>','','warn',dueSoon?'要フォロー':'なし')}
+    ${kpi('#16b877','完了率',pct+'<small>%</small>',done+'件 完了','up','前週比 +8pt')}
+    ${kpi('#e24a4a','遅延タスク',late+'<small>件</small>','',late?'down':'up',late?'至急対応':'なし')}`;
+  // load by member
+  const loads=MEMBERS.map(m=>({m,n:tasks.filter(t=>t.assignee===m.name&&t.status!=='done').length}));
+  const mx=Math.max(...loads.map(l=>l.n),1);
+  $('loadBars').innerHTML=loads.map(l=>`
+    <div class="bar-row"><span class="mlabel">${esc(l.m.name.split(' ')[0])}</span>
+      <div class="bar-track"><div class="bar-fill ${l.n>=5?'':'g'}" style="width:0" data-w="${Math.round(l.n/mx*100)}"></div></div>
+      <span class="mval">${l.n}件</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#loadBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // donut
+  const todo=tasks.filter(t=>t.status==='todo').length;
+  const doingN=tasks.filter(t=>t.status==='doing').length;
+  const lateN=late;
+  $('donut').style.setProperty('--p',0);
+  setTimeout(()=>{$('donut').style.setProperty('--p',pct);},80);
+  let cur=0;const t0=setInterval(()=>{cur++;$('donutPct').textContent=cur+'%';if(cur>=pct)clearInterval(t0);},14);
+  $('donutLeg').innerHTML=`
+    <div class="lr"><span class="sw" style="background:var(--green)"></span>完了<b>${done}件</b></div>
+    <div class="lr"><span class="sw" style="background:var(--brand)"></span>進行中<b>${doingN}件</b></div>
+    <div class="lr"><span class="sw" style="background:var(--ink-3)"></span>未着手<b>${todo}件</b></div>
+    <div class="lr"><span class="sw" style="background:var(--red)"></span>遅延<b>${lateN}件</b></div>`;
+  // activity
+  const acts=[
+    {i:'✅',c:'#e6f8f0',t:'田中 美咲 が「介護記録の月次集計」を完了',m:'8分前'},
+    {i:'⚡',c:'#efeafe',t:'AI自動割振で 5件のタスクを最適メンバーへ割当',m:'1時間前'},
+    {i:'🗂️',c:'#eaf1ff',t:'高橋 由香 が「HPの開院案内ページ」を進行中に',m:'今日 9:40'},
+    {i:'⚠️',c:'#fdeaea',t:'「保健所提出書類の確認」が期限超過しています',m:'今日 8:15'},
+    {i:'➕',c:'#eaf1ff',t:'佐藤 健太 が新規タスクを3件追加',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${a.m}</div></div></div>`).join('');
+  // due soon list
+  const soon=tasks.filter(t=>t.status!=='done').sort((a,b)=>a.due-b.due).slice(0,5);
+  $('dueSoon').innerHTML=soon.map(t=>{
+    const cls=dueClass(t);const c=cls==='late'?'#fdeaea':cls==='warn'?'#fdf3e2':'#eaf1ff';const ic=cls==='late'?'🔴':cls==='warn'?'🟠':'🗓️';
+    return `<div class="act"><div class="ai" style="background:${c}">${ic}</div><div style="flex:1"><div class="at">${esc(t.title)}</div><div class="am">${esc(t.assignee)} ・ ${esc(t.proj)}</div></div><div style="font-size:11.5px;font-weight:800;align-self:center" class="duecell ${cls}">${dueText(t)}</div></div>`;
+  }).join('');
+}
+
+/* ============ LIST ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['todo','未着手'],['doing','進行中'],['done','完了'],['late','遅延']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=tasks.filter(t=>filterStatus==='all'||t.status===filterStatus)
+    .filter(t=>!q||(t.title+t.assignee+t.proj+t.tag).toLowerCase().includes(q))
+    .sort((a,b)=>a.due-b.due);
+  $('listRows').innerHTML=rows.length?rows.map(t=>`<tr onclick="cycleStatus(${t.id})">
+    <td><b>${esc(t.title)}</b></td>
+    <td style="color:var(--ink-2)">${esc(t.proj)}</td>
+    <td>${assigneeCell(t.assignee)}</td>
+    <td>${priBadge(t.pri)}</td>
+    <td class="duecell ${dueClass(t)}">${dueText(t)}</td>
+    <td>${stBadge(t.status)}</td></tr>`).join('')
+    :'<tr><td colspan="6" class="empty-cell">該当するタスクがありません</td></tr>';
+  $('navDue').textContent=tasks.filter(isDueSoon).length;
+}
+window.cycleStatus=id=>{
+  const t=tasks.find(x=>x.id===id);if(!t)return;
+  const order=['todo','doing','done'];
+  let cur=order.indexOf(t.status==='late'?'todo':t.status);
+  t.status=order[(cur+1)%order.length];
+  if(t.status==='done'){/*done*/}
+  renderList();showToast('「'+t.title+'」を'+STLABEL[t.status]+'にしました');
+};
+$('q').addEventListener('input',renderList);
+
+/* ============ KANBAN / PROJECT ============ */
+let projFilter='all';
+function renderProjChips(){
+  const opts=[['all','すべてのプロジェクト']].concat(PROJECTS.map(p=>[p.name,p.name]));
+  $('projChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===projFilter?'on':''}" data-p="${esc(o[0])}">${esc(o[1])}</button>`).join('');
+  $('projChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{projFilter=c.dataset.p;renderProjChips();renderBoard();});
+}
+const KCOLS=[['todo','未着手','var(--ink-3)'],['doing','進行中','var(--brand)'],['done','完了','var(--green)']];
+function renderBoard(){
+  renderProjChips();
+  const list=tasks.filter(t=>projFilter==='all'||t.proj===projFilter);
+  $('kanban').innerHTML=KCOLS.map(col=>{
+    const colTasks=list.filter(t=>(col[0]==='todo'?(t.status==='todo'||t.status==='late'):t.status===col[0]));
+    const cards=colTasks.map(t=>{
+      const lateMark=t.status==='late'?'<span class="ktag" style="background:var(--red-soft);color:var(--red)">遅延</span>':'';
+      return `<div class="kcard" draggable="true" data-id="${t.id}">
+        <div class="kt">${esc(t.title)}</div>
+        <div class="kmeta">${priBadge(t.pri)}<span class="ktag">${esc(t.tag)}</span>${lateMark}</div>
+        <div class="kfoot">${assigneeCell(t.assignee)}<span class="due duecell ${dueClass(t)}">${dueText(t)}</span></div>
+      </div>`;
+    }).join('')||'<div class="kempty">タスクなし</div>';
+    return `<div class="kcol" data-col="${col[0]}">
+      <div class="kh"><span class="kdot" style="background:${col[2]}"></span>${col[1]}<span class="cnt">${colTasks.length}</span></div>
+      ${cards}</div>`;
+  }).join('');
+  bindDnD();
+}
+let dragId=null;
+function bindDnD(){
+  document.querySelectorAll('#kanban .kcard').forEach(card=>{
+    card.addEventListener('dragstart',e=>{dragId=+card.dataset.id;card.classList.add('drag');e.dataTransfer.effectAllowed='move';});
+    card.addEventListener('dragend',()=>{card.classList.remove('drag');document.querySelectorAll('.kcol').forEach(c=>c.classList.remove('over'));});
+  });
+  document.querySelectorAll('#kanban .kcol').forEach(col=>{
+    col.addEventListener('dragover',e=>{e.preventDefault();col.classList.add('over');});
+    col.addEventListener('dragleave',()=>col.classList.remove('over'));
+    col.addEventListener('drop',e=>{
+      e.preventDefault();col.classList.remove('over');
+      const t=tasks.find(x=>x.id===dragId);if(!t)return;
+      const ns=col.dataset.col;
+      if((t.status==='todo'||t.status==='late')&&ns==='todo'){/*same*/}
+      t.status=ns;
+      renderBoard();showToast('「'+t.title+'」を'+STLABEL[ns]+'へ移動');
+    });
+  });
+}
+
+/* ============ MEMBER ============ */
+function renderMember(){
+  $('memberGrid').innerHTML=MEMBERS.map(m=>{
+    const mine=tasks.filter(t=>t.assignee===m.name);
+    const doing=mine.filter(t=>t.status==='doing'||t.status==='late').length;
+    const done=mine.filter(t=>t.status==='done').length;
+    const todo=mine.filter(t=>t.status==='todo').length;
+    const activeN=doing+todo;
+    const loadPct=Math.min(100,Math.round(activeN/8*100));
+    const loadColor=activeN>=6?'var(--red)':activeN>=4?'var(--amber)':'var(--green)';
+    const loadLabel=activeN>=6?'高負荷':activeN>=4?'やや多い':'余裕あり';
+    const taskRows=mine.filter(t=>t.status!=='done').sort((a,b)=>a.due-b.due).slice(0,4).map(t=>{
+      const dc=dueClass(t);const col=dc==='late'?'var(--red)':dc==='warn'?'var(--amber)':'var(--brand)';
+      return `<div class="mtask"><span class="mdot" style="background:${col}"></span><span style="flex:1">${esc(t.title)}</span><span class="duecell ${dc}" style="font-size:11px;font-weight:700">${dueText(t)}</span></div>`;
+    }).join('')||'<div class="mtask" style="color:var(--ink-3)">未完了タスクなし 🎉</div>';
+    return `<div class="mcard">
+      <div class="mhead">${avatar(m.name,'av-lg')}<div><b>${esc(m.name)}</b><span>${esc(m.role)} ・ ${m.skills.map(esc).join('/')}</span></div></div>
+      <div class="mstat">
+        <div class="ms"><b style="color:var(--brand)">${doing}</b><span>進行中</span></div>
+        <div class="ms"><b style="color:var(--ink-3)">${todo}</b><span>未着手</span></div>
+        <div class="ms"><b style="color:var(--green)">${done}</b><span>完了</span></div>
+      </div>
+      ${taskRows}
+      <div class="mload"><span style="color:var(--ink-3)">負荷</span>
+        <div class="pbar" style="flex:1"><i style="width:${loadPct}%;background:${loadColor}"></i></div>
+        <span style="color:${loadColor}">${loadLabel}</span></div>
+    </div>`;
+  }).join('');
+}
+
+/* ============ PROGRESS ============ */
+function renderProgress(){
+  const total=tasks.length;const done=tasks.filter(t=>t.status==='done').length;
+  const late=tasks.filter(t=>t.status==='late').length;
+  const pct=Math.round(done/total*100);
+  $('progKpis').innerHTML=`
+    ${kpi('#2f6df0','総タスク',total+'<small>件</small>',PROJECTS.length+'プロジェクト','up','稼働中')}
+    ${kpi('#16b877','全体完了率',pct+'<small>%</small>',done+'件 完了','up','前週比 +8pt')}
+    ${kpi('#e3941f','残タスク',(total-done)+'<small>件</small>','','warn','進行・未着手')}
+    ${kpi('#e24a4a','遅延',late+'<small>件</small>','',late?'down':'up',late?'要対応':'なし')}`;
+  $('progRows').innerHTML=PROJECTS.map((p,idx)=>{
+    const pt=tasks.filter(t=>t.proj===p.name);
+    const pd=pt.filter(t=>t.status==='done').length;
+    const pl=pt.filter(t=>t.status==='late').length;
+    const ppct=pt.length?Math.round(pd/pt.length*100):0;
+    const members=[...new Set(pt.map(t=>t.assignee))];
+    return `<div class="proj-row">
+      <div class="pr-top"><b>${esc(p.name)}</b><span class="pr-pct">${ppct}%</span></div>
+      <div class="pr-bar"><i style="width:0" data-w="${ppct}"></i></div>
+      <div class="pr-meta">
+        <span>タスク <b>${pt.length}件</b></span>
+        <span>完了 <b>${pd}件</b></span>
+        <span>遅延 <b style="color:${pl?'var(--red)':'inherit'}">${pl}件</b></span>
+        <span>担当 ${members.map(m=>avatar(m)).join('')}</span>
+      </div></div>`;
+  }).join('');
+  setTimeout(()=>document.querySelectorAll('#progRows .pr-bar > i').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+}
+
+/* ============ CREATE ============ */
+function fillSelect(el,arr,ph){el.innerHTML=(ph?`<option value="">${ph}</option>`:'')+arr.map(v=>`<option>${esc(v)}</option>`).join('');}
+function renderCreateSelects(){
+  fillSelect($('cProj'),PROJECTS.map(p=>p.name),'選択してください');
+  fillSelect($('cAssignee'),MEMBERS.map(m=>m.name),'AIにおまかせ');
+}
+function suggestAssignee(text){
+  // simple keyword -> skill match for the "AI proposal"
+  const map=[['シフト','介護担当'],['介護',' 介護担当'],['備品','事務'],['発注','事務'],['請求','事務'],['HP','制作'],['ページ','制作'],['挨拶','営業'],['配送','営業'],['提案','リーダー'],['研修','リーダー']];
+  for(const[kw,role]of map){if(text.includes(kw)){const m=MEMBERS.find(x=>x.role.trim()===role.trim());if(m)return m.name;}}
+  // fallback: least loaded
+  let best=MEMBERS[0],min=999;
+  MEMBERS.forEach(m=>{const n=tasks.filter(t=>t.assignee===m.name&&t.status!=='done').length;if(n<min){min=n;best=m;}});
+  return best.name;
+}
+function suggestPri(text){if(/緊急|至急|本日|今日|期限/.test(text))return 'high';if(/検討|改善|計画|資料/.test(text))return 'low';return 'mid';}
+function renderPreview(){
+  const title=$('cTitle').value.trim();
+  $('pvTitle').textContent=title||'（タスク名を入力してください）';
+  $('pvDesc').textContent=$('cDesc').value.trim();
+  const proj=$('cProj').value;$('pvProj').textContent=proj||'プロジェクト未設定';
+  const pri=$('cPri').value;$('pvPri').className='pri '+pri;$('pvPri').textContent='優先度 '+PRLABEL[pri];
+  const ass=$('cAssignee').value;
+  $('pvAssignee').innerHTML=ass?avatar(ass)+esc(ass):'<span style="color:var(--ink-3)">未割当（AIが提案）</span>';
+  const due=$('cDue').value;$('pvDue').textContent=due?(due.slice(5).replace('-','/')):'期限未設定';
+}
+['cTitle','cDesc','cProj','cAssignee','cPri','cDue'].forEach(id=>{
+  $(id).addEventListener('input',()=>{
+    if(id==='cTitle'){
+      const t=$('cTitle').value;
+      if(t.length>=4&&!$('cAssignee').value){$('cAssignee').value=suggestAssignee(t);$('cPri').value=suggestPri(t);$('cAiHint').classList.add('show');setTimeout(()=>$('cAiHint').classList.remove('show'),2200);}
+    }
+    renderPreview();
+  });
+  $(id).addEventListener('change',renderPreview);
+});
+$('cSample').addEventListener('click',()=>{
+  $('cTitle').value='緊急：保健所提出書類の確認';
+  $('cDesc').value='開院前に必要な提出書類を最終チェック';
+  $('cProj').value='大分中央クリニック 開院支援';
+  $('cAssignee').value=suggestAssignee('保健所提出書類');
+  $('cPri').value='high';
+  const d=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+3);$('cDue').value=ymd(d);
+  renderPreview();
+});
+$('cCreate').addEventListener('click',async()=>{
+  const title=$('cTitle').value.trim();
+  if(!title){showToast('タスク名を入力してください');return;}
+  const btn=$('cCreate');btn.textContent='⚡ AIが仕分け中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,700));
+  let ass=$('cAssignee').value||suggestAssignee(title);
+  const proj=$('cProj').value||PROJECTS[0].name;
+  const dueV=$('cDue').value;const due=dueV?new Date(dueV):new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+5);
+  tasks.push({id:UID++,title,desc:$('cDesc').value.trim(),proj,assignee:ass,pri:$('cPri').value,due,status:'todo',tag:pick(TAGS)});
+  btn.textContent='⚡ AIで仕分けして登録';btn.disabled=false;
+  showToast('「'+title+'」を登録（担当：'+ass+'）');
+  // reset
+  $('cTitle').value='';$('cDesc').value='';$('cProj').value='';$('cAssignee').value='';$('cPri').value='mid';$('cDue').value='';
+  renderPreview();
+  setTimeout(()=>go('list'),700);
+});
+
+/* ============ AI AUTO ASSIGN ============ */
+let aiResult=[];
+function decompose(req){
+  // map request keywords to a realistic task breakdown
+  const out=[];
+  const add=(title,role,pri,tag,dd)=>out.push({title,role,pri,tag,dd});
+  if(/シフト/.test(req))add('スタッフのシフト表を作成','介護担当','high','介護',4);
+  if(/備品|発注/.test(req))add('開院備品の発注リスト作成・発注','事務','mid','事務',6);
+  if(/ホームページ|HP|案内ページ|ページ/.test(req))add('HPに開院案内ページを制作','制作','mid','制作',8);
+  if(/挨拶状|挨拶|近隣/.test(req))add('近隣への挨拶状を作成・発送','営業','low','営業',10);
+  if(/保健所|書類|申請/.test(req))add('保健所提出書類の準備・確認','リーダー','high','医療',3);
+  if(/配送|ルート/.test(req))add('配送ルートの調整','営業','mid','配送',7);
+  if(/研修/.test(req))add('スタッフ研修の準備','リーダー','mid','企画',9);
+  if(!out.length){
+    add('依頼内容を整理しタスク化','リーダー','mid','企画',5);
+    add('関係先への連絡・調整','事務','mid','事務',7);
+    add('成果物の作成','制作','low','制作',10);
+  }
+  // assign by least load among role-matching members
+  return out.map(o=>{
+    let cand=MEMBERS.filter(m=>m.role.trim()===o.role.trim());
+    if(!cand.length)cand=MEMBERS.slice();
+    cand.sort((a,b)=>tasks.filter(t=>t.assignee===a.name&&t.status!=='done').length-tasks.filter(t=>t.assignee===b.name&&t.status!=='done').length);
+    return {...o,assignee:cand[0].name,due:new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+o.dd)};
+  });
+}
+$('aiRun').addEventListener('click',async()=>{
+  const req=$('aiReq').value.trim();
+  if(!req){showToast('依頼内容を入力してください');return;}
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 分析中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  $('genList').classList.remove('show');
+  let s=0;const tk=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},110);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(tk);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  aiResult=decompose(req);
+  $('genItems').innerHTML=aiResult.map((o,i)=>`<div class="gen-item" data-i="${i}">
+    <span class="ck">✓</span>
+    <span class="gt">${esc(o.title)}</span>
+    ${priBadge(o.pri)}
+    <span class="gass">${avatar(o.assignee)}${esc(o.assignee.split(' ')[0])}</span>
+    <span style="font-size:11.5px;color:var(--ink-3);font-weight:700">〆${fmtD(o.due)}</span>
+  </div>`).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,170));items[i].classList.add('in');}
+  btn.disabled=false;btn.textContent='⚡ もう一度分解';
+  showToast(aiResult.length+'件のタスクに分解し、最適な担当へ割り当てました');
+});
+$('aiApply').addEventListener('click',()=>{
+  if(!aiResult.length){showToast('先にAIで分解してください');return;}
+  aiResult.forEach(o=>tasks.push({id:UID++,title:o.title,desc:'',proj:'大分中央クリニック 開院支援',assignee:o.assignee,pri:o.pri,due:o.due,status:'todo',tag:o.tag}));
+  showToast(aiResult.length+'件のタスクを一覧に登録しました');
+  aiResult=[];
+  setTimeout(()=>go('list'),650);
+});
+
+/* ============ INIT ============ */
+renderCreateSelects();renderPreview();renderChips();renderDash();
+$('navDue').textContent=tasks.filter(isDueSoon).length;
+</script>
+</body>
+</html>

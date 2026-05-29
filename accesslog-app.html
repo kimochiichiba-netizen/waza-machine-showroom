@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜アクセスログ分析マシン（セキュリティ監視システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cff;--purple-soft:#efeaff;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn.red{background:var(--red);border-color:var(--red);color:#fff}
+.btn.red:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel.mb{margin-bottom:16px}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-fill.amber{background:linear-gradient(90deg,var(--amber),#f0b24a)}
+.bar-fill.red{background:linear-gradient(90deg,var(--red),#f07d7d)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* hourly area chart (SVG-less, bars) */
+.hourly{display:flex;align-items:flex-end;gap:4px;height:140px;padding-top:8px}
+.hourly .h{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;justify-content:flex-end}
+.hourly .h .bar{width:100%;border-radius:5px 5px 2px 2px;background:linear-gradient(180deg,var(--brand),#7eb0ff);min-height:3px;transition:height .9s cubic-bezier(.2,.8,.3,1);position:relative}
+.hourly .h .bar.alert{background:linear-gradient(180deg,var(--red),#f08a8a)}
+.hourly .h .hl{font-size:9.5px;color:var(--ink-3);font-weight:700}
+
+/* donut */
+.donut-wrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.donut{width:128px;height:128px;border-radius:50%;flex-shrink:0;
+  background:conic-gradient(var(--green) 0 var(--p1),var(--amber) var(--p1) var(--p2),var(--red) var(--p2) 100%);
+  display:grid;place-items:center;position:relative}
+.donut::after{content:"";position:absolute;width:80px;height:80px;border-radius:50%;background:var(--card)}
+.donut .dc{position:relative;z-index:1;text-align:center}
+.donut .dc b{font-size:22px;font-weight:900;display:block;line-height:1}
+.donut .dc span{font-size:10px;color:var(--ink-3);font-weight:700}
+.legend{display:flex;flex-direction:column;gap:9px;font-size:12.5px}
+.legend .lg{display:flex;align-items:center;gap:8px}
+.legend .lg .sw{width:11px;height:11px;border-radius:3px}
+.legend .lg b{margin-left:auto;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.ok{background:var(--green-soft);color:var(--green)}
+.st.review{background:var(--amber-soft);color:var(--amber)}
+.st.alert{background:var(--red-soft);color:var(--red)}
+.st.blocked{background:var(--soft);color:var(--ink-3)}
+.st.resolved{background:var(--brand-soft);color:var(--brand)}
+.sev{display:inline-flex;align-items:center;font-size:11px;font-weight:800;padding:3px 9px;border-radius:6px}
+.sev.high{background:var(--red-soft);color:var(--red)}
+.sev.mid{background:var(--amber-soft);color:var(--amber)}
+.sev.low{background:var(--brand-soft);color:var(--brand)}
+
+/* detail / form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,400px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:78px;line-height:1.5}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* anomaly detail card */
+.anom-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px 24px;box-shadow:var(--shadow)}
+.anom-card .ahead{display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:16px}
+.anom-card .ahead .ic{width:46px;height:46px;border-radius:12px;background:var(--red-soft);color:var(--red);display:grid;place-items:center;font-size:22px;flex-shrink:0}
+.anom-card .ahead h3{font-size:17px;font-weight:900}
+.anom-card .ahead p{font-size:12px;color:var(--ink-3)}
+.kv{display:grid;grid-template-columns:120px 1fr;gap:8px 14px;font-size:13px;margin-bottom:16px}
+.kv dt{color:var(--ink-3);font-weight:700}
+.kv dd{font-weight:600;color:var(--ink)}
+.aibox{background:linear-gradient(180deg,var(--purple-soft),#f6f3ff);border:1px solid #ddd2ff;border-radius:11px;padding:15px 16px;font-size:13px}
+.aibox .t{font-size:12px;font-weight:800;color:var(--purple);display:flex;align-items:center;gap:7px;margin-bottom:8px}
+.aibox ul{list-style:none;margin-top:8px}
+.aibox li{padding:4px 0;display:flex;gap:8px;align-items:flex-start;color:var(--ink-2)}
+.aibox li::before{content:"▸";color:var(--purple);font-weight:900}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+.gen-item .ck.red{background:var(--red)}.gen-item .ck.amber{background:var(--amber)}.gen-item .ck.green{background:var(--green)}
+.progress{height:8px;border-radius:99px;background:var(--soft);overflow:hidden;margin:14px 0 4px}
+.progress .pf{height:100%;width:0;background:linear-gradient(90deg,var(--brand),var(--sky));border-radius:99px;transition:width .2s}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto;flex-shrink:0}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* report */
+.report{background:#fff;border:1px solid var(--line);border-radius:12px;padding:30px 34px;box-shadow:var(--shadow);font-size:13px;color:#1a2233}
+.report h2{font-size:21px;font-weight:900;letter-spacing:.04em;border-bottom:3px solid var(--brand-dk);padding-bottom:8px;color:var(--brand-dk);margin-bottom:6px}
+.report .rmeta{font-size:11.5px;color:var(--ink-3);margin-bottom:20px}
+.report h4{font-size:14px;font-weight:800;margin:20px 0 9px;display:flex;align-items:center;gap:8px}
+.report .summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:6px 0}
+@media(max-width:680px){.report .summary-grid{grid-template-columns:repeat(2,1fr)}}
+.report .sg{background:var(--soft);border-radius:10px;padding:13px 14px;text-align:center}
+.report .sg b{font-size:21px;font-weight:900;display:block;line-height:1.1}
+.report .sg span{font-size:10.5px;color:var(--ink-3);font-weight:700}
+.report .note{background:var(--amber-soft);border-left:4px solid var(--amber);border-radius:6px;padding:12px 15px;font-size:12.5px;color:#7a5a13;margin-top:8px}
+.report ol{margin:8px 0 0 20px}
+.report ol li{padding:3px 0}
+
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.ipmono{font-family:'Orbitron',monospace;font-size:12px;letter-spacing:.01em}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">アクセスログ分析マシン<small>技マシン｜セキュリティ監視</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="logs"><span class="i">📜</span>ログ一覧</a>
+      <a data-v="anom"><span class="i">🚨</span>異常検知<span class="badge" id="navAnom">0</span></a>
+      <a data-v="users"><span class="i">👥</span>ユーザー別</a>
+      <a data-v="report"><span class="i">📑</span>レポート</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI分析</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。ログ・IPアドレス・ユーザーはサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">本日のアクセス状況とセキュリティ監視</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="panel mb">
+          <div class="ph"><h3>時間帯別アクセス数（過去24時間）</h3><span class="more">赤＝異常スパイク</span></div>
+          <div class="pb"><div class="hourly" id="hourly"></div></div>
+        </div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>アクセス判定の内訳</h3></div>
+            <div class="pb">
+              <div class="donut-wrap">
+                <div class="donut" id="donut"><div class="dc"><b id="donutPct">—</b><span>正常率</span></div></div>
+                <div class="legend" id="donutLegend"></div>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LOGS -->
+      <section class="view" id="v-logs">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="IPアドレス・ユーザー・URL・国で検索"></div>
+          <div class="chips" id="judgeChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>日時</th><th>IPアドレス</th><th>ユーザー</th><th>アクセス先</th><th>メソッド</th><th class="r">応答</th><th>国/地域</th><th>判定</th></tr></thead>
+          <tbody id="logRows"></tbody>
+        </table>
+      </section>
+
+      <!-- ANOMALY -->
+      <section class="view" id="v-anom">
+        <div class="kpis" id="anomKpis"></div>
+        <div class="create-grid">
+          <div>
+            <div class="toolbar"><div class="chips" id="sevChips"></div></div>
+            <table class="tbl">
+              <thead><tr><th>検知時刻</th><th>種別</th><th>IP</th><th>深刻度</th><th>状態</th></tr></thead>
+              <tbody id="anomRows"></tbody>
+            </table>
+          </div>
+          <div id="anomDetail"></div>
+        </div>
+      </section>
+
+      <!-- USERS -->
+      <section class="view" id="v-users">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="uq" placeholder="ユーザー名・部署で検索"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>ユーザー</th><th>部署</th><th class="r">総アクセス</th><th class="r">異常</th><th>主なIP</th><th>最終アクセス</th><th>リスク</th></tr></thead>
+          <tbody id="userRows"></tbody>
+        </table>
+      </section>
+
+      <!-- REPORT -->
+      <section class="view" id="v-report">
+        <div class="toolbar">
+          <div class="chips">
+            <button class="chip on">本日</button><button class="chip">今週</button><button class="chip">今月</button>
+          </div>
+          <button class="btn primary" style="margin-left:auto" id="dlReport">⬇ PDFでダウンロード</button>
+        </div>
+        <div class="report" id="reportBody"></div>
+      </section>
+
+      <!-- AI ANALYSIS -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">アクセスログをAIが一括分析・不審アクセスを検知</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">本日のアクセスログ <b id="aiLogCount">0</b>件 を、AIが1件ずつ照合し、不審なアクセスを自動で洗い出します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで一括分析する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">約3時間</div>
+              <ul>
+                <li>📜 サーバーのログを目視で1行ずつ確認</li>
+                <li>🌐 怪しいIPを手作業で検索・国を特定</li>
+                <li>📝 不審なものをExcelに転記して報告</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 全ログをAIが瞬時にパターン照合</li>
+                <li>🚨 不審アクセスを深刻度つきで自動抽出</li>
+                <li>📑 そのまま提出できる報告書を自動作成</li>
+              </ul>
+            </div>
+          </div>
+          <div class="progress" id="aiProgWrap" style="display:none"><div class="pf" id="aiProg"></div></div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">🚨 AIが検知した不審アクセス</div>
+            <div id="genItems"></div>
+            <div class="linkrow" style="margin-top:14px"><button class="btn primary" onclick="go('anom')">🚨 異常検知の詳細を見る</button><button class="btn" onclick="go('report')">📑 レポートを見る</button></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const USERS=[
+  {name:'佐藤 健一',dept:'医事課',ip:'192.168.10.21'},
+  {name:'田中 美咲',dept:'看護部',ip:'192.168.10.34'},
+  {name:'鈴木 大輔',dept:'システム管理',ip:'192.168.10.5'},
+  {name:'高橋 由美',dept:'事務局',ip:'192.168.10.48'},
+  {name:'渡辺 翔',dept:'医事課',ip:'192.168.10.27'},
+  {name:'伊藤 さやか',dept:'看護部',ip:'192.168.10.39'},
+  {name:'山本 拓也',dept:'リハビリ科',ip:'192.168.10.52'},
+  {name:'(未認証)',dept:'外部',ip:'-'},
+];
+const PATHS=[
+  '/login','/dashboard','/patients/list','/patients/123/record','/admin/users',
+  '/api/v1/export','/billing/invoice','/shifts/calendar','/reports/monthly',
+  '/api/v1/auth/token','/wp-admin/','/.env','/admin/config','/api/v1/users/all',
+  '/uploads/','/phpmyadmin/','/backup.sql','/staff/profile',
+];
+const METHODS=['GET','GET','GET','POST','GET','POST','GET','PUT','GET','DELETE'];
+const SAFE_COUNTRIES=[['日本','🇯🇵'],['日本','🇯🇵'],['日本','🇯🇵'],['日本','🇯🇵']];
+const RISK_COUNTRIES=[['ロシア','🇷🇺'],['中国','🇨🇳'],['北朝鮮','🇰🇵'],['ブラジル','🇧🇷'],['オランダ','🇳🇱'],['ウクライナ','🇺🇦']];
+
+const TODAY=new Date();
+let SEED=48271;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+function pad(n){return n<10?'0'+n:''+n;}
+
+/* anomaly type templates */
+const ANOM_TYPES=[
+  {key:'bruteforce',label:'総当たりログイン攻撃',sev:'high',icon:'🔓',
+   path:'/api/v1/auth/token',method:'POST',code:401,
+   desc:'同一IPから短時間に大量のログイン試行を検知しました。パスワードの総当たり攻撃の可能性が高いです。',
+   recs:['該当IPを直ちにファイアウォールでブロック','対象アカウントのパスワードを強制リセット','二要素認証(2段階認証)の有効化を推奨']},
+  {key:'foreign',label:'海外からの不審アクセス',sev:'high',icon:'🌐',
+   path:'/admin/users',method:'GET',code:403,
+   desc:'通常アクセスのない国から、管理者向けページへのアクセスを検知しました。普段の利用地域と大きく異なります。',
+   recs:['国外IPからの管理画面アクセスを制限','VPN・許可IPリスト方式への切替を検討','該当アカウントの利用状況を確認']},
+  {key:'scan',label:'脆弱性スキャン痕跡',sev:'mid',icon:'🔎',
+   path:'/.env',method:'GET',code:404,
+   desc:'存在しない設定ファイルや管理ツール(.env, wp-admin, phpmyadmin等)への連続アクセスを検知。システムの弱点を探る自動スキャンの疑いがあります。',
+   recs:['不要な公開パスを閉じる','WAF(Webアプリ保護)の導入を検討','スキャン元IPの監視を継続']},
+  {key:'exfil',label:'大量データ持ち出しの疑い',sev:'high',icon:'📤',
+   path:'/api/v1/export',method:'GET',code:200,
+   desc:'短時間に通常の何倍ものデータエクスポートを検知しました。情報の不正持ち出し(内部不正)の可能性があります。',
+   recs:['該当ユーザーの操作内容を即時確認','大量エクスポートに上限・承認フローを設定','個人情報を含む場合は責任者へ報告']},
+  {key:'offhours',label:'深夜の不自然なアクセス',sev:'mid',icon:'🌙',
+   path:'/patients/list',method:'GET',code:200,
+   desc:'業務時間外(深夜帯)に患者情報ページへのアクセスを検知しました。なりすましや不正利用の可能性を確認してください。',
+   recs:['本人へ深夜アクセスの心当たりを確認','業務時間外アクセスのアラート通知を設定','端末の紛失・共有有無を点検']},
+  {key:'priv',label:'権限外ページへのアクセス',sev:'low',icon:'⛔',
+   path:'/admin/config',method:'GET',code:403,
+   desc:'一般権限のユーザーが管理者専用ページへアクセスを試みました。アクセスは拒否されましたが操作意図の確認が必要です。',
+   recs:['誤操作か意図的かを本人に確認','権限設定(ロール)の妥当性を見直し','繰り返す場合は監視対象に追加']},
+];
+
+/* seed logs */
+let logs=[];
+(function seed(){
+  for(let i=0;i<320;i++){
+    const isAnom=rnd()<0.085;
+    const t=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate(),Math.floor(rnd()*24),Math.floor(rnd()*60),Math.floor(rnd()*60));
+    let row;
+    if(isAnom){
+      const at=pick(ANOM_TYPES);
+      const c=pick(RISK_COUNTRIES);
+      const ip=Math.floor(rnd()*223+1)+'.'+Math.floor(rnd()*255)+'.'+Math.floor(rnd()*255)+'.'+Math.floor(rnd()*254+1);
+      row={t,ip,user:at.key==='exfil'||at.key==='offhours'||at.key==='priv'?pick(USERS).name:'(未認証)',
+        path:at.path,method:at.method,code:at.code,country:c[0],flag:c[1],
+        judge:at.sev==='high'?'alert':'review',anomType:at.key};
+    }else{
+      const u=pick(USERS.slice(0,7));
+      const codes=[200,200,200,200,302,200,404,200];
+      row={t,ip:u.ip,user:u.name,path:pick(PATHS.slice(0,9)),method:pick(METHODS),code:pick(codes),
+        country:'日本',flag:'🇯🇵',judge:'ok',anomType:null};
+    }
+    logs.push(row);
+  }
+  logs.sort((a,b)=>b.t-a.t);
+})();
+
+/* build anomaly records grouped */
+let anomalies=[];
+(function buildAnoms(){
+  const byType={};
+  logs.filter(l=>l.judge!=='ok').forEach(l=>{(byType[l.anomType]=byType[l.anomType]||[]).push(l);});
+  let id=1;
+  Object.keys(byType).forEach(k=>{
+    const tpl=ANOM_TYPES.find(t=>t.key===k);
+    const group=byType[k];
+    // make 1-3 anomaly cases per type
+    const cases=Math.min(group.length,1+Math.floor(rnd()*2));
+    for(let c=0;c<cases;c++){
+      const sample=group[c];
+      anomalies.push({id:'AL-'+pad(id++),tpl,t:sample.t,ip:sample.ip,user:sample.user,
+        count:5+Math.floor(rnd()*40),status:'alert',country:sample.country,flag:sample.flag});
+    }
+  });
+  anomalies.sort((a,b)=>(a.tpl.sev==='high'?0:a.tpl.sev==='mid'?1:2)-(b.tpl.sev==='high'?0:b.tpl.sev==='mid'?1:2));
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const num=n=>Math.round(n).toLocaleString();
+const fmtT=d=>pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
+const fmtDT=d=>(d.getMonth()+1)+'/'+d.getDate()+' '+pad(d.getHours())+':'+pad(d.getMinutes());
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const JLABEL={ok:'正常',review:'要確認',alert:'異常',blocked:'ブロック済',resolved:'対応済'};
+function jBadge(j){return `<span class="st ${j}">${JLABEL[j]}</span>`;}
+const SEVLABEL={high:'高',mid:'中',low:'低'};
+function sevBadge(s){return `<span class="sev ${s}">深刻度 ${SEVLABEL[s]}</span>`;}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function counts(){const total=logs.length;const alert=logs.filter(l=>l.judge==='alert').length;const review=logs.filter(l=>l.judge==='review').length;const ok=total-alert-review;return{total,alert,review,ok};}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','本日のアクセス状況とセキュリティ監視'],logs:['ログ一覧','全アクセスログを検索・確認できます'],
+  anom:['異常検知','AIが検知した不審アクセスの一覧と詳細'],users:['ユーザー別','利用者ごとのアクセス傾向とリスク'],
+  report:['レポート','セキュリティ状況の集計レポート'],ai:['AI分析','アクセスログをAIが一括で分析します']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='dash'?'<button class="btn" onclick="go(\'logs\')">📜 ログ一覧</button><button class="btn primary" onclick="go(\'ai\')">⚡ AI分析</button>'
+    : v==='anom'?'<button class="btn primary" onclick="go(\'report\')">📑 レポート作成</button>'
+    : v==='logs'?'<button class="btn" onclick="go(\'ai\')">⚡ AI分析</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='logs')renderLogs();
+  if(v==='anom')renderAnom();
+  if(v==='users')renderUsers();
+  if(v==='report')renderReport();
+  if(v==='ai')$('aiLogCount').textContent=num(logs.length);
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const c=counts();
+  const okPct=(c.ok/c.total*100);
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','総アクセス数',num(c.total),'本日','up','24時間で集計')}
+    ${kpi('#e24a4a','異常検知',num(c.alert)+'件',' ',c.alert?'down':'up',c.alert?'要対応':'なし')}
+    ${kpi('#e3941f','要確認',num(c.review)+'件',' ','warn','確認待ち')}
+    ${kpi('#16b877','正常率',okPct.toFixed(1)+'<small>%</small>','','up','+0.4pt')}`;
+  // hourly
+  const hours=Array.from({length:24},(_,h)=>h);
+  const hc=hours.map(h=>logs.filter(l=>l.t.getHours()===h).length);
+  const ha=hours.map(h=>logs.filter(l=>l.t.getHours()===h&&l.judge==='alert').length);
+  const mx=Math.max(...hc,1);
+  $('hourly').innerHTML=hours.map(h=>{
+    const alert=ha[h]>0;
+    return `<div class="h"><div class="bar ${alert?'alert':''}" data-hh="${Math.max(3,Math.round(hc[h]/mx*120))}" style="height:0" title="${h}時台 ${hc[h]}件${alert?'（異常あり）':''}"></div><div class="hl">${h%3===0?h:''}</div></div>`;
+  }).join('');
+  setTimeout(()=>document.querySelectorAll('#hourly .bar').forEach(b=>b.style.height=b.dataset.hh+'px'),60);
+  // donut
+  const p1=(c.ok/c.total*100).toFixed(1),p2=((c.ok+c.review)/c.total*100).toFixed(1);
+  const dn=$('donut');dn.style.setProperty('--p1',p1+'%');dn.style.setProperty('--p2',p2+'%');
+  $('donutPct').textContent=okPct.toFixed(0)+'%';
+  $('donutLegend').innerHTML=`
+    <div class="lg"><span class="sw" style="background:var(--green)"></span>正常<b>${num(c.ok)}件</b></div>
+    <div class="lg"><span class="sw" style="background:var(--amber)"></span>要確認<b>${num(c.review)}件</b></div>
+    <div class="lg"><span class="sw" style="background:var(--red)"></span>異常<b>${num(c.alert)}件</b></div>`;
+  // activity
+  const acts=[
+    {i:'🚨',c:'#fdeaea',t:'総当たりログイン攻撃を検知（IP 185.220.x.x をブロック）',m:'3分前'},
+    {i:'🌐',c:'#fdeaea',t:'ロシアからの管理画面アクセスを遮断しました',m:'27分前'},
+    {i:'⚡',c:'#e6f8f0',t:'AI分析が完了（320件を解析・不審 '+c.alert+'件を抽出）',m:'今日 9:02'},
+    {i:'🔎',c:'#fdf3e2',t:'脆弱性スキャンの痕跡を要確認に分類',m:'今日 8:41'},
+    {i:'✅',c:'#eaf1ff',t:'佐藤 健一 が正常にログイン（医事課）',m:'今日 8:30'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub&&sub.trim()?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ LOGS ============ */
+let filterJudge='all';
+function renderChips(){
+  const opts=[['all','すべて'],['ok','正常'],['review','要確認'],['alert','異常']];
+  $('judgeChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterJudge?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('judgeChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterJudge=c.dataset.s;renderChips();renderLogs();});
+}
+function renderLogs(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=logs.filter(l=>filterJudge==='all'||l.judge===filterJudge)
+    .filter(l=>!q||(l.ip+l.user+l.path+l.country).toLowerCase().includes(q))
+    .slice(0,120);
+  $('logRows').innerHTML=rows.length?rows.map(l=>`<tr>
+    <td class="ipmono" style="color:var(--ink-2)">${fmtT(l.t)}</td>
+    <td class="ipmono">${esc(l.ip)}</td>
+    <td><b>${esc(l.user)}</b></td>
+    <td style="color:var(--ink-2);font-size:12px">${esc(l.path)}</td>
+    <td><span style="font-size:11px;font-weight:800;color:var(--ink-2)">${esc(l.method)}</span></td>
+    <td class="r tnum" style="color:${l.code>=400?'var(--red)':'var(--ink-2)'};font-weight:700">${l.code}</td>
+    <td style="color:var(--ink-2)">${l.flag} ${esc(l.country)}</td>
+    <td>${jBadge(l.judge)}</td></tr>`).join('')
+    :'<tr><td colspan="8" class="empty-cell">該当するログがありません</td></tr>';
+}
+$('q').addEventListener('input',renderLogs);
+
+/* ============ ANOMALY ============ */
+let filterSev='all';let selAnom=null;
+function renderSevChips(){
+  const opts=[['all','すべて'],['high','深刻度 高'],['mid','深刻度 中'],['low','深刻度 低']];
+  $('sevChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterSev?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('sevChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterSev=c.dataset.s;renderSevChips();renderAnomRows();});
+}
+function renderAnom(){
+  const high=anomalies.filter(a=>a.tpl.sev==='high'&&a.status!=='resolved').length;
+  const open=anomalies.filter(a=>a.status!=='resolved').length;
+  const resolved=anomalies.filter(a=>a.status==='resolved').length;
+  $('anomKpis').innerHTML=`
+    ${kpi('#e24a4a','未対応の異常',num(open)+'件',' ',open?'down':'up',open?'対応が必要':'すべて対応済')}
+    ${kpi('#e3941f','深刻度 高',num(high)+'件',' ','warn','優先対応')}
+    ${kpi('#16b877','対応済',num(resolved)+'件',' ','up','解決済み')}
+    ${kpi('#2f6df0','検知総数',num(anomalies.length)+'件','','up','本日累計')}`;
+  renderSevChips();renderAnomRows();
+  if(!selAnom){const first=anomalies.find(a=>filterSev==='all'||a.tpl.sev===filterSev);selAnom=first?first.id:null;}
+  renderAnomDetail();
+}
+function renderAnomRows(){
+  let rows=anomalies.filter(a=>filterSev==='all'||a.tpl.sev===filterSev);
+  $('anomRows').innerHTML=rows.length?rows.map(a=>`<tr onclick="selectAnom('${a.id}')" style="${a.id===selAnom?'background:var(--brand-soft)':''}">
+    <td class="ipmono" style="color:var(--ink-2)">${fmtDT(a.t)}</td>
+    <td><b style="font-size:12.5px">${a.tpl.icon} ${esc(a.tpl.label)}</b></td>
+    <td class="ipmono">${esc(a.ip)}</td>
+    <td>${sevBadge(a.tpl.sev)}</td>
+    <td>${jBadge(a.status)}</td></tr>`).join('')
+    :'<tr><td colspan="5" class="empty-cell">該当する異常はありません</td></tr>';
+}
+window.selectAnom=id=>{selAnom=id;renderAnomRows();renderAnomDetail();};
+function renderAnomDetail(){
+  const a=anomalies.find(x=>x.id===selAnom);
+  if(!a){$('anomDetail').innerHTML='<div class="anom-card"><p style="color:var(--ink-3);text-align:center;padding:30px">左の一覧から異常を選択してください</p></div>';return;}
+  $('anomDetail').innerHTML=`<div class="anom-card">
+    <div class="ahead"><div class="ic">${a.tpl.icon}</div>
+      <div><h3>${esc(a.tpl.label)}</h3><p>${a.id} ・ ${sevBadge(a.tpl.sev).replace(/<[^>]+>/g,m=>m)} ${fmtDT(a.t)} 検知</p></div></div>
+    <dl class="kv">
+      <dt>送信元IP</dt><dd class="ipmono">${esc(a.ip)}</dd>
+      <dt>国/地域</dt><dd>${a.flag} ${esc(a.country)}</dd>
+      <dt>対象ユーザー</dt><dd>${esc(a.user)}</dd>
+      <dt>アクセス先</dt><dd style="font-size:12px">${esc(a.tpl.path)}（${esc(a.tpl.method)} / ${a.tpl.code}）</dd>
+      <dt>試行回数</dt><dd class="tnum">${num(a.count)} 回</dd>
+      <dt>状態</dt><dd>${jBadge(a.status)}</dd>
+    </dl>
+    <div class="aibox">
+      <div class="t">🤖 AIによる分析と判断理由</div>
+      <div>${esc(a.tpl.desc)}</div>
+      <ul>${a.tpl.recs.map(r=>`<li>${esc(r)}</li>`).join('')}</ul>
+    </div>
+    <div class="linkrow" style="margin-top:16px">
+      ${a.status==='resolved'
+        ? '<button class="btn green" style="flex:1;justify-content:center" disabled>✅ 対応済み</button>'
+        : `<button class="btn red" style="flex:1;justify-content:center" onclick="blockIp('${esc(a.id)}')">🛡 このIPをブロックして対応済みにする</button>`}
+    </div>
+  </div>`;
+}
+window.blockIp=id=>{const a=anomalies.find(x=>x.id===id);if(a){a.status='resolved';renderAnom();showToast(a.ip+' をブロックし、対応済みにしました');}};
+
+/* ============ USERS ============ */
+function renderUsers(){
+  const q=($('uq').value||'').toLowerCase();
+  const list=USERS.filter(u=>u.name!=='(未認証)').filter(u=>!q||(u.name+u.dept).toLowerCase().includes(q));
+  $('userRows').innerHTML=list.map(u=>{
+    const ul=logs.filter(l=>l.user===u.name);
+    const anom=ul.filter(l=>l.judge!=='ok').length;
+    const last=ul.length?ul[0].t:null;
+    const risk=anom>=3?'high':anom>=1?'mid':'low';
+    const riskLabel=anom>=3?'高':anom>=1?'中':'低';
+    return `<tr><td><b>${esc(u.name)}</b></td><td style="color:var(--ink-2)">${esc(u.dept)}</td>
+      <td class="r tnum">${num(ul.length)}</td>
+      <td class="r tnum" style="color:${anom?'var(--red)':'var(--ink-3)'};font-weight:700">${anom}</td>
+      <td class="ipmono">${esc(u.ip)}</td>
+      <td style="color:var(--ink-2)">${last?fmtDT(last):'—'}</td>
+      <td><span class="sev ${risk}">${riskLabel}</span></td></tr>`;
+  }).join('') || '<tr><td colspan="7" class="empty-cell">該当するユーザーがいません</td></tr>';
+}
+document.getElementById('uq').addEventListener('input',renderUsers);
+
+/* ============ REPORT ============ */
+function renderReport(){
+  const c=counts();
+  const high=anomalies.filter(a=>a.tpl.sev==='high').length;
+  const okPct=(c.ok/c.total*100).toFixed(1);
+  const topTypes={};anomalies.forEach(a=>{topTypes[a.tpl.label]=(topTypes[a.tpl.label]||0)+1;});
+  const topList=Object.entries(topTypes).sort((a,b)=>b[1]-a[1]);
+  const d=TODAY;
+  $('reportBody').innerHTML=`
+    <h2>アクセスログ セキュリティ分析レポート</h2>
+    <div class="rmeta">対象期間：${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（本日）　／　発行：株式会社気持ち市場　セキュリティ監視（自動生成）</div>
+    <h4>📊 集計サマリー</h4>
+    <div class="summary-grid">
+      <div class="sg"><b class="tnum">${num(c.total)}</b><span>総アクセス数</span></div>
+      <div class="sg"><b class="tnum" style="color:var(--red)">${num(c.alert)}</b><span>異常検知</span></div>
+      <div class="sg"><b class="tnum" style="color:var(--amber)">${num(c.review)}</b><span>要確認</span></div>
+      <div class="sg"><b class="tnum" style="color:var(--green)">${okPct}%</b><span>正常率</span></div>
+    </div>
+    <h4>🚨 検知された脅威の内訳</h4>
+    <table class="tbl" style="box-shadow:none">
+      <thead><tr><th>脅威の種別</th><th class="r">検知件数</th><th>主な深刻度</th></tr></thead>
+      <tbody>${topList.map(([label,n])=>{const tpl=ANOM_TYPES.find(t=>t.label===label);return `<tr><td><b>${esc(label)}</b></td><td class="r tnum">${n}件</td><td>${sevBadge(tpl?tpl.sev:'low')}</td></tr>`;}).join('')||'<tr><td colspan="3" class="empty-cell">脅威は検知されませんでした</td></tr>'}</tbody>
+    </table>
+    <h4>📝 AIによる総評と推奨アクション</h4>
+    <div>本日の正常率は <b>${okPct}%</b> でした。深刻度「高」の脅威が <b style="color:var(--red)">${high}件</b> 検知されており、特に総当たりログイン攻撃と海外からの管理画面アクセスへの対応が最優先です。</div>
+    <ol>
+      <li>深刻度「高」の送信元IPを直ちにブロックし、対象アカウントのパスワードをリセットする。</li>
+      <li>管理画面への国外アクセス制限と、二要素認証(2段階認証)を導入する。</li>
+      <li>業務時間外アクセスのアラート通知を設定し、内部不正の早期発見につなげる。</li>
+    </ol>
+    <div class="note">⚠️ 本レポートはデモ環境のサンプルデータから自動生成されています。実環境では実際のサーバーログを基に同じ書式で毎日自動作成されます。</div>`;
+}
+$('dlReport').addEventListener('click',()=>showToast('レポートのPDF出力を準備しました（デモ）'));
+document.querySelectorAll('#v-report .chip').forEach(c=>c.addEventListener('click',()=>{
+  document.querySelectorAll('#v-report .chip').forEach(x=>x.classList.remove('on'));c.classList.add('on');
+}));
+
+/* ============ AI ANALYSIS ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 分析中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  $('aiProgWrap').style.display='block';$('aiProg').style.width='0';
+  $('genList').classList.remove('show');$('genItems').innerHTML='';
+  // counter + progress animation
+  let s=0;const tt=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,8);},120);
+  let p=0;const pt=setInterval(()=>{p=Math.min(100,p+4);$('aiProg').style.width=p+'%';$('aiSub').innerHTML='ログを照合中… <b>'+Math.round(p/100*logs.length)+'</b> / '+num(logs.length)+' 件';},45);
+  await new Promise(r=>setTimeout(r,1200));
+  clearInterval(tt);clearInterval(pt);
+  $('aiProg').style.width='100%';$('baAfterT').textContent='8秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  $('aiSub').innerHTML='分析完了。<b>'+num(logs.length)+'</b>件のログから不審アクセスを抽出しました。';
+  // list detected anomalies (top items)
+  const det=anomalies.slice(0,6);
+  $('genItems').innerHTML=det.map((a,i)=>{
+    const ck=a.tpl.sev==='high'?'red':a.tpl.sev==='mid'?'amber':'green';
+    return `<div class="gen-item" data-i="${i}"><span class="ck ${ck}">!</span><span style="font-size:15px">${a.tpl.icon}</span><b style="flex:1">${esc(a.tpl.label)}</b><span class="ipmono" style="color:var(--ink-3);font-size:11px">${esc(a.ip)}</span>${sevBadge(a.tpl.sev)}</div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,170));items[i].classList.add('in');}
+  btn.disabled=false;btn.textContent='⚡ もう一度分析';
+  $('navAnom').textContent=anomalies.filter(a=>a.status!=='resolved').length;
+  showToast(det.length+'件の不審アクセスをAIが検知しました');
+});
+
+/* ============ INIT ============ */
+renderChips();renderDash();
+$('navAnom').textContent=anomalies.filter(a=>a.status!=='resolved').length;
+</script>
+</body>
+</html>

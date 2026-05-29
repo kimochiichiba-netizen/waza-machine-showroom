@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜農薬記録マシン（農薬散布記録・GAP対応システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f8f3;--card:#ffffff;--soft:#eef4ec;--line:#e2ebe0;--line-2:#d2ded0;
+  --ink:#1e2a22;--ink-2:#566052;--ink-3:#8a948a;
+  --brand:#2f9e44;--brand-dk:#237a35;--brand-soft:#e7f6ea;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--earth:#a9742f;
+  --sb:#13251a;--sb-2:#1b3024;--sb-ink:#c3d6c6;--sb-ink-2:#7d9080;
+  --shadow:0 1px 2px rgba(16,40,24,.04),0 4px 16px rgba(16,40,24,.05);
+  --shadow-lg:0 18px 50px rgba(16,40,24,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#7be29a,#37e2c0,#cfe364,#7be29a);
+  display:grid;place-items:center;color:#04140a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,158,68,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 70px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut / crop legend */
+.legend{display:flex;flex-direction:column;gap:11px;margin-top:4px}
+.lg-row{display:flex;align-items:center;gap:10px;font-size:12.5px}
+.lg-row .sw{width:12px;height:12px;border-radius:4px;flex-shrink:0}
+.lg-row .nm{font-weight:600;color:var(--ink)}
+.lg-row .vl{margin-left:auto;font-weight:800;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.donut-wrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.donut{width:130px;height:130px;border-radius:50%;flex-shrink:0;position:relative;display:grid;place-items:center}
+.donut::after{content:"";position:absolute;width:78px;height:78px;border-radius:50%;background:var(--card)}
+.donut .cen{position:relative;z-index:1;text-align:center}
+.donut .cen b{font-size:22px;font-weight:900;display:block;line-height:1}
+.donut .cen span{font-size:10px;color:var(--ink-3);font-weight:700}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.ok{background:var(--green-soft);color:var(--green)}
+.st.warn{background:var(--amber-soft);color:var(--amber)}
+.st.ng{background:var(--red-soft);color:var(--red)}
+.st.plan{background:var(--brand-soft);color:var(--brand)}
+.st.done{background:var(--soft);color:var(--ink-3)}
+.tagpill{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:7px;background:var(--soft);color:var(--ink-2)}
+
+/* create form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,400px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--brand)}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* record paper preview */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:30px 32px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2a20}
+.pv-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
+.pv-title{font-size:21px;font-weight:900;letter-spacing:.18em;color:var(--brand-dk);border-bottom:3px solid var(--brand-dk);padding-bottom:5px}
+.pv-meta{text-align:right;font-size:11.5px;color:var(--ink-2)}
+.pv-meta .no{font-family:'Orbitron';color:var(--ink);font-weight:700}
+.pv-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:14px 0}
+.pv-grid .cell{padding:10px 13px;border-bottom:1px solid var(--line)}
+.pv-grid .cell:nth-child(odd){border-right:1px solid var(--line);background:var(--soft)}
+.pv-grid .cell .k{font-size:10.5px;color:var(--ink-3);font-weight:700}
+.pv-grid .cell .v{font-size:13.5px;font-weight:800;margin-top:2px}
+.pv-check{border-radius:8px;padding:12px 15px;margin-top:14px;font-size:12.5px;display:flex;gap:10px;align-items:flex-start}
+.pv-check.ok{background:var(--green-soft);border:1px solid #bdebd4}
+.pv-check.warn{background:var(--amber-soft);border:1px solid #f3dca6}
+.pv-check b{font-weight:900}
+.pv-harvest{background:var(--soft);border-left:5px solid var(--brand-dk);border-radius:6px;padding:13px 18px;margin-top:14px;display:flex;justify-content:space-between;align-items:center}
+.pv-harvest .a{font-family:'Orbitron';font-size:21px;font-weight:700;color:var(--brand-dk)}
+
+/* standards detail */
+.std-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.std-card{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:16px;box-shadow:var(--shadow)}
+.std-card .h{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+.std-card .h .ic{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-size:17px;background:var(--brand-soft)}
+.std-card .h b{font-size:14px;font-weight:900}
+.std-card .h span{font-size:11px;color:var(--ink-3);display:block}
+.std-row{display:flex;justify-content:space-between;font-size:12.5px;padding:6px 0;border-top:1px dashed var(--line)}
+.std-row .k{color:var(--ink-2)}
+.std-row .v{font-weight:800}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900}
+.gen-item .ck.ng{background:var(--red)}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#7be29a,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(123,226,154,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.note{font-size:11px;color:var(--ink-3);margin-top:14px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">農薬記録マシン<small>技マシン｜散布記録・GAP対応</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="spray"><span class="i">🌿</span>散布記録</a>
+      <a data-v="crop"><span class="i">🍅</span>作物別</a>
+      <a data-v="std"><span class="i">📖</span>使用基準</a>
+      <a data-v="hist"><span class="i">📜</span>履歴</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AIチェック<span class="badge" id="navAlert">0</span></a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>気持ちファーム（大分）</b><span>デモ環境 / 生産管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。作物・農薬・数値はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">2026年5月の散布状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>月別の散布回数</h3><span class="more">過去6ヶ月</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>作物別 散布回数</h3><span class="more more" onclick="go('crop')">作物別へ →</span></div>
+            <div class="pb"><div class="donut-wrap"><div class="donut" id="donut"><div class="cen"><b id="donutTotal">0</b><span>散布</span></div></div><div class="legend" id="donutLegend" style="flex:1"></div></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>収穫前 要注意リスト</h3></div>
+            <div class="pb"><div class="acts" id="harvestList"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SPRAY RECORDS -->
+      <section class="view" id="v-spray">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="作物・農薬・圃場・担当で検索"></div>
+          <div class="chips" id="cropChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>散布日</th><th>圃場 / 作物</th><th>農薬名</th><th class="r">希釈倍数</th><th class="r">使用回数</th><th>収穫前日数</th><th>担当</th><th>基準</th></tr></thead>
+          <tbody id="sprayRows"></tbody>
+        </table>
+        <div class="note">※ 収穫前日数 = 最後の散布から収穫まで空ける必要がある日数（PHI）。基準列が「適合」なら出荷可能、「要注意」は確認、「超過」は基準違反の可能性です。</div>
+      </section>
+
+      <!-- CROP -->
+      <section class="view" id="v-crop">
+        <div class="kpis" id="cropKpis"></div>
+        <table class="tbl">
+          <thead><tr><th>作物</th><th>圃場</th><th class="r">今月散布</th><th class="r">累計散布</th><th>直近散布日</th><th>収穫予定</th><th>状態</th></tr></thead>
+          <tbody id="cropRows"></tbody>
+        </table>
+      </section>
+
+      <!-- STANDARDS -->
+      <section class="view" id="v-std">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="qStd" placeholder="農薬名・作物で使用基準を検索"></div>
+        </div>
+        <div class="std-grid" id="stdGrid"></div>
+        <div class="note">※ 使用基準は登録農薬の「適用表」に基づくサンプルです。実運用では最新の農薬登録情報（ラベル）を必ずご確認ください。</div>
+      </section>
+
+      <!-- HISTORY -->
+      <section class="view" id="v-hist">
+        <div class="toolbar">
+          <div class="chips" id="histChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>日時</th><th>種別</th><th>内容</th><th>担当</th></tr></thead>
+          <tbody id="histRows"></tbody>
+        </table>
+      </section>
+
+      <!-- AI CHECK -->
+      <section class="view" id="v-ai">
+        <div class="create-grid">
+          <div class="formcard">
+            <div style="font-size:14px;font-weight:900;margin-bottom:4px">⚡ 散布をその場で記録</div>
+            <div style="font-size:12px;color:var(--ink-3);margin-bottom:14px">入力するとAIが使用基準を即チェックし、収穫前日数を自動計算します。</div>
+            <div class="fg"><label>圃場 / 作物</label>
+              <select id="rCrop"></select></div>
+            <div class="fg"><label>農薬名（選ぶとAIが希釈倍数を提案）</label>
+              <input id="rPest" list="pestList" placeholder="例：アディオン乳剤"></div>
+            <div class="aihint" id="rAiHint">✨ AIが適用表から標準の希釈倍数・収穫前日数を自動入力しました</div>
+            <div class="fg2">
+              <div class="fg"><label>希釈倍数（〜倍）</label><input id="rDil" type="number" min="0" placeholder="2000"></div>
+              <div class="fg"><label>散布日</label><input id="rDate" type="date"></div>
+            </div>
+            <div class="fg"><label>担当者</label>
+              <select id="rStaff"></select></div>
+            <div class="linkrow" style="margin-top:6px">
+              <button class="btn primary" id="rRun" style="flex:1;justify-content:center">⚡ AIでチェックして記録</button>
+              <button class="btn" id="rSample">サンプル</button>
+            </div>
+          </div>
+          <div>
+            <div class="paper" id="rPaper">
+              <div class="pv-top">
+                <div class="pv-title">農薬使用記録</div>
+                <div class="pv-meta"><div>記録番号：<span class="no" id="rNo">—</span></div><div>記録日：<span id="rRecDate">—</span></div></div>
+              </div>
+              <div class="pv-grid">
+                <div class="cell"><div class="k">圃場 / 作物</div><div class="v" id="rvCrop">—</div></div>
+                <div class="cell"><div class="k">農薬名</div><div class="v" id="rvPest">—</div></div>
+                <div class="cell"><div class="k">希釈倍数</div><div class="v" id="rvDil">—</div></div>
+                <div class="cell"><div class="k">散布日</div><div class="v" id="rvDate">—</div></div>
+                <div class="cell"><div class="k">使用回数（今期）</div><div class="v" id="rvCnt">—</div></div>
+                <div class="cell"><div class="k">担当者</div><div class="v" id="rvStaff">—</div></div>
+              </div>
+              <div class="pv-check warn" id="rCheck"><span style="font-size:18px">🤖</span><div><b>AIチェック待ち</b><div style="color:var(--ink-2);margin-top:2px">農薬を選ぶと、使用基準（希釈倍数・総使用回数・収穫前日数）を自動照合します。</div></div></div>
+              <div class="pv-harvest"><span style="font-weight:700">出荷可能（最短収穫日）</span><span class="a" id="rHarvest">—</span></div>
+              <div class="note" style="margin-top:12px;border-top:1px solid var(--line);padding-top:10px">記録はGAP（農業生産工程管理）の書類として自動保存され、監査時にそのまま提出できます。</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ai-stage" style="margin-top:18px">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">手書きの散布記録をAIで一括点検 → GAP書類化</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">今月の散布記録 <b>18件</b> を、AIが使用基準と一括照合し、出荷可否とGAP提出書類を自動で作成します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで一括チェック</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">3時間20分</div>
+              <ul>
+                <li>📒 防除日誌から1件ずつ転記</li>
+                <li>📖 農薬ごとに適用表と手で照合</li>
+                <li>🗓 収穫前日数を電卓で逆算</li>
+                <li>📑 GAP監査用の書類を清書</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 記録を自動で読み取り・集計</li>
+                <li>📖 適用表と全件を一括照合</li>
+                <li>🗓 収穫前日数・出荷可否を自動判定</li>
+                <li>📑 GAP提出書類をワンクリック出力</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ AIチェック結果</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const FIELDS=[
+  {field:'第1ハウス',crop:'トマト',icon:'🍅',color:'#e24a4a',harvestM:0,harvestD:18,staff:'川宿田'},
+  {field:'第2ハウス',crop:'いちご',icon:'🍓',color:'#e25a7a',harvestM:1,harvestD:5,staff:'佐藤'},
+  {field:'露地A',crop:'なす',icon:'🍆',color:'#7a5ad0',harvestM:0,harvestD:24,staff:'田中'},
+  {field:'露地B',crop:'ピーマン',icon:'🫑',color:'#2f9e44',harvestM:0,harvestD:28,staff:'川宿田'},
+  {field:'第3ハウス',crop:'きゅうり',icon:'🥒',color:'#16b877',harvestM:0,harvestD:14,staff:'佐藤'},
+  {field:'露地C',crop:'だいこん',icon:'🥬',color:'#0ea5b7',harvestM:1,harvestD:12,staff:'田中'},
+  {field:'第4ハウス',crop:'ねぎ',icon:'🌱',color:'#a9742f',harvestM:0,harvestD:20,staff:'高橋'},
+];
+const STAFFS=['川宿田','佐藤','田中','高橋'];
+// 農薬適用表（サンプル）: 名前,種別,標準希釈倍数,総使用回数上限,収穫前日数(PHI日)
+const PESTICIDES=[
+  {n:'アディオン乳剤',type:'殺虫剤',dil:2000,maxUse:3,phi:7},
+  {n:'ダコニール1000',type:'殺菌剤',dil:1000,maxUse:4,phi:7},
+  {n:'モスピラン顆粒水溶剤',type:'殺虫剤',dil:4000,maxUse:2,phi:3},
+  {n:'ベンレート水和剤',type:'殺菌剤',dil:2000,maxUse:5,phi:1},
+  {n:'アファーム乳剤',type:'殺虫剤',dil:2000,maxUse:3,phi:3},
+  {n:'ランマンフロアブル',type:'殺菌剤',dil:2000,maxUse:4,phi:1},
+  {n:'スミチオン乳剤',type:'殺虫剤',dil:1000,maxUse:2,phi:7},
+  {n:'カリグリーン',type:'殺菌剤',dil:800,maxUse:99,phi:1},
+];
+const TODAY=new Date();
+function ym(d){return (d.getMonth()+1)}
+
+let SEED=4071;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+/* seed spray records */
+let records=[];
+(function seed(){
+  let id=0;
+  for(let i=0;i<24;i++){
+    const f=pick(FIELDS);
+    const p=pick(PESTICIDES);
+    // 散布日: 過去3ヶ月以内
+    const date=new Date(TODAY.getFullYear(),TODAY.getMonth()-Math.floor(rnd()*3),1+Math.floor(rnd()*27));
+    // 実際の希釈倍数: たまに基準より濃い(=数値が小さい)/総使用回数オーバーを混ぜる
+    let dil=p.dil;
+    const naughty=rnd();
+    if(naughty>0.85) dil=Math.round(p.dil*0.6); // 濃すぎ
+    const useCount=1+Math.floor(rnd()*(p.maxUse+1)); // たまに上限超過
+    records.push({id:++id,field:f.field,crop:f.crop,icon:f.icon,color:f.color,
+      pest:p.n,ptype:p.type,dil,stdDil:p.dil,maxUse:p.maxUse,useCount,phi:p.phi,
+      date,staff:f.staff});
+  }
+  records.sort((a,b)=>b.date-a.date);
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const fmtD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+const fmtSlash=d=>d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate();
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x;}
+
+/* 1レコードの判定: ok/warn/ng */
+function judge(r){
+  if(r.useCount>r.maxUse) return 'ng';           // 総使用回数オーバー = 基準違反
+  if(r.dil<r.stdDil*0.8) return 'ng';            // 大幅に濃い = 違反
+  if(r.dil<r.stdDil) return 'warn';              // やや濃い = 要注意
+  const harvest=addDays(r.date,r.phi);
+  const daysLeft=Math.ceil((harvest-TODAY)/86400000);
+  if(daysLeft>0 && daysLeft<=3) return 'warn';   // 収穫前日数 残りわずか
+  return 'ok';
+}
+const JLABEL={ok:'適合',warn:'要注意',ng:'超過'};
+function jBadge(j){return `<span class="st ${j}">${JLABEL[j]}</span>`;}
+// 収穫前日数の残り(出荷可能まで)
+function harvestDaysLeft(r){const h=addDays(r.date,r.phi);return Math.ceil((h-TODAY)/86400000);}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','2026年'+ym(TODAY)+'月の散布状況'],spray:['散布記録','すべての農薬散布記録を管理します'],
+  crop:['作物別','圃場・作物ごとの散布状況'],std:['使用基準','登録農薬の適用表（希釈倍数・使用回数・収穫前日数）'],
+  hist:['履歴','記録・チェックの操作ログ'],ai:['AIチェック','散布をその場で基準照合し、GAP書類を自動化します']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='spray'?'<button class="btn primary" onclick="go(\'ai\')">＋ 散布を記録</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'std\')">📖 使用基準</button><button class="btn primary" onclick="go(\'ai\')">⚡ AIチェック</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='spray')renderSpray();
+  if(v==='crop')renderCrop();
+  if(v==='std')renderStd();
+  if(v==='hist')renderHist();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const tm=records.filter(r=>thisMonth(r.date));
+  const okCnt=records.filter(r=>judge(r)==='ok').length;
+  const okRate=Math.round(okCnt/records.length*100);
+  const ngCnt=records.filter(r=>judge(r)==='ng').length;
+  const warnCnt=records.filter(r=>judge(r)==='warn').length;
+  // 直近の収穫前日数(出荷待ちで残日数>0の最小)
+  const pending=records.map(r=>({r,d:harvestDaysLeft(r)})).filter(x=>x.d>0).sort((a,b)=>a.d-b.d);
+  const minHarvest=pending.length?pending[0].d:0;
+  $('kpis').innerHTML=`
+    ${kpi('#2f9e44','今月の散布',tm.length+'<small>回</small>',new Set(tm.map(r=>r.crop)).size+'作物','up','記録漏れなし')}
+    ${kpi('#16b877','基準適合率',okRate+'<small>%</small>',okCnt+'/'+records.length+'件','up',okRate>=85?'良好':'要改善')}
+    ${kpi('#0ea5b7','最短 収穫前日数',(minHarvest||0)+'<small>日</small>',pending.length?pending[0].r.crop:'—','warn','出荷待ち')}
+    ${kpi('#e24a4a','要注意',(ngCnt+warnCnt)+'<small>件</small>','超過'+ngCnt+'・注意'+warnCnt,ngCnt?'down':'warn',ngCnt?'至急確認':'確認推奨')}`;
+  // trend: 月別散布回数
+  const months=[];for(let k=5;k>=0;k--){const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1);months.push(d);}
+  const counts=months.map(m=>records.filter(r=>r.date.getMonth()===m.getMonth()&&r.date.getFullYear()===m.getFullYear()).length);
+  const mx=Math.max(...counts,1);
+  $('trendBars').innerHTML=months.map((m,i)=>`
+    <div class="bar-row"><span class="mlabel">${m.getMonth()+1}月</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(counts[i]/mx*100)}"></div></div>
+      <span class="mval">${counts[i]}回</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // donut: 作物別散布回数
+  renderDonut();
+  // activity
+  const acts=[
+    {i:'🌿',c:'#e7f6ea',t:'第1ハウス トマト に アディオン乳剤 を散布（2000倍）',m:'2分前'},
+    {i:'⚡',c:'#e6f8f0',t:'AI一括チェックで 18件を照合（適合16・要注意2）',m:'1時間前'},
+    {i:'📑',c:'#e7f6ea',t:'GAP提出書類「防除実施記録」を自動生成',m:'今日 10:05'},
+    {i:'⚠️',c:'#fdeaea',t:'露地A なす：モスピランの使用回数が上限に近づいています',m:'今日 8:40'},
+    {i:'🗓',c:'#e7f6ea',t:'第3ハウス きゅうり の出荷可能日が確定（収穫前日数クリア）',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+  // 収穫前 要注意リスト
+  const hv=pending.slice(0,5);
+  $('harvestList').innerHTML=hv.length?hv.map(x=>`<div class="act"><div class="ai" style="background:${x.r.color}22">${x.r.icon}</div>
+    <div style="flex:1"><div class="at">${esc(x.r.field)} ${esc(x.r.crop)}<span class="tagpill" style="margin-left:7px">${esc(x.r.pest)}</span></div>
+    <div class="am">${esc(x.r.pest)} 散布後 残り収穫前日数</div></div>
+    <div style="text-align:right"><div style="font-weight:900;color:${x.d<=3?'var(--amber)':'var(--brand)'}">あと${x.d}日</div><div class="am">${fmtSlash(addDays(x.r.date,x.r.phi))}〜出荷可</div></div></div>`).join('')
+    :'<div class="empty-cell">収穫前日数の制限中の作物はありません 🎉</div>';
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?esc(sub)+' ・ ':''}${esc(d)}</div></div>`;}
+
+function renderDonut(){
+  const byCrop={};
+  records.forEach(r=>{byCrop[r.crop]=byCrop[r.crop]||{n:0,color:r.color,icon:r.icon};byCrop[r.crop].n++;});
+  const entries=Object.entries(byCrop).sort((a,b)=>b[1].n-a[1].n);
+  const total=records.length;
+  let acc=0;const segs=[];
+  entries.forEach(([crop,o])=>{const start=acc/total*360;acc+=o.n;const end=acc/total*360;segs.push(`${o.color} ${start}deg ${end}deg`);});
+  $('donut').style.background=`conic-gradient(${segs.join(',')})`;
+  $('donutTotal').textContent=total;
+  $('donutLegend').innerHTML=entries.map(([crop,o])=>`<div class="lg-row"><span class="sw" style="background:${o.color}"></span><span class="nm">${o.icon} ${esc(crop)}</span><span class="vl">${o.n}回</span></div>`).join('');
+}
+
+/* ============ SPRAY RECORDS ============ */
+let filterCrop='all';
+function renderChips(){
+  const crops=['all',...new Set(records.map(r=>r.crop))];
+  const labels={all:'すべて'};
+  $('cropChips').innerHTML=crops.map(c=>`<button class="chip ${c===filterCrop?'on':''}" data-c="${esc(c)}">${c==='all'?'すべて':esc((FIELDS.find(f=>f.crop===c)||{}).icon||'')+' '+esc(c)}</button>`).join('');
+  $('cropChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterCrop=c.dataset.c;renderChips();renderSpray();});
+}
+function renderSpray(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=records.filter(r=>filterCrop==='all'||r.crop===filterCrop)
+    .filter(r=>!q||(r.crop+r.pest+r.field+r.staff).toLowerCase().includes(q));
+  $('sprayRows').innerHTML=rows.length?rows.map(r=>{
+    const j=judge(r);
+    const dl=harvestDaysLeft(r);
+    const harvestTxt=dl>0?`<b style="color:var(--amber)">あと${dl}日</b>`:`<span style="color:var(--green);font-weight:700">出荷可</span>`;
+    return `<tr>
+    <td style="color:var(--ink-2)">${fmtSlash(r.date)}</td>
+    <td><b>${esc(r.crop)}</b> <span class="tagpill">${esc(r.field)}</span></td>
+    <td>${esc(r.pest)}<div class="am" style="font-size:11px;color:var(--ink-3)">${esc(r.ptype)}</div></td>
+    <td class="r tnum">${r.dil}倍${r.dil<r.stdDil?'<span style="color:var(--red);font-size:11px"> ▲</span>':''}</td>
+    <td class="r tnum">${r.useCount}/${r.maxUse}回</td>
+    <td>${harvestTxt}<div class="am" style="font-size:11px;color:var(--ink-3)">PHI ${r.phi}日</div></td>
+    <td style="color:var(--ink-2)">${esc(r.staff)}</td>
+    <td>${jBadge(j)}</td></tr>`;
+  }).join('')
+    :'<tr><td colspan="8" class="empty-cell">該当する散布記録がありません</td></tr>';
+}
+$('q').addEventListener('input',renderSpray);
+
+/* ============ CROP ============ */
+function renderCrop(){
+  const okRate=Math.round(records.filter(r=>judge(r)==='ok').length/records.length*100);
+  $('cropKpis').innerHTML=`
+    ${kpi('#2f9e44','管理中の作物',FIELDS.length+'<small>作物</small>','全圃場','up','稼働中')}
+    ${kpi('#16b877','総散布記録',records.length+'<small>件</small>','過去3ヶ月','up','記録済')}
+    ${kpi('#0ea5b7','基準適合率',okRate+'<small>%</small>','全作物','up',okRate>=85?'良好':'要改善')}
+    ${kpi('#e3941f','出荷待ち',records.filter(r=>harvestDaysLeft(r)>0).length+'<small>件</small>','収穫前日数 制限中','warn','確認')}`;
+  $('cropRows').innerHTML=FIELDS.map(f=>{
+    const rs=records.filter(r=>r.field===f.field&&r.crop===f.crop);
+    const tm=rs.filter(r=>thisMonth(r.date)).length;
+    const last=rs.length?rs.slice().sort((a,b)=>b.date-a.date)[0].date:null;
+    const harvest=new Date(TODAY.getFullYear(),TODAY.getMonth()+f.harvestM,f.harvestD);
+    const hasNg=rs.some(r=>judge(r)==='ng');
+    const hasWarn=rs.some(r=>judge(r)==='warn');
+    const st=hasNg?'ng':hasWarn?'warn':'ok';
+    const stl={ok:'適合',warn:'要注意',ng:'超過'};
+    return `<tr><td><b>${f.icon} ${esc(f.crop)}</b></td><td><span class="tagpill">${esc(f.field)}</span></td>
+      <td class="r tnum">${tm}回</td><td class="r tnum" style="color:var(--ink-2)">${rs.length}回</td>
+      <td style="color:var(--ink-2)">${last?fmtSlash(last):'—'}</td>
+      <td style="color:var(--ink-2)">${fmtSlash(harvest)} 頃</td>
+      <td><span class="st ${st}">${stl[st]}</span></td></tr>`;
+  }).join('');
+}
+
+/* ============ STANDARDS ============ */
+function renderStd(){
+  const q=($('qStd').value||'').toLowerCase();
+  const list=PESTICIDES.filter(p=>!q||(p.n+p.type).toLowerCase().includes(q));
+  // どの作物に使われているか
+  $('stdGrid').innerHTML=list.length?list.map(p=>{
+    const usedCrops=[...new Set(records.filter(r=>r.pest===p.n).map(r=>r.crop))];
+    return `<div class="std-card">
+      <div class="h"><div class="ic">${p.type==='殺虫剤'?'🐛':'🍄'}</div><div><b>${esc(p.n)}</b><span>${esc(p.type)}</span></div></div>
+      <div class="std-row"><span class="k">標準希釈倍数</span><span class="v">${p.dil}倍</span></div>
+      <div class="std-row"><span class="k">総使用回数（上限）</span><span class="v">${p.maxUse>=99?'制限なし':p.maxUse+'回'}</span></div>
+      <div class="std-row"><span class="k">収穫前日数（PHI）</span><span class="v">${p.phi}日前まで</span></div>
+      <div class="std-row"><span class="k">使用中の作物</span><span class="v" style="font-size:11.5px;color:var(--ink-2)">${usedCrops.length?usedCrops.map(esc).join('・'):'—'}</span></div>
+    </div>`;
+  }).join('')
+    :'<div class="empty-cell">該当する農薬がありません</div>';
+}
+$('qStd').addEventListener('input',renderStd);
+
+/* ============ HISTORY ============ */
+let histFilter='all';
+let HIST=[
+  {t:new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate(),10,5),k:'AI',c:'AIチェック：18件を一括照合（適合16・要注意2・超過0）',staff:'システム'},
+  {t:new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate(),9,42),k:'記録',c:'第1ハウス トマト：アディオン乳剤 2000倍を記録',staff:'川宿田'},
+  {t:new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-1,16,20),k:'書類',c:'GAP提出書類「防除実施記録（5月）」をPDF出力',staff:'佐藤'},
+  {t:new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-1,11,8),k:'記録',c:'第3ハウス きゅうり：ベンレート水和剤 2000倍を記録',staff:'佐藤'},
+  {t:new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-2,14,55),k:'警告',c:'露地A なす：モスピラン使用回数が上限間近（2/2）をアラート',staff:'システム'},
+  {t:new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-3,8,30),k:'記録',c:'露地B ピーマン：ダコニール1000 1000倍を記録',staff:'川宿田'},
+  {t:new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-4,17,12),k:'書類',c:'使用基準（適用表）を最新版に更新',staff:'田中'},
+];
+function renderHistChips(){
+  const opts=[['all','すべて'],['記録','記録'],['AI','AIチェック'],['書類','書類'],['警告','警告']];
+  $('histChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===histFilter?'on':''}" data-h="${o[0]}">${o[1]}</button>`).join('');
+  $('histChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{histFilter=c.dataset.h;renderHistChips();renderHist();});
+}
+function renderHist(){
+  const KICON={'記録':'🌿','AI':'⚡','書類':'📑','警告':'⚠️'};
+  let rows=HIST.filter(h=>histFilter==='all'||h.k===histFilter).sort((a,b)=>b.t-a.t);
+  $('histRows').innerHTML=rows.length?rows.map(h=>`<tr>
+    <td style="color:var(--ink-2)">${fmtSlash(h.t)} ${('0'+h.t.getHours()).slice(-2)}:${('0'+h.t.getMinutes()).slice(-2)}</td>
+    <td><span class="tagpill">${KICON[h.k]||''} ${esc(h.k)}</span></td>
+    <td>${esc(h.c)}</td><td style="color:var(--ink-2)">${esc(h.staff)}</td></tr>`).join('')
+    :'<tr><td colspan="4" class="empty-cell">該当する履歴がありません</td></tr>';
+}
+function addHist(k,c,staff){HIST.unshift({t:new Date(),k,c,staff:staff||'川宿田'});}
+
+/* ============ AI CHECK (single record) ============ */
+function renderCropSelect(){$('rCrop').innerHTML='<option value="">選択してください</option>'+FIELDS.map(f=>`<option value="${esc(f.field)}|${esc(f.crop)}">${f.icon} ${esc(f.crop)}（${esc(f.field)}）</option>`).join('');}
+function renderStaffSelect(){$('rStaff').innerHTML=STAFFS.map(s=>`<option>${esc(s)}</option>`).join('');}
+function curField(){const v=$('rCrop').value;if(!v)return null;const[field,crop]=v.split('|');return FIELDS.find(f=>f.field===field&&f.crop===crop)||null;}
+function curPest(){return PESTICIDES.find(p=>p.n===$('rPest').value)||null;}
+function curUseCount(){const f=curField();const p=curPest();if(!f||!p)return 0;return records.filter(r=>r.field===f.field&&r.crop===f.crop&&r.pest===p.n).length+1;}
+function renderRecPaper(){
+  const f=curField();const p=curPest();
+  $('rvCrop').textContent=f?`${f.icon} ${f.crop}（${f.field}）`:'—';
+  $('rvPest').textContent=p?`${p.n}（${p.type}）`:($('rPest').value||'—');
+  $('rvDil').textContent=$('rDil').value?($('rDil').value+'倍'):'—';
+  $('rvDate').textContent=$('rDate').value?$('rDate').value.replace(/-/g,'/'):'—';
+  $('rvCnt').textContent=p&&f?`${curUseCount()} / ${p.maxUse>=99?'制限なし':p.maxUse+'回'}`:'—';
+  $('rvStaff').textContent=$('rStaff').value||'—';
+}
+function evalRec(){
+  const f=curField();const p=curPest();const dil=+$('rDil').value||0;const dateStr=$('rDate').value;
+  if(!f||!p||!dil||!dateStr){
+    $('rCheck').className='pv-check warn';
+    $('rCheck').innerHTML='<span style="font-size:18px">🤖</span><div><b>AIチェック待ち</b><div style="color:var(--ink-2);margin-top:2px">圃場・農薬・希釈倍数・散布日を入力すると、使用基準を自動照合します。</div></div>';
+    $('rHarvest').textContent='—';
+    return null;
+  }
+  const date=new Date(dateStr+'T00:00:00');
+  const useCount=curUseCount();
+  const issues=[];
+  if(dil<p.dil*0.8)issues.push(`希釈が濃すぎます（基準${p.dil}倍に対し${dil}倍）`);
+  else if(dil<p.dil)issues.push(`希釈がやや濃いめです（基準${p.dil}倍）`);
+  if(useCount>p.maxUse)issues.push(`総使用回数が上限超過（${useCount}/${p.maxUse}回）`);
+  else if(p.maxUse<99&&useCount===p.maxUse)issues.push(`総使用回数が上限に達します（${useCount}/${p.maxUse}回）`);
+  const harvest=addDays(date,p.phi);
+  const ng=issues.some(s=>s.includes('超過')||s.includes('濃すぎ'));
+  const cls=ng?'ng':issues.length?'warn':'ok';
+  if(cls==='ok'){
+    $('rCheck').className='pv-check ok';
+    $('rCheck').innerHTML=`<span style="font-size:18px">✅</span><div><b>使用基準に適合しています</b><div style="color:var(--ink-2);margin-top:2px">希釈倍数・総使用回数・収穫前日数のすべてが基準内です。このまま記録・出荷管理できます。</div></div>`;
+  }else{
+    $('rCheck').className='pv-check warn';
+    $('rCheck').innerHTML=`<span style="font-size:18px">${ng?'⛔':'⚠️'}</span><div><b>${ng?'基準違反の可能性があります':'要注意の項目があります'}</b><ul style="margin:4px 0 0 0;padding-left:16px;color:var(--ink-2)">${issues.map(s=>'<li>'+esc(s)+'</li>').join('')}</ul></div>`;
+  }
+  $('rHarvest').textContent=fmtDL(harvest)+' 以降';
+  return {field:f.field,crop:f.crop,icon:f.icon,color:f.color,pest:p.n,ptype:p.type,dil,stdDil:p.dil,maxUse:p.maxUse,useCount,phi:p.phi,date,staff:$('rStaff').value,harvest,cls};
+}
+['rCrop','rPest','rDil','rDate','rStaff'].forEach(id=>{
+  $(id).addEventListener('input',()=>{
+    if(id==='rPest'){const p=curPest();if(p&&!$('rDil').value){$('rDil').value=p.dil;$('rAiHint').classList.add('show');setTimeout(()=>$('rAiHint').classList.remove('show'),2200);}}
+    renderRecPaper();evalRec();
+  });
+  $(id).addEventListener('change',()=>{renderRecPaper();evalRec();});
+});
+$('rSample').addEventListener('click',()=>{
+  $('rCrop').value='第1ハウス|トマト';
+  $('rPest').value='アディオン乳剤';
+  $('rDil').value=2000;
+  $('rDate').value=new Date().toISOString().slice(0,10);
+  $('rStaff').value='川宿田';
+  renderRecPaper();evalRec();
+});
+$('rRun').addEventListener('click',async()=>{
+  const data=evalRec();
+  if(!data){showToast('圃場・農薬・希釈倍数・散布日を入力してください');return;}
+  const btn=$('rRun');btn.textContent='⚡ AIが照合中…';btn.disabled=true;
+  $('rNo').textContent='—';
+  await new Promise(r=>setTimeout(r,800));
+  const no='SPR-'+(202600+records.length+1);
+  $('rNo').textContent=no;$('rRecDate').textContent=fmtDL(new Date());
+  records.unshift({id:records.length+1,field:data.field,crop:data.crop,icon:data.icon,color:data.color,
+    pest:data.pest,ptype:data.ptype,dil:data.dil,stdDil:data.stdDil,maxUse:data.maxUse,useCount:data.useCount,phi:data.phi,date:data.date,staff:data.staff});
+  addHist('記録',`${data.field} ${data.crop}：${data.pest} ${data.dil}倍を記録`,data.staff);
+  if(data.cls==='ng')addHist('警告',`${data.field} ${data.crop}：${data.pest} が使用基準違反の可能性`,'システム');
+  btn.textContent='⚡ AIでチェックして記録';btn.disabled=false;
+  $('navAlert').textContent=records.filter(r=>judge(r)!=='ok').length;
+  showToast('散布記録 '+no+' を保存しました（基準チェック済）');
+});
+
+/* ============ AI BULK CHECK ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 照合中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:'+('0'+Math.min(s,12)).slice(-2);},110);
+  await new Promise(r=>setTimeout(r,1200));
+  clearInterval(t);$('baAfterT').textContent='12秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // 直近18件を判定表示
+  const targets=records.slice(0,18);
+  $('genItems').innerHTML=targets.map((r,i)=>{
+    const j=judge(r);
+    const note=j==='ng'?'基準違反の可能性':j==='warn'?'要確認':'適合・出荷可';
+    return `<div class="gen-item" data-i="${i}"><span class="ck ${j==='ng'?'ng':''}">${j==='ng'?'!':'✓'}</span>
+      <b style="flex:1">${r.icon} ${esc(r.crop)}　${esc(r.pest)}</b>
+      <span style="color:var(--ink-3);font-size:11.5px">${esc(r.field)}</span>
+      ${jBadge(j)}<span style="color:var(--ink-3);font-size:11.5px;min-width:96px;text-align:right">${esc(note)}</span></div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,90));items[i].classList.add('in');}
+  const ng=targets.filter(r=>judge(r)==='ng').length;
+  const warn=targets.filter(r=>judge(r)==='warn').length;
+  const ok=targets.length-ng-warn;
+  addHist('AI',`AIチェック：${targets.length}件を一括照合（適合${ok}・要注意${warn}・超過${ng}）`,'システム');
+  addHist('書類',`GAP提出書類「防除実施記録」を自動生成（${targets.length}件分）`,'システム');
+  btn.disabled=false;btn.textContent='⚡ もう一度チェック';
+  $('navAlert').textContent=records.filter(r=>judge(r)!=='ok').length;
+  showToast(`${targets.length}件をチェック（適合${ok}・要注意${warn}・超過${ng}）GAP書類を生成しました`);
+});
+
+/* ============ INIT ============ */
+(function(){const dl=document.createElement('datalist');dl.id='pestList';dl.innerHTML=PESTICIDES.map(p=>`<option value="${esc(p.n)}">`).join('');document.body.appendChild(dl);})();
+$('rDate').value=new Date().toISOString().slice(0,10);
+renderCropSelect();renderStaffSelect();renderRecPaper();renderChips();renderHistChips();renderDash();
+$('navAlert').textContent=records.filter(r=>judge(r)!=='ok').length;
+</script>
+</body>
+</html>

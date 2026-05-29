@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜見積積算マシン（建設見積・積算システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#e0731a;--brand-dk:#c25c0c;--brand-soft:#fdf0e2;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--blue:#2f6df0;--blue-soft:#eaf1ff;
+  --sb:#141a26;--sb-2:#1e2738;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#f5a623,#e0731a,#c25c0c,#f5a623);
+  display:grid;place-items:center;color:#fff;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(224,115,26,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn.blue{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.blue:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 92px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),#f5a623);width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut / win-rate */
+.donut-wrap{display:flex;align-items:center;gap:20px}
+.donut{width:128px;height:128px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;position:relative}
+.donut::before{content:"";position:absolute;inset:18px;border-radius:50%;background:var(--card)}
+.donut .dc{position:relative;text-align:center}
+.donut .dc b{font-size:26px;font-weight:900;display:block;line-height:1}
+.donut .dc span{font-size:11px;color:var(--ink-3);font-weight:700}
+.legend{flex:1;display:flex;flex-direction:column;gap:9px;font-size:12.5px}
+.legend .lg{display:flex;align-items:center;gap:9px}
+.legend .lg .sw{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.legend .lg .nm{color:var(--ink-2);font-weight:600;flex:1}
+.legend .lg .vl{font-weight:800;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.won{background:var(--green-soft);color:var(--green)}
+.st.sent{background:var(--blue-soft);color:var(--blue)}
+.st.draft{background:var(--amber-soft);color:var(--amber)}
+.st.lost{background:var(--red-soft);color:var(--red)}
+.st.review{background:var(--soft);color:var(--ink-3)}
+.mb{display:inline-flex;align-items:center;font-size:11px;font-weight:800;padding:3px 9px;border-radius:7px}
+.mb.hi{background:var(--green-soft);color:var(--green)}
+.mb.mid{background:var(--amber-soft);color:var(--amber)}
+.mb.lo{background:var(--red-soft);color:var(--red)}
+
+/* create / estimate sheet */
+.create-grid{display:grid;grid-template-columns:minmax(330px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--brand)}
+.fg-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.line-head{display:grid;grid-template-columns:1fr 70px 46px 78px 28px;gap:7px;font-size:11px;color:var(--ink-3);font-weight:700;padding:0 2px 6px}
+.line-row{display:grid;grid-template-columns:1fr 70px 46px 78px 28px;gap:7px;margin-bottom:7px;align-items:center}
+.line-row input{padding:8px 9px;font-size:12.5px;border:1px solid var(--line-2);border-radius:8px;font-family:inherit;min-width:0}
+.line-row .x{border:1px solid var(--line-2);background:var(--red-soft);color:var(--red);border-radius:7px;cursor:pointer;height:30px}
+.addline{width:100%;margin-top:3px;padding:9px;border:1px dashed var(--line-2);background:transparent;border-radius:8px;color:var(--brand);font-weight:700;font-size:12.5px;cursor:pointer}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* paper preview (estimate) */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:34px 36px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.pv-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px}
+.pv-title{font-size:25px;font-weight:900;letter-spacing:.26em;color:var(--brand-dk);border-bottom:3px solid var(--brand-dk);padding-bottom:5px}
+.pv-meta{text-align:right;font-size:11.5px;color:var(--ink-2)}
+.pv-meta .no{font-family:'Orbitron';color:var(--ink);font-weight:700}
+.pv-cust{font-size:19px;font-weight:900;border-bottom:1.5px solid #1a2233;display:inline-block;min-width:220px;padding-bottom:5px;margin-bottom:8px}
+.pv-total{background:var(--soft);border-left:5px solid var(--brand-dk);border-radius:6px;padding:13px 18px;margin:18px 0;display:flex;justify-content:space-between;align-items:center}
+.pv-total .a{font-family:'Orbitron';font-size:23px;font-weight:700;color:var(--brand-dk)}
+table.pv{width:100%;border-collapse:collapse;margin-bottom:14px}
+table.pv th{background:var(--brand-dk);color:#fff;font-size:11px;padding:8px 11px;text-align:left}
+table.pv th.r,table.pv td.r{text-align:right}
+table.pv td{padding:8px 11px;border-bottom:1px solid var(--line);font-size:12px}
+.pv-sums{margin-left:auto;width:250px}
+.pv-sums .r{display:flex;justify-content:space-between;padding:6px 10px;font-size:12px;color:var(--ink-2)}
+.pv-sums .r.g{background:var(--brand-dk);color:#fff;border-radius:6px;margin-top:5px;padding:9px 10px;font-weight:800}
+
+/* master table inline */
+.mtable{width:100%;border-collapse:collapse;font-size:13px}
+.mtable th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:11px 14px}
+.mtable th.r{text-align:right}
+.mtable td{padding:11px 14px;border-top:1px solid var(--line)}
+.mtable td.r{text-align:right}
+.cat{display:inline-flex;font-size:11px;font-weight:800;padding:3px 9px;border-radius:7px;background:var(--blue-soft);color:var(--blue)}
+
+/* cost bars (原価) */
+.costcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow);margin-bottom:16px}
+.stack{height:30px;border-radius:8px;overflow:hidden;display:flex;font-size:11px;font-weight:800;color:#fff}
+.stack > div{display:grid;place-items:center;white-space:nowrap;min-width:0}
+.cost-legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font-size:12px}
+.cost-legend .it{display:flex;align-items:center;gap:7px;color:var(--ink-2);font-weight:600}
+.cost-legend .it .sw{width:11px;height:11px;border-radius:3px}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.dropzone{border:2px dashed var(--line-2);border-radius:12px;padding:22px;text-align:center;background:var(--soft);margin:8px 0 14px;transition:all .2s}
+.dropzone .fz{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:9px;padding:9px 14px;font-size:13px;font-weight:700}
+.dropzone .fz .ic2{width:30px;height:30px;border-radius:7px;background:var(--blue-soft);color:var(--blue);display:grid;place-items:center;font-size:15px}
+.dropzone .hint{font-size:11.5px;color:var(--ink-3);margin-top:8px}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#f5a623,#e0731a);display:grid;place-items:center;font-size:26px;margin:0 auto;flex-shrink:0}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(224,115,26,.4)}50%{box-shadow:0 0 40px rgba(245,166,35,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.sec-title{font-size:13px;font-weight:800;color:var(--ink-2);margin:4px 0 10px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">見積積算マシン<small>技マシン｜建設見積・積算</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">📋</span>見積一覧</a>
+      <a data-v="takeoff"><span class="i">📐</span>数量拾い</a>
+      <a data-v="master"><span class="i">💴</span>単価マスタ</a>
+      <a data-v="cost"><span class="i">📈</span>原価</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI積算</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち建設</b><span>デモ環境 / 積算担当</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。物件・数値・単価はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">今月の見積・積算状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>月次の見積金額推移</h3><span class="more">過去6ヶ月</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>受注 / 失注 の内訳</h3></div>
+            <div class="pb"><div class="donut-wrap"><div class="donut" id="donut"><div class="dc"><b id="dcRate">0%</b><span>受注率</span></div></div>
+              <div class="legend" id="winLegend"></div></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>工種別 見積件数</h3></div>
+            <div class="pb"><div class="bars" id="tradeBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="物件名・発注者・見積番号で検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>見積番号</th><th>物件名</th><th>発注者</th><th>工種</th><th class="r">見積金額</th><th class="r">粗利率</th><th>提出日</th><th>状態</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- TAKEOFF (数量拾い) -->
+      <section class="view" id="v-takeoff">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>物件名</label><input id="cName" placeholder="例：大分市〇〇邸 新築工事"></div>
+            <div class="fg-2">
+              <div class="fg"><label>発注者</label><select id="cCust"></select></div>
+              <div class="fg"><label>工種</label><select id="cTrade"></select></div>
+            </div>
+            <label class="sec-title">数量拾い明細（品名を選ぶとマスタ単価を自動入力）</label>
+            <div class="line-head"><div>品名・規格</div><div>数量</div><div>単位</div><div>単価</div><div></div></div>
+            <div id="cLines"></div>
+            <button class="addline" id="cAdd">＋ 明細を追加</button>
+            <div class="aihint" id="cAiHint">✨ AIが単価マスタから相場単価を自動入力しました</div>
+            <div class="fg-2" style="margin-top:14px">
+              <div class="fg" style="margin-bottom:0"><label>諸経費率(%)</label><input id="cOh" type="number" min="0" value="12"></div>
+              <div class="fg" style="margin-bottom:0"><label>目標粗利率(%)</label><input id="cMg" type="number" min="0" value="22"></div>
+            </div>
+            <div class="linkrow" style="margin-top:16px">
+              <button class="btn primary" id="cIssue" style="flex:1;justify-content:center">⚡ AIで積算して見積作成</button>
+              <button class="btn" id="cSample">サンプル</button>
+            </div>
+          </div>
+          <div>
+            <div class="paper" id="cPaper">
+              <div class="pv-top">
+                <div class="pv-title">御 見 積 書</div>
+                <div class="pv-meta"><div>番号：<span class="no" id="pNo">—</span></div><div>提出日：<span id="pDate">—</span></div><div>有効期限：<span id="pDue">—</span></div></div>
+              </div>
+              <div><span class="pv-cust" id="pCust">　御中</span></div>
+              <div style="font-size:11.5px;color:var(--ink-2)">下記の通りお見積り申し上げます。</div>
+              <div class="pv-total"><span style="font-weight:700">お見積金額（税込）</span><span class="a" id="pGrand">¥0</span></div>
+              <table class="pv"><thead><tr><th>品名・規格</th><th class="r" style="width:46px">数量</th><th class="r" style="width:40px">単位</th><th class="r" style="width:78px">単価</th><th class="r" style="width:90px">金額</th></tr></thead><tbody id="pRows"></tbody></table>
+              <div class="pv-sums">
+                <div class="r"><span>直接工事費</span><span id="pSub">¥0</span></div>
+                <div class="r"><span>諸経費</span><span id="pOh">¥0</span></div>
+                <div class="r"><span>消費税(10%)</span><span id="pTax">¥0</span></div>
+                <div class="r g"><span>合計</span><span id="pGrand2">¥0</span></div>
+              </div>
+              <div style="margin-top:18px;font-size:11px;color:var(--ink-2);border-top:1px solid var(--line);padding-top:12px">
+                工期：別途協議 ／ 有効期限：提出後30日 ／ 上記には別途指定なき仮設・運搬費を含みます。
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MASTER (単価マスタ) -->
+      <section class="view" id="v-master">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="mq" placeholder="品名・規格・分類で検索"></div>
+          <div class="chips" id="masterChips"></div>
+          <button class="btn primary" id="mAdd">＋ マスタ登録</button>
+        </div>
+        <div class="panel" style="overflow:hidden">
+          <table class="mtable">
+            <thead><tr><th>コード</th><th>品名・規格</th><th>分類</th><th class="r">標準単価</th><th>単位</th><th class="r">仕入単価</th><th class="r">利幅</th><th>最終更新</th></tr></thead>
+            <tbody id="masterRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- COST (原価) -->
+      <section class="view" id="v-cost">
+        <div class="kpis" id="costKpis"></div>
+        <div class="costcard">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <h3 style="font-size:14.5px;font-weight:800">原価構成（受注見込・進行中物件 合計）</h3>
+          </div>
+          <div class="stack" id="costStack"></div>
+          <div class="cost-legend" id="costLegend"></div>
+        </div>
+        <div class="panel">
+          <div class="ph"><h3>物件別 原価・粗利分析</h3>
+            <button class="btn blue" id="costRecalc" style="margin-left:auto">🔁 最新仕入で再計算</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>物件名</th><th>工種</th><th class="r">見積金額</th><th class="r">原価</th><th class="r">粗利</th><th class="r">粗利率</th></tr></thead>
+              <tbody id="costRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI 積算 -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">図面から数量拾い・積算を自動化</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">アップした図面（PDF/画像）をAIが読み取り、数量拾いから単価マスタ照合・積算まで自動で行います。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで積算する</button>
+          </div>
+          <div class="dropzone" id="drop">
+            <div class="fz"><span class="ic2">📄</span><span id="dropName">大分市中央町_店舗内装_平面図.pdf</span><span style="color:var(--ink-3);font-weight:600">・1.8MB</span></div>
+            <div class="hint">サンプル図面を読み込み済み。実機では PDF・JWW・DXF・写真をドラッグ＆ドロップ。</div>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">3時間20分</div>
+              <ul>
+                <li>📐 図面を見ながら数量を電卓で拾い出し</li>
+                <li>📖 単価表を1行ずつ探して転記</li>
+                <li>🧮 諸経費・粗利を計算して見積書を清書</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 図面から数量を自動拾い出し</li>
+                <li>💴 単価マスタを自動照合して積算</li>
+                <li>📄 粗利チェック済みの見積書を即生成</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ AIが拾い出した数量・積算結果</div>
+            <div id="genItems"></div>
+            <div id="genFooter" style="display:none;margin-top:12px;border-top:1px solid var(--line);padding-top:12px"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const CUSTOMERS=[
+  {name:'大分県土木建築部',type:'公共'},
+  {name:'豊後ハウジング株式会社',type:'元請'},
+  {name:'別府リゾート開発',type:'民間'},
+  {name:'医療法人 中央会',type:'民間'},
+  {name:'おおいた商業ビル管理',type:'民間'},
+  {name:'佐藤工務店',type:'元請'},
+  {name:'大分市役所 営繕課',type:'公共'},
+];
+const TRADES=['建築一式','内装仕上','土木','電気設備','給排水','外構','解体','塗装'];
+// 単価マスタ
+const MASTER=[
+  {code:'K-1010',n:'コンクリート打設 21-18-20',cat:'躯体',u:'m3',price:18500,cost:14800},
+  {code:'K-1020',n:'型枠 合板せき板',cat:'躯体',u:'m2',price:6800,cost:5200},
+  {code:'K-1030',n:'鉄筋工 SD295 D13',cat:'躯体',u:'t',price:128000,cost:104000},
+  {code:'N-2010',n:'石膏ボード張り t12.5',cat:'内装',u:'m2',price:2400,cost:1650},
+  {code:'N-2020',n:'クロス張替 量産品',cat:'内装',u:'m2',price:1300,cost:780},
+  {code:'N-2030',n:'フローリング張り 複合12mm',cat:'内装',u:'m2',price:6500,cost:4400},
+  {code:'N-2040',n:'システムキッチン 標準型',cat:'内装',u:'式',price:480000,cost:360000},
+  {code:'T-3010',n:'掘削 機械 土砂',cat:'土工',u:'m3',price:1200,cost:850},
+  {code:'T-3020',n:'残土処分 場外運搬',cat:'土工',u:'m3',price:3800,cost:3100},
+  {code:'T-3030',n:'砕石路盤 RC-40',cat:'土工',u:'m3',price:4500,cost:3300},
+  {code:'E-4010',n:'分電盤 単3 20回路',cat:'電気',u:'面',price:85000,cost:62000},
+  {code:'E-4020',n:'LED照明器具 取付',cat:'電気',u:'台',price:9800,cost:6200},
+  {code:'E-4030',n:'配線工事 VVF 1.6-2C',cat:'電気',u:'m',price:480,cost:280},
+  {code:'P-5010',n:'給水管 架橋ポリ 13A',cat:'設備',u:'m',price:1400,cost:920},
+  {code:'P-5020',n:'衛生器具 大便器 節水型',cat:'設備',u:'台',price:62000,cost:46000},
+  {code:'G-6010',n:'アスファルト舗装 t50',cat:'外構',u:'m2',price:4200,cost:3000},
+  {code:'G-6020',n:'ブロック積 化粧CB',cat:'外構',u:'m2',price:9500,cost:6800},
+  {code:'S-7010',n:'外壁塗装 シリコン2回塗',cat:'塗装',u:'m2',price:2800,cost:1700},
+];
+const MCATS=['躯体','内装','土工','電気','設備','外構','塗装'];
+
+const TODAY=new Date();
+let SEED=4071;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+const STATUSES=['won','won','sent','lost','review','sent','won','draft'];
+let estimates=[];
+(function seed(){
+  const nameParts=['大分市中央町','別府市北浜','大分市明野','由布市湯布院','大分市都町','佐伯市','日田市','大分市萩原','臼杵市'];
+  const kinds=['新築工事','改修工事','内装リニューアル','外構工事','設備更新工事','耐震補強工事','店舗内装工事','解体工事'];
+  for(let i=0;i<24;i++){
+    const c=pick(CUSTOMERS);
+    const trade=pick(TRADES);
+    const grand=(800000+Math.floor(rnd()*42000000));
+    const mg=Math.round((8+rnd()*26)*10)/10; // 粗利率
+    const cost=Math.round(grand*(1-mg/100));
+    const issue=new Date(TODAY.getFullYear(),TODAY.getMonth()-Math.floor(rnd()*5),1+Math.floor(rnd()*26));
+    let stt=pick(STATUSES);
+    estimates.push({no:'EST-'+(2026000+i+1),name:pick(nameParts)+' '+pick(kinds),cust:c.name,trade,grand,cost,mg,issue,status:stt});
+  }
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+const man=n=>{const m=n/10000;return (m>=1000?Math.round(m):Math.round(m*10)/10).toLocaleString()+'万';};
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+const fmtS=d=>(d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate());
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STLABEL={won:'受注',sent:'提出済',draft:'下書き',lost:'失注',review:'積算中'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]}</span>`;}
+function mgBadge(mg){const c=mg>=20?'hi':mg>=12?'mid':'lo';return `<span class="mb ${c}">${mg.toFixed(1)}%</span>`;}
+function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','今月の見積・積算状況'],list:['見積一覧','作成した見積を管理します'],
+  takeoff:['数量拾い','図面から数量を拾い、リアルタイムで見積が組み上がります'],master:['単価マスタ','工種別の標準単価・仕入単価を管理します'],
+  cost:['原価','物件別の原価・粗利を分析します'],ai:['AI積算','図面から数量拾い・積算を自動で行います']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn primary" onclick="go(\'takeoff\')">＋ 新規見積</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI積算</button><button class="btn primary" onclick="go(\'takeoff\')">＋ 新規見積</button>'
+    : v==='master'?'':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='master')renderMaster();
+  if(v==='cost')renderCost();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const tm=estimates.filter(i=>thisMonth(i.issue));
+  const tmSum=tm.reduce((s,i)=>s+i.grand,0);
+  const won=estimates.filter(i=>i.status==='won');
+  const decided=estimates.filter(i=>i.status==='won'||i.status==='lost');
+  const winRate=decided.length?Math.round(won.length/decided.length*100):0;
+  const wonGross=won.reduce((s,i)=>s+(i.grand-i.cost),0);
+  const avgMg=won.length?(won.reduce((s,i)=>s+i.mg,0)/won.length):0;
+  $('kpis').innerHTML=`
+    ${kpi('#e0731a','今月の見積金額',yen(tmSum),tm.length+'件 作成','up','前月比 +9%')}
+    ${kpi('#16b877','受注率',winRate+'<small>%</small>',won.length+'/'+decided.length+'件','up','+4pt')}
+    ${kpi('#2f6df0','受注粗利(累計)',yen(wonGross),'平均粗利率 '+avgMg.toFixed(1)+'%','up','目標達成')}
+    ${kpi('#e3941f','平均積算時間','12<small>分</small>','以前は約3.2時間','up','▲ 約94%短縮')}`;
+  // trend
+  const months=[];for(let k=5;k>=0;k--){const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1);months.push(d);}
+  const sums=months.map(m=>estimates.filter(i=>i.issue.getMonth()===m.getMonth()&&i.issue.getFullYear()===m.getFullYear()).reduce((s,i)=>s+i.grand,0));
+  const mx=Math.max(...sums,1);
+  $('trendBars').innerHTML=months.map((m,i)=>`
+    <div class="bar-row"><span class="mlabel">${m.getMonth()+1}月</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(sums[i]/mx*100)}"></div></div>
+      <span class="mval">${man(sums[i])}</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // donut win/lost/pending
+  const cWon=won.length, cLost=estimates.filter(i=>i.status==='lost').length;
+  const cPend=estimates.filter(i=>i.status==='sent'||i.status==='review'||i.status==='draft').length;
+  const tot=cWon+cLost+cPend||1;
+  const aWon=cWon/tot*360, aLost=cLost/tot*360;
+  $('donut').style.background=`conic-gradient(#16b877 0 ${aWon}deg,#e24a4a ${aWon}deg ${aWon+aLost}deg,#d8deea ${aWon+aLost}deg 360deg)`;
+  $('dcRate').textContent=winRate+'%';
+  $('winLegend').innerHTML=[['#16b877','受注',cWon],['#e24a4a','失注',cLost],['#d8deea','検討中',cPend]]
+    .map(r=>`<div class="lg"><span class="sw" style="background:${r[0]}"></span><span class="nm">${r[1]}</span><span class="vl">${r[2]}件</span></div>`).join('');
+  // trade bars
+  const tcnt={};TRADES.forEach(t=>tcnt[t]=0);estimates.forEach(e=>tcnt[e.trade]++);
+  const tEntries=Object.entries(tcnt).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const tmx=Math.max(...tEntries.map(e=>e[1]),1);
+  $('tradeBars').innerHTML=tEntries.map(([t,c])=>`
+    <div class="bar-row"><span class="mlabel" style="width:auto;white-space:nowrap;font-size:11.5px">${esc(t)}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0;background:linear-gradient(90deg,#2f6df0,#0ea5b7)" data-w="${Math.round(c/tmx*100)}"></div></div>
+      <span class="mval">${c}件</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#tradeBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),120);
+  // activity
+  const acts=[
+    {i:'⚡',c:'#fdf0e2',t:'AI積算で「大分市中央町 店舗内装工事」を積算（拾い出し 142行 / 11分）',m:'8分前'},
+    {i:'🎉',c:'#e6f8f0',t:'別府リゾート開発「外構工事」を受注（粗利率24.3%）',m:'1時間前'},
+    {i:'📄',c:'#eaf1ff',t:'EST-2026019 を発注者へ提出しました',m:'今日 10:20'},
+    {i:'⚠️',c:'#fdeaea',t:'「日田市 改修工事」の粗利率が9.8%と低めです。要確認',m:'今日 9:05'},
+    {i:'💴',c:'#fdf3e2',t:'単価マスタ：生コン単価を 18,200→18,500 に更新',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ LIST ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['won','受注'],['sent','提出済'],['review','積算中'],['draft','下書き'],['lost','失注']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=estimates.filter(i=>filterStatus==='all'||i.status===filterStatus)
+    .filter(i=>!q||(i.cust+i.name+i.no+i.trade).toLowerCase().includes(q))
+    .sort((a,b)=>b.issue-a.issue);
+  $('listRows').innerHTML=rows.length?rows.map(i=>`<tr>
+    <td class="mono" style="font-size:12px">${esc(i.no)}</td><td><b>${esc(i.name)}</b></td><td style="color:var(--ink-2)">${esc(i.cust)}</td>
+    <td><span class="cat">${esc(i.trade)}</span></td>
+    <td class="r tnum"><b>${yen(i.grand)}</b></td><td class="r">${mgBadge(i.mg)}</td>
+    <td style="color:var(--ink-2)">${fmtS(i.issue)}</td><td>${stBadge(i.status)}</td></tr>`).join('')
+    :'<tr><td colspan="8" class="empty-cell">該当する見積がありません</td></tr>';
+}
+$('q').addEventListener('input',renderList);
+
+/* ============ MASTER ============ */
+let mFilter='all';
+function renderMasterChips(){
+  const opts=[['all','すべて'],...MCATS.map(c=>[c,c])];
+  $('masterChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===mFilter?'on':''}" data-s="${esc(o[0])}">${esc(o[1])}</button>`).join('');
+  $('masterChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{mFilter=c.dataset.s;renderMasterChips();renderMaster();});
+}
+function renderMaster(){
+  const q=($('mq').value||'').toLowerCase();
+  const rows=MASTER.filter(m=>mFilter==='all'||m.cat===mFilter)
+    .filter(m=>!q||(m.code+m.n+m.cat).toLowerCase().includes(q));
+  $('masterRows').innerHTML=rows.length?rows.map(m=>{
+    const margin=Math.round((m.price-m.cost)/m.price*100);
+    return `<tr><td class="mono" style="font-size:11.5px;color:var(--ink-2)">${esc(m.code)}</td>
+      <td><b>${esc(m.n)}</b></td><td><span class="cat">${esc(m.cat)}</span></td>
+      <td class="r tnum"><b>${yen(m.price)}</b></td><td style="color:var(--ink-2)">${esc(m.u)}</td>
+      <td class="r tnum" style="color:var(--ink-2)">${yen(m.cost)}</td>
+      <td class="r">${mgBadge(margin)}</td><td style="color:var(--ink-3);font-size:12px">${fmtS(new Date(TODAY.getFullYear(),TODAY.getMonth(),1+Math.floor(rnd()*20)))}</td></tr>`;
+  }).join('')
+    :'<tr><td colspan="8" class="empty-cell">該当する単価がありません</td></tr>';
+}
+$('mq').addEventListener('input',renderMaster);
+$('mAdd').addEventListener('click',()=>showToast('デモ環境のためマスタ登録は無効です（実機では即登録）'));
+
+/* ============ COST ============ */
+function renderCost(){
+  const active=estimates.filter(i=>i.status==='won'||i.status==='sent'||i.status==='review');
+  const totGrand=active.reduce((s,i)=>s+i.grand,0);
+  const totCost=active.reduce((s,i)=>s+i.cost,0);
+  const totGross=totGrand-totCost;
+  const avgMg=totGrand?Math.round(totGross/totGrand*1000)/10:0;
+  // breakdown of cost into 材料/労務/外注/経費 (合成比率)
+  const mat=Math.round(totCost*0.46),lab=Math.round(totCost*0.27),sub=Math.round(totCost*0.18),exp=totCost-mat-lab-sub;
+  $('costKpis').innerHTML=`
+    ${kpi('#e0731a','対象 見積金額',yen(totGrand),active.length+'件','up','受注+進行中')}
+    ${kpi('#e24a4a','合計原価',yen(totCost),'材工外注込','warn','管理対象')}
+    ${kpi('#16b877','合計粗利',yen(totGross),'','up','確保済')}
+    ${kpi('#2f6df0','平均粗利率',avgMg+'<small>%</small>','目標 22%',avgMg>=20?'up':'warn',avgMg>=20?'良好':'要改善')}`;
+  // stack
+  const parts=[['材料費',mat,'#e0731a'],['労務費',lab,'#2f6df0'],['外注費',sub,'#0ea5b7'],['現場経費',exp,'#e3941f']];
+  $('costStack').innerHTML=parts.map(p=>`<div style="width:${(p[1]/totCost*100).toFixed(1)}%;background:${p[2]}">${(p[1]/totCost*100).toFixed(0)}%</div>`).join('');
+  $('costLegend').innerHTML=parts.map(p=>`<div class="it"><span class="sw" style="background:${p[2]}"></span>${p[0]}：${yen(p[1])}</div>`).join('');
+  // rows
+  $('costRows').innerHTML=active.sort((a,b)=>a.mg-b.mg).map(i=>`<tr>
+    <td><b>${esc(i.name)}</b></td><td><span class="cat">${esc(i.trade)}</span></td>
+    <td class="r tnum">${yen(i.grand)}</td><td class="r tnum" style="color:var(--ink-2)">${yen(i.cost)}</td>
+    <td class="r tnum"><b>${yen(i.grand-i.cost)}</b></td><td class="r">${mgBadge(i.mg)}</td></tr>`).join('');
+}
+$('costRecalc').addEventListener('click',async()=>{
+  const btn=$('costRecalc');btn.textContent='🔁 再計算中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,900));
+  estimates.forEach(e=>{if(e.status!=='won'&&rnd()>0.5){const d=(rnd()-0.5)*2;e.mg=Math.max(4,Math.round((e.mg+d)*10)/10);e.cost=Math.round(e.grand*(1-e.mg/100));}});
+  btn.textContent='🔁 最新仕入で再計算';btn.disabled=false;
+  renderCost();showToast('最新の仕入単価で全物件の原価・粗利を再計算しました');
+});
+
+/* ============ TAKEOFF (数量拾い) ============ */
+let cLines=[{n:'',q:1,u:'m2',p:''},{n:'',q:1,u:'m2',p:''}];
+function renderCustSelect(){
+  $('cCust').innerHTML='<option value="">選択してください</option>'+CUSTOMERS.map(c=>`<option>${esc(c.name)}</option>`).join('');
+  $('cTrade').innerHTML=TRADES.map(t=>`<option>${esc(t)}</option>`).join('');
+}
+function renderLines(){
+  $('cLines').innerHTML=cLines.map((l,i)=>`<div class="line-row" data-i="${i}">
+    <input class="ln" list="cItemList" placeholder="品名・規格" value="${esc(l.n)}">
+    <input class="lq" type="number" min="0" step="0.1" value="${l.q}">
+    <input class="lu" placeholder="単位" value="${esc(l.u)}">
+    <input class="lp" type="number" min="0" placeholder="0" value="${l.p}">
+    <button class="x">✕</button></div>`).join('');
+  $('cLines').querySelectorAll('.line-row').forEach(row=>{
+    const i=+row.dataset.i;
+    const ln=row.querySelector('.ln'),lq=row.querySelector('.lq'),lu=row.querySelector('.lu'),lp=row.querySelector('.lp');
+    ln.oninput=()=>{cLines[i].n=ln.value;const h=MASTER.find(x=>x.n===ln.value);if(h){if(!cLines[i].p){cLines[i].p=h.price;lp.value=h.price;}cLines[i].u=h.u;lu.value=h.u;$('cAiHint').classList.add('show');setTimeout(()=>$('cAiHint').classList.remove('show'),2000);}renderPaper();};
+    lq.oninput=()=>{cLines[i].q=+lq.value||0;renderPaper();};
+    lu.oninput=()=>{cLines[i].u=lu.value;renderPaper();};
+    lp.oninput=()=>{cLines[i].p=+lp.value||0;renderPaper();};
+    row.querySelector('.x').onclick=()=>{cLines.splice(i,1);if(!cLines.length)cLines.push({n:'',q:1,u:'m2',p:''});renderLines();renderPaper();};
+  });
+}
+function calc(){
+  const valid=cLines.filter(l=>l.n||+l.p>0);
+  const direct=valid.reduce((s,l)=>s+(+l.q||0)*(+l.p||0),0);
+  const oh=Math.round(direct*((+$('cOh').value||0)/100));
+  const sub=direct+oh;const tax=Math.round(sub*0.1);
+  return {valid,direct,oh,sub,tax,grand:sub+tax};
+}
+function renderPaper(){
+  $('pCust').textContent=($('cCust').value||'')+'　御中';
+  const c=calc();
+  $('pRows').innerHTML=c.valid.length?c.valid.map(l=>`<tr><td>${esc(l.n)||'（品名）'}</td><td class="r">${+l.q||0}</td><td class="r" style="color:var(--ink-3)">${esc(l.u)}</td><td class="r">${yen(+l.p||0)}</td><td class="r">${yen((+l.q||0)*(+l.p||0))}</td></tr>`).join('')
+    :'<tr><td colspan="5" style="text-align:center;color:#aab2c4;padding:14px">← 数量を拾うと明細が表示されます</td></tr>';
+  $('pSub').textContent=yen(c.direct);$('pOh').textContent=yen(c.oh);$('pTax').textContent=yen(c.tax);$('pGrand').textContent=yen(c.grand);$('pGrand2').textContent=yen(c.grand);
+}
+$('cCust').addEventListener('change',renderPaper);
+$('cName').addEventListener('input',renderPaper);
+$('cTrade').addEventListener('change',renderPaper);
+$('cOh').addEventListener('input',renderPaper);
+$('cMg').addEventListener('input',renderPaper);
+$('cAdd').addEventListener('click',()=>{cLines.push({n:'',q:1,u:'m2',p:''});renderLines();renderPaper();});
+$('cSample').addEventListener('click',()=>{
+  $('cName').value='大分市中央町 店舗内装工事';$('cCust').value='おおいた商業ビル管理';$('cTrade').value='内装仕上';
+  cLines=[
+    {n:'石膏ボード張り t12.5',q:186,u:'m2',p:2400},
+    {n:'クロス張替 量産品',q:210,u:'m2',p:1300},
+    {n:'フローリング張り 複合12mm',q:96,u:'m2',p:6500},
+    {n:'LED照明器具 取付',q:24,u:'台',p:9800},
+  ];
+  renderLines();renderPaper();showToast('サンプル物件を読み込みました');
+});
+$('cIssue').addEventListener('click',async()=>{
+  const c=calc();
+  if(!$('cCust').value||!c.valid.length){showToast('発注者と数量拾い明細を入力してください');return;}
+  const btn=$('cIssue');btn.textContent='⚡ AIが積算中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,850));
+  const now=new Date();const no='EST-'+(2026000+estimates.length+1);
+  $('pNo').textContent=no;$('pDate').textContent=fmtDL(now);
+  const due=new Date(now.getFullYear(),now.getMonth(),now.getDate()+30);$('pDue').textContent=fmtDL(due);
+  // 原価＝直接費の概算原価率(マスタ仕入比)＋諸経費
+  let costDirect=0;c.valid.forEach(l=>{const h=MASTER.find(x=>x.n===l.n);const cu=h?h.cost:(+l.p||0)*0.72;costDirect+=(+l.q||0)*cu;});
+  const cost=Math.round(costDirect+c.oh*0.6);
+  const grandExTax=c.sub;const gross=grandExTax-cost;const mg=grandExTax?Math.round(gross/grandExTax*1000)/10:0;
+  estimates.push({no,name:$('cName').value||'無題の物件',cust:$('cCust').value,trade:$('cTrade').value,grand:c.grand,cost,mg,issue:now,status:'review'});
+  btn.textContent='⚡ AIで積算して見積作成';btn.disabled=false;
+  showToast('見積 '+no+' を作成しました（粗利率 '+mg.toFixed(1)+'% / 一覧に追加）');
+  setTimeout(()=>go('list'),750);
+});
+
+/* ============ AI 積算 ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 解析中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('aiSub').textContent='図面を解析し、部材・数量を拾い出して単価マスタと照合しています…';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:'+String(Math.min(s,11)).padStart(2,'0');},110);
+  await new Promise(r=>setTimeout(r,1250));
+  clearInterval(t);$('baAfterT').textContent='11秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  $('aiSub').textContent='図面の解析が完了しました。拾い出した数量と積算結果は以下のとおりです。';
+  // 拾い出し結果（マスタから）
+  const picks=[
+    {m:MASTER.find(x=>x.code==='N-2010'),q:186},
+    {m:MASTER.find(x=>x.code==='N-2020'),q:210},
+    {m:MASTER.find(x=>x.code==='N-2030'),q:96},
+    {m:MASTER.find(x=>x.code==='E-4020'),q:24},
+    {m:MASTER.find(x=>x.code==='P-5020'),q:4},
+  ].filter(p=>p.m);
+  $('genItems').innerHTML=picks.map((p,i)=>{
+    const amt=p.q*p.m.price;
+    return `<div class="gen-item" data-i="${i}"><span class="ck">✓</span>
+      <b style="flex:1">${esc(p.m.n)}</b>
+      <span class="tnum" style="color:var(--ink-3);font-size:12px">${p.q} ${esc(p.m.u)} × ${yen(p.m.price)}</span>
+      <span class="tnum" style="font-weight:800;min-width:84px;text-align:right">${yen(amt)}</span></div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,200));items[i].classList.add('in');}
+  // totals + 自動見積登録
+  const direct=picks.reduce((s,p)=>s+p.q*p.m.price,0);
+  const cost=picks.reduce((s,p)=>s+p.q*p.m.cost,0)+Math.round(direct*0.12*0.6);
+  const oh=Math.round(direct*0.12);const ex=direct+oh;const grand=Math.round(ex*1.1);
+  const gross=ex-cost;const mg=Math.round(gross/ex*1000)/10;
+  const no='EST-'+(2026000+estimates.length+1);
+  await new Promise(r=>setTimeout(r,250));
+  $('genFooter').style.display='block';
+  $('genFooter').innerHTML=`<div style="display:flex;flex-wrap:wrap;gap:18px;align-items:center;font-size:13px">
+    <div><span style="color:var(--ink-3)">直接工事費</span> <b class="tnum">${yen(direct)}</b></div>
+    <div><span style="color:var(--ink-3)">諸経費(12%)</span> <b class="tnum">${yen(oh)}</b></div>
+    <div><span style="color:var(--ink-3)">見積金額(税込)</span> <b class="tnum" style="color:var(--brand)">${yen(grand)}</b></div>
+    <div><span style="color:var(--ink-3)">想定粗利率</span> ${mgBadge(mg)}</div>
+    <button class="btn primary" id="aiToList" style="margin-left:auto">📋 この見積を一覧に登録</button></div>`;
+  $('aiToList').onclick=()=>{
+    estimates.push({no,name:'大分市中央町 店舗内装工事',cust:'おおいた商業ビル管理',trade:'内装仕上',grand,cost,mg,issue:new Date(),status:'review'});
+    showToast('AI積算の見積 '+no+' を一覧に登録しました');setTimeout(()=>go('list'),650);
+  };
+  btn.disabled=false;btn.textContent='⚡ もう一度積算する';
+  showToast('図面から '+items.length+' 項目を拾い出し、積算が完了しました');
+});
+
+/* ============ INIT ============ */
+(()=>{const dl=document.createElement('datalist');dl.id='cItemList';dl.innerHTML=MASTER.map(i=>`<option value="${esc(i.n)}">`).join('');document.body.appendChild(dl);})();
+renderCustSelect();renderLines();renderPaper();renderChips();renderMasterChips();renderDash();
+</script>
+</body>
+</html>

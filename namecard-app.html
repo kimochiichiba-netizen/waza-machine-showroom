@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜名刺管理マシン（名刺・人脈管理システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--violet:#7c5cff;--violet-soft:#efeaff;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:78px 1fr 56px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut / dept viz */
+.deptwrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.donut{width:128px;height:128px;border-radius:50%;flex-shrink:0;position:relative;background:var(--soft)}
+.donut::after{content:"";position:absolute;inset:20px;border-radius:50%;background:var(--card)}
+.donut .dc{position:absolute;inset:0;display:grid;place-items:center;text-align:center;z-index:1}
+.donut .dc b{font-size:22px;font-weight:900;line-height:1}
+.donut .dc span{font-size:10px;color:var(--ink-3);font-weight:700}
+.legend{flex:1;min-width:160px;display:flex;flex-direction:column;gap:8px}
+.legend .lr{display:flex;align-items:center;gap:9px;font-size:12.5px}
+.legend .lr .sw{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.legend .lr .ln{color:var(--ink-2);font-weight:600}
+.legend .lr .lv{margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.avtar{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px;flex-shrink:0}
+.namecell{display:flex;align-items:center;gap:11px}
+.namecell .nmt b{font-size:13px}
+.namecell .nmt span{display:block;font-size:11px;color:var(--ink-3)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.lead{background:var(--green-soft);color:var(--green)}
+.st.client{background:var(--brand-soft);color:var(--brand)}
+.st.partner{background:var(--violet-soft);color:var(--violet)}
+.st.cold{background:var(--soft);color:var(--ink-3)}
+.st.dup{background:var(--red-soft);color:var(--red)}
+.tag-pill{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:6px;background:var(--soft);color:var(--ink-2);margin-right:4px}
+
+/* company cards */
+.cgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:1080px){.cgrid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:680px){.cgrid{grid-template-columns:1fr}}
+.ccard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow);cursor:pointer;transition:all .15s}
+.ccard:hover{border-color:var(--brand);transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.ccard .ct{display:flex;align-items:center;gap:11px;margin-bottom:12px}
+.ccard .clogo{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;color:#fff;font-weight:900;font-size:16px;flex-shrink:0}
+.ccard h4{font-size:14.5px;font-weight:800;line-height:1.3}
+.ccard .cind{font-size:11px;color:var(--ink-3);font-weight:600}
+.ccard .crow{display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-top:1px solid var(--line);color:var(--ink-2)}
+.ccard .crow b{color:var(--ink);font-weight:800}
+
+/* network map */
+.netwrap{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.netcanvas{position:relative;height:440px;background:
+  radial-gradient(circle at 50% 50%,#fbfcfe,#f3f6fb);overflow:hidden}
+.netcanvas svg{position:absolute;inset:0;width:100%;height:100%}
+.node{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;transition:transform .2s;z-index:2}
+.node:hover{transform:translate(-50%,-50%) scale(1.08)}
+.node .nb{border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:900;box-shadow:0 6px 18px rgba(16,24,40,.18);border:3px solid #fff}
+.node .nl{font-size:11px;font-weight:700;color:var(--ink);background:rgba(255,255,255,.85);padding:1px 7px;border-radius:6px;white-space:nowrap}
+.node.center .nb{width:64px;height:64px;font-size:13px;background:linear-gradient(135deg,#0f1830,#2f6df0)}
+.node.hub .nb{width:50px;height:50px;font-size:18px}
+.node.leaf .nb{width:34px;height:34px;font-size:13px}
+.netedge{stroke:#c6d0e4;stroke-width:1.6;fill:none}
+.netedge.strong{stroke:var(--brand);stroke-width:2.4;opacity:.6}
+
+/* drawer */
+.drawer-bg{position:fixed;inset:0;background:rgba(15,24,48,.34);opacity:0;pointer-events:none;transition:opacity .25s;z-index:150}
+.drawer-bg.show{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;height:100vh;width:400px;max-width:92vw;background:var(--card);box-shadow:var(--shadow-lg);
+  transform:translateX(100%);transition:transform .28s cubic-bezier(.2,.8,.3,1);z-index:160;overflow-y:auto;padding:22px}
+.drawer.show{transform:none}
+.drawer .dx{position:absolute;top:16px;right:16px;border:1px solid var(--line-2);background:var(--card);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px}
+.dcard{background:linear-gradient(135deg,#1f2b45,#2f6df0);border-radius:14px;padding:20px;color:#fff;margin-bottom:18px;position:relative;overflow:hidden}
+.dcard::after{content:"";position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.08)}
+.dcard .dco{font-size:11px;opacity:.8;font-weight:600}
+.dcard .dnm{font-size:21px;font-weight:900;margin-top:3px}
+.dcard .dps{font-size:12.5px;opacity:.92;margin-top:2px}
+.drow{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}
+.drow .dk{width:74px;color:var(--ink-3);font-weight:700;font-size:12px;flex-shrink:0}
+.drow .dv{color:var(--ink);font-weight:600;word-break:break-all}
+
+/* create form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--brand)}
+.fg-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* business-card preview */
+.bcard{background:linear-gradient(135deg,#ffffff,#f4f7fc);border:1px solid var(--line);border-radius:14px;
+  box-shadow:var(--shadow);padding:26px 28px;position:relative;overflow:hidden;min-height:200px}
+.bcard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:linear-gradient(180deg,var(--brand),var(--sky))}
+.bcard .bco{font-size:13px;color:var(--ink-2);font-weight:700;letter-spacing:.02em}
+.bcard .bdept{font-size:11.5px;color:var(--ink-3);margin-top:2px}
+.bcard .bnm{font-size:26px;font-weight:900;margin:14px 0 2px;letter-spacing:.04em}
+.bcard .bnm small{font-size:12px;color:var(--ink-3);font-weight:600;letter-spacing:0}
+.bcard .bpos{font-size:13px;color:var(--brand-dk);font-weight:800}
+.bcard .binfo{margin-top:14px;font-size:12px;color:var(--ink-2);display:flex;flex-direction:column;gap:4px}
+.bcard .binfo div{display:flex;gap:8px}
+.bcard .binfo .bk{color:var(--ink-3);width:42px;flex-shrink:0}
+.scan-overlay{position:absolute;inset:0;background:linear-gradient(180deg,transparent,rgba(47,109,240,.16),transparent);
+  height:40%;animation:scanmove 1.1s ease-in-out infinite;display:none}
+.bcard.scanning .scan-overlay{display:block}
+@keyframes scanmove{0%{top:-40%}100%{top:100%}}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+
+/* before/after compare table (company enrich) */
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:8px}
+@media(max-width:680px){.cmp{grid-template-columns:1fr}}
+.cmp .ch{font-size:12px;font-weight:800;padding:9px 14px}
+.cmp .cb{background:#f3f4f7}.cmp .cb .ch{background:#e7e9ef;color:#6b7280}
+.cmp .ca{background:var(--green-soft)}.cmp .ca .ch{background:#cdeedd;color:var(--green)}
+.cmp .cl{display:flex;gap:8px;padding:8px 14px;font-size:12.5px;border-top:1px solid rgba(0,0,0,.04)}
+.cmp .cl .ck{width:78px;color:var(--ink-3);font-weight:700;flex-shrink:0}
+.cmp .cl .cv{color:var(--ink);font-weight:600}
+.cmp .ca .cv.new{color:var(--green);font-weight:800}
+.cmp .cl .cv.miss{color:var(--ink-3);font-style:italic}
+
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.dropzone{border:2px dashed var(--line-2);border-radius:14px;background:var(--card);padding:30px 22px;text-align:center;transition:all .15s;cursor:pointer}
+.dropzone:hover{border-color:var(--brand);background:var(--brand-soft)}
+.dropzone .dzi{font-size:34px}
+.dropzone .dzt{font-size:14px;font-weight:800;margin-top:8px}
+.dropzone .dzs{font-size:12px;color:var(--ink-3);margin-top:3px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">名刺管理マシン<small>技マシン｜名刺・人脈管理</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">📇</span>名刺一覧</a>
+      <a data-v="capture"><span class="i">📥</span>取込</a>
+      <a data-v="company"><span class="i">🏢</span>会社別</a>
+      <a data-v="network"><span class="i">🕸️</span>人脈マップ</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI読取・補完<span class="badge" id="navDup">0</span></a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。人物・会社名はすべてサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">名刺データの全体状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>月別の名刺登録数</h3><span class="more">過去6ヶ月</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>部署別の連絡先</h3><span class="more" onclick="go('list')">一覧へ</span></div>
+            <div class="pb"><div class="deptwrap"><div class="donut" id="deptDonut"><div class="dc"><b id="deptTotal">0</b><span>登録数</span></div></div><div class="legend" id="deptLegend"></div></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>業種別の登録割合</h3></div>
+            <div class="pb"><div class="bars" id="indBars"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="氏名・会社・部署・役職で検索"></div>
+          <div class="chips" id="typeChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>氏名</th><th>会社</th><th>部署 / 役職</th><th>連絡先</th><th>区分</th><th>名刺交換日</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- CAPTURE -->
+      <section class="view" id="v-capture">
+        <div class="create-grid">
+          <div>
+            <div class="dropzone" id="dz" style="margin-bottom:14px">
+              <div class="dzi">📸</div>
+              <div class="dzt">名刺をドラッグ＆ドロップ</div>
+              <div class="dzs">または クリックして撮影・ファイルを選択（JPG / PNG / PDF）</div>
+            </div>
+            <div class="formcard">
+              <div style="font-size:13px;font-weight:800;margin-bottom:12px">読み取り結果（AIが自動入力）</div>
+              <div class="fg-2">
+                <div class="fg"><label>氏名</label><input id="fName" placeholder="例：田中 太郎"></div>
+                <div class="fg"><label>ふりがな</label><input id="fKana" placeholder="例：たなか たろう"></div>
+              </div>
+              <div class="fg"><label>会社名</label><input id="fCo" placeholder="例：株式会社○○"></div>
+              <div class="fg-2">
+                <div class="fg"><label>部署</label><input id="fDept" placeholder="例：営業部"></div>
+                <div class="fg"><label>役職</label><input id="fPos" placeholder="例：課長"></div>
+              </div>
+              <div class="fg"><label>メール</label><input id="fMail" placeholder="例：taro@example.co.jp"></div>
+              <div class="fg-2">
+                <div class="fg"><label>電話</label><input id="fTel" placeholder="例：097-000-0000"></div>
+                <div class="fg"><label>区分</label><select id="fType">
+                  <option value="lead">見込み客</option><option value="client">取引先</option>
+                  <option value="partner">パートナー</option><option value="cold">名刺交換のみ</option>
+                </select></div>
+              </div>
+              <div class="aihint" id="capHint">✨ AIが名刺画像を読み取り、項目を自動入力しました</div>
+              <div class="linkrow" style="margin-top:14px">
+                <button class="btn primary" id="capSave" style="flex:1;justify-content:center">＋ この名刺を登録</button>
+                <button class="btn" id="capScan">📸 AIで読取（デモ）</button>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="bcard scanning" id="bcardPrev">
+              <div class="scan-overlay"></div>
+              <div class="bco" id="bvCo">株式会社サンプル商事</div>
+              <div class="bdept" id="bvDept">営業推進部</div>
+              <div class="bnm" id="bvNm">山田 花子<small id="bvKana"> / やまだ はなこ</small></div>
+              <div class="bpos" id="bvPos">マネージャー</div>
+              <div class="binfo">
+                <div><span class="bk">TEL</span><span id="bvTel">097-555-0123</span></div>
+                <div><span class="bk">MAIL</span><span id="bvMail">hanako@sample.co.jp</span></div>
+                <div><span class="bk">住所</span><span id="bvAddr">大分県大分市都町1-1-1</span></div>
+              </div>
+            </div>
+            <div style="font-size:11.5px;color:var(--ink-3);margin-top:12px;line-height:1.7">
+              💡 ヒント：「📸 AIで読取（デモ）」を押すと、名刺画像のスキャン演出のあと、左のフォームに氏名・会社・連絡先が自動で入ります。内容を確認して「登録」を押すと一覧に追加されます。
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- COMPANY -->
+      <section class="view" id="v-company">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="cq" placeholder="会社名・業種で検索"></div>
+        </div>
+        <div class="cgrid" id="coGrid"></div>
+      </section>
+
+      <!-- NETWORK -->
+      <section class="view" id="v-network">
+        <div class="toolbar">
+          <div style="font-size:12.5px;color:var(--ink-2)">中心の<b>自社（気持ち市場）</b>から、よく接点のある会社・キーパーソンへのつながりを可視化します。会社をクリックすると関係者を表示します。</div>
+        </div>
+        <div class="netwrap">
+          <div class="netcanvas" id="netCanvas">
+            <svg id="netSvg"></svg>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>キーパーソン（接点の多い順）</h3></div>
+            <div class="pb"><div class="bars" id="keyBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3 id="netDetailT">関係者</h3></div>
+            <div class="pb"><div class="acts" id="netDetail"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">名刺をAIでデータ化 ＋ 会社情報を自動補完</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">未処理の名刺画像 <b>12枚</b> をAIが読み取り、不足している会社情報（業種・住所・URL）まで自動で補います。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで一括データ化する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">1時間20分</div>
+              <ul>
+                <li>📇 名刺を1枚ずつ目視で確認</li>
+                <li>⌨️ 氏名・会社・連絡先を手入力</li>
+                <li>🔎 会社の業種・住所を都度ネット検索</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 画像から文字を自動でデータ化</li>
+                <li>🏢 会社情報をAIが自動で補完</li>
+                <li>🚫 重複名刺も自動で検出</li>
+              </ul>
+            </div>
+          </div>
+
+          <div style="margin-top:20px;font-size:13px;font-weight:800">会社情報の自動補完（Before → After）</div>
+          <div class="cmp" id="cmpBox">
+            <div class="cb">
+              <div class="ch">📇 名刺から読めた情報</div>
+              <div class="cl"><span class="ck">会社名</span><span class="cv">合同会社 おおいたケアサポート</span></div>
+              <div class="cl"><span class="ck">担当者</span><span class="cv">河野 美咲</span></div>
+              <div class="cl"><span class="ck">業種</span><span class="cv miss">不明</span></div>
+              <div class="cl"><span class="ck">住所</span><span class="cv miss">不明</span></div>
+              <div class="cl"><span class="ck">URL</span><span class="cv miss">不明</span></div>
+              <div class="cl"><span class="ck">従業員数</span><span class="cv miss">不明</span></div>
+            </div>
+            <div class="ca">
+              <div class="ch">⚡ AIが補完した情報</div>
+              <div class="cl"><span class="ck">会社名</span><span class="cv">合同会社 おおいたケアサポート</span></div>
+              <div class="cl"><span class="ck">担当者</span><span class="cv">河野 美咲</span></div>
+              <div class="cl"><span class="ck">業種</span><span class="cv new" id="afInd">—</span></div>
+              <div class="cl"><span class="ck">住所</span><span class="cv new" id="afAddr">—</span></div>
+              <div class="cl"><span class="ck">URL</span><span class="cv new" id="afUrl">—</span></div>
+              <div class="cl"><span class="ck">従業員数</span><span class="cv new" id="afEmp">—</span></div>
+            </div>
+          </div>
+
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ データ化された名刺</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- contact drawer -->
+<div class="drawer-bg" id="drawerBg"></div>
+<aside class="drawer" id="drawer">
+  <button class="dx" id="drawerX">✕</button>
+  <div id="drawerBody"></div>
+</aside>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const COLORS=['#2f6df0','#16b877','#e3941f','#7c5cff','#0ea5b7','#e24a4a','#d2538f','#5b7cfa'];
+const COMPANIES=[
+  {name:'大分中央クリニック',ind:'医療',addr:'大分県大分市中央町2-3-1',url:'oita-central-cl.example.jp',emp:'48名'},
+  {name:'さくら総合病院',ind:'医療',addr:'大分県大分市西大道3-12',url:'sakura-hosp.example.jp',emp:'320名'},
+  {name:'合同会社おおいたケアサポート',ind:'介護',addr:'大分県大分市駄原1-5-7',url:'oita-care.example.jp',emp:'22名'},
+  {name:'つくし介護センター',ind:'介護',addr:'大分県別府市北浜2-8',url:'tsukushi-kaigo.example.jp',emp:'35名'},
+  {name:'豊後おおいた青果株式会社',ind:'青果卸',addr:'大分県大分市公設市場1',url:'bungo-seika.example.jp',emp:'60名'},
+  {name:'都町商店会',ind:'小売',addr:'大分県大分市都町3-1',url:'miyakomachi.example.jp',emp:'—'},
+  {name:'別府温泉ホテル組合',ind:'宿泊',addr:'大分県別府市駅前町1-1',url:'beppu-hotel.example.jp',emp:'—'},
+  {name:'大分海鮮市場',ind:'飲食',addr:'大分県大分市府内町2-4',url:'oita-kaisen.example.jp',emp:'18名'},
+  {name:'みらい歯科医院',ind:'医療',addr:'大分県大分市明野東1-9',url:'mirai-dental.example.jp',emp:'12名'},
+  {name:'九州ロジスティクス株式会社',ind:'運送',addr:'大分県大分市鶴崎4-2',url:'kyushu-logi.example.jp',emp:'140名'},
+  {name:'大分建設工業株式会社',ind:'建設',addr:'大分県大分市顕徳町1-6',url:'oita-kensetsu.example.jp',emp:'85名'},
+  {name:'やまびこ農園',ind:'農業',addr:'大分県由布市湯布院町1-3',url:'yamabiko-farm.example.jp',emp:'9名'},
+];
+const SURNAME=['佐藤','鈴木','高橋','田中','渡辺','伊藤','中村','小林','加藤','吉田','山本','松本','井上','木村','林','清水','河野','後藤','岡田','長谷川'];
+const GNAME=['太郎','花子','健一','美咲','大輔','由美','翔','彩','直樹','恵','拓海','理沙','誠','千尋','亮','麻衣','慎一','奈々','和也','智子'];
+const KANA_S={'佐藤':'さとう','鈴木':'すずき','高橋':'たかはし','田中':'たなか','渡辺':'わたなべ','伊藤':'いとう','中村':'なかむら','小林':'こばやし','加藤':'かとう','吉田':'よしだ','山本':'やまもと','松本':'まつもと','井上':'いのうえ','木村':'きむら','林':'はやし','清水':'しみず','河野':'こうの','後藤':'ごとう','岡田':'おかだ','長谷川':'はせがわ'};
+const DEPTS=['営業部','総務部','経営企画部','医療連携室','看護部','購買部','現場管理部','人事部','広報部','情報システム部'];
+const POSITIONS=['代表取締役','取締役','部長','課長','係長','主任','マネージャー','担当','院長','事務長'];
+const TYPES=['lead','client','partner','cold','client','lead','client','cold'];
+const TYPELABEL={lead:'見込み客',client:'取引先',partner:'パートナー',cold:'名刺交換のみ',dup:'重複'};
+
+const TODAY=new Date();
+let SEED=4071;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+function colorFor(s){let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))&0xffff;return COLORS[h%COLORS.length];}
+
+let cards=[];
+(function seed(){
+  for(let i=0;i<46;i++){
+    const co=pick(COMPANIES);
+    const sn=pick(SURNAME),gn=pick(GNAME);
+    const name=sn+' '+gn;
+    const dept=pick(DEPTS),pos=pick(POSITIONS);
+    const mailUser=KANA_S[sn]+'.'+gn.charAt(0);
+    const issue=new Date(TODAY.getFullYear(),TODAY.getMonth()-Math.floor(rnd()*6),1+Math.floor(rnd()*27));
+    cards.push({
+      id:i+1,name,kana:KANA_S[sn]+' '+gn,co:co.name,ind:co.ind,dept,pos,
+      mail:mailUser+'@'+co.url, tel:'097-'+(500+Math.floor(rnd()*400))+'-'+(1000+Math.floor(rnd()*8999)),
+      type:pick(TYPES),date:issue,dup:false
+    });
+  }
+  // make 3 duplicates (same name+company already exists)
+  for(let k=0;k<3;k++){const base=cards[Math.floor(rnd()*cards.length)];
+    cards.push({...base,id:100+k,date:new Date(TODAY.getFullYear(),TODAY.getMonth(),1+Math.floor(rnd()*20)),dup:true,type:'lead'});}
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const fmtD=d=>(d.getFullYear()+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0'));
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function initials(name){const p=name.replace(/\s+/g,'');return p.charAt(0);}
+function typeBadge(t){return `<span class="st ${esc(t)}">${TYPELABEL[t]||t}</span>`;}
+function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','名刺データの全体状況'],list:['名刺一覧','登録済みの名刺・連絡先を管理します'],
+  capture:['取込','名刺を撮影・アップロードしてデータ化します'],company:['会社別','取引先・接点企業ごとにまとめて表示します'],
+  network:['人脈マップ','自社を中心とした会社・人のつながり'],ai:['AI読取・補完','名刺画像から自動でデータ化し会社情報を補います']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn primary" onclick="go(\'capture\')">＋ 名刺を取込</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI読取・補完</button><button class="btn primary" onclick="go(\'capture\')">＋ 名刺を取込</button>'
+    : v==='company'?'<button class="btn primary" onclick="go(\'capture\')">＋ 名刺を取込</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='company')renderCompany();
+  if(v==='network')renderNetwork();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const total=cards.filter(c=>!c.dup).length;
+  const tm=cards.filter(c=>thisMonth(c.date)&&!c.dup).length;
+  const dup=cards.filter(c=>c.dup).length;
+  const depts=[...new Set(cards.filter(c=>!c.dup).map(c=>c.dept))].length;
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','名刺 登録数',total+'<small>件</small>',[...new Set(cards.filter(c=>!c.dup).map(c=>c.co))].length+'社','up','+8% 前月比')}
+    ${kpi('#16b877','今月の追加',tm+'<small>件</small>','','up','取込 順調')}
+    ${kpi('#e24a4a','重複の可能性',dup+'<small>件</small>',' ',dup?'down':'up',dup?'要確認':'なし')}
+    ${kpi('#7c5cff','部署の種類',depts+'<small>部署</small>','','up','人脈 拡大中')}`;
+  $('navDup').textContent=dup;
+  // trend (monthly count)
+  const months=[];for(let k=5;k>=0;k--){months.push(new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1));}
+  const counts=months.map(m=>cards.filter(c=>!c.dup&&c.date.getMonth()===m.getMonth()&&c.date.getFullYear()===m.getFullYear()).length);
+  const mx=Math.max(...counts,1);
+  $('trendBars').innerHTML=months.map((m,i)=>`
+    <div class="bar-row"><span class="mlabel">${m.getFullYear()}/${m.getMonth()+1}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(counts[i]/mx*100)}"></div></div>
+      <span class="mval">${counts[i]}件</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // activity
+  const acts=[
+    {i:'📸',c:'#e6f8f0',t:'AI読取で 8枚の名刺をデータ化（読取精度98%）',m:'たった今'},
+    {i:'🏢',c:'#eaf1ff',t:'さくら総合病院 の会社情報を自動補完',m:'25分前'},
+    {i:'⚠️',c:'#fdeaea',t:'重複の可能性がある名刺が 3件 見つかりました',m:'1時間前'},
+    {i:'🤝',c:'#efeaff',t:'豊後おおいた青果株式会社 を「パートナー」に変更',m:'今日 10:20'},
+    {i:'📥',c:'#eaf1ff',t:'河野 美咲（おおいたケアサポート）を登録',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+  renderDept();renderIndBars();
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+function renderDept(){
+  const map={};cards.filter(c=>!c.dup).forEach(c=>{map[c.dept]=(map[c.dept]||0)+1;});
+  const arr=Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const total=arr.reduce((s,a)=>s+a[1],0);
+  $('deptTotal').textContent=cards.filter(c=>!c.dup).length;
+  let acc=0;const segs=arr.map((a,i)=>{const frac=a[1]/total;const start=acc*360;acc+=frac;const end=acc*360;return `${COLORS[i]} ${start}deg ${end}deg`;});
+  $('deptDonut').style.background='conic-gradient('+segs.join(',')+')';
+  $('deptLegend').innerHTML=arr.map((a,i)=>`<div class="lr"><span class="sw" style="background:${COLORS[i]}"></span><span class="ln">${esc(a[0])}</span><span class="lv">${a[1]}件</span></div>`).join('');
+}
+function renderIndBars(){
+  const map={};cards.filter(c=>!c.dup).forEach(c=>{map[c.ind]=(map[c.ind]||0)+1;});
+  const arr=Object.entries(map).sort((a,b)=>b[1]-a[1]);
+  const mx=Math.max(...arr.map(a=>a[1]),1);
+  $('indBars').innerHTML=arr.map(a=>`
+    <div class="bar-row"><span class="mlabel">${esc(a[0])}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0;background:linear-gradient(90deg,#7c5cff,#0ea5b7)" data-w="${Math.round(a[1]/mx*100)}"></div></div>
+      <span class="mval">${a[1]}件</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#indBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+}
+
+/* ============ LIST ============ */
+let filterType='all';
+function renderChips(){
+  const opts=[['all','すべて'],['lead','見込み客'],['client','取引先'],['partner','パートナー'],['cold','名刺交換のみ'],['dup','重複']];
+  $('typeChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterType?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('typeChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterType=c.dataset.s;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=cards.filter(c=>filterType==='all'?true:filterType==='dup'?c.dup:(c.type===filterType&&!c.dup))
+    .filter(c=>!q||(c.name+c.co+c.dept+c.pos+c.kana).toLowerCase().includes(q))
+    .sort((a,b)=>b.date-a.date);
+  $('listRows').innerHTML=rows.length?rows.map(c=>`<tr onclick="openCard(${c.id})">
+    <td><div class="namecell"><div class="avtar" style="background:${colorFor(c.co)}">${esc(initials(c.name))}</div>
+      <div class="nmt"><b>${esc(c.name)}</b><span>${esc(c.kana)}</span></div></div></td>
+    <td><b>${esc(c.co)}</b><div style="font-size:11px;color:var(--ink-3)">${esc(c.ind)}</div></td>
+    <td style="color:var(--ink-2)">${esc(c.dept)}<div style="font-size:11px;color:var(--ink-3)">${esc(c.pos)}</div></td>
+    <td style="color:var(--ink-2);font-size:12px">${esc(c.mail)}<div style="font-size:11px;color:var(--ink-3)">${esc(c.tel)}</div></td>
+    <td>${c.dup?typeBadge('dup'):typeBadge(c.type)}</td>
+    <td style="color:var(--ink-2)">${fmtD(c.date)}</td></tr>`).join('')
+    :'<tr><td colspan="6" class="empty-cell">該当する名刺がありません</td></tr>';
+}
+$('q').addEventListener('input',renderList);
+
+window.openCard=id=>{
+  const c=cards.find(x=>x.id===id);if(!c)return;
+  const co=COMPANIES.find(x=>x.name===c.co)||{};
+  $('drawerBody').innerHTML=`
+    <div class="dcard" style="background:linear-gradient(135deg,#1f2b45,${colorFor(c.co)})">
+      <div class="dco">${esc(c.co)}</div>
+      <div class="dnm">${esc(c.name)}</div>
+      <div class="dps">${esc(c.dept)} ／ ${esc(c.pos)}</div>
+    </div>
+    ${c.dup?'<div style="background:var(--red-soft);color:var(--red);font-size:12px;font-weight:700;padding:9px 12px;border-radius:9px;margin-bottom:12px">⚠️ この名刺は既存データと重複している可能性があります</div>':''}
+    <div class="drow"><span class="dk">ふりがな</span><span class="dv">${esc(c.kana)}</span></div>
+    <div class="drow"><span class="dk">区分</span><span class="dv">${c.dup?typeBadge('dup'):typeBadge(c.type)}</span></div>
+    <div class="drow"><span class="dk">メール</span><span class="dv">${esc(c.mail)}</span></div>
+    <div class="drow"><span class="dk">電話</span><span class="dv">${esc(c.tel)}</span></div>
+    <div class="drow"><span class="dk">業種</span><span class="dv">${esc(c.ind)}</span></div>
+    <div class="drow"><span class="dk">住所</span><span class="dv">${esc(co.addr||'—')}</span></div>
+    <div class="drow"><span class="dk">URL</span><span class="dv">${esc(co.url||'—')}</span></div>
+    <div class="drow"><span class="dk">交換日</span><span class="dv">${fmtD(c.date)}</span></div>
+    <div class="linkrow" style="margin-top:16px">
+      <button class="btn primary" style="flex:1;justify-content:center" onclick="showToast('${esc(c.mail)} 宛にメール作成（デモ）')">✉️ メール作成</button>
+      <button class="btn" onclick="closeDrawer()">閉じる</button>
+    </div>`;
+  $('drawer').classList.add('show');$('drawerBg').classList.add('show');
+};
+window.closeDrawer=()=>{$('drawer').classList.remove('show');$('drawerBg').classList.remove('show');};
+$('drawerX').onclick=closeDrawer;$('drawerBg').onclick=closeDrawer;
+
+/* ============ COMPANY ============ */
+function renderCompany(){
+  const q=($('cq').value||'').toLowerCase();
+  const data=COMPANIES.map(co=>{
+    const cs=cards.filter(c=>c.co===co.name&&!c.dup);
+    return {...co,count:cs.length,types:[...new Set(cs.map(c=>c.type))]};
+  }).filter(co=>co.count>0).filter(co=>!q||(co.name+co.ind).toLowerCase().includes(q))
+    .sort((a,b)=>b.count-a.count);
+  $('coGrid').innerHTML=data.length?data.map(co=>`
+    <div class="ccard" onclick="filterByCo('${esc(co.name)}')">
+      <div class="ct"><div class="clogo" style="background:${colorFor(co.name)}">${esc(co.name.replace(/^(株式会社|合同会社|有限会社)/,'').charAt(0))}</div>
+        <div><h4>${esc(co.name)}</h4><div class="cind">${esc(co.ind)}・${esc(co.emp)}</div></div></div>
+      <div class="crow"><span>登録された連絡先</span><b>${co.count}名</b></div>
+      <div class="crow"><span>所在地</span><b style="font-size:11.5px;font-weight:600">${esc(co.addr)}</b></div>
+      <div class="crow" style="border-bottom:0"><span>区分</span><b>${co.types.map(t=>`<span class="tag-pill">${TYPELABEL[t]}</span>`).join('')}</b></div>
+    </div>`).join('')
+    :'<div class="empty-cell" style="grid-column:1/-1">該当する会社がありません</div>';
+}
+$('cq').addEventListener('input',renderCompany);
+window.filterByCo=name=>{filterType='all';go('list');$('q').value=name;renderList();showToast(name+' の連絡先を表示しました');};
+
+/* ============ NETWORK ============ */
+let netSelected=null;
+function renderNetwork(){
+  const canvas=$('netCanvas');const svg=$('netSvg');
+  const W=canvas.clientWidth||900,H=440;
+  // top companies by contact count
+  const tops=COMPANIES.map(co=>({co,n:cards.filter(c=>c.co===co.name&&!c.dup).length}))
+    .filter(x=>x.n>0).sort((a,b)=>b.n-a.n).slice(0,7);
+  const cx=W/2,cy=H/2;
+  const R=Math.min(W,H)*0.36;
+  let nodesHtml='<div class="node center" style="left:'+cx+'px;top:'+cy+'px"><div class="nb">気持ち<br>市場</div><div class="nl">自社</div></div>';
+  let edges='';
+  tops.forEach((t,i)=>{
+    const ang=(i/tops.length)*Math.PI*2 - Math.PI/2;
+    const x=cx+Math.cos(ang)*R, y=cy+Math.sin(ang)*R*0.92;
+    const col=colorFor(t.co.name);
+    const strong=t.n>=5;
+    edges+=`<line class="netedge ${strong?'strong':''}" x1="${cx}" y1="${cy}" x2="${x}" y2="${y}"></line>`;
+    const short=t.co.name.replace(/^(株式会社|合同会社|有限会社)/,'').replace(/(株式会社|病院|クリニック)$/,'');
+    nodesHtml+=`<div class="node hub" style="left:${x}px;top:${y}px" onclick="selectCo('${esc(t.co.name)}')">
+      <div class="nb" style="background:${col}">${esc(short.charAt(0))}</div><div class="nl">${esc(short.slice(0,8))}（${t.n}）</div></div>`;
+    // leaves: up to 2 key persons
+    const persons=cards.filter(c=>c.co===t.co.name&&!c.dup).slice(0,2);
+    persons.forEach((p,j)=>{
+      const la=ang+(j===0?-0.34:0.34);const lr=R+58;
+      const lx=cx+Math.cos(la)*lr, ly=cy+Math.sin(la)*lr*0.92;
+      const lxc=Math.max(40,Math.min(W-40,lx)), lyc=Math.max(28,Math.min(H-28,ly));
+      edges+=`<line class="netedge" x1="${x}" y1="${y}" x2="${lxc}" y2="${lyc}"></line>`;
+      nodesHtml+=`<div class="node leaf" style="left:${lxc}px;top:${lyc}px" onclick="selectCo('${esc(t.co.name)}')">
+        <div class="nb" style="background:${col};opacity:.82">${esc(initials(p.name))}</div><div class="nl">${esc(p.name.split(' ')[0])}</div></div>`;
+    });
+  });
+  svg.innerHTML=edges;
+  canvas.querySelectorAll('.node').forEach(n=>n.remove());
+  canvas.insertAdjacentHTML('beforeend',nodesHtml);
+  // key persons bar (by company contact count as proxy for relationship)
+  const mx=Math.max(...tops.map(t=>t.n),1);
+  $('keyBars').innerHTML=tops.map(t=>{
+    const short=t.co.name.replace(/^(株式会社|合同会社|有限会社)/,'');
+    return `<div class="bar-row" style="grid-template-columns:120px 1fr 56px"><span class="mlabel" style="font-size:11.5px">${esc(short.slice(0,9))}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(t.n/mx*100)}"></div></div>
+      <span class="mval">${t.n}名</span></div>`;}).join('');
+  setTimeout(()=>document.querySelectorAll('#keyBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  if(!netSelected&&tops.length)netSelected=tops[0].co.name;
+  renderNetDetail();
+}
+window.selectCo=name=>{netSelected=name;renderNetDetail();showToast(name+' の関係者を表示しました');};
+function renderNetDetail(){
+  if(!netSelected)return;
+  $('netDetailT').textContent=netSelected.replace(/^(株式会社|合同会社|有限会社)/,'')+' の関係者';
+  const persons=cards.filter(c=>c.co===netSelected&&!c.dup);
+  $('netDetail').innerHTML=persons.length?persons.map(p=>`<div class="act" onclick="openCard(${p.id})" style="cursor:pointer">
+    <div class="ai" style="background:${colorFor(p.co)};color:#fff">${esc(initials(p.name))}</div>
+    <div><div class="at">${esc(p.name)}<span style="color:var(--ink-3);font-weight:600;font-size:11px"> ${esc(p.pos)}</span></div>
+    <div class="am">${esc(p.dept)} ・ ${esc(p.mail)}</div></div></div>`).join('')
+    :'<div class="empty-cell">関係者がいません</div>';
+}
+
+/* ============ CAPTURE ============ */
+const SAMPLE_CARDS=[
+  {name:'河野 美咲',kana:'こうの みさき',co:'合同会社おおいたケアサポート',dept:'介護サービス部',pos:'サービス提供責任者',mail:'kouno.m@oita-care.example.jp',tel:'097-512-3478',type:'lead',addr:'大分県大分市駄原1-5-7'},
+  {name:'松本 大輔',kana:'まつもと だいすけ',co:'さくら総合病院',dept:'医療連携室',pos:'課長',mail:'matsumoto.d@sakura-hosp.example.jp',tel:'097-588-2210',type:'client',addr:'大分県大分市西大道3-12'},
+  {name:'山本 千尋',kana:'やまもと ちひろ',co:'豊後おおいた青果株式会社',dept:'購買部',pos:'部長',mail:'yamamoto.c@bungo-seika.example.jp',tel:'097-534-9981',type:'partner',addr:'大分県大分市公設市場1'},
+];
+let sampleIdx=0;
+function fillPreviewFromForm(){
+  $('bvCo').textContent=$('fCo').value||'会社名';
+  $('bvDept').textContent=$('fDept').value||'部署';
+  $('bvNm').innerHTML=esc($('fName').value||'氏名')+(($('fKana').value)?`<small> / ${esc($('fKana').value)}</small>`:'');
+  $('bvPos').textContent=$('fPos').value||'役職';
+  $('bvTel').textContent=$('fTel').value||'—';
+  $('bvMail').textContent=$('fMail').value||'—';
+}
+['fName','fKana','fCo','fDept','fPos','fMail','fTel'].forEach(id=>$(id).addEventListener('input',fillPreviewFromForm));
+$('capScan').addEventListener('click',async()=>{
+  const btn=$('capScan');btn.disabled=true;btn.textContent='📸 読取中…';
+  $('bcardPrev').classList.add('scanning');
+  const s=SAMPLE_CARDS[sampleIdx%SAMPLE_CARDS.length];sampleIdx++;
+  // preview shows the "captured" card immediately
+  $('bvCo').textContent=s.co;$('bvDept').textContent=s.dept;
+  $('bvNm').innerHTML=esc(s.name)+`<small> / ${esc(s.kana)}</small>`;
+  $('bvPos').textContent=s.pos;$('bvTel').textContent=s.tel;$('bvMail').textContent=s.mail;$('bvAddr').textContent=s.addr;
+  await new Promise(r=>setTimeout(r,1300));
+  $('bcardPrev').classList.remove('scanning');
+  // typewriter-fill the form
+  $('fName').value=s.name;$('fKana').value=s.kana;$('fCo').value=s.co;$('fDept').value=s.dept;
+  $('fPos').value=s.pos;$('fMail').value=s.mail;$('fTel').value=s.tel;$('fType').value=s.type;
+  $('capHint').classList.add('show');setTimeout(()=>$('capHint').classList.remove('show'),2600);
+  btn.disabled=false;btn.textContent='📸 AIで読取（デモ）';
+  showToast('名刺を読み取りました（読取精度98%）');
+});
+$('dz').addEventListener('click',()=>$('capScan').click());
+$('capSave').addEventListener('click',()=>{
+  const name=$('fName').value.trim();const co=$('fCo').value.trim();
+  if(!name||!co){showToast('氏名と会社名を入力してください');return;}
+  const newCo={name:co,ind:'その他',addr:$('bvAddr').textContent||'—',url:'—',emp:'—'};
+  if(!COMPANIES.find(x=>x.name===co))COMPANIES.push(newCo);
+  const ind=(COMPANIES.find(x=>x.name===co)||{}).ind||'その他';
+  cards.push({id:Date.now(),name,kana:$('fKana').value,co,ind,dept:$('fDept').value||'—',pos:$('fPos').value||'—',
+    mail:$('fMail').value||'—',tel:$('fTel').value||'—',type:$('fType').value,date:new Date(),dup:false});
+  ['fName','fKana','fCo','fDept','fPos','fMail','fTel'].forEach(id=>$(id).value='');
+  fillPreviewFromForm();
+  showToast(esc(name)+' を名刺一覧に登録しました');
+  setTimeout(()=>go('list'),700);
+});
+
+/* ============ AI READ & ENRICH ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 処理中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent=Math.min(s,11)+'秒';},110);
+  await new Promise(r=>setTimeout(r,1200));
+  clearInterval(t);$('baAfterT').textContent='11秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // fill enrichment after-card
+  $('afInd').textContent='介護（訪問介護・居宅支援）';
+  $('afAddr').textContent='大分県大分市駄原1-5-7';
+  $('afUrl').textContent='oita-care.example.jp';
+  $('afEmp').textContent='22名';
+  // generate processed list (data-ize new cards)
+  const targets=[
+    {name:'河野 美咲',co:'合同会社おおいたケアサポート',ind:'介護',type:'lead'},
+    {name:'清水 直樹',co:'九州ロジスティクス株式会社',ind:'運送',type:'client'},
+    {name:'長谷川 彩',co:'やまびこ農園',ind:'農業',type:'partner'},
+    {name:'岡田 誠',co:'大分建設工業株式会社',ind:'建設',type:'lead'},
+    {name:'木村 麻衣',co:'みらい歯科医院',ind:'医療',type:'client'},
+    {name:'後藤 拓海',co:'大分海鮮市場',ind:'飲食',type:'cold'},
+  ];
+  $('genItems').innerHTML=targets.map((c,i)=>`<div class="gen-item" data-i="${i}">
+    <span class="ck">✓</span>
+    <div class="avtar" style="width:28px;height:28px;font-size:12px;background:${colorFor(c.co)}">${esc(initials(c.name))}</div>
+    <b style="flex:1">${esc(c.name)}</b><span style="color:var(--ink-3);font-size:12px">${esc(c.co)}</span>${typeBadge(c.type)}</div>`).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){
+    await new Promise(r=>setTimeout(r,180));items[i].classList.add('in');
+    const c=targets[i];
+    cards.push({id:Date.now()+i,name:c.name,kana:'',co:c.co,ind:c.ind,dept:'—',pos:'—',
+      mail:'—',tel:'—',type:c.type,date:new Date(),dup:false});
+  }
+  $('navDup').textContent=cards.filter(x=>x.dup).length;
+  btn.disabled=false;btn.textContent='⚡ もう一度処理';
+  showToast(items.length+'枚の名刺をデータ化し会社情報を補完しました');
+});
+
+/* ============ INIT ============ */
+renderChips();renderDash();fillPreviewFromForm();
+window.addEventListener('resize',()=>{if($('v-network').classList.contains('on'))renderNetwork();});
+</script>
+</body>
+</html>

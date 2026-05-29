@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜物件管理マシン（賃貸物件管理システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cff;--purple-soft:#efeaff;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.nav a .badge.amber{background:var(--amber)}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 92px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* occupancy donut */
+.donut-wrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.donut{width:128px;height:128px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;position:relative;
+  background:conic-gradient(var(--green) 0deg,var(--green) var(--occ-deg,0deg),var(--soft) var(--occ-deg,0deg));transition:--occ-deg 1s}
+.donut::after{content:"";position:absolute;width:88px;height:88px;border-radius:50%;background:var(--card)}
+.donut .dc{position:relative;text-align:center;z-index:1}
+.donut .dc b{font-size:24px;font-weight:900;display:block;line-height:1}
+.donut .dc span{font-size:10.5px;color:var(--ink-3);font-weight:700}
+.legend{display:flex;flex-direction:column;gap:9px;font-size:12.5px}
+.legend .lr{display:flex;align-items:center;gap:9px}
+.legend .lr .sw{width:11px;height:11px;border-radius:3px}
+.legend .lr b{font-weight:800;margin-left:auto;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.occ{background:var(--green-soft);color:var(--green)}
+.st.vac{background:var(--soft);color:var(--ink-3)}
+.st.notice{background:var(--brand-soft);color:var(--brand)}
+.st.arrears{background:var(--red-soft);color:var(--red)}
+.st.recruit{background:var(--amber-soft);color:var(--amber)}
+.st.paid{background:var(--green-soft);color:var(--green)}
+.st.due{background:var(--amber-soft);color:var(--amber)}
+.st.late{background:var(--red-soft);color:var(--red)}
+.st.done{background:var(--green-soft);color:var(--green)}
+.st.prog{background:var(--brand-soft);color:var(--brand)}
+.st.wait{background:var(--amber-soft);color:var(--amber)}
+
+/* mini bar for occupancy per building */
+.occbar{height:8px;border-radius:99px;background:var(--soft);overflow:hidden;width:90px;display:inline-block;vertical-align:middle}
+.occbar i{display:block;height:100%;background:linear-gradient(90deg,var(--green),#3fd99a)}
+
+/* create / form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,400px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--brand)}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* paper-like result card */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:30px 32px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.pv-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
+.pv-title{font-size:20px;font-weight:900;letter-spacing:.14em;color:var(--brand-dk);border-bottom:3px solid var(--brand-dk);padding-bottom:5px}
+.pv-meta{text-align:right;font-size:11.5px;color:var(--ink-2)}
+.pv-total{background:var(--soft);border-left:5px solid var(--brand-dk);border-radius:6px;padding:13px 18px;margin:16px 0;display:flex;justify-content:space-between;align-items:center}
+.pv-total .a{font-family:'Orbitron';font-size:23px;font-weight:700;color:var(--brand-dk)}
+.assess-empty{text-align:center;color:var(--ink-3);padding:40px 10px}
+.assess-empty .orb{margin-bottom:14px}
+.range{display:flex;align-items:flex-end;gap:14px;margin:10px 0 4px}
+.range .lo,.range .hi{font-size:13px;color:var(--ink-3);font-weight:700}
+.range .mid{flex:1;text-align:center}
+.range .mid b{font-family:'Orbitron';font-size:30px;color:var(--brand-dk);display:block;line-height:1}
+.range .mid span{font-size:10.5px;color:var(--ink-3);font-weight:700}
+.range-track{height:8px;border-radius:99px;background:linear-gradient(90deg,#cfe0ff,var(--brand),#cfe0ff);position:relative;margin:8px 0 18px}
+.range-track i{position:absolute;top:50%;transform:translate(-50%,-50%);width:16px;height:16px;border-radius:50%;background:#fff;border:3px solid var(--brand-dk);box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.factor{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:12.5px}
+.factor .fi{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;font-size:13px;flex-shrink:0}
+.factor .fv{margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums}
+.factor .fv.up{color:var(--green)}.factor .fv.down{color:var(--red)}
+
+/* AI generate (before/after) */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.sub-ink{color:var(--ink-2)}
+.tag-type{font-size:11px;font-weight:800;padding:3px 9px;border-radius:6px;background:var(--soft);color:var(--ink-2)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">物件管理マシン<small>技マシン｜賃貸管理</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="props"><span class="i">🏢</span>物件一覧</a>
+      <a data-v="occ"><span class="i">🚪</span>入居状況</a>
+      <a data-v="rent"><span class="i">💴</span>家賃管理<span class="badge" id="navArrears">0</span></a>
+      <a data-v="repair"><span class="i">🔧</span>修繕<span class="badge amber" id="navRepair">0</span></a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI査定</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>気持ち不動産管理</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。物件・入居者・金額はすべてサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">2026年5月の管理状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>月次の家賃収入推移</h3><span class="more">過去6ヶ月</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>入居状況サマリー</h3></div>
+            <div class="pb"><div class="donut-wrap">
+              <div class="donut" id="occDonut"><div class="dc"><b id="occPct">0%</b><span>入居率</span></div></div>
+              <div class="legend" id="occLegend"></div>
+            </div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>対応が必要なタスク</h3></div>
+            <div class="pb"><div class="acts" id="tasks"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PROPERTIES -->
+      <section class="view" id="v-props">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="qProp" placeholder="物件名・住所・エリアで検索"></div>
+          <div class="chips" id="propChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>物件名</th><th>種別</th><th>エリア</th><th class="r">戸数</th><th>入居率</th><th class="r">月額賃料(満室時)</th></tr></thead>
+          <tbody id="propRows"></tbody>
+        </table>
+      </section>
+
+      <!-- OCCUPANCY -->
+      <section class="view" id="v-occ">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="qOcc" placeholder="部屋番号・物件・入居者名で検索"></div>
+          <div class="chips" id="occChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>物件 / 部屋</th><th>間取り</th><th>入居者</th><th class="r">賃料</th><th>契約更新日</th><th>状態</th></tr></thead>
+          <tbody id="occRows"></tbody>
+        </table>
+      </section>
+
+      <!-- RENT -->
+      <section class="view" id="v-rent">
+        <div class="kpis" id="rentKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>今月の家賃入金状況</h3>
+            <button class="btn green" id="autoMatch" style="margin-left:auto">🔗 銀行データで自動消込</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>物件 / 部屋</th><th>入居者</th><th class="r">家賃</th><th>引落日</th><th>状態</th><th></th></tr></thead>
+              <tbody id="rentRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- REPAIR -->
+      <section class="view" id="v-repair">
+        <div class="create-grid">
+          <div class="formcard">
+            <div style="font-size:14px;font-weight:800;margin-bottom:14px">🔧 修繕依頼を登録</div>
+            <div class="fg"><label>物件 / 部屋</label><select id="rPlace"></select></div>
+            <div class="fg"><label>区分</label><select id="rCat">
+              <option>給排水・水まわり</option><option>エアコン・空調</option><option>建具・ドア・鍵</option>
+              <option>電気・照明</option><option>外壁・共用部</option><option>その他</option></select></div>
+            <div class="fg"><label>内容</label><input id="rDesc" placeholder="例：浴室の蛇口から水漏れ"></div>
+            <div class="fg-row">
+              <div class="fg"><label>緊急度</label><select id="rUrg"><option>低</option><option selected>中</option><option>高（至急）</option></select></div>
+              <div class="fg"><label>概算費用(円)</label><input id="rCost" type="number" min="0" placeholder="例：18000"></div>
+            </div>
+            <div class="linkrow" style="margin-top:6px">
+              <button class="btn primary" id="rAdd" style="flex:1;justify-content:center">＋ 依頼を登録</button>
+              <button class="btn" id="rSample">サンプル</button>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>修繕依頼の一覧</h3>
+              <span class="more" id="repairCount"></span></div>
+            <div class="pb" style="padding:0">
+              <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+                <thead><tr><th>物件 / 部屋</th><th>区分・内容</th><th>緊急度</th><th class="r">費用</th><th>状態</th><th></th></tr></thead>
+                <tbody id="repairRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI ASSESS -->
+      <section class="view" id="v-ai">
+        <div class="create-grid">
+          <div class="formcard">
+            <div style="font-size:14px;font-weight:800;margin-bottom:4px">⚡ AI賃料査定 ＆ 空室対策</div>
+            <div style="font-size:12px;color:var(--ink-3);margin-bottom:14px">条件を入れると、相場から適正賃料とBefore/Afterの改善案をAIが提案します。</div>
+            <div class="fg"><label>エリア</label><select id="aArea">
+              <option>大分市中心部（都町・府内）</option><option>大分市郊外（明野・大在）</option>
+              <option>別府市</option><option>大分大学周辺（学生向け）</option></select></div>
+            <div class="fg-row">
+              <div class="fg"><label>間取り</label><select id="aPlan">
+                <option>1K</option><option>1DK</option><option selected>1LDK</option><option>2DK</option><option>2LDK</option><option>3LDK</option></select></div>
+              <div class="fg"><label>専有面積(㎡)</label><input id="aSize" type="number" min="10" value="42"></div>
+            </div>
+            <div class="fg-row">
+              <div class="fg"><label>築年数</label><input id="aAge" type="number" min="0" value="12"></div>
+              <div class="fg"><label>駅徒歩(分)</label><input id="aWalk" type="number" min="0" value="8"></div>
+            </div>
+            <div class="fg"><label>現在の募集賃料(円)</label><input id="aCur" type="number" min="0" value="62000"></div>
+            <button class="btn primary" id="aRun" style="width:100%;justify-content:center;margin-top:4px">⚡ AIで査定する</button>
+          </div>
+          <div>
+            <div class="ai-stage" style="margin-bottom:16px">
+              <div style="display:flex;align-items:center;gap:14px">
+                <div class="orb" id="aiOrb">🤖</div>
+                <div><div style="font-size:15px;font-weight:900">査定のスピード比較</div>
+                <div style="font-size:12px;color:var(--ink-3)">不動産会社への相見積もり・近隣調査が、AIなら数秒で。</div></div>
+              </div>
+              <div class="ba">
+                <div class="col before">
+                  <span class="ct">😓 今までの手作業</span>
+                  <div class="big">3日〜1週間</div>
+                  <ul>
+                    <li>🏃 不動産会社に査定を依頼</li>
+                    <li>📞 複数社と電話・来店調整</li>
+                    <li>📝 近隣の募集事例を手で収集</li>
+                  </ul>
+                </div>
+                <div class="arrow">→</div>
+                <div class="col after">
+                  <span class="ct">⚡ 技マシン</span>
+                  <div class="big" id="baAfterT">—</div>
+                  <ul id="baAfterList" style="opacity:.4">
+                    <li>🤖 近隣相場データを自動分析</li>
+                    <li>📊 適正賃料レンジを即算出</li>
+                    <li>💡 空室対策の改善案まで提案</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div class="paper" id="aResult">
+              <div class="assess-empty">
+                <div class="orb">🤖</div>
+                左の条件を入れて「AIで査定する」を押すと、ここに結果が表示されます。
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const TODAY=new Date();
+function ym(d){return (d.getMonth()+1)}
+function fmtDL(d){return d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate();}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+let SEED=4079;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+/* ============ DATA ============ */
+const PROP_TYPES=['アパート','マンション','戸建て','テラスハウス'];
+const AREAS=['大分市都町','大分市府内町','大分市明野','大分市大在','別府市北浜','大分市賀来'];
+const PLANS=['1K','1DK','1LDK','2DK','2LDK','3LDK'];
+const TENANT_LAST=['佐藤','田中','鈴木','高橋','渡辺','伊藤','山本','中村','小林','加藤','吉田','松本'];
+const STAFF=['佐藤(管理)','田中(管理)','鈴木(営業)','高橋(営業)'];
+
+// build properties
+const PROPS=[
+  {name:'グランメゾン都町',type:'マンション',area:'大分市都町',units:12,rentBase:78000,builtAge:7},
+  {name:'コーポさくら明野',type:'アパート',area:'大分市明野',units:8,rentBase:54000,builtAge:18},
+  {name:'リバーサイド府内',type:'マンション',area:'大分市府内町',units:16,rentBase:86000,builtAge:5},
+  {name:'パークハイツ大在',type:'アパート',area:'大分市大在',units:10,rentBase:48000,builtAge:24},
+  {name:'別府ベイサイドコート',type:'マンション',area:'別府市北浜',units:14,rentBase:69000,builtAge:11},
+  {name:'メゾン賀来テラス',type:'テラスハウス',area:'大分市賀来',units:6,rentBase:92000,builtAge:9},
+  {name:'サンライズ都町',type:'アパート',area:'大分市都町',units:9,rentBase:61000,builtAge:15},
+  {name:'シティタワー府内',type:'マンション',area:'大分市府内町',units:20,rentBase:98000,builtAge:3},
+];
+
+// build units (rooms)
+const OCC_STATUSES=['occ','occ','occ','occ','vac','occ','notice','occ','arrears','occ'];
+let rooms=[];
+PROPS.forEach((p,pi)=>{
+  for(let u=0;u<p.units;u++){
+    const floor=Math.floor(u/4)+1;
+    const no=floor+String(101+(u%4)).slice(1); // e.g. 101,102
+    const roomNo=floor+'0'+((u%4)+1);
+    const plan=pick(PLANS);
+    const rentVar=Math.round((p.rentBase+(rnd()*16000-8000))/1000)*1000;
+    let stt=pick(OCC_STATUSES);
+    const tenant=(stt==='vac')?null:pick(TENANT_LAST)+' '+pick(['太郎','花子','健一','美咲','大輔','由美','翔','彩','直樹','恵'])+' 様';
+    // renewal date within +/- 1 year
+    const renew=new Date(TODAY.getFullYear()+ (rnd()>0.5?1:0), Math.floor(rnd()*12), 1+Math.floor(rnd()*27));
+    rooms.push({pi,prop:p.name,room:roomNo,plan,size:Math.round(22+rnd()*40),rent:rentVar,status:stt,tenant,renew,
+      paid: stt==='arrears'?'late':(rnd()>0.18?'paid':(rnd()>0.4?'due':'late'))});
+  }
+});
+
+// repairs
+let repairs=[
+  {place:'グランメゾン都町 302',cat:'給排水・水まわり',desc:'キッチン下の配管から水漏れ',urg:'高（至急）',cost:24000,status:'prog'},
+  {place:'コーポさくら明野 105',cat:'エアコン・空調',desc:'リビングのエアコンが効かない',urg:'中',cost:42000,status:'wait'},
+  {place:'パークハイツ大在 201',cat:'建具・ドア・鍵',desc:'玄関ドアの鍵が回りにくい',urg:'中',cost:8000,status:'done'},
+  {place:'別府ベイサイドコート 402',cat:'外壁・共用部',desc:'共用廊下のLED照明が点滅',urg:'低',cost:6000,status:'wait'},
+  {place:'リバーサイド府内 504',cat:'電気・照明',desc:'浴室換気扇から異音',urg:'中',cost:15000,status:'done'},
+];
+
+/* ============ ROUTING ============ */
+const TITLES={
+  dash:['ダッシュボード','2026年'+ym(TODAY)+'月の管理状況'],
+  props:['物件一覧','管理中の物件を一覧で確認します'],
+  occ:['入居状況','部屋ごとの入居・空室を管理します'],
+  rent:['家賃管理','家賃の入金・滞納を管理します'],
+  repair:['修繕','修繕依頼の受付と進捗を管理します'],
+  ai:['AI査定','相場から適正賃料と空室対策を提案します']
+};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI査定</button><button class="btn primary" onclick="go(\'occ\')">🚪 入居状況へ</button>'
+    : v==='occ'?'<button class="btn primary" onclick="go(\'ai\')">⚡ 空室をAI査定</button>'
+    : v==='props'?'<button class="btn primary" onclick="go(\'occ\')">🚪 入居状況へ</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='props')renderProps();
+  if(v==='occ')renderOcc();
+  if(v==='rent')renderRent();
+  if(v==='repair')renderRepair();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function occRate(){const t=rooms.length;const o=rooms.filter(r=>r.status!=='vac').length;return {t,o,vac:t-o,pct:Math.round(o/t*100)};}
+function renderDash(){
+  const o=occRate();
+  const monthIncome=rooms.filter(r=>r.status!=='vac').reduce((s,r)=>s+r.rent,0);
+  const arrears=rooms.filter(r=>r.status==='arrears'||r.paid==='late');
+  const arrSum=arrears.reduce((s,r)=>s+r.rent,0);
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','管理戸数',o.t+'<small> 戸</small>',PROPS.length+'棟','up','前月比 +1棟')}
+    ${kpi('#16b877','入居率',o.pct+'<small>%</small>','空室 '+o.vac+'戸','up',o.pct>=90?'良好':'要対策')}
+    ${kpi('#e24a4a','滞納',arrears.length+'<small> 件</small>',yen(arrSum),arrears.length?'down':'up',arrears.length?'要督促':'なし')}
+    ${kpi('#e3941f','今月の家賃収入',yen(monthIncome),'満室想定比 '+o.pct+'%','warn','回収中')}`;
+  // trend (income, climbing toward current)
+  const months=[];for(let k=5;k>=0;k--){const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1);months.push(d);}
+  const factors=[0.90,0.92,0.93,0.96,0.97,1.0];
+  const sums=factors.map(f=>Math.round(monthIncome*f/1000)*1000);
+  const mx=Math.max(...sums,1);
+  $('trendBars').innerHTML=months.map((m,i)=>`
+    <div class="bar-row"><span class="mlabel">${m.getMonth()+1}月</span>
+      <div class="bar-track"><div class="bar-fill" data-w="${Math.round(sums[i]/mx*100)}"></div></div>
+      <span class="mval">${yen(sums[i])}</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // donut
+  const notice=rooms.filter(r=>r.status==='notice').length;
+  $('occPct').textContent=o.pct+'%';
+  const dn=$('occDonut');dn.style.setProperty('--occ-deg','0deg');
+  setTimeout(()=>dn.style.setProperty('--occ-deg',(o.pct/100*360)+'deg'),80);
+  $('occLegend').innerHTML=`
+    <div class="lr"><span class="sw" style="background:var(--green)"></span>入居中<b>${o.o-notice}戸</b></div>
+    <div class="lr"><span class="sw" style="background:var(--brand)"></span>退去予定<b>${notice}戸</b></div>
+    <div class="lr"><span class="sw" style="background:var(--soft);border:1px solid var(--line-2)"></span>空室<b>${o.vac}戸</b></div>
+    <div class="lr"><span class="sw" style="background:var(--red)"></span>滞納<b>${rooms.filter(r=>r.status==='arrears').length}戸</b></div>`;
+  // activity
+  const acts=[
+    {i:'💴',c:'#e6f8f0',t:'グランメゾン都町 201 より家賃入金（¥81,000）',m:'12分前'},
+    {i:'🚪',c:'#eaf1ff',t:'リバーサイド府内 504 で新規入居の契約が成立',m:'2時間前'},
+    {i:'⚡',c:'#e6f8f0',t:'AI査定で空室3戸の適正賃料を算出（平均 +4,000円）',m:'今日 10:22'},
+    {i:'🔧',c:'#fdf3e2',t:'コーポさくら明野 105 のエアコン修理を業者へ手配',m:'今日 9:05'},
+    {i:'⚠️',c:'#fdeaea',t:'パークハイツ大在 201 の家賃が未入金です',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${a.m}</div></div></div>`).join('');
+  // tasks
+  const vacList=rooms.filter(r=>r.status==='vac').slice(0,2);
+  const arrList=arrears.slice(0,2);
+  const noticeList=rooms.filter(r=>r.status==='notice').slice(0,1);
+  const tasks=[
+    ...arrList.map(r=>({i:'💴',c:'#fdeaea',t:r.prop+' '+r.room+' の家賃を督促',m:'滞納 '+yen(r.rent)})),
+    ...vacList.map(r=>({i:'📣',c:'#fdf3e2',t:r.prop+' '+r.room+' の入居者を募集',m:r.plan+' / '+yen(r.rent)})),
+    ...noticeList.map(r=>({i:'🚪',c:'#eaf1ff',t:r.prop+' '+r.room+' の退去立会いを調整',m:'退去予定'})),
+    {i:'🔧',c:'#fdf3e2',t:'修繕依頼 '+repairs.filter(x=>x.status!=='done').length+'件が対応待ち',m:'修繕タブで確認'},
+  ];
+  $('tasks').innerHTML=tasks.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ PROPERTIES ============ */
+let propFilter='all';
+function renderPropChips(){
+  const opts=[['all','すべて'],['マンション','マンション'],['アパート','アパート'],['戸建て','戸建て'],['テラスハウス','テラスハウス']];
+  $('propChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===propFilter?'on':''}" data-s="${esc(o[0])}">${esc(o[1])}</button>`).join('');
+  $('propChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{propFilter=c.dataset.s;renderPropChips();renderProps();});
+}
+function renderProps(){
+  const q=($('qProp').value||'').toLowerCase();
+  const rows=PROPS.filter(p=>propFilter==='all'||p.type===propFilter)
+    .filter(p=>!q||(p.name+p.area+p.type).toLowerCase().includes(q));
+  $('propRows').innerHTML=rows.length?rows.map(p=>{
+    const rm=rooms.filter(r=>r.prop===p.name);
+    const occN=rm.filter(r=>r.status!=='vac').length;
+    const pct=Math.round(occN/rm.length*100);
+    const fullRent=rm.reduce((s,r)=>s+r.rent,0);
+    return `<tr onclick="go('occ')"><td><b>${esc(p.name)}</b></td>
+      <td><span class="tag-type">${esc(p.type)}</span></td>
+      <td class="sub-ink">${esc(p.area)}</td>
+      <td class="r tnum">${rm.length}</td>
+      <td><span class="occbar"><i style="width:${pct}%"></i></span> <b class="tnum" style="font-size:12px">${pct}%</b></td>
+      <td class="r tnum"><b>${yen(fullRent)}</b></td></tr>`;
+  }).join(''):'<tr><td colspan="6" class="empty-cell">該当する物件がありません</td></tr>';
+}
+
+/* ============ OCCUPANCY ============ */
+let occFilter='all';
+const OCC_LABEL={occ:'入居中',vac:'空室',notice:'退去予定',arrears:'滞納'};
+function occBadge(s){return `<span class="st ${s}">${OCC_LABEL[s]}</span>`;}
+function renderOccChips(){
+  const opts=[['all','すべて'],['occ','入居中'],['vac','空室'],['notice','退去予定'],['arrears','滞納']];
+  $('occChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===occFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('occChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{occFilter=c.dataset.s;renderOccChips();renderOcc();});
+}
+function renderOcc(){
+  const q=($('qOcc').value||'').toLowerCase();
+  const rows=rooms.filter(r=>occFilter==='all'||r.status===occFilter)
+    .filter(r=>!q||((r.prop+r.room+(r.tenant||'')).toLowerCase().includes(q)));
+  $('occRows').innerHTML=rows.length?rows.map(r=>`<tr onclick="${r.status==='vac'?"go('ai')":''}">
+    <td><b>${esc(r.prop)}</b><div class="am" style="color:var(--ink-3);font-size:11px">${esc(r.room)}号室 / ${r.size}㎡</div></td>
+    <td><span class="tag-type">${esc(r.plan)}</span></td>
+    <td class="sub-ink">${r.tenant?esc(r.tenant):'<span style="color:var(--ink-3)">― 募集中 ―</span>'}</td>
+    <td class="r tnum"><b>${yen(r.rent)}</b></td>
+    <td class="sub-ink">${r.status==='vac'?'―':fmtDL(r.renew)}</td>
+    <td>${occBadge(r.status)}</td></tr>`).join(''):'<tr><td colspan="6" class="empty-cell">該当する部屋がありません</td></tr>';
+}
+$('qOcc')&&$('qOcc').addEventListener('input',renderOcc);
+
+/* ============ RENT ============ */
+const PAID_LABEL={paid:'入金済',due:'引落待ち',late:'未入金'};
+function paidBadge(s){return `<span class="st ${s}">${PAID_LABEL[s]}</span>`;}
+function renderRent(){
+  const active=rooms.filter(r=>r.status!=='vac');
+  const total=active.reduce((s,r)=>s+r.rent,0);
+  const paidSum=active.filter(r=>r.paid==='paid').reduce((s,r)=>s+r.rent,0);
+  const late=active.filter(r=>r.paid==='late');
+  const lateSum=late.reduce((s,r)=>s+r.rent,0);
+  $('rentKpis').innerHTML=`
+    ${kpi('#2f6df0','今月の請求額',yen(total),active.length+'件','up','満室想定')}
+    ${kpi('#16b877','入金済',yen(paidSum),Math.round(paidSum/total*100)+'%','up','回収順調')}
+    ${kpi('#e24a4a','未入金',yen(lateSum),late.length+'件',late.length?'down':'up',late.length?'要督促':'なし')}
+    ${kpi('#e3941f','回収率',Math.round(paidSum/total*100)+'<small>%</small>','','up','+3pt')}`;
+  const order={late:0,due:1,paid:2};
+  $('rentRows').innerHTML=active.slice().sort((a,b)=>order[a.paid]-order[b.paid]).map(r=>{
+    const day=27;
+    return `<tr><td><b>${esc(r.prop)}</b> <span class="sub-ink">${esc(r.room)}</span></td>
+      <td class="sub-ink">${r.tenant?esc(r.tenant):'―'}</td>
+      <td class="r tnum"><b>${yen(r.rent)}</b></td>
+      <td class="sub-ink">毎月${day}日</td>
+      <td>${paidBadge(r.paid)}</td>
+      <td class="r">${r.paid!=='paid'?`<button class="btn green" style="padding:6px 12px" onclick="markPaid('${esc(r.prop)}','${esc(r.room)}')">消込</button>`:'<span style="color:var(--ink-3);font-size:12px">―</span>'}</td></tr>`;
+  }).join('');
+  updateArrearsBadge();
+}
+window.markPaid=(prop,room)=>{const r=rooms.find(x=>x.prop===prop&&x.room===room);if(r){r.paid='paid';if(r.status==='arrears')r.status='occ';renderRent();showToast(prop+' '+room+' を入金済にしました');}};
+$('autoMatch')&&$('autoMatch').addEventListener('click',async()=>{
+  const btn=$('autoMatch');btn.textContent='🔗 照合中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,900));
+  let n=0;rooms.filter(r=>r.status!=='vac'&&r.paid!=='paid').forEach(r=>{if(rnd()>0.35){r.paid='paid';if(r.status==='arrears')r.status='occ';n++;}});
+  btn.textContent='🔗 銀行データで自動消込';btn.disabled=false;
+  renderRent();showToast('銀行データと照合し '+n+'件を自動で消込しました');
+});
+
+/* ============ REPAIR ============ */
+const REP_LABEL={done:'対応完了',prog:'対応中',wait:'受付済'};
+function repBadge(s){return `<span class="st ${s}">${REP_LABEL[s]}</span>`;}
+const URG_COLOR={'低':'var(--ink-2)','中':'var(--amber)','高（至急）':'var(--red)'};
+function renderRepairPlaces(){
+  const opts=[];rooms.filter(r=>r.status!=='vac').forEach(r=>opts.push(r.prop+' '+r.room));
+  rooms.filter(r=>r.status==='vac').forEach(r=>opts.push(r.prop+' '+r.room+'（空室）'));
+  $('rPlace').innerHTML=opts.map(o=>`<option>${esc(o)}</option>`).join('');
+}
+function renderRepair(){
+  $('repairCount').textContent='全'+repairs.length+'件 / 未完了'+repairs.filter(r=>r.status!=='done').length+'件';
+  $('repairRows').innerHTML=repairs.length?repairs.map((r,i)=>`<tr>
+    <td><b>${esc(r.place)}</b></td>
+    <td><span class="tag-type">${esc(r.cat)}</span><div class="am" style="color:var(--ink-3);font-size:11px;margin-top:3px">${esc(r.desc)}</div></td>
+    <td><span style="font-weight:800;color:${URG_COLOR[r.urg]||'var(--ink-2)'}">${esc(r.urg)}</span></td>
+    <td class="r tnum">${yen(r.cost)}</td>
+    <td>${repBadge(r.status)}</td>
+    <td class="r">${r.status!=='done'?`<button class="btn green" style="padding:6px 12px" onclick="repNext(${i})">${r.status==='wait'?'着手':'完了'}</button>`:'<span style="color:var(--ink-3);font-size:12px">✓</span>'}</td></tr>`).join('')
+    :'<tr><td colspan="6" class="empty-cell">修繕依頼はありません 🎉</td></tr>';
+  updateRepairBadge();
+}
+window.repNext=i=>{const r=repairs[i];if(!r)return;r.status=r.status==='wait'?'prog':'done';renderRepair();showToast(r.place+' の修繕を「'+REP_LABEL[r.status]+'」にしました');};
+$('rAdd')&&$('rAdd').addEventListener('click',()=>{
+  const place=$('rPlace').value,desc=$('rDesc').value.trim();
+  if(!desc){showToast('内容を入力してください');return;}
+  repairs.unshift({place,cat:$('rCat').value,desc,urg:$('rUrg').value,cost:+$('rCost').value||0,status:'wait'});
+  $('rDesc').value='';$('rCost').value='';
+  renderRepair();showToast('修繕依頼を登録しました');
+});
+$('rSample')&&$('rSample').addEventListener('click',()=>{
+  $('rCat').value='給排水・水まわり';$('rDesc').value='トイレの水が止まらない';$('rUrg').value='高（至急）';$('rCost').value='13000';
+});
+
+/* ============ AI ASSESS ============ */
+$('aRun')&&$('aRun').addEventListener('click',async()=>{
+  const area=$('aArea').value,plan=$('aPlan').value;
+  const size=+$('aSize').value||30,age=+$('aAge').value||0,walk=+$('aWalk').value||10,cur=+$('aCur').value||0;
+  const btn=$('aRun');btn.disabled=true;btn.textContent='⚡ 査定中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,6);},120);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);$('baAfterT').textContent='6秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+
+  // estimate (deterministic, plausible)
+  const planBase={'1K':38000,'1DK':46000,'1LDK':58000,'2DK':62000,'2LDK':74000,'3LDK':88000}[plan]||55000;
+  const areaAdj={'大分市中心部（都町・府内）':1.12,'大分市郊外（明野・大在）':0.92,'別府市':0.98,'大分大学周辺（学生向け）':1.0}[area]||1;
+  let est=planBase*areaAdj;
+  est += (size-35)*450;             // size effect
+  est -= age*650;                   // age depreciation
+  est -= Math.max(0,(walk-5))*900;  // distance penalty
+  est = Math.max(28000, est);
+  const mid=Math.round(est/1000)*1000;
+  const lo=Math.round(mid*0.94/1000)*1000;
+  const hi=Math.round(mid*1.07/1000)*1000;
+  const pos=Math.min(92,Math.max(8,(cur-lo)/(hi-lo)*100||50));
+  const diff=mid-cur;
+
+  const factors=[
+    {i:'📍',c:'var(--brand-soft)',t:'エリア相場',v:(areaAdj>=1?'+':'')+Math.round((areaAdj-1)*100)+'%',up:areaAdj>=1},
+    {i:'📐',c:'var(--green-soft)',t:'専有面積 '+size+'㎡',v:(size>=35?'+':'')+yen((size-35)*450).replace('¥','¥'),up:size>=35},
+    {i:'🏗',c:'var(--amber-soft)',t:'築'+age+'年',v:'-'+yen(age*650),up:false},
+    {i:'🚶',c:'var(--soft)',t:'駅徒歩'+walk+'分',v:walk<=5?'±¥0':'-'+yen(Math.max(0,(walk-5))*900),up:walk<=5},
+  ];
+  // before/after improvement suggestions
+  const improves=[
+    {b:'室内が古い印象（旧式キーレス無し）',a:'スマートロック導入で +月3,000円・成約率UP'},
+    {b:'写真が暗く内見数が少ない',a:'AI推奨アングルで撮影 → 反響 約1.8倍'},
+    {b:'初期費用が高く敬遠されがち',a:'敷金1→0 / フリーレント1ヶ月で空室期間 短縮'},
+    {b:'設備の訴求が弱い',a:'インターネット無料を明記し若年層に訴求'},
+  ];
+  const vacDays=Math.round(45+age*1.2+Math.max(0,walk-5)*3);
+  const newVacDays=Math.round(vacDays*0.45);
+
+  $('aResult').innerHTML=`
+    <div class="pv-top">
+      <div class="pv-title">AI 賃料査定</div>
+      <div class="pv-meta"><div>${esc(area)}</div><div>${esc(plan)} / ${size}㎡ / 築${age}年</div><div>査定日：${fmtDL(TODAY)}</div></div>
+    </div>
+    <div style="font-size:12px;font-weight:700;color:var(--ink-2)">AIが算出した適正賃料レンジ</div>
+    <div class="range">
+      <div class="lo">${yen(lo)}</div>
+      <div class="mid"><b>${yen(mid)}</b><span>適正賃料（推奨）</span></div>
+      <div class="hi">${yen(hi)}</div>
+    </div>
+    <div class="range-track"><i style="left:${pos}%"></i></div>
+    <div class="pv-total">
+      <span style="font-weight:700">現在 ${yen(cur)} → 推奨 ${yen(mid)}</span>
+      <span class="a" style="color:${diff>=0?'var(--green)':'var(--red)'}">${diff>=0?'+':''}${yen(diff)}</span>
+    </div>
+    <div style="font-size:12px;font-weight:700;color:var(--ink-2);margin-top:6px">査定の根拠</div>
+    ${factors.map(f=>`<div class="factor"><div class="fi" style="background:${f.c}">${f.i}</div>${esc(f.t)}<span class="fv ${f.up?'up':'down'}">${esc(f.v)}</span></div>`).join('')}
+    <div style="margin-top:18px;font-size:13px;font-weight:800;color:var(--green)">💡 空室対策の改善提案（Before → After）</div>
+    <div class="ba" style="grid-template-columns:1fr 56px 1fr;margin-top:10px">
+      <div class="col before" style="padding:14px">
+        <span class="ct">😓 Before</span>
+        <div class="big" style="font-size:22px">${vacDays}日</div>
+        <div style="font-size:11px;color:var(--ink-3)">想定の空室期間</div>
+        <ul style="margin-top:10px">${improves.map(x=>`<li>・${esc(x.b)}</li>`).join('')}</ul>
+      </div>
+      <div class="arrow">→</div>
+      <div class="col after" style="padding:14px">
+        <span class="ct">⚡ After</span>
+        <div class="big" style="font-size:22px">${newVacDays}日</div>
+        <div style="font-size:11px;color:var(--ink-3)">対策後の見込み（▲${Math.round((1-newVacDays/vacDays)*100)}%）</div>
+        <ul style="margin-top:10px">${improves.map(x=>`<li>✅ ${esc(x.a)}</li>`).join('')}</ul>
+      </div>
+    </div>`;
+
+  btn.disabled=false;btn.textContent='⚡ もう一度査定する';
+  showToast('AI査定が完了しました（推奨 '+yen(mid)+'）');
+});
+
+/* ============ BADGES ============ */
+function updateArrearsBadge(){const n=rooms.filter(r=>r.status!=='vac'&&r.paid==='late').length;$('navArrears').textContent=n;}
+function updateRepairBadge(){$('navRepair').textContent=repairs.filter(r=>r.status!=='done').length;}
+
+/* ============ INIT ============ */
+renderPropChips();renderOccChips();renderRepairPlaces();
+renderDash();
+updateArrearsBadge();updateRepairBadge();
+$('qProp').addEventListener('input',renderProps);
+</script>
+</body>
+</html>

@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜見込み客スコアリングマシン</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cf0;--purple-soft:#efebfe;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.nav a .badge.hot{background:var(--amber)}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:84px 1fr 60px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-fill.hot{background:linear-gradient(90deg,var(--red),var(--amber))}
+.bar-fill.warm{background:linear-gradient(90deg,var(--amber),#f5c542)}
+.bar-fill.cold{background:linear-gradient(90deg,#8a94a6,#b7c0d0)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* funnel */
+.funnel{display:flex;flex-direction:column;gap:8px}
+.fn-row{display:flex;align-items:center;gap:12px;font-size:12.5px}
+.fn-bar{height:34px;border-radius:8px;display:flex;align-items:center;padding:0 12px;color:#fff;font-weight:800;
+  font-size:12.5px;min-width:60px;transition:width 1s cubic-bezier(.2,.8,.3,1);width:0;white-space:nowrap}
+.fn-row .fn-label{width:96px;color:var(--ink-2);font-weight:700;flex-shrink:0}
+.fn-row .fn-pct{margin-left:auto;font-weight:700;color:var(--ink-3);font-size:11.5px}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl th.c,table.tbl td.c{text-align:center}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+
+/* status badges */
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.hot{background:var(--red-soft);color:var(--red)}
+.st.warm{background:var(--amber-soft);color:var(--amber)}
+.st.cold{background:var(--soft);color:var(--ink-3)}
+.st.new{background:var(--brand-soft);color:var(--brand)}
+.st.won{background:var(--green-soft);color:var(--green)}
+.st.lost{background:var(--soft);color:var(--ink-3)}
+
+/* score pill */
+.score{display:inline-flex;align-items:center;gap:8px;font-family:'Orbitron';font-weight:700;font-variant-numeric:tabular-nums}
+.score .num{font-size:15px}
+.score-ring{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-family:'Orbitron';font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.mini-track{width:60px;height:7px;border-radius:99px;background:var(--soft);overflow:hidden;display:inline-block;vertical-align:middle}
+.mini-fill{height:100%;border-radius:99px}
+
+/* lead detail form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,400px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--brand)}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* scorecard preview */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:26px 28px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.sc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;gap:16px}
+.sc-name{font-size:19px;font-weight:900}
+.sc-meta{font-size:11.5px;color:var(--ink-2);margin-top:3px}
+.sc-bigring{width:96px;height:96px;border-radius:50%;display:grid;place-items:center;color:#fff;flex-shrink:0;text-align:center;line-height:1.1}
+.sc-bigring .n{font-family:'Orbitron';font-size:30px;font-weight:700}
+.sc-bigring .lb{font-size:10px;font-weight:700;opacity:.9}
+.sc-factors{margin-top:6px}
+.sc-factor{display:grid;grid-template-columns:118px 1fr 44px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px dashed var(--line);font-size:12px}
+.sc-factor:last-child{border-bottom:0}
+.sc-factor .fl{color:var(--ink-2);font-weight:600}
+.sc-factor .ft{height:8px;border-radius:99px;background:var(--soft);overflow:hidden}
+.sc-factor .ff{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width .8s}
+.sc-factor .fv{text-align:right;font-weight:700;font-family:'Orbitron';font-size:11px}
+.sc-rec{background:var(--brand-soft);border-left:5px solid var(--brand);border-radius:6px;padding:12px 14px;margin-top:16px;font-size:12.5px}
+.sc-rec b{color:var(--brand-dk)}
+.sc-empty{text-align:center;color:#aab2c4;padding:40px 0}
+
+/* behavior history timeline */
+.tl{position:relative;padding-left:26px}
+.tl::before{content:"";position:absolute;left:9px;top:6px;bottom:6px;width:2px;background:var(--line)}
+.tl-item{position:relative;padding:9px 0;font-size:13px}
+.tl-item .dot{position:absolute;left:-22px;top:13px;width:16px;height:16px;border-radius:50%;background:var(--card);border:3px solid var(--brand);box-sizing:border-box}
+.tl-item .dot.hi{border-color:var(--red)}
+.tl-item .dot.lo{border-color:var(--ink-3)}
+.tl-item .tt{font-weight:600}
+.tl-item .tm{color:var(--ink-3);font-size:11px;margin-top:1px}
+.tl-item .pts{float:right;font-family:'Orbitron';font-weight:700;font-size:12px;color:var(--green)}
+.tl-item .pts.neg{color:var(--red)}
+
+/* AI scoring stage */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+
+/* hot list cards */
+.hotcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.hotcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow);border-top:3px solid var(--red)}
+.hotcard .hc-top{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.hotcard .hc-name{font-weight:900;font-size:14.5px}
+.hotcard .hc-sub{font-size:11.5px;color:var(--ink-3)}
+.hotcard .hc-why{font-size:12px;color:var(--ink-2);background:var(--soft);border-radius:8px;padding:8px 10px;margin:8px 0}
+.hotcard .hc-act{display:flex;gap:7px;margin-top:10px}
+.hotcard .hc-act .btn{flex:1;justify-content:center;padding:8px 10px;font-size:12px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">スコアマシン<small>技マシン｜見込み客スコアリング</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="leads"><span class="i">👥</span>見込み客</a>
+      <a data-v="score"><span class="i">🎯</span>スコア</a>
+      <a data-v="hot"><span class="i">🔥</span>ホット客<span class="badge hot" id="navHot">0</span></a>
+      <a data-v="history"><span class="i">📜</span>行動履歴</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI採点</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。見込み客・数値はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">見込み客の確度をひと目で</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>スコア帯ごとの見込み客分布</h3><span class="more">全件</span></div>
+            <div class="pb"><div class="bars" id="distBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>商談フェーズの転換ファネル</h3><span class="more">今四半期</span></div>
+            <div class="pb"><div class="funnel" id="funnel"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>いま動くべきホット客 TOP5</h3><span class="more" onclick="go('hot')">すべて見る →</span></div>
+            <div class="pb"><div class="acts" id="topHot"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LEADS -->
+      <section class="view" id="v-leads">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="会社名・担当者・業種で検索"></div>
+          <div class="chips" id="tempChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>会社名 / 担当者</th><th>業種</th><th>流入元</th><th class="c">スコア</th><th>確度</th><th>状態</th><th class="r">想定金額</th></tr></thead>
+          <tbody id="leadRows"></tbody>
+        </table>
+      </section>
+
+      <!-- SCORE DETAIL -->
+      <section class="view" id="v-score">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>見込み客を選ぶ</label><select id="sSelect"></select></div>
+            <div style="font-size:12px;font-weight:700;color:var(--ink-2);margin:14px 0 4px">行動データ（変えると確度が動きます）</div>
+            <div class="fg-row">
+              <div class="fg"><label>サイト訪問回数</label><input id="sVisits" type="number" min="0" value="0"></div>
+              <div class="fg"><label>資料DL数</label><input id="sDl" type="number" min="0" value="0"></div>
+            </div>
+            <div class="fg-row">
+              <div class="fg"><label>メール開封率(%)</label><input id="sOpen" type="number" min="0" max="100" value="0"></div>
+              <div class="fg"><label>価格ページ閲覧</label><input id="sPrice" type="number" min="0" value="0"></div>
+            </div>
+            <div class="fg-row">
+              <div class="fg"><label>問い合わせ</label>
+                <select id="sInquiry"><option value="0">なし</option><option value="1">あり</option></select></div>
+              <div class="fg"><label>商談実施</label>
+                <select id="sMeeting"><option value="0">未実施</option><option value="1">実施済</option></select></div>
+            </div>
+            <div class="aihint" id="sHint">✨ 行動データから確度をリアルタイムに再計算しました</div>
+            <div class="linkrow" style="margin-top:16px">
+              <button class="btn primary" id="sRescore" style="flex:1;justify-content:center">⚡ AIで再採点する</button>
+              <button class="btn" id="sSample">サンプル</button>
+            </div>
+          </div>
+          <div>
+            <div class="paper" id="sPaper">
+              <div class="sc-empty" id="sEmpty">← 左で見込み客を選ぶと、AIの採点カードが出ます</div>
+              <div id="sCard" style="display:none">
+                <div class="sc-top">
+                  <div>
+                    <div class="sc-name" id="scName">—</div>
+                    <div class="sc-meta" id="scMeta">—</div>
+                  </div>
+                  <div class="sc-bigring" id="scRing"><div><div class="n" id="scNum">0</div><div class="lb" id="scLb">確度</div></div></div>
+                </div>
+                <div style="font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:4px">AIが見た採点の内訳</div>
+                <div class="sc-factors" id="scFactors"></div>
+                <div class="sc-rec" id="scRec"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- HOT -->
+      <section class="view" id="v-hot">
+        <div class="hotcards" id="hotCards"></div>
+      </section>
+
+      <!-- HISTORY -->
+      <section class="view" id="v-history">
+        <div class="toolbar">
+          <div class="search" style="max-width:340px"><span class="ic">🔍</span><input id="hq" placeholder="会社名で絞り込み"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>日時</th><th>会社名</th><th>行動</th><th class="c">確度への影響</th></tr></thead>
+          <tbody id="histRows"></tbody>
+        </table>
+      </section>
+
+      <!-- AI SCORING -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">行動データから確度スコアを一括算出</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">蓄積した行動データ <b id="aiCount">0件</b> を、AIが採点して「いま動くべき客」を炙り出します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで一括採点する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">3時間20分</div>
+              <ul>
+                <li>📋 訪問・開封・DLログを手で集計</li>
+                <li>🧮 営業の勘で「脈ありそう」を仕分け</li>
+                <li>📞 結局やみくもに片っ端から架電</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 全行動データを自動でスコア化</li>
+                <li>🎯 確度の高い順に自動ランク付け</li>
+                <li>🔥 ホット客と次の一手まで提示</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">🎯 AIが採点した見込み客（確度の高い順）</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+let SEED=70413;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+/* ============ DATA ============ */
+const SOURCES=['Web検索','展示会','紹介','広告','セミナー','問い合わせフォーム','SNS'];
+const SALES=['佐藤','田中','鈴木','高橋'];
+const COMPANIES=[
+  {name:'大分中央クリニック',type:'医療',person:'院長 三浦様',amount:600000},
+  {name:'さくら総合病院',type:'医療',person:'事務長 岡田様',amount:1800000},
+  {name:'つくし介護センター',type:'介護',person:'施設長 渡辺様',amount:840000},
+  {name:'豊後おおいた青果',type:'青果卸',person:'専務 川宿田様',amount:360000},
+  {name:'都町商店会',type:'小売',person:'会長 林様',amount:240000},
+  {name:'別府温泉ホテル組合',type:'宿泊',person:'支配人 中村様',amount:1200000},
+  {name:'大分海鮮市場',type:'飲食',person:'店長 木下様',amount:300000},
+  {name:'みらい歯科医院',type:'医療',person:'院長 安藤様',amount:480000},
+  {name:'臼杵運送株式会社',type:'運送',person:'部長 後藤様',amount:960000},
+  {name:'豊の国コンクリート',type:'建設',person:'社長 吉原様',amount:1500000},
+  {name:'やまびこ農園',type:'農業',person:'代表 工藤様',amount:280000},
+  {name:'大分シティ会計事務所',type:'士業',person:'所長 平野様',amount:720000},
+  {name:'佐伯水産加工',type:'飲食',person:'工場長 河野様',amount:540000},
+  {name:'なごみ訪問看護',type:'介護',person:'管理者 内田様',amount:660000},
+  {name:'大分中央薬局チェーン',type:'医療',person:'本部 松本様',amount:1100000},
+  {name:'湯布院クラフトビール',type:'飲食',person:'代表 緒方様',amount:380000},
+  {name:'国東スマート農場',type:'農業',person:'役員 阿部様',amount:900000},
+  {name:'大在ロジスティクス',type:'運送',person:'課長 衛藤様',amount:1300000},
+];
+
+/* スコア算出ロジック（重み付き） */
+const WEIGHTS={visits:2.2,dl:5,open:0.35,price:7,inquiry:18,meeting:24};
+function calcScore(b){
+  let s=0;
+  s+=Math.min(b.visits,20)*WEIGHTS.visits;
+  s+=Math.min(b.dl,6)*WEIGHTS.dl;
+  s+=Math.min(b.open,100)*WEIGHTS.open;
+  s+=Math.min(b.price,8)*WEIGHTS.price;
+  s+=(+b.inquiry)*WEIGHTS.inquiry;
+  s+=(+b.meeting)*WEIGHTS.meeting;
+  return Math.max(0,Math.min(99,Math.round(s)));
+}
+function tempOf(sc){return sc>=70?'hot':sc>=40?'warm':'cold';}
+const TEMPLABEL={hot:'ホット',warm:'ウォーム',cold:'コールド'};
+function scColor(sc){return sc>=70?'var(--red)':sc>=40?'var(--amber)':'#8a94a6';}
+function scGrad(sc){return sc>=70?'linear-gradient(135deg,#e24a4a,#e3941f)':sc>=40?'linear-gradient(135deg,#e3941f,#f5c542)':'linear-gradient(135deg,#8a94a6,#b7c0d0)';}
+
+const STATES=['new','new','warm','hot','warm','cold','won','lost'];
+const STLABEL={hot:'要アプローチ',warm:'育成中',cold:'様子見',new:'新規',won:'受注',lost:'失注'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]}</span>`;}
+
+/* seed leads */
+let leads=[];
+(function seed(){
+  COMPANIES.forEach((c,i)=>{
+    const b={
+      visits:Math.floor(rnd()*22),
+      dl:Math.floor(rnd()*6),
+      open:Math.floor(rnd()*101),
+      price:Math.floor(rnd()*8),
+      inquiry:rnd()>0.5?1:0,
+      meeting:rnd()>0.7?1:0,
+    };
+    const sc=calcScore(b);
+    let state=pick(STATES);
+    if(state==='won'&&sc<55)state='warm';
+    if(state==='hot'&&sc<60)state='warm';
+    leads.push({id:i+1,...c,source:pick(SOURCES),staff:pick(SALES),b,score:sc,state,
+      daysAgo:Math.floor(rnd()*30)});
+  });
+})();
+
+/* behavior history events */
+const HIST_TPL=[
+  {t:'価格ページを3回閲覧',pts:14,k:'hi'},
+  {t:'導入事例の資料をダウンロード',pts:10,k:'hi'},
+  {t:'問い合わせフォームを送信',pts:18,k:'hi'},
+  {t:'メールを開封',pts:3,k:''},
+  {t:'サイトに再訪問',pts:5,k:''},
+  {t:'料金シミュレーターを操作',pts:12,k:'hi'},
+  {t:'メルマガ配信停止',pts:-15,k:'lo'},
+  {t:'30日間アクセスなし',pts:-10,k:'lo'},
+  {t:'オンライン商談を実施',pts:24,k:'hi'},
+  {t:'よくある質問ページを閲覧',pts:4,k:''},
+];
+let history=[];
+(function seedHist(){
+  for(let i=0;i<40;i++){
+    const c=pick(COMPANIES);const ev=pick(HIST_TPL);
+    history.push({company:c.name,t:ev.t,pts:ev.pts,k:ev.k,
+      when:new Date(2026,4,1+Math.floor(rnd()*29),8+Math.floor(rnd()*11),Math.floor(rnd()*60))});
+  }
+  history.sort((a,b)=>b.when-a.when);
+})();
+function fmtDT(d){return (d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','見込み客の確度をひと目で'],leads:['見込み客','流入した見込み客を一覧で管理'],
+  score:['スコア','行動データを変えると確度がリアルタイムに動きます'],hot:['ホット客','いま追うべき確度の高い見込み客'],
+  history:['行動履歴','見込み客の行動ログとスコアへの影響'],ai:['AI採点','行動データから確度を自動で算出します']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='leads'?'<button class="btn" onclick="go(\'ai\')">⚡ AI一括採点</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI採点</button><button class="btn primary" onclick="go(\'hot\')">🔥 ホット客を見る</button>'
+    : v==='hot'?'<button class="btn primary" onclick="go(\'ai\')">⚡ 再採点する</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='leads')renderLeads();
+  if(v==='score')renderScoreSelect();
+  if(v==='hot')renderHot();
+  if(v==='history')renderHist();
+  if(v==='ai')$('aiCount').textContent=history.length+'件';
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const total=leads.length;
+  const hot=leads.filter(l=>tempOf(l.score)==='hot').length;
+  const avg=Math.round(leads.reduce((s,l)=>s+l.score,0)/total);
+  const won=leads.filter(l=>l.state==='won').length;
+  const conv=Math.round(won/total*100);
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','見込み客数',total+'<small>社</small>','今月 +'+ (3) +'社','up','流入順調')}
+    ${kpi('#e24a4a','ホット客',hot+'<small>社</small>','確度70以上','warn','要アプローチ')}
+    ${kpi('#e3941f','平均スコア',avg+'<small>点</small>','','up','前月比 +6pt')}
+    ${kpi('#16b877','転換率',conv+'<small>%</small>',won+'社 受注','up','+4pt')}`;
+  // distribution by temperature
+  const buckets=[
+    {lb:'80〜99 (即商談)',cls:'hot',from:80},
+    {lb:'70〜79 (ホット)',cls:'hot',from:70,to:79},
+    {lb:'40〜69 (育成)',cls:'warm',from:40,to:69},
+    {lb:'0〜39 (様子見)',cls:'cold',from:0,to:39},
+  ];
+  const counts=buckets.map(b=>leads.filter(l=>l.score>=b.from&&(b.to==null||l.score<=b.to)).length);
+  const mx=Math.max(...counts,1);
+  $('distBars').innerHTML=buckets.map((b,i)=>`
+    <div class="bar-row"><span class="mlabel">${b.lb}</span>
+      <div class="bar-track"><div class="bar-fill ${b.cls}" style="width:0" data-w="${Math.round(counts[i]/mx*100)}"></div></div>
+      <span class="mval">${counts[i]}社</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#distBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // funnel
+  const fn=[
+    {lb:'流入',n:total,c:'#2f6df0'},
+    {lb:'反応あり',n:leads.filter(l=>l.score>=30).length,c:'#0ea5b7'},
+    {lb:'ホット化',n:leads.filter(l=>l.score>=70).length,c:'#e3941f'},
+    {lb:'商談',n:leads.filter(l=>l.b.meeting).length,c:'#7c5cf0'},
+    {lb:'受注',n:won,c:'#16b877'},
+  ];
+  $('funnel').innerHTML=fn.map(f=>`<div class="fn-row"><span class="fn-label">${f.lb}</span>
+    <div class="fn-bar" style="background:${f.c};width:0" data-w="${Math.round(f.n/total*100)}">${f.n}社</div>
+    <span class="fn-pct">${Math.round(f.n/total*100)}%</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#funnel .fn-bar').forEach(b=>b.style.width=Math.max(14,+b.dataset.w)+'%'),120);
+  // top hot
+  const top=[...leads].sort((a,b)=>b.score-a.score).slice(0,5);
+  $('topHot').innerHTML=top.map(l=>`<div class="act">
+    <div class="score-ring" style="background:${scGrad(l.score)}">${l.score}</div>
+    <div style="flex:1"><div class="at">${esc(l.name)}</div><div class="am">${esc(l.type)}・${esc(l.person)}・${esc(l.staff)}</div></div>
+    <div style="font-weight:700;font-size:12px;color:var(--ink-2)">${yen(l.amount)}</div></div>`).join('');
+  // activity
+  const acts=[
+    {i:'🔥',c:'#fdeaea',t:'豊の国コンクリート の確度が 84点 に上昇（価格ページ閲覧）',m:'5分前'},
+    {i:'⚡',c:'#e6f8f0',t:'AI採点で 18社 のスコアを再計算（ホット 5社）',m:'今日 9:02'},
+    {i:'📥',c:'#eaf1ff',t:'さくら総合病院 が導入事例をダウンロード（+10点）',m:'1時間前'},
+    {i:'✉️',c:'#eaf1ff',t:'大分中央薬局チェーン がメールを開封（+3点）',m:'今日 8:40'},
+    {i:'📉',c:'#f0f3f9',t:'都町商店会 が30日アクセスなし（-10点）',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${a.m}</div></div></div>`).join('');
+  $('navHot').textContent=hot;
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ LEADS ============ */
+let filterTemp='all';
+function renderChips(){
+  const opts=[['all','すべて'],['hot','🔥 ホット'],['warm','ウォーム'],['cold','コールド']];
+  $('tempChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterTemp?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('tempChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterTemp=c.dataset.s;renderChips();renderLeads();});
+}
+function renderLeads(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=leads.filter(l=>filterTemp==='all'||tempOf(l.score)===filterTemp)
+    .filter(l=>!q||(l.name+l.person+l.type).toLowerCase().includes(q))
+    .sort((a,b)=>b.score-a.score);
+  $('leadRows').innerHTML=rows.length?rows.map(l=>{
+    const t=tempOf(l.score);
+    return `<tr onclick="openScore(${l.id})">
+    <td><b>${esc(l.name)}</b><div style="color:var(--ink-3);font-size:11.5px">${esc(l.person)}</div></td>
+    <td style="color:var(--ink-2)">${esc(l.type)}</td>
+    <td style="color:var(--ink-2)">${esc(l.source)}</td>
+    <td class="c"><span class="score"><span class="num" style="color:${scColor(l.score)}">${l.score}</span>
+      <span class="mini-track"><span class="mini-fill" style="width:${l.score}%;background:${scGrad(l.score)}"></span></span></span></td>
+    <td><span class="st ${t}">${TEMPLABEL[t]}</span></td>
+    <td>${stBadge(l.state)}</td>
+    <td class="r tnum" style="color:var(--ink-2)">${yen(l.amount)}</td></tr>`;}).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する見込み客がありません</td></tr>';
+}
+
+/* ============ SCORE DETAIL ============ */
+let curLead=null;
+function renderScoreSelect(){
+  $('sSelect').innerHTML='<option value="">選択してください</option>'+
+    [...leads].sort((a,b)=>b.score-a.score).map(l=>`<option value="${l.id}">${esc(l.name)}（現在 ${l.score}点）</option>`).join('');
+}
+window.openScore=id=>{go('score');$('sSelect').value=id;loadLead(id);};
+function loadLead(id){
+  curLead=leads.find(l=>l.id===+id)||null;
+  if(!curLead){$('sEmpty').style.display='block';$('sCard').style.display='none';return;}
+  $('sVisits').value=curLead.b.visits;$('sDl').value=curLead.b.dl;$('sOpen').value=curLead.b.open;
+  $('sPrice').value=curLead.b.price;$('sInquiry').value=curLead.b.inquiry;$('sMeeting').value=curLead.b.meeting;
+  renderCard(false);
+}
+function readBehavior(){
+  return {
+    visits:+$('sVisits').value||0,dl:+$('sDl').value||0,open:+$('sOpen').value||0,
+    price:+$('sPrice').value||0,inquiry:+$('sInquiry').value||0,meeting:+$('sMeeting').value||0,
+  };
+}
+function renderCard(animate){
+  if(!curLead){$('sEmpty').style.display='block';$('sCard').style.display='none';return;}
+  $('sEmpty').style.display='none';$('sCard').style.display='block';
+  const b=readBehavior();const sc=calcScore(b);const t=tempOf(sc);
+  $('scName').textContent=curLead.name;
+  $('scMeta').textContent=`${curLead.type}・${curLead.person}・担当 ${curLead.staff}・想定 ${yen(curLead.amount)}`;
+  $('scRing').style.background=scGrad(sc);$('scNum').textContent=sc;$('scLb').textContent=TEMPLABEL[t];
+  // factor breakdown (contribution to score)
+  const factors=[
+    {l:'サイト訪問',v:Math.min(b.visits,20)*WEIGHTS.visits},
+    {l:'資料DL',v:Math.min(b.dl,6)*WEIGHTS.dl},
+    {l:'メール開封',v:Math.min(b.open,100)*WEIGHTS.open},
+    {l:'価格ページ閲覧',v:Math.min(b.price,8)*WEIGHTS.price},
+    {l:'問い合わせ',v:(+b.inquiry)*WEIGHTS.inquiry},
+    {l:'商談実施',v:(+b.meeting)*WEIGHTS.meeting},
+  ];
+  const mx=Math.max(...factors.map(f=>f.v),1);
+  $('scFactors').innerHTML=factors.map(f=>`<div class="sc-factor">
+    <span class="fl">${f.l}</span>
+    <span class="ft"><span class="ff" style="width:0" data-w="${Math.round(f.v/mx*100)}"></span></span>
+    <span class="fv">+${Math.round(f.v)}</span></div>`).join('');
+  setTimeout(()=>$('scFactors').querySelectorAll('.ff').forEach(e=>e.style.width=e.dataset.w+'%'),animate?40:0);
+  // recommendation
+  let rec;
+  if(sc>=70)rec=`<b>🔥 今すぐ電話を。</b> 価格や事例を見て購買意欲が高い状態です。${curLead.staff}さんから当日中の架電を推奨。クロージング資料を持参してください。`;
+  else if(sc>=40)rec=`<b>📩 育成フェーズ。</b> 興味はあるが決め手不足。導入事例とROIシミュレーションをメール送付し、ウェビナーへ誘導しましょう。`;
+  else rec=`<b>🕘 様子見でOK。</b> まだ温度が低い状態。月1のメルマガで接点を保ち、価格ページ閲覧などの反応が出たら再アプローチを。`;
+  $('scRec').innerHTML=rec;
+}
+$('sSelect').addEventListener('change',e=>loadLead(e.target.value));
+['sVisits','sDl','sOpen','sPrice','sInquiry','sMeeting'].forEach(id=>$(id).addEventListener('input',()=>{
+  renderCard(false);$('sHint').classList.add('show');clearTimeout(window._ht);window._ht=setTimeout(()=>$('sHint').classList.remove('show'),1800);
+}));
+$('sSample').addEventListener('click',()=>{
+  const hotLead=[...leads].sort((a,b)=>b.score-a.score)[0];
+  $('sSelect').value=hotLead.id;loadLead(hotLead.id);
+});
+$('sRescore').addEventListener('click',async()=>{
+  if(!curLead){showToast('先に見込み客を選んでください');return;}
+  const btn=$('sRescore');btn.textContent='⚡ AIが採点中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,700));
+  const b=readBehavior();const sc=calcScore(b);
+  curLead.b=b;curLead.score=sc;curLead.state=tempOf(sc)==='hot'?'hot':tempOf(sc)==='warm'?'warm':'cold';
+  renderCard(true);renderScoreSelect();$('sSelect').value=curLead.id;
+  $('navHot').textContent=leads.filter(l=>tempOf(l.score)==='hot').length;
+  btn.textContent='⚡ AIで再採点する';btn.disabled=false;
+  showToast(curLead.name+' の確度を '+sc+'点 に更新しました');
+});
+
+/* ============ HOT ============ */
+function renderHot(){
+  const hot=[...leads].filter(l=>tempOf(l.score)==='hot').sort((a,b)=>b.score-a.score);
+  $('hotCards').innerHTML=hot.length?hot.map(l=>{
+    let why=[];
+    if(l.b.price>=2)why.push('価格ページを'+l.b.price+'回閲覧');
+    if(l.b.inquiry)why.push('問い合わせ済');
+    if(l.b.meeting)why.push('商談実施済');
+    if(l.b.dl>=2)why.push('資料DL '+l.b.dl+'回');
+    if(!why.length)why.push('高い訪問頻度と開封率');
+    return `<div class="hotcard">
+      <div class="hc-top">
+        <div class="sc-bigring" style="width:54px;height:54px;background:${scGrad(l.score)}"><div><div class="n" style="font-size:18px">${l.score}</div></div></div>
+        <div><div class="hc-name">${esc(l.name)}</div><div class="hc-sub">${esc(l.type)}・${esc(l.person)}</div></div>
+      </div>
+      <div class="hc-why">🤖 <b>AIの根拠：</b>${esc(why.join(' / '))}</div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2)">
+        <span>担当：${esc(l.staff)}</span><span>想定 <b>${yen(l.amount)}</b></span></div>
+      <div class="hc-act">
+        <button class="btn green" onclick="callLead(${l.id})">📞 架電する</button>
+        <button class="btn" onclick="openScore(${l.id})">採点を見る</button>
+      </div>
+    </div>`;}).join('')
+    :'<div class="empty-cell" style="grid-column:1/-1">ホット客はいません。AI採点で確度を再計算してみてください。</div>';
+}
+window.callLead=id=>{const l=leads.find(x=>x.id===id);if(l){showToast(l.name+' へ架電タスクを '+l.staff+' さんに割り当てました');}};
+
+/* ============ HISTORY ============ */
+function renderHist(){
+  const q=($('hq').value||'').toLowerCase();
+  const rows=history.filter(h=>!q||h.company.toLowerCase().includes(q));
+  $('histRows').innerHTML=rows.length?rows.map(h=>`<tr>
+    <td class="mono" style="font-size:12px;color:var(--ink-2)">${fmtDT(h.when)}</td>
+    <td><b>${esc(h.company)}</b></td>
+    <td style="color:var(--ink-2)">${esc(h.t)}</td>
+    <td class="c"><span class="mono" style="font-weight:700;color:${h.pts>=0?'var(--green)':'var(--red)'}">${h.pts>=0?'+':''}${h.pts}点</span></td></tr>`).join('')
+    :'<tr><td colspan="4" class="empty-cell">該当する履歴がありません</td></tr>';
+}
+$('hq').addEventListener('input',renderHist);
+
+/* ============ AI SCORING ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 採点中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},120);
+  await new Promise(r=>setTimeout(r,1200));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // recompute all scores from behavior
+  leads.forEach(l=>{l.score=calcScore(l.b);});
+  const ranked=[...leads].sort((a,b)=>b.score-a.score).slice(0,8);
+  $('genItems').innerHTML=ranked.map((l,i)=>{
+    const sc=l.score;const t2=tempOf(sc);
+    return `<div class="gen-item" data-i="${i}">
+      <span class="ck" style="background:${scColor(sc)}">${sc}</span>
+      <b style="flex:1">${esc(l.name)}</b>
+      <span style="color:var(--ink-3);font-size:12px">${esc(l.type)}</span>
+      <span class="st ${t2}">${TEMPLABEL[t2]}</span></div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,160));items[i].classList.add('in');}
+  $('navHot').textContent=leads.filter(l=>tempOf(l.score)==='hot').length;
+  btn.disabled=false;btn.textContent='⚡ もう一度採点';
+  const hotN=leads.filter(l=>tempOf(l.score)==='hot').length;
+  showToast(leads.length+'社を採点完了。ホット客 '+hotN+'社 を炙り出しました');
+});
+
+/* ============ INIT ============ */
+renderChips();renderDash();
+$('navHot').textContent=leads.filter(l=>tempOf(l.score)==='hot').length;
+$('aiCount').textContent=history.length+'件';
+</script>
+</body>
+</html>

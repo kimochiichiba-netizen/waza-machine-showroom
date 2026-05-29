@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜退職手続きマシン（退職オフボーディング管理）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cf0;--purple-soft:#efeafe;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.nav a .badge.amber{background:var(--amber)}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn.sm{padding:6px 12px;font-size:12px}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}.kpi .d.flat{color:var(--ink-3)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut / progress */
+.donut-wrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.donut{width:128px;height:128px;border-radius:50%;display:grid;place-items:center;flex-shrink:0;
+  background:conic-gradient(var(--green) 0 var(--p,0%),var(--soft) var(--p,0%) 100%)}
+.donut .hole{width:92px;height:92px;background:var(--card);border-radius:50%;display:grid;place-items:center;text-align:center}
+.donut .hole b{font-size:24px;font-weight:900;display:block;line-height:1}
+.donut .hole span{font-size:10.5px;color:var(--ink-3);font-weight:700}
+.legend{display:flex;flex-direction:column;gap:8px;font-size:12.5px}
+.legend .li{display:flex;align-items:center;gap:8px}
+.legend .li .sw{width:11px;height:11px;border-radius:3px}
+.legend .li b{margin-left:auto;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl th.c,table.tbl td.c{text-align:center}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px;white-space:nowrap}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.done{background:var(--green-soft);color:var(--green)}
+.st.prog{background:var(--brand-soft);color:var(--brand)}
+.st.wait{background:var(--soft);color:var(--ink-3)}
+.st.alert{background:var(--red-soft);color:var(--red)}
+.st.soon{background:var(--amber-soft);color:var(--amber)}
+.tag-dept{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:7px;background:var(--soft);color:var(--ink-2)}
+
+/* progress bar inline */
+.pbar{height:7px;border-radius:99px;background:var(--soft);overflow:hidden;min-width:90px}
+.pbar > i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky))}
+.pbar-wrap{display:flex;align-items:center;gap:9px}
+.pbar-wrap b{font-size:12px;font-variant-numeric:tabular-nums;width:34px;text-align:right}
+
+/* progress detail (steps) */
+.steps{display:flex;flex-direction:column;gap:0}
+.step{display:flex;gap:13px;padding:13px 0;border-bottom:1px solid var(--line);align-items:flex-start}
+.step:last-child{border-bottom:0}
+.step .sck{width:26px;height:26px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;font-size:13px;font-weight:900}
+.step .sck.done{background:var(--green);color:#fff}
+.step .sck.prog{background:var(--brand-soft);color:var(--brand);border:2px solid var(--brand)}
+.step .sck.wait{background:var(--soft);color:var(--ink-3);border:2px solid var(--line-2)}
+.step .stt{font-weight:700;font-size:13.5px}
+.step .sm{font-size:11.5px;color:var(--ink-3);margin-top:2px}
+.step .sright{margin-left:auto;text-align:right}
+
+/* return items grid */
+.ret-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.ret-card{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:15px 16px;box-shadow:var(--shadow);transition:all .15s}
+.ret-card.returned{border-color:#bdebd4;background:linear-gradient(180deg,var(--green-soft),#f5fdfa)}
+.ret-card .rh{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.ret-card .ric{width:34px;height:34px;border-radius:9px;background:var(--soft);display:grid;place-items:center;font-size:17px}
+.ret-card.returned .ric{background:#cdeedd}
+.ret-card .rn{font-weight:800;font-size:13.5px}
+.ret-card .ro{font-size:11px;color:var(--ink-3)}
+.ret-card .rfoot{display:flex;align-items:center;gap:8px;margin-top:12px}
+
+/* documents */
+.doc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.doc-card{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:11px}
+.doc-card .dic{width:42px;height:42px;border-radius:10px;display:grid;place-items:center;font-size:20px;background:var(--brand-soft);color:var(--brand)}
+.doc-card .dt{font-weight:800;font-size:14px}
+.doc-card .dm{font-size:11.5px;color:var(--ink-3);flex:1}
+.doc-card .dfoot{display:flex;align-items:center;gap:8px}
+
+/* create form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,400px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:64px}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+
+/* paper preview */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:34px 36px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.pv-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}
+.pv-title{font-size:23px;font-weight:900;letter-spacing:.18em;color:var(--brand-dk);border-bottom:3px solid var(--brand-dk);padding-bottom:5px}
+.pv-meta{text-align:right;font-size:11.5px;color:var(--ink-2)}
+.pv-meta .no{font-family:'Orbitron';color:var(--ink);font-weight:700}
+.pv-sec{margin:16px 0}
+.pv-sec h4{font-size:12px;color:var(--brand-dk);font-weight:800;border-left:4px solid var(--brand-dk);padding-left:8px;margin-bottom:9px}
+table.pv{width:100%;border-collapse:collapse;margin-bottom:6px}
+table.pv th{background:var(--soft);color:var(--ink-2);font-size:11px;padding:7px 11px;text-align:left;border:1px solid var(--line)}
+table.pv td{padding:7px 11px;border:1px solid var(--line);font-size:12px}
+table.pv td.k{background:#fafbfd;font-weight:700;color:var(--ink-2);width:38%}
+.pv-note{margin-top:14px;font-size:11px;color:var(--ink-2);border-top:1px solid var(--line);padding-top:11px}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900}
+.gen-item .di{width:26px;height:26px;border-radius:7px;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center;font-size:13px}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(13,20,40,.42);display:none;place-items:center;z-index:150;padding:20px}
+.modal.show{display:grid;animation:fade .2s}
+.modal .box{background:var(--card);border-radius:16px;max-width:640px;width:100%;max-height:88vh;overflow:auto;box-shadow:var(--shadow-lg)}
+.modal .mh{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px}
+.modal .mh h3{font-size:16px;font-weight:900}
+.modal .mh .x{margin-left:auto;border:0;background:var(--soft);width:32px;height:32px;border-radius:9px;cursor:pointer;font-size:15px;color:var(--ink-2)}
+.modal .mb{padding:20px 22px}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+.muted{color:var(--ink-3)}
+.flexb{display:flex;align-items:center;gap:10px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">退職手続きマシン<small>技マシン｜オフボーディング管理</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="navMain">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">📋</span>退職予定</a>
+      <a data-v="prog"><span class="i">✅</span>手続き進捗<span class="badge" id="navProg">0</span></a>
+      <a data-v="ret"><span class="i">📦</span>返却物<span class="badge amber" id="navRet">0</span></a>
+      <a data-v="docs"><span class="i">📄</span>書類</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav" id="navAi">
+      <a data-v="ai"><span class="i">⚡</span>AI自動段取り</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 人事管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。退職者・数値はすべてサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">退職手続きの全体状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>月別の退職者数</h3><span class="more">過去6ヶ月</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>手続き完了の内訳</h3></div>
+            <div class="pb">
+              <div class="donut-wrap">
+                <div class="donut" id="donut"><div class="hole"><b id="donutPct">0%</b><span>完了率</span></div></div>
+                <div class="legend" id="donutLegend"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>対応が必要な退職者</h3><span class="more" onclick="go('prog')">すべて見る</span></div>
+            <div class="pb" style="padding:0">
+              <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+                <thead><tr><th>退職者</th><th>退職日</th><th>進捗</th><th>状態</th></tr></thead>
+                <tbody id="dashAlert"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST (退職予定) -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="氏名・部署・社員番号で検索"></div>
+          <div class="chips" id="deptChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>社員番号</th><th>氏名</th><th>部署</th><th>役職</th><th>退職日</th><th>退職理由</th><th>進捗</th><th>状態</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- PROGRESS (手続き進捗) -->
+      <section class="view" id="v-prog">
+        <div class="cols" style="grid-template-columns:320px 1fr">
+          <div class="panel">
+            <div class="ph"><h3>退職者を選択</h3></div>
+            <div class="pb" style="padding:8px"><div id="progPeople"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3 id="progName">退職者を選択してください</h3><span class="more" id="progPctTop"></span></div>
+            <div class="pb"><div class="steps" id="progSteps"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RETURN ITEMS (返却物) -->
+      <section class="view" id="v-ret">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="qRet" placeholder="退職者・物品名で検索"></div>
+          <div class="chips" id="retChips"></div>
+        </div>
+        <div class="ret-grid" id="retGrid"></div>
+      </section>
+
+      <!-- DOCUMENTS (書類) -->
+      <section class="view" id="v-docs">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="qDoc" placeholder="退職者・書類名で検索"></div>
+          <button class="btn" style="margin-left:auto" onclick="go('ai')">⚡ AIで書類を一括作成</button>
+        </div>
+        <div class="doc-grid" id="docGrid"></div>
+      </section>
+
+      <!-- AI 自動段取り -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div style="flex:1;min-width:220px"><div style="font-size:16px;font-weight:900">退職情報から手続き・書類をAIが自動段取り</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">退職者を1人選ぶだけで、必要な<b>手続きチェックリスト・離職票・退職証明書・源泉徴収票</b>をAIが自動で組み立てます。</div></div>
+            <select id="aiTarget" style="padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13px;background:var(--card);min-width:200px"></select>
+            <button class="btn primary" id="aiRun">⚡ AIで自動段取りする</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">3時間20分</div>
+              <ul>
+                <li>📑 退職に必要な手続きを毎回調べる</li>
+                <li>⌨️ 離職票・退職証明書を1枚ずつ手入力</li>
+                <li>🏦 社保喪失・住民税の届出を個別に作成</li>
+                <li>📨 本人・行政・年金事務所へ個別連絡</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 退職区分から必要手続きを自動判定</li>
+                <li>📄 離職票・退職証明書を自動作成</li>
+                <li>🏦 社保喪失・住民税の届出も自動下書き</li>
+                <li>✉️ 提出先と期限まで自動でリスト化</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ 自動で作成された手続き・書類</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- detail modal -->
+<div class="modal" id="modal">
+  <div class="box">
+    <div class="mh"><h3 id="mTitle">退職者詳細</h3><button class="x" id="mClose">✕</button></div>
+    <div class="mb" id="mBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const TODAY=new Date(2026,4,30); // 2026-05-30 固定（デモ基準日）
+const fmtD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+const fmtSlash=d=>d.getFullYear()+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+('0'+d.getDate()).slice(-2);
+function daysUntil(d){return Math.round((d-TODAY)/86400000);}
+function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+
+/* ============ DATA ============ */
+// 手続きステップのテンプレート
+const STEP_DEFS=[
+  {k:'accept',n:'退職届の受理',m:'本人提出 → 上長承認'},
+  {k:'social',n:'社会保険・厚生年金の喪失手続き',m:'退職日翌日から5日以内に年金事務所へ'},
+  {k:'employ',n:'雇用保険の喪失届・離職票の発行',m:'退職日翌日から10日以内にハローワークへ'},
+  {k:'tax',n:'住民税の異動届',m:'特別徴収 → 普通徴収 or 一括徴収の手続き'},
+  {k:'gensen',n:'源泉徴収票の作成・交付',m:'退職後1ヶ月以内に本人へ交付'},
+  {k:'return',n:'貸与品・備品の返却',m:'社員証・PC・制服など'},
+  {k:'access',n:'システム権限の停止',m:'メール・グループウェア・入退室カード'},
+  {k:'cert',n:'退職証明書の交付',m:'本人の請求に応じて遅滞なく'},
+];
+// 返却物テンプレート（区分別に少し変える）
+function retTemplate(type){
+  const base=[
+    {n:'社員証 / IDカード',ic:'🪪'},
+    {n:'貸与PC・タブレット',ic:'💻'},
+    {n:'入退室カードキー',ic:'🔑'},
+    {n:'制服・名札',ic:'👕'},
+    {n:'社用携帯',ic:'📱'},
+  ];
+  if(type==='医療'||type==='介護')base.push({n:'白衣・ユニフォーム',ic:'🥼'},{n:'記録端末・PHS',ic:'☎️'});
+  if(type==='配送')base.push({n:'社用車・ETCカード',ic:'🚚'});
+  if(type==='青果')base.push({n:'倉庫鍵・冷蔵庫キー',ic:'🧊'});
+  return base;
+}
+// 書類テンプレート
+const DOC_DEFS=[
+  {k:'employ',n:'離職票（雇用保険被保険者離職証明書）',ic:'📄',to:'ハローワーク → 本人'},
+  {k:'cert',n:'退職証明書',ic:'📜',to:'本人'},
+  {k:'gensen',n:'源泉徴収票',ic:'🧾',to:'本人'},
+  {k:'social',n:'健康保険・厚生年金 資格喪失届',ic:'🏥',to:'年金事務所'},
+  {k:'tax',n:'給与所得者異動届出書（住民税）',ic:'🏛️',to:'市区町村'},
+];
+
+const DEPTS=['看護部','介護部','医事課','管理部','配送部','青果仕入課','営業部'];
+const REASONS=['自己都合','定年退職','契約期間満了','転職','家庭の事情','体調不良','会社都合'];
+const LAST=['佐藤','鈴木','高橋','田中','渡辺','伊藤','山本','中村','小林','加藤','吉田','松本','井上','木村','清水'];
+const FIRST_OK=['一郎','美咲','健太','陽子','大輔','さくら','翔','由美','直樹','彩','拓海','麻衣','悠斗','千尋','涼','奈々','遼','瞳'];
+const TYPE_OF_DEPT={'看護部':'医療','介護部':'介護','医事課':'医療','管理部':'管理','配送部':'配送','青果仕入課':'青果','営業部':'営業'};
+
+let SEED=20260530;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+let people=[];
+let pid=0;
+function makePerson(opts){
+  opts=opts||{};
+  const dept=opts.dept||pick(DEPTS);
+  const type=TYPE_OF_DEPT[dept]||'管理';
+  const name=opts.name||(pick(LAST)+' '+pick(FIRST_OK));
+  const reason=opts.reason||pick(REASONS);
+  const retDate=opts.retDate||new Date(TODAY.getFullYear(),TODAY.getMonth()+(Math.floor(rnd()*4)-1),1+Math.floor(rnd()*27));
+  // steps
+  const steps=STEP_DEFS.map(s=>({...s,done:false}));
+  // returns
+  const rets=retTemplate(type).map(r=>({...r,returned:false}));
+  // docs
+  const docs=DOC_DEFS.map(d=>({...d,ready:false}));
+  pid++;
+  const p={
+    id:'EMP'+(1000+pid),
+    empNo:'A-'+(2300+pid),
+    name,dept,type,
+    role:opts.role||pick(['一般職','主任','係長','課長','スタッフ','リーダー']),
+    reason,retDate,steps,rets,docs,
+    note:opts.note||'',
+  };
+  // ランダムに進捗を進める（基準日との関係で）
+  const past=retDate<TODAY;
+  const prog= past?0.7+rnd()*0.3 : rnd()*0.7;
+  const doneN=Math.round(steps.length*prog);
+  for(let i=0;i<doneN;i++)p.steps[i].done=true;
+  // returns/docs はステップ進捗に連動
+  p.rets.forEach((r,i)=>{if(rnd()<prog)r.returned=true;});
+  p.docs.forEach((d)=>{const st=p.steps.find(s=>s.k===d.k);d.ready=st?st.done:rnd()<prog;});
+  return p;
+}
+// 固定っぽいリアルなデータを数件 + ランダム
+people.push(makePerson({name:'佐藤 美咲',dept:'看護部',role:'主任',reason:'自己都合',retDate:new Date(2026,5,15),note:'産休を経て退職。後任への引き継ぎ実施中。'}));
+people.push(makePerson({name:'田中 健太',dept:'配送部',role:'リーダー',reason:'転職',retDate:new Date(2026,4,31)}));
+people.push(makePerson({name:'渡辺 陽子',dept:'介護部',role:'スタッフ',reason:'家庭の事情',retDate:new Date(2026,5,5)}));
+people.push(makePerson({name:'高橋 大輔',dept:'青果仕入課',role:'課長',reason:'定年退職',retDate:new Date(2026,4,30)}));
+people.push(makePerson({name:'鈴木 さくら',dept:'医事課',role:'一般職',reason:'契約期間満了',retDate:new Date(2026,5,30)}));
+for(let i=0;i<11;i++)people.push(makePerson());
+
+/* ============ 派生計算 ============ */
+function progPct(p){return Math.round(p.steps.filter(s=>s.done).length/p.steps.length*100);}
+function pStatus(p){
+  const pct=progPct(p);const du=daysUntil(p.retDate);
+  if(pct>=100)return 'done';
+  if(du<0)return 'alert';          // 退職日過ぎたのに未完了
+  if(du<=14)return 'soon';         // 退職間近
+  return 'prog';
+}
+const STLABEL={done:'完了',prog:'進行中',wait:'未着手',alert:'要対応',soon:'退職間近'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]}</span>`;}
+function retDone(p){return p.rets.filter(r=>r.returned).length;}
+function allDocs(){return people.flatMap(p=>p.docs.map(d=>({...d,person:p})));}
+
+/* ============ ROUTING ============ */
+const TITLES={
+  dash:['ダッシュボード','退職手続きの全体状況'],
+  list:['退職予定','退職予定者の一覧と進捗'],
+  prog:['手続き進捗','退職者ごとの手続きチェックリスト'],
+  ret:['返却物','貸与品・備品の返却状況'],
+  docs:['書類','離職票・退職証明書などの発行管理'],
+  ai:['AI自動段取り','退職情報から手続き・書類を自動作成']
+};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn primary" onclick="go(\'ai\')">⚡ AI自動段取り</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'list\')">📋 退職予定を見る</button><button class="btn primary" onclick="go(\'ai\')">⚡ AI自動段取り</button>'
+    : v==='docs'?'<button class="btn primary" onclick="go(\'ai\')">⚡ 書類を一括作成</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='prog')renderProg();
+  if(v==='ret')renderRet();
+  if(v==='docs')renderDocs();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const tm=people.filter(p=>thisMonth(p.retDate));
+  const completed=people.filter(p=>progPct(p)>=100).length;
+  const rate=Math.round(completed/people.length*100);
+  const unreturned=people.reduce((s,p)=>s+(p.rets.length-retDone(p)),0);
+  // 離職率（デモ：在籍想定数に対する直近12ヶ月退職換算）
+  const headcount=120;
+  const annualLeavers=people.length+24; // デモ用
+  const turnover=(annualLeavers/headcount*100).toFixed(1);
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','今月の退職予定',tm.length+'<small>名</small>',people.length+'名 進行中','flat','5月退職分')}
+    ${kpi('#16b877','手続き完了率',rate+'<small>%</small>',completed+'/'+people.length+'名',rate>=70?'up':'warn',rate>=70?'順調':'要フォロー')}
+    ${kpi('#e3941f','未返却の物品',unreturned+'<small>点</small>','',unreturned?'warn':'up',unreturned?'回収待ち':'なし')}
+    ${kpi('#e24a4a','離職率(年換算)',turnover+'<small>%</small>','',+turnover>15?'down':'flat',+turnover>15?'業界平均比 高め':'業界平均並み')}`;
+  // trend bars: 月別退職者数（過去6ヶ月）
+  const months=[];for(let k=5;k>=0;k--){const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1);months.push(d);}
+  const counts=months.map(m=>people.filter(p=>p.retDate.getMonth()===m.getMonth()&&p.retDate.getFullYear()===m.getFullYear()).length);
+  // 過去月でデータ薄いところは見栄え用に底上げ（デモ）
+  const seedExtra=[3,5,2,4,0,0];
+  const vals=counts.map((c,i)=>c+seedExtra[i]);
+  const mx=Math.max(...vals,1);
+  $('trendBars').innerHTML=months.map((m,i)=>`
+    <div class="bar-row"><span class="mlabel">${m.getMonth()+1}月</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(vals[i]/mx*100)}"></div></div>
+      <span class="mval">${vals[i]}名</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // donut: 完了/進行中/未着手
+  const done=people.filter(p=>progPct(p)>=100).length;
+  const prog=people.filter(p=>{const x=progPct(p);return x>0&&x<100;}).length;
+  const wait=people.filter(p=>progPct(p)===0).length;
+  const total=people.length;
+  const pctDone=Math.round(done/total*100);
+  $('donut').style.setProperty('--p',pctDone+'%');
+  $('donutPct').textContent=pctDone+'%';
+  const lg=[['var(--green)','完了',done],['#cfd8e6','進行中',prog],['#eef1f7','未着手',wait]];
+  // 進行中は青系で
+  const lg2=[['var(--green)','完了',done],['var(--brand)','進行中',prog],['var(--soft)','未着手',wait]];
+  $('donutLegend').innerHTML=lg2.map(l=>`<div class="li"><span class="sw" style="background:${l[0]}"></span>${l[1]}<b>${l[2]}名</b></div>`).join('');
+  // donut グラデを完了+進行中で表現
+  const a=done/total*100, b=(done+prog)/total*100;
+  $('donut').style.background=`conic-gradient(var(--green) 0 ${a}%,var(--brand) ${a}% ${b}%,var(--soft) ${b}% 100%)`;
+  // 対応が必要な退職者
+  const alerts=people.filter(p=>pStatus(p)==='alert'||pStatus(p)==='soon').sort((x,y)=>x.retDate-y.retDate).slice(0,5);
+  $('dashAlert').innerHTML=alerts.length?alerts.map(p=>`<tr onclick="openPerson('${p.id}')">
+    <td><b>${esc(p.name)}</b><div class="muted" style="font-size:11px">${esc(p.dept)}</div></td>
+    <td class="muted">${fmtSlash(p.retDate)}</td>
+    <td>${pbar(progPct(p))}</td>
+    <td>${stBadge(pStatus(p))}</td></tr>`).join('')
+    :'<tr><td colspan="4" class="empty-cell">対応待ちはありません 🎉</td></tr>';
+  // activity
+  const acts=[
+    {i:'⚡',c:'var(--green-soft)',t:'AI自動段取りで 田中 健太 さんの離職票を作成（提出先：ハローワーク）',m:'12分前'},
+    {i:'📦',c:'var(--amber-soft)',t:'高橋 大輔 さんの貸与PCを返却受領',m:'1時間前'},
+    {i:'✅',c:'var(--green-soft)',t:'渡辺 陽子 さんの社会保険喪失手続きが完了',m:'今日 10:20'},
+    {i:'⚠️',c:'var(--red-soft)',t:'田中 健太 さんの源泉徴収票が未交付です（期限まで残り3日）',m:'今日 9:05'},
+    {i:'📄',c:'var(--brand-soft)',t:'佐藤 美咲 さんの退職証明書を発行しました',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${a.m}</div></div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+function pbar(pct){return `<div class="pbar-wrap"><div class="pbar"><i style="width:${pct}%"></i></div><b>${pct}%</b></div>`;}
+
+/* ============ LIST (退職予定) ============ */
+let filterDept='all';
+function renderChips(){
+  const opts=[['all','すべて']].concat(DEPTS.map(d=>[d,d]));
+  $('deptChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterDept?'on':''}" data-s="${esc(o[0])}">${esc(o[1])}</button>`).join('');
+  $('deptChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterDept=c.dataset.s;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=people.filter(p=>filterDept==='all'||p.dept===filterDept)
+    .filter(p=>!q||(p.name+p.dept+p.empNo+p.role).toLowerCase().includes(q))
+    .sort((a,b)=>a.retDate-b.retDate);
+  $('listRows').innerHTML=rows.length?rows.map(p=>`<tr onclick="openPerson('${p.id}')">
+    <td class="mono" style="font-size:12px">${esc(p.empNo)}</td>
+    <td><b>${esc(p.name)}</b></td>
+    <td><span class="tag-dept">${esc(p.dept)}</span></td>
+    <td class="muted">${esc(p.role)}</td>
+    <td class="muted">${fmtSlash(p.retDate)}</td>
+    <td class="muted">${esc(p.reason)}</td>
+    <td>${pbar(progPct(p))}</td>
+    <td>${stBadge(pStatus(p))}</td></tr>`).join('')
+    :'<tr><td colspan="8" class="empty-cell">該当する退職予定者がいません</td></tr>';
+}
+$('q').addEventListener('input',renderList);
+
+/* ============ PROGRESS (手続き進捗) ============ */
+let selPid=null;
+function renderProg(){
+  if(!selPid)selPid=people[0].id;
+  // 進捗が必要な人を上に
+  const sorted=[...people].sort((a,b)=>(progPct(a)-progPct(b))||(a.retDate-b.retDate));
+  $('progPeople').innerHTML=sorted.map(p=>{
+    const on=p.id===selPid;
+    return `<a class="nav" style="display:block"><div onclick="selectProg('${p.id}')" style="display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;cursor:pointer;margin-bottom:3px;${on?'background:var(--brand-soft);':''}">
+      <div style="width:32px;height:32px;border-radius:8px;background:${on?'var(--brand)':'var(--soft)'};color:${on?'#fff':'var(--ink-2)'};display:grid;place-items:center;font-weight:800;font-size:13px">${esc(p.name.slice(0,1))}</div>
+      <div style="flex:1;min-width:0"><div style="font-weight:700;font-size:13px;${on?'color:var(--brand)':''}">${esc(p.name)}</div>
+      <div class="muted" style="font-size:11px">${esc(p.dept)}・${fmtSlash(p.retDate)}</div></div>
+      <b style="font-size:12px;color:${progPct(p)>=100?'var(--green)':'var(--ink-3)'}">${progPct(p)}%</b></div></a>`;
+  }).join('');
+  renderSteps();
+}
+window.selectProg=id=>{selPid=id;renderProg();};
+function renderSteps(){
+  const p=people.find(x=>x.id===selPid);if(!p)return;
+  $('progName').textContent=p.name+' さん（'+p.dept+'）';
+  $('progPctTop').textContent='完了 '+progPct(p)+'%';
+  $('progSteps').innerHTML=p.steps.map((s,i)=>{
+    const cls=s.done?'done':(i===p.steps.findIndex(x=>!x.done)?'prog':'wait');
+    return `<div class="step">
+      <div class="sck ${cls}">${s.done?'✓':(cls==='prog'?'▶':(i+1))}</div>
+      <div style="flex:1"><div class="stt">${esc(s.n)}</div><div class="sm">${esc(s.m)}</div></div>
+      <div class="sright"><button class="btn sm ${s.done?'':'primary'}" onclick="toggleStep('${p.id}',${i})">${s.done?'完了を取消':'完了にする'}</button></div>
+    </div>`;
+  }).join('');
+}
+window.toggleStep=(id,i)=>{
+  const p=people.find(x=>x.id===id);p.steps[i].done=!p.steps[i].done;
+  // 連動：手続き完了時に対応する書類/返却を更新
+  const k=p.steps[i].k;
+  const doc=p.docs.find(d=>d.k===k);if(doc)doc.ready=p.steps[i].done;
+  if(k==='return')p.rets.forEach(r=>r.returned=p.steps[i].done);
+  renderSteps();renderProg();updateBadges();
+  showToast(p.steps[i].n+(p.steps[i].done?' を完了にしました':' の完了を取り消しました'));
+};
+
+/* ============ RETURN ITEMS (返却物) ============ */
+let retFilter='all';
+function renderRetChips(){
+  const opts=[['all','すべて'],['todo','未返却のみ'],['done','返却済のみ']];
+  $('retChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===retFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('retChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{retFilter=c.dataset.s;renderRetChips();renderRet();});
+}
+function renderRet(){
+  const q=($('qRet').value||'').toLowerCase();
+  let cards=[];
+  people.forEach(p=>p.rets.forEach((r,i)=>{
+    if(retFilter==='todo'&&r.returned)return;
+    if(retFilter==='done'&&!r.returned)return;
+    if(q&&!(p.name+r.n).toLowerCase().includes(q))return;
+    cards.push({p,r,i});
+  }));
+  // 未返却を先頭に
+  cards.sort((a,b)=>(a.r.returned-b.r.returned));
+  $('retGrid').innerHTML=cards.length?cards.map(({p,r,i})=>`
+    <div class="ret-card ${r.returned?'returned':''}">
+      <div class="rh"><div class="ric">${r.ic}</div>
+        <div><div class="rn">${esc(r.n)}</div><div class="ro">${esc(p.name)}・${esc(p.dept)}</div></div></div>
+      <div class="rfoot">
+        ${r.returned?'<span class="st done">返却済</span>':'<span class="st soon">未返却</span>'}
+        <button class="btn sm ${r.returned?'':'green'}" style="margin-left:auto" onclick="toggleRet('${p.id}',${i})">${r.returned?'取消':'受領'}</button>
+      </div>
+    </div>`).join('')
+    :'<div class="empty-cell" style="grid-column:1/-1">該当する物品がありません 🎉</div>';
+}
+window.toggleRet=(id,i)=>{
+  const p=people.find(x=>x.id===id);p.rets[i].returned=!p.rets[i].returned;
+  // 全返却なら手続きの「返却」ステップも完了
+  const allRet=p.rets.every(r=>r.returned);
+  const st=p.steps.find(s=>s.k==='return');if(st)st.done=allRet;
+  renderRet();updateBadges();
+  showToast(p.name+'さんの「'+p.rets[i].n+'」を'+(p.rets[i].returned?'受領しました':'未返却に戻しました'));
+};
+$('qRet').addEventListener('input',renderRet);
+
+/* ============ DOCUMENTS (書類) ============ */
+function renderDocs(){
+  const q=($('qDoc').value||'').toLowerCase();
+  let docs=allDocs().filter(d=>!q||(d.person.name+d.n).toLowerCase().includes(q));
+  // 未作成（要対応）を先頭に。退職日が近い順
+  docs.sort((a,b)=>(a.ready-b.ready)||(a.person.retDate-b.person.retDate));
+  $('docGrid').innerHTML=docs.slice(0,60).map(d=>`
+    <div class="doc-card">
+      <div style="display:flex;align-items:center;gap:11px">
+        <div class="dic">${d.ic}</div>
+        <div>${d.ready?'<span class="st done">作成済</span>':'<span class="st wait">未作成</span>'}</div>
+      </div>
+      <div class="dt">${esc(d.n)}</div>
+      <div class="dm">${esc(d.person.name)}（${esc(d.person.dept)}）<br>提出先：${esc(d.to)}</div>
+      <div class="dfoot">
+        ${d.ready
+          ? `<button class="btn sm" style="flex:1;justify-content:center" onclick="previewDoc('${d.person.id}','${d.k}')">プレビュー</button><button class="btn sm primary" onclick="showToast('${esc(d.n)} をダウンロードしました（デモ）')">DL</button>`
+          : `<button class="btn sm primary" style="flex:1;justify-content:center" onclick="makeDoc('${d.person.id}','${d.k}')">⚡ AIで作成</button>`}
+      </div>
+    </div>`).join('');
+}
+$('qDoc').addEventListener('input',renderDocs);
+window.makeDoc=(id,k)=>{
+  const p=people.find(x=>x.id===id);const d=p.docs.find(x=>x.k===k);d.ready=true;
+  const st=p.steps.find(s=>s.k===k);if(st)st.done=true;
+  renderDocs();updateBadges();
+  showToast(p.name+'さんの「'+d.n+'」をAIが作成しました');
+};
+window.previewDoc=(id,k)=>{
+  const p=people.find(x=>x.id===id);const d=p.docs.find(x=>x.k===k);
+  $('mTitle').textContent=d.n;
+  const issue=fmtDL(TODAY);
+  let body='';
+  if(k==='cert'){
+    body=docPaper('退　職　証　明　書',[
+      ['氏名',p.name],['所属',p.dept+'　'+p.role],['入社年月日','2019年4月1日'],
+      ['退職年月日',fmtDL(p.retDate)],['退職事由',p.reason],['業務の種類',p.dept+'における業務全般']
+    ],'上記の者は、当社を上記の事由により退職したことを証明します。');
+  }else if(k==='employ'){
+    body=docPaper('雇用保険被保険者離職証明書（離職票）',[
+      ['被保険者氏名',p.name],['事業所名','株式会社気持ち市場'],['離職年月日',fmtDL(p.retDate)],
+      ['離職区分',p.reason==='会社都合'?'1A（事業主都合）':'4D（正当な理由のない自己都合）'],
+      ['被保険者期間','7年2ヶ月'],['離職理由',p.reason]
+    ],'本書はハローワークへ提出し、交付後すみやかに本人へ送付します。');
+  }else if(k==='gensen'){
+    body=docPaper('令和8年分 給与所得の源泉徴収票',[
+      ['氏名',p.name],['支払金額','¥3,820,000'],['給与所得控除後の金額','¥2,656,000'],
+      ['所得控除の額の合計額','¥1,180,000'],['源泉徴収税額','¥73,500'],['退職年月日',fmtDL(p.retDate)]
+    ],'退職後1ヶ月以内に本人へ交付します。');
+  }else if(k==='social'){
+    body=docPaper('健康保険・厚生年金保険 被保険者資格喪失届',[
+      ['被保険者氏名',p.name],['基礎年金番号','1234-567890'],['資格喪失年月日',fmtDL(new Date(p.retDate.getFullYear(),p.retDate.getMonth(),p.retDate.getDate()+1))],
+      ['喪失原因','退職等'],['標準報酬月額','280,000円'],['提出先','日本年金機構（年金事務所）']
+    ],'退職日の翌日から5日以内に年金事務所へ提出します。');
+  }else if(k==='tax'){
+    body=docPaper('給与所得者異動届出書（住民税）',[
+      ['氏名',p.name],['特別徴収義務者','株式会社気持ち市場'],['異動年月日',fmtDL(p.retDate)],
+      ['異動の事由','退職'],['未徴収税額の徴収方法',p.reason==='定年退職'?'普通徴収へ切替':'一括徴収'],['提出先',p.dept+'所在地の市区町村']
+    ],'退職日の翌月10日までに市区町村へ提出します。');
+  }
+  $('mBody').innerHTML=`<div style="font-size:11px;color:var(--green);margin-bottom:10px">⚡ AI自動作成・発行日 ${issue}（デモ用サンプル）</div>${body}
+    <div style="display:flex;gap:8px;margin-top:16px"><button class="btn primary" style="flex:1;justify-content:center" onclick="showToast('${esc(d.n)} をダウンロードしました（デモ）')">📥 PDFでダウンロード</button><button class="btn" onclick="closeModal()">閉じる</button></div>`;
+  openModal();
+};
+function docPaper(title,rows,note){
+  return `<div class="paper">
+    <div class="pv-top"><div class="pv-title">${title}</div>
+      <div class="pv-meta"><div>文書番号：<span class="no">DOC-${1000+Math.floor(rnd()*9000)}</span></div><div>発行：株式会社気持ち市場</div></div></div>
+    <div class="pv-sec"><table class="pv"><tbody>
+      ${rows.map(r=>`<tr><td class="k">${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join('')}
+    </tbody></table></div>
+    <div class="pv-note">${esc(note)}　大分市都町○-○-○　株式会社気持ち市場　代表取締役</div>
+  </div>`;
+}
+
+/* ============ MODAL (退職者詳細) ============ */
+function openModal(){$('modal').classList.add('show');}
+function closeModal(){$('modal').classList.remove('show');}
+window.closeModal=closeModal;
+$('mClose').onclick=closeModal;
+$('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal();});
+window.openPerson=id=>{
+  const p=people.find(x=>x.id===id);if(!p)return;
+  const pct=progPct(p);const du=daysUntil(p.retDate);
+  $('mTitle').textContent=p.name+' さんの退職手続き';
+  const stepsHtml=p.steps.map(s=>`<div style="display:flex;gap:9px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)">
+    <span class="st ${s.done?'done':'wait'}" style="min-width:62px;justify-content:center">${s.done?'完了':'未'}</span>
+    <span style="font-size:12.5px">${esc(s.n)}</span></div>`).join('');
+  const retN=retDone(p),retT=p.rets.length;
+  const docN=p.docs.filter(d=>d.ready).length,docT=p.docs.length;
+  $('mBody').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:16px">
+      <div class="kpi"><div class="l">社員番号</div><div class="v" style="font-size:18px">${esc(p.empNo)}</div></div>
+      <div class="kpi"><div class="l">退職日</div><div class="v" style="font-size:18px">${fmtSlash(p.retDate)}<small style="font-size:12px"> ${du<0?'（'+(-du)+'日経過）':'（あと'+du+'日）'}</small></div></div>
+      <div class="kpi"><div class="l">部署 / 役職</div><div class="v" style="font-size:15px">${esc(p.dept)}<br><small style="font-size:12px">${esc(p.role)}</small></div></div>
+      <div class="kpi"><div class="l">退職理由</div><div class="v" style="font-size:15px">${esc(p.reason)}</div></div>
+    </div>
+    <div style="margin-bottom:6px;font-weight:800;font-size:13.5px">手続き進捗　${pbar(pct).replace('pbar-wrap','pbar-wrap')}</div>
+    <div style="margin:6px 0 16px">${stepsHtml}</div>
+    <div style="display:flex;gap:11px;margin-bottom:16px">
+      <div class="kpi" style="flex:1"><div class="l">返却物</div><div class="v" style="font-size:18px">${retN}<small> / ${retT}点</small></div></div>
+      <div class="kpi" style="flex:1"><div class="l">書類</div><div class="v" style="font-size:18px">${docN}<small> / ${docT}件</small></div></div>
+    </div>
+    ${p.note?`<div style="background:var(--brand-soft);border-radius:10px;padding:12px 14px;font-size:12.5px;color:var(--ink-2);margin-bottom:14px">📝 ${esc(p.note)}</div>`:''}
+    <div style="display:flex;gap:8px">
+      <button class="btn primary" style="flex:1;justify-content:center" onclick="closeModal();selectProg('${p.id}');go('prog')">手続きを進める</button>
+      <button class="btn" onclick="closeModal();go('docs')">書類を見る</button>
+    </div>`;
+  openModal();
+};
+
+/* ============ AI 自動段取り ============ */
+function renderAiTarget(){
+  $('aiTarget').innerHTML=people.filter(p=>progPct(p)<100)
+    .sort((a,b)=>a.retDate-b.retDate)
+    .map(p=>`<option value="${p.id}">${esc(p.name)}（${esc(p.dept)}・${fmtSlash(p.retDate)}）</option>`).join('')
+    || '<option>全員 手続き完了済みです</option>';
+}
+$('aiRun').addEventListener('click',async()=>{
+  const id=$('aiTarget').value;const p=people.find(x=>x.id===id);
+  if(!p){showToast('対象の退職者がいません');return;}
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 段取り生成中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},110);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // 生成物：手続き + 書類（退職区分で出し分け）
+  const gens=[];
+  STEP_DEFS.forEach(s=>gens.push({type:'手続き',n:s.n,ic:'✅'}));
+  p.docs.forEach(d=>gens.push({type:'書類',n:d.n,ic:'📄'}));
+  // 会社都合なら助成金チェックを追加
+  if(p.reason==='会社都合')gens.push({type:'確認',n:'解雇予告手当・離職区分の確認',ic:'⚠️'});
+  if(p.reason==='定年退職')gens.push({type:'確認',n:'退職金・継続雇用希望の確認',ic:'💰'});
+  $('genItems').innerHTML=gens.map((g,i)=>`<div class="gen-item" data-i="${i}">
+    <span class="ck">✓</span><div class="di">${g.ic}</div>
+    <b style="flex:1">${esc(g.n)}</b>
+    <span class="muted" style="font-size:11.5px">${esc(g.type)}</span></div>`).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,140));items[i].classList.add('in');}
+  // 実データ反映：手続き全完了 + 書類全作成 + 返却ステップ以外完了
+  p.steps.forEach(st=>{if(st.k!=='return')st.done=true;});
+  p.docs.forEach(d=>d.ready=true);
+  btn.disabled=false;btn.textContent='⚡ もう一度 段取りする';
+  updateBadges();renderAiTarget();
+  showToast(p.name+'さんの手続き'+STEP_DEFS.length+'件・書類'+p.docs.length+'件をAIが自動段取りしました');
+});
+
+/* ============ BADGES ============ */
+function updateBadges(){
+  const needProg=people.filter(p=>progPct(p)<100).length;
+  const needRet=people.reduce((s,p)=>s+(p.rets.length-retDone(p)),0);
+  $('navProg').textContent=needProg;
+  $('navRet').textContent=needRet;
+}
+
+/* ============ INIT ============ */
+renderChips();renderRetChips();renderAiTarget();renderDash();updateBadges();
+</script>
+</body>
+</html>

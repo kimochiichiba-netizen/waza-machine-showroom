@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜設備保全マシン（設備保全管理システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cf0;--purple-soft:#efeafe;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut / gauge */
+.gauge-wrap{display:flex;align-items:center;gap:22px;justify-content:center;padding:6px 0}
+.gauge{position:relative;width:140px;height:140px;flex-shrink:0}
+.gauge svg{transform:rotate(-90deg)}
+.gauge .gc{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.gauge .gc .gv{font-size:30px;font-weight:900;line-height:1}
+.gauge .gc .gl{font-size:11px;color:var(--ink-3);font-weight:700}
+.gleg{display:flex;flex-direction:column;gap:10px;font-size:12.5px}
+.gleg .gl-row{display:flex;align-items:center;gap:9px}
+.gleg .gl-dot{width:11px;height:11px;border-radius:4px}
+.gleg b{font-weight:800}
+.gleg span{color:var(--ink-3);margin-left:auto;font-weight:700}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.ok{background:var(--green-soft);color:var(--green)}
+.st.run{background:var(--brand-soft);color:var(--brand)}
+.st.idle{background:var(--soft);color:var(--ink-3)}
+.st.alert{background:var(--red-soft);color:var(--red)}
+.st.warn{background:var(--amber-soft);color:var(--amber)}
+.st.done{background:var(--green-soft);color:var(--green)}
+.st.plan{background:var(--brand-soft);color:var(--brand)}
+.st.late{background:var(--red-soft);color:var(--red)}
+.st.fixed{background:var(--green-soft);color:var(--green)}
+.st.repair{background:var(--amber-soft);color:var(--amber)}
+
+/* health bar */
+.hb{display:inline-block;width:62px;height:8px;border-radius:99px;background:var(--soft);overflow:hidden;vertical-align:middle}
+.hb i{display:block;height:100%;border-radius:99px}
+
+/* risk pill */
+.risk{font-size:11px;font-weight:800;padding:3px 9px;border-radius:7px}
+.risk.high{background:var(--red-soft);color:var(--red)}
+.risk.mid{background:var(--amber-soft);color:var(--amber)}
+.risk.low{background:var(--green-soft);color:var(--green)}
+
+/* create form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,400px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:64px}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* paper preview (work order) */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:30px 34px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.pv-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}
+.pv-title{font-size:22px;font-weight:900;letter-spacing:.22em;color:var(--brand-dk);border-bottom:3px solid var(--brand-dk);padding-bottom:5px}
+.pv-meta{text-align:right;font-size:11.5px;color:var(--ink-2)}
+.pv-meta .no{font-family:'Orbitron';color:var(--ink);font-weight:700}
+.pv-eq{font-size:18px;font-weight:900;border-bottom:1.5px solid #1a2233;display:inline-block;min-width:220px;padding-bottom:5px;margin-bottom:8px}
+.pv-box{background:var(--soft);border-left:5px solid var(--brand-dk);border-radius:6px;padding:13px 18px;margin:16px 0;font-size:12.5px}
+.pv-box .lbl{font-size:11px;color:var(--ink-3);font-weight:700}
+table.pv{width:100%;border-collapse:collapse;margin-bottom:14px}
+table.pv th{background:var(--brand-dk);color:#fff;font-size:11px;padding:8px 11px;text-align:left}
+table.pv th.r,table.pv td.r{text-align:right}
+table.pv td{padding:8px 11px;border-bottom:1px solid var(--line);font-size:12px}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--line);border-radius:9px;margin-bottom:8px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;font-size:11px;font-weight:900;color:#fff}
+.gen-item .gi-body{flex:1;min-width:0}
+.gen-item .gi-eq{font-weight:800}
+.gen-item .gi-rec{font-size:11.5px;color:var(--ink-2);margin-top:1px}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto;flex-shrink:0}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* sensor sparkline */
+.spark{display:flex;align-items:flex-end;gap:3px;height:46px;margin-top:4px}
+.spark i{flex:1;border-radius:3px 3px 0 0;background:linear-gradient(180deg,var(--brand),var(--sky));min-height:3px;transition:height .5s}
+.spark.risk i{background:linear-gradient(180deg,var(--red),var(--amber))}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.muted{color:var(--ink-2)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">設備保全マシン<small>技マシン｜設備保全管理</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="equip"><span class="i">⚙️</span>設備一覧</a>
+      <a data-v="plan"><span class="i">🗓️</span>保全計画</a>
+      <a data-v="fault"><span class="i">🛠️</span>故障履歴</a>
+      <a data-v="parts"><span class="i">📦</span>部品<span class="badge" id="navParts">0</span></a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI予知保全</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 保全管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。設備・センサー値・故障データはサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">設備の稼働状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>月次の故障件数推移</h3><span class="more">過去6ヶ月</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>設備ステータス内訳</h3></div>
+            <div class="pb"><div class="gauge-wrap" id="gaugeWrap"></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>AIが検知した要注意設備</h3><span class="more" onclick="go('ai')">AI予知保全へ</span></div>
+            <div class="pb" style="padding:0">
+              <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+                <thead><tr><th>設備</th><th>異常の予兆</th><th>故障リスク</th><th class="r">推定残日数</th></tr></thead>
+                <tbody id="riskRows"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- EQUIPMENT -->
+      <section class="view" id="v-equip">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="設備名・管理番号・設置場所で検索"></div>
+          <div class="chips" id="equipChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>管理番号</th><th>設備名</th><th>設置場所</th><th>健全度</th><th class="r">稼働率</th><th>次回点検</th><th>状態</th></tr></thead>
+          <tbody id="equipRows"></tbody>
+        </table>
+      </section>
+
+      <!-- MAINTENANCE PLAN -->
+      <section class="view" id="v-plan">
+        <div class="create-grid">
+          <div class="formcard">
+            <div style="font-size:14px;font-weight:900;margin-bottom:14px">🗓️ 保全作業の登録</div>
+            <div class="fg"><label>対象設備</label><select id="pEquip"></select></div>
+            <div class="fg"><label>作業種別</label>
+              <select id="pKind"><option>定期点検</option><option>予防保全</option><option>部品交換</option><option>清掃・調整</option><option>予知保全（AI推奨）</option></select></div>
+            <div class="fg-row">
+              <div class="fg"><label>予定日</label><input id="pDate" type="date"></div>
+              <div class="fg"><label>担当者</label>
+                <select id="pStaff"><option>佐藤（電気）</option><option>田中（機械）</option><option>鈴木（設備）</option><option>高橋（外注）</option></select></div>
+            </div>
+            <div class="fg"><label>作業内容</label><textarea id="pMemo" placeholder="例：ベアリング異音点検、グリス補充"></textarea></div>
+            <div class="aihint" id="pAiHint">✨ AIが過去履歴から推奨作業内容を入力しました</div>
+            <div class="linkrow" style="margin-top:6px">
+              <button class="btn primary" id="pAdd" style="flex:1;justify-content:center">＋ 計画に登録</button>
+              <button class="btn" id="pSample">AI提案を入れる</button>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>保全カレンダー（予定一覧）</h3><span class="more" id="planCount">0件</span></div>
+            <div class="pb" style="padding:0">
+              <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+                <thead><tr><th>予定日</th><th>設備</th><th>作業種別</th><th>担当</th><th>状態</th><th></th></tr></thead>
+                <tbody id="planRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FAULT HISTORY -->
+      <section class="view" id="v-fault">
+        <div class="kpis" id="faultKpis"></div>
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="fq" placeholder="設備名・症状で検索"></div>
+          <div class="chips" id="faultChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>発生日</th><th>設備</th><th>症状</th><th>原因</th><th class="r">復旧時間</th><th class="r">費用</th><th>状態</th></tr></thead>
+          <tbody id="faultRows"></tbody>
+        </table>
+      </section>
+
+      <!-- PARTS -->
+      <section class="view" id="v-parts">
+        <div class="kpis" id="partsKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>部品在庫一覧</h3>
+            <button class="btn green" id="autoOrder" style="margin-left:auto">🤖 不足分をAIが自動発注</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>部品コード</th><th>部品名</th><th>対応設備</th><th class="r">在庫数</th><th class="r">適正在庫</th><th>状態</th><th></th></tr></thead>
+              <tbody id="partsRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI PREDICTIVE -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">稼働データから故障を予知し、保全計画を自動提案</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">全 <b id="aiEqCount">0</b>台のセンサーデータ（振動・温度・電流）をAIが解析し、故障の予兆と最適な保全タイミングを提案します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで予知解析する</button>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:18px 0 4px" id="sensorCards"></div>
+
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">3時間20分/週</div>
+              <ul>
+                <li>📋 設備を1台ずつ巡回点検</li>
+                <li>📝 点検表に手書き記録・Excel転記</li>
+                <li>🔧 壊れてから事後対応（突発停止）</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 センサーデータを常時自動監視</li>
+                <li>📈 故障の予兆をAIが早期検知</li>
+                <li>🗓️ 壊れる前に保全計画を自動提案</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">🔮 AIによる故障予知・保全提案</div>
+            <div id="genItems"></div>
+            <div style="margin-top:6px;text-align:right">
+              <button class="btn green" id="genApply" style="display:none">🗓️ 提案をすべて保全計画に登録</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const TODAY=new Date();
+let SEED=4071;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+const LOCATIONS=['A棟 1F 機械室','A棟 2F 製造ライン','B棟 冷蔵設備室','B棟 厨房','屋上 空調機械室','第2工場 加工室','配送センター','変電室'];
+// 設備マスタ：健全度 health(0-100), 稼働率 util(%), riskScore(0-100), 次回点検まで日数
+const EQUIP_DEFS=[
+  {name:'No.1 冷凍コンプレッサー',cat:'冷凍機'},
+  {name:'No.2 業務用エアコン',cat:'空調'},
+  {name:'給水ポンプ P-101',cat:'ポンプ'},
+  {name:'非常用発電機 G-1',cat:'発電機'},
+  {name:'コンベア搬送ライン CV-3',cat:'搬送'},
+  {name:'真空包装機 VP-2',cat:'包装機'},
+  {name:'冷蔵ショーケース SC-5',cat:'冷蔵'},
+  {name:'高圧洗浄ポンプ HW-1',cat:'ポンプ'},
+  {name:'排気ファン EF-4',cat:'送風機'},
+  {name:'受変電トランス TR-1',cat:'電気設備'},
+  {name:'エレベーター EV-1',cat:'昇降機'},
+  {name:'ボイラー BL-2',cat:'熱源'},
+  {name:'製氷機 IM-3',cat:'冷凍機'},
+  {name:'空気圧縮機 AC-6',cat:'圧縮機'},
+];
+const STATUSES=['run','run','ok','idle','run','warn','alert','run'];
+let equipment=[];
+(function seedEquip(){
+  EQUIP_DEFS.forEach((e,i)=>{
+    let st=pick(STATUSES);
+    const health=st==='alert'?20+Math.floor(rnd()*22):st==='warn'?52+Math.floor(rnd()*18):72+Math.floor(rnd()*26);
+    const util=st==='idle'?0:60+Math.floor(rnd()*38);
+    const risk=st==='alert'?72+Math.floor(rnd()*24):st==='warn'?44+Math.floor(rnd()*22):4+Math.floor(rnd()*28);
+    const nextDays=st==='alert'?-2+Math.floor(rnd()*4):Math.floor(rnd()*42)-3;
+    const nextInsp=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+nextDays);
+    const mtbf=180+Math.floor(rnd()*820);
+    equipment.push({id:'EQ-'+String(101+i),name:e.name,cat:e.cat,loc:LOCATIONS[i%LOCATIONS.length],
+      status:st,health,util,risk,nextInsp,mtbf});
+  });
+})();
+
+// 故障履歴
+const SYMPTOMS=['異音・振動増大','温度上昇アラーム','起動不良','冷却能力低下','油圧低下','電流値異常','漏れ検知','停止'];
+const CAUSES=['ベアリング摩耗','フィルター目詰まり','コンデンサ劣化','冷媒不足','潤滑不良','配線接触不良','パッキン劣化','過負荷運転'];
+let faults=[];
+(function seedFaults(){
+  for(let i=0;i<18;i++){
+    const e=pick(equipment);
+    const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-Math.floor(rnd()*5),1+Math.floor(rnd()*27));
+    const downMin=20+Math.floor(rnd()*340);
+    const cost=8000+Math.floor(rnd()*240000);
+    const st=rnd()>0.18?'fixed':(rnd()>0.5?'repair':'fixed');
+    faults.push({date:d,eq:e.name,sym:pick(SYMPTOMS),cause:pick(CAUSES),downMin,cost,status:st});
+  }
+  faults.sort((a,b)=>b.date-a.date);
+})();
+
+// 部品在庫
+const PARTS_DEFS=[
+  {code:'PT-001',name:'ベアリング 6204ZZ',eq:'ポンプ／送風機',stock:2,opt:6},
+  {code:'PT-002',name:'エアフィルター 標準',eq:'空調全般',stock:14,opt:10},
+  {code:'PT-003',name:'Vベルト B-50',eq:'コンベア／圧縮機',stock:1,opt:4},
+  {code:'PT-004',name:'冷媒 R410A 10kg',eq:'冷凍機／冷蔵',stock:0,opt:3},
+  {code:'PT-005',name:'グリス 万能 400g',eq:'機械全般',stock:8,opt:8},
+  {code:'PT-006',name:'コンタクタ 三相20A',eq:'電気設備',stock:3,opt:5},
+  {code:'PT-007',name:'メカニカルシール',eq:'ポンプ',stock:5,opt:4},
+  {code:'PT-008',name:'温度センサー PT100',eq:'冷凍機／熱源',stock:1,opt:6},
+];
+let parts=PARTS_DEFS.map(p=>({...p}));
+
+// 保全計画
+let plans=[];
+(function seedPlans(){
+  const kinds=['定期点検','予防保全','部品交換','清掃・調整'];
+  const staffs=['佐藤（電気）','田中（機械）','鈴木（設備）'];
+  for(let i=0;i<5;i++){
+    const e=pick(equipment);
+    const dd=Math.floor(rnd()*20)-2;
+    const d=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+dd);
+    let st=dd<0?'done':(dd<3?'plan':'plan');
+    if(dd<-1&&rnd()>0.6)st='late';
+    plans.push({date:d,eq:e.name,kind:pick(kinds),staff:pick(staffs),status:st});
+  }
+  plans.sort((a,b)=>a.date-b.date);
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+const fmtD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ESTLABEL={run:'稼働中',ok:'正常',idle:'停止中',warn:'要注意',alert:'要点検'};
+const FSTLABEL={fixed:'復旧済',repair:'修理中'};
+const PSTLABEL={done:'完了',plan:'予定',late:'遅延'};
+function eqBadge(s){return `<span class="st ${s}">${ESTLABEL[s]}</span>`;}
+function faultBadge(s){return `<span class="st ${s}">${FSTLABEL[s]}</span>`;}
+function planBadge(s){return `<span class="st ${s}">${PSTLABEL[s]}</span>`;}
+function healthBar(h){const c=h>=70?'var(--green)':h>=45?'var(--amber)':'var(--red)';
+  return `<span class="hb"><i style="width:${h}%;background:${c}"></i></span> <b class="tnum" style="font-size:12px;color:${c}">${h}</b>`;}
+function riskPill(r){const c=r>=65?'high':r>=40?'mid':'low';const t=r>=65?'高':r>=40?'中':'低';
+  return `<span class="risk ${c}">${t} ${r}%</span>`;}
+function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function dateInput(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','設備の稼働状況とAI予知'],equip:['設備一覧','登録した設備の健全度を管理します'],
+  plan:['保全計画','点検・保全のスケジュールを登録します'],fault:['故障履歴','過去の故障・修理記録を分析します'],
+  parts:['部品在庫','保全部品の在庫を管理します'],ai:['AI予知保全','稼働データから故障を予知し保全を提案します']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='equip'?'<button class="btn primary" onclick="go(\'plan\')">＋ 保全計画を作成</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI予知保全</button><button class="btn primary" onclick="go(\'plan\')">＋ 保全計画</button>'
+    : v==='plan'?'<button class="btn" onclick="go(\'ai\')">⚡ AIに提案させる</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='equip')renderEquip();
+  if(v==='plan')renderPlan();
+  if(v==='fault')renderFault();
+  if(v==='parts')renderParts();
+  if(v==='ai')renderAiIntro();
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const total=equipment.length;
+  const running=equipment.filter(e=>e.status==='run').length;
+  const alerts=equipment.filter(e=>e.status==='alert').length;
+  const warns=equipment.filter(e=>e.status==='warn').length;
+  const avgUtil=Math.round(equipment.reduce((s,e)=>s+e.util,0)/total);
+  const faultsTM=faults.filter(f=>thisMonth(f.date)).length;
+  const avgMtbf=Math.round(equipment.reduce((s,e)=>s+e.mtbf,0)/total);
+  const needCheck=equipment.filter(e=>{const dd=Math.round((e.nextInsp-TODAY)/86400000);return dd<=3;}).length;
+  $('kpis').innerHTML=`
+    ${kpi('#16b877','設備稼働率',avgUtil+'<small>%</small>','稼働 '+running+'/'+total+'台','up','前月比 +3pt')}
+    ${kpi('#e24a4a','今月の故障件数',faultsTM+'<small>件</small>','',faultsTM>3?'down':'up',faultsTM>3?'要改善':'前月比 -2件')}
+    ${kpi('#2f6df0','平均故障間隔(MTBF)',avgMtbf.toLocaleString()+'<small>h</small>','約'+Math.round(avgMtbf/24)+'日','up','長寿命化中')}
+    ${kpi('#e3941f','要点検 設備',needCheck+'<small>台</small>',(alerts+warns)+'台が注意','warn',alerts?'至急対応':'計画的に')}`;
+  // trend (faults per month)
+  const months=[];for(let k=5;k>=0;k--){const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1);months.push(d);}
+  const counts=months.map(m=>faults.filter(f=>f.date.getMonth()===m.getMonth()&&f.date.getFullYear()===m.getFullYear()).length);
+  const mx=Math.max(...counts,1);
+  $('trendBars').innerHTML=months.map((m,i)=>`
+    <div class="bar-row"><span class="mlabel">${m.getMonth()+1}月</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(counts[i]/mx*100)}"></div></div>
+      <span class="mval">${counts[i]}件</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // gauge: status breakdown
+  renderGauge(total,running,equipment.filter(e=>e.status==='ok').length,warns,alerts,equipment.filter(e=>e.status==='idle').length);
+  // risk rows
+  const risky=[...equipment].filter(e=>e.risk>=40).sort((a,b)=>b.risk-a.risk).slice(0,5);
+  const omen={'冷凍機':'振動値が基準の1.8倍','空調':'消費電流が緩やかに上昇','ポンプ':'軸受温度が+12℃','搬送':'モーター負荷が増加','包装機':'真空到達時間が延長','冷蔵':'庫内温度のばらつき','送風機':'振動スペクトル異常','電気設備':'絶縁抵抗が低下','圧縮機':'吐出温度上昇','発電機':'始動電圧の低下','昇降機':'制動距離の増加','熱源':'排ガス温度上昇'};
+  $('riskRows').innerHTML=risky.length?risky.map(e=>{
+    const dd=Math.max(0,Math.round((100-e.risk)/4));
+    return `<tr onclick="go('ai')"><td><b>${esc(e.name)}</b><div class="am" style="color:var(--ink-3);font-size:11px">${esc(e.loc)}</div></td>
+      <td class="muted" style="font-size:12px">${esc(omen[e.cat]||'稼働パターンの変化')}</td>
+      <td>${riskPill(e.risk)}</td><td class="r tnum"><b>約${dd}日</b></td></tr>`;
+  }).join(''):'<tr><td colspan="4" class="empty-cell">要注意設備はありません 🎉</td></tr>';
+  // activity
+  const acts=[
+    {i:'🔮',c:'#efeafe',t:'AI予知保全：No.1 冷凍コンプレッサーの故障リスクを検知',m:'12分前'},
+    {i:'✅',c:'#e6f8f0',t:'給水ポンプ P-101 の定期点検が完了しました',m:'1時間前'},
+    {i:'📦',c:'#eaf1ff',t:'冷媒 R410A を自動発注（在庫0 → 適正在庫へ）',m:'今日 9:40'},
+    {i:'⚠️',c:'#fdeaea',t:'冷蔵ショーケース SC-5 で温度上昇アラーム',m:'今日 8:05'},
+    {i:'🛠️',c:'#fdf3e2',t:'真空包装機 VP-2 の修理を起票しました',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${a.t}</div><div class="am">${a.m}</div></div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+function renderGauge(total,run,ok,warn,alert,idle){
+  const segs=[['稼働中',run,'#2f6df0'],['正常',ok,'#16b877'],['要注意',warn,'#e3941f'],['要点検',alert,'#e24a4a'],['停止中',idle,'#8a94a6']].filter(s=>s[1]>0);
+  const R=58,C=2*Math.PI*R;let off=0;
+  const circles=segs.map(s=>{const frac=s[1]/total;const len=C*frac;const c=`<circle cx="70" cy="70" r="${R}" fill="none" stroke="${s[2]}" stroke-width="16" stroke-dasharray="${len} ${C-len}" stroke-dashoffset="${-off}"/>`;off+=len;return c;}).join('');
+  const okPct=Math.round((run+ok)/total*100);
+  $('gaugeWrap').innerHTML=`
+    <div class="gauge"><svg width="140" height="140">${circles}</svg>
+      <div class="gc"><div><div class="gv">${okPct}<small style="font-size:15px">%</small></div><div class="gl">健全な設備</div></div></div></div>
+    <div class="gleg">${segs.map(s=>`<div class="gl-row"><span class="gl-dot" style="background:${s[2]}"></span><b>${s[0]}</b><span>${s[1]}台</span></div>`).join('')}</div>`;
+}
+
+/* ============ EQUIPMENT ============ */
+let equipFilter='all';
+function renderEquipChips(){
+  const opts=[['all','すべて'],['run','稼働中'],['ok','正常'],['warn','要注意'],['alert','要点検'],['idle','停止中']];
+  $('equipChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===equipFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('equipChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{equipFilter=c.dataset.s;renderEquipChips();renderEquip();});
+}
+function renderEquip(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=equipment.filter(e=>equipFilter==='all'||e.status===equipFilter)
+    .filter(e=>!q||(e.name+e.id+e.loc+e.cat).toLowerCase().includes(q));
+  $('equipRows').innerHTML=rows.length?rows.map(e=>{
+    const dd=Math.round((e.nextInsp-TODAY)/86400000);
+    const dueTxt=dd<0?`<span style="color:var(--red);font-weight:700">${Math.abs(dd)}日超過</span>`:dd<=3?`<span style="color:var(--amber);font-weight:700">あと${dd}日</span>`:`${fmtD(e.nextInsp)}（あと${dd}日）`;
+    return `<tr>
+      <td class="mono" style="font-size:12px">${esc(e.id)}</td>
+      <td><b>${esc(e.name)}</b><div style="color:var(--ink-3);font-size:11px">${esc(e.cat)}</div></td>
+      <td class="muted">${esc(e.loc)}</td>
+      <td>${healthBar(e.health)}</td>
+      <td class="r tnum"><b>${e.util}%</b></td>
+      <td class="muted" style="font-size:12px">${dueTxt}</td>
+      <td>${eqBadge(e.status)}</td></tr>`;
+  }).join(''):'<tr><td colspan="7" class="empty-cell">該当する設備がありません</td></tr>';
+}
+$('q').addEventListener('input',renderEquip);
+
+/* ============ MAINTENANCE PLAN ============ */
+function fillEquipSelect(sel){sel.innerHTML='<option value="">選択してください</option>'+equipment.map(e=>`<option>${e.name}</option>`).join('');}
+function renderPlan(){
+  fillEquipSelect($('pEquip'));
+  if(!$('pDate').value)$('pDate').value=dateInput(new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+3));
+  renderPlanRows();
+}
+function renderPlanRows(){
+  plans.sort((a,b)=>a.date-b.date);
+  $('planCount').textContent=plans.length+'件';
+  $('planRows').innerHTML=plans.length?plans.map((p,i)=>`<tr>
+    <td class="muted" style="font-size:12px"><b style="color:var(--ink)">${fmtD(p.date)}</b></td>
+    <td><b>${esc(p.eq)}</b></td><td class="muted">${esc(p.kind)}</td><td class="muted" style="font-size:12px">${esc(p.staff)}</td>
+    <td>${planBadge(p.status)}</td>
+    <td class="r">${p.status!=='done'?`<button class="btn green" style="padding:6px 12px" onclick="completePlan(${i})">完了</button>`:'<span class="muted" style="font-size:11px">✓</span>'}</td></tr>`).join('')
+    :'<tr><td colspan="6" class="empty-cell">予定はありません</td></tr>';
+}
+window.completePlan=i=>{if(plans[i]){plans[i].status='done';renderPlanRows();showToast(plans[i].eq+' の作業を完了にしました');}};
+$('pSample').addEventListener('click',()=>{
+  $('pEquip').value='No.1 冷凍コンプレッサー';$('pKind').value='予知保全（AI推奨）';$('pStaff').value='田中（機械）';
+  $('pDate').value=dateInput(new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+2));
+  $('pMemo').value='圧縮機ベアリングの振動値上昇を検知。グリス補充と軸受温度の再測定。必要に応じベアリング(PT-001)交換。';
+  $('pAiHint').classList.add('show');setTimeout(()=>$('pAiHint').classList.remove('show'),2400);
+});
+$('pAdd').addEventListener('click',()=>{
+  const eq=$('pEquip').value;
+  if(!eq){showToast('対象設備を選択してください');return;}
+  const d=$('pDate').value?new Date($('pDate').value):new Date();
+  plans.push({date:d,eq,kind:$('pKind').value,staff:$('pStaff').value,status:'plan'});
+  renderPlanRows();showToast('保全計画に登録しました（'+esc(eq)+'）');
+  $('pMemo').value='';$('pEquip').value='';
+});
+
+/* ============ FAULT HISTORY ============ */
+let faultFilter='all';
+function renderFaultChips(){
+  const opts=[['all','すべて'],['fixed','復旧済'],['repair','修理中']];
+  $('faultChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===faultFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('faultChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{faultFilter=c.dataset.s;renderFaultChips();renderFault();});
+}
+function renderFault(){
+  const tm=faults.filter(f=>thisMonth(f.date));
+  const avgDown=faults.length?Math.round(faults.reduce((s,f)=>s+f.downMin,0)/faults.length):0;
+  const totalCost=faults.reduce((s,f)=>s+f.cost,0);
+  const repairing=faults.filter(f=>f.status==='repair').length;
+  $('faultKpis').innerHTML=`
+    ${kpi('#e24a4a','累計 故障件数',faults.length+'<small>件</small>',tm.length+'件 今月','warn','記録中')}
+    ${kpi('#e3941f','平均復旧時間',avgDown+'<small>分</small>','MTTR','up','短縮傾向')}
+    ${kpi('#2f6df0','累計 修理費用',yen(totalCost),'','up','予算内')}
+    ${kpi('#16b877','対応中',repairing+'<small>件</small>',(faults.length-repairing)+'件 復旧済','up','順調')}`;
+  const q=($('fq').value||'').toLowerCase();
+  let rows=faults.filter(f=>faultFilter==='all'||f.status===faultFilter)
+    .filter(f=>!q||(f.eq+f.sym+f.cause).toLowerCase().includes(q));
+  $('faultRows').innerHTML=rows.length?rows.map(f=>`<tr>
+    <td class="muted" style="font-size:12px"><b style="color:var(--ink)">${fmtD(f.date)}</b></td>
+    <td><b>${esc(f.eq)}</b></td><td class="muted">${esc(f.sym)}</td><td class="muted">${esc(f.cause)}</td>
+    <td class="r tnum">${f.downMin}分</td><td class="r tnum">${yen(f.cost)}</td><td>${faultBadge(f.status)}</td></tr>`).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する故障記録がありません</td></tr>';
+}
+$('fq').addEventListener('input',renderFault);
+
+/* ============ PARTS ============ */
+function partState(p){return p.stock===0?'alert':p.stock<p.opt?'warn':'ok';}
+function renderParts(){
+  const low=parts.filter(p=>p.stock<p.opt);
+  const zero=parts.filter(p=>p.stock===0);
+  const totalQty=parts.reduce((s,p)=>s+p.stock,0);
+  $('partsKpis').innerHTML=`
+    ${kpi('#2f6df0','登録部品',parts.length+'<small>品目</small>','在庫合計 '+totalQty+'点','up','管理中')}
+    ${kpi('#e3941f','在庫不足',low.length+'<small>品目</small>','適正在庫を下回る','warn','要発注')}
+    ${kpi('#e24a4a','在庫切れ',zero.length+'<small>品目</small>','',zero.length?'down':'up',zero.length?'至急':'なし')}
+    ${kpi('#16b877','充足率',Math.round((parts.length-low.length)/parts.length*100)+'<small>%</small>','','up','安定')}`;
+  $('partsRows').innerHTML=parts.map((p,i)=>{
+    const st=partState(p);
+    const lbl=st==='alert'?'在庫切れ':st==='warn'?'要発注':'適正';
+    const cls=st==='alert'?'alert':st==='warn'?'warn':'ok';
+    return `<tr>
+      <td class="mono" style="font-size:12px">${esc(p.code)}</td>
+      <td><b>${esc(p.name)}</b></td><td class="muted" style="font-size:12px">${esc(p.eq)}</td>
+      <td class="r tnum"><b style="color:${st==='alert'?'var(--red)':st==='warn'?'var(--amber)':'var(--ink)'}">${p.stock}</b></td>
+      <td class="r tnum muted">${p.opt}</td>
+      <td><span class="st ${cls}">${lbl}</span></td>
+      <td class="r">${p.stock<p.opt?`<button class="btn" style="padding:6px 12px" onclick="orderPart(${i})">発注</button>`:'<span class="muted" style="font-size:11px">—</span>'}</td></tr>`;
+  }).join('');
+  $('navParts').textContent=low.length;
+}
+window.orderPart=i=>{const p=parts[i];if(p){p.stock=p.opt;renderParts();showToast(p.name+' を適正在庫まで発注しました');}};
+$('autoOrder').addEventListener('click',async()=>{
+  const btn=$('autoOrder');btn.textContent='🤖 発注処理中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,900));
+  let n=0;parts.forEach(p=>{if(p.stock<p.opt){p.stock=p.opt;n++;}});
+  btn.textContent='🤖 不足分をAIが自動発注';btn.disabled=false;
+  renderParts();showToast('在庫不足の '+n+'品目をAIが自動発注しました');
+});
+
+/* ============ AI PREDICTIVE ============ */
+function renderAiIntro(){
+  $('aiEqCount').textContent=equipment.length;
+  // sensor sparkline cards (3 highest-risk equipment)
+  const top=[...equipment].sort((a,b)=>b.risk-a.risk).slice(0,3);
+  const metrics=['振動 (mm/s)','軸受温度 (℃)','消費電流 (A)'];
+  $('sensorCards').innerHTML=top.map((e,k)=>{
+    const risky=e.risk>=50;
+    const bars=Array.from({length:14},(_,j)=>{
+      const base=risky?20+j*4:30+Math.sin(j)*8;
+      const h=Math.max(8,Math.min(46,base+(rnd()*16-8)));
+      return `<i style="height:${Math.round(h)}px"></i>`;
+    }).join('');
+    return `<div style="border:1px solid var(--line);border-radius:11px;padding:12px 13px;background:var(--soft)">
+      <div style="font-size:11px;color:var(--ink-3);font-weight:700">${esc(e.name)}</div>
+      <div style="font-size:12.5px;font-weight:800;margin-top:1px">${metrics[k]} ${riskPill(e.risk)}</div>
+      <div class="spark ${risky?'risk':''}">${bars}</div></div>`;
+  }).join('');
+}
+let aiProposals=[];
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 解析中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent=Math.min(s,9)+'秒';},120);
+  await new Promise(r=>setTimeout(r,1200));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // build proposals from risky equipment
+  const recMap={'冷凍機':'冷媒充填量の点検＋ベアリング(PT-001)交換を推奨','空調':'エアフィルター(PT-002)交換と電流値の再測定','ポンプ':'メカニカルシール(PT-007)点検・グリス補充','搬送':'Vベルト(PT-003)張力調整・モーター負荷確認','包装機':'真空ポンプの油交換・シール点検','冷蔵':'温度センサー(PT-008)校正と冷媒(PT-004)確認','送風機':'軸受グリス補充・バランス調整','電気設備':'コンタクタ(PT-006)点検・絶縁抵抗測定','圧縮機':'吐出温度監視・潤滑油交換','発電機':'始動バッテリー点検・負荷試験','昇降機':'制動装置の調整・ワイヤー点検','熱源':'バーナー清掃・排ガス測定'};
+  aiProposals=[...equipment].filter(e=>e.risk>=38).sort((a,b)=>b.risk-a.risk).slice(0,6).map(e=>{
+    const days=Math.max(1,Math.round((100-e.risk)/4));
+    return {eq:e.name,risk:e.risk,days,rec:recMap[e.cat]||'稼働データ精査と予防保全の実施を推奨'};
+  });
+  $('genItems').innerHTML=aiProposals.map((p,i)=>{
+    const c=p.risk>=65?'var(--red)':p.risk>=45?'var(--amber)':'var(--green)';
+    return `<div class="gen-item" data-i="${i}">
+      <span class="ck" style="background:${c}">!</span>
+      <div class="gi-body"><div class="gi-eq">${esc(p.eq)} ${riskPill(p.risk)}</div>
+        <div class="gi-rec">推定故障まで <b>約${p.days}日</b>｜${esc(p.rec)}</div></div></div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,170));items[i].classList.add('in');}
+  $('genApply').style.display='inline-flex';
+  btn.disabled=false;btn.textContent='⚡ もう一度解析';
+  showToast(aiProposals.length+'件の故障予兆を検知し、保全提案を作成しました');
+});
+$('genApply').addEventListener('click',()=>{
+  if(!aiProposals.length){showToast('先にAI解析を実行してください');return;}
+  aiProposals.forEach(p=>{
+    const d=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+Math.max(1,p.days-1));
+    plans.push({date:d,eq:p.eq,kind:'予知保全（AI推奨）',staff:'田中（機械）',status:'plan'});
+  });
+  showToast(aiProposals.length+'件のAI提案を保全計画に登録しました');
+  setTimeout(()=>go('plan'),800);
+});
+
+/* ============ INIT ============ */
+renderEquipChips();renderFaultChips();renderDash();
+$('navParts').textContent=parts.filter(p=>p.stock<p.opt).length;
+</script>
+</body>
+</html>

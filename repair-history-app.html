@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜修繕履歴マシン（不動産修繕管理システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cf0;--purple-soft:#efeafe;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 88px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut / category breakdown */
+.cat{display:flex;flex-direction:column;gap:11px}
+.cat-row{display:grid;grid-template-columns:18px 1fr 64px;align-items:center;gap:10px;font-size:12.5px}
+.cat-row .sw{width:12px;height:12px;border-radius:4px}
+.cat-row .cn{color:var(--ink-2);font-weight:600}
+.cat-row .cv{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.cat-bar{grid-column:2/4;height:7px;border-radius:99px;background:var(--soft);overflow:hidden;margin-top:-4px}
+.cat-bar > i{display:block;height:100%;border-radius:99px;width:0;transition:width .9s cubic-bezier(.2,.8,.3,1)}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.done{background:var(--green-soft);color:var(--green)}
+.st.prog{background:var(--brand-soft);color:var(--brand)}
+.st.plan{background:var(--soft);color:var(--ink-3)}
+.st.urgent{background:var(--red-soft);color:var(--red)}
+.st.quote{background:var(--amber-soft);color:var(--amber)}
+.st.gray{background:var(--soft);color:var(--ink-2)}
+
+/* create form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,400px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:70px}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* property cards */
+.prop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.prop{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;cursor:pointer;transition:all .15s}
+.prop:hover{border-color:var(--brand);box-shadow:var(--shadow-lg);transform:translateY(-2px)}
+.prop .img{height:96px;display:grid;place-items:center;font-size:38px;color:#fff;position:relative}
+.prop .img .yr{position:absolute;right:10px;bottom:8px;background:rgba(0,0,0,.32);color:#fff;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:6px;backdrop-filter:blur(3px)}
+.prop .pbd{padding:14px 16px}
+.prop .pn{font-size:14.5px;font-weight:900}
+.prop .pa{font-size:11.5px;color:var(--ink-3);margin-top:2px}
+.prop .pmeta{display:flex;gap:14px;margin-top:12px;font-size:12px}
+.prop .pmeta b{display:block;font-size:15px;font-weight:900}
+.prop .pmeta span{color:var(--ink-3);font-size:10.5px}
+.prop .health{margin-top:12px}
+.prop .health .hl{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-2);font-weight:700;margin-bottom:4px}
+.prop .health .ht{height:7px;border-radius:99px;background:var(--soft);overflow:hidden}
+.prop .health .hf{height:100%;border-radius:99px}
+
+/* detail */
+.detail-head{display:flex;align-items:flex-start;gap:16px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow);margin-bottom:16px}
+.detail-head .ic{width:60px;height:60px;border-radius:12px;display:grid;place-items:center;font-size:30px;color:#fff;flex-shrink:0}
+.detail-head h2{font-size:18px;font-weight:900}
+.detail-head .da{font-size:12.5px;color:var(--ink-3)}
+.timeline{position:relative;padding-left:26px}
+.timeline::before{content:"";position:absolute;left:8px;top:6px;bottom:6px;width:2px;background:var(--line)}
+.tl{position:relative;padding:10px 0 14px}
+.tl::before{content:"";position:absolute;left:-22px;top:14px;width:12px;height:12px;border-radius:50%;background:var(--brand);border:2px solid #fff;box-shadow:0 0 0 2px var(--brand-soft)}
+.tl.done::before{background:var(--green);box-shadow:0 0 0 2px var(--green-soft)}
+.tl.urgent::before{background:var(--red);box-shadow:0 0 0 2px var(--red-soft)}
+.tl .td{font-size:11px;color:var(--ink-3);font-weight:700}
+.tl .tt{font-size:13.5px;font-weight:700;margin-top:1px}
+.tl .tm{font-size:12px;color:var(--ink-2);margin-top:2px}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:flex-start;gap:11px;padding:11px 13px;border:1px solid var(--line);border-radius:9px;margin-bottom:8px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0;margin-top:1px}
+.gen-item .gx{flex:1}
+.gen-item .gx b{font-weight:800}
+.gen-item .gx .gm{font-size:11.5px;color:var(--ink-2);margin-top:2px}
+.gen-item .gp{text-align:right;flex-shrink:0}
+.gen-item .gp .pr{font-weight:800;font-variant-numeric:tabular-nums}
+.gen-item .gp .py{font-size:10.5px;color:var(--ink-3)}
+
+/* prevention cards (AI result) */
+.prev-card{border:1px solid #bdebd4;background:linear-gradient(180deg,var(--green-soft),#f6fefb);border-radius:12px;padding:15px 16px;margin-bottom:10px;opacity:0;transform:translateY(8px);transition:all .45s}
+.prev-card.in{opacity:1;transform:none}
+.prev-card .pt{font-weight:800;font-size:13.5px;display:flex;align-items:center;gap:8px}
+.prev-card .pt .tag{font-size:10px;font-weight:800;padding:2px 8px;border-radius:6px;background:#cdeedd;color:var(--green)}
+.prev-card .ps{font-size:12.5px;color:var(--ink-2);margin-top:6px}
+.prev-card .pf{display:flex;gap:18px;margin-top:10px;font-size:11.5px}
+.prev-card .pf b{font-family:'Orbitron';font-size:14px;color:var(--ink)}
+.prev-card .pf span{color:var(--ink-3);display:block;font-size:10px}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.pill{font-size:10.5px;font-weight:800;padding:2px 9px;border-radius:99px;background:var(--soft);color:var(--ink-2)}
+.tag-cat{font-size:11px;font-weight:700;padding:3px 9px;border-radius:7px;display:inline-flex;align-items:center;gap:5px}
+.stars{color:var(--amber);font-size:12px;letter-spacing:1px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">修繕履歴マシン<small>技マシン｜修繕管理</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="prop"><span class="i">🏢</span>物件別</a>
+      <a data-v="repair"><span class="i">🔧</span>修繕記録</a>
+      <a data-v="quote"><span class="i">📝</span>見積<span class="badge" id="navQuote">0</span></a>
+      <a data-v="vendor"><span class="i">👷</span>業者</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI修繕計画</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。物件・修繕データはサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">2026年5月の修繕状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>月次の修繕費用 推移</h3><span class="more">過去6ヶ月</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>修繕箇所カテゴリ別の費用</h3><span class="more">今年度累計</span></div>
+            <div class="pb"><div class="cat" id="catChart"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>要予防保全アラート</h3><span class="more" onclick="go('ai')">AIで計画 →</span></div>
+            <div class="pb"><div class="acts" id="alerts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PROPERTIES -->
+      <section class="view" id="v-prop">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="pq" placeholder="物件名・住所で検索"></div>
+          <div class="chips" id="propChips"></div>
+        </div>
+        <div class="prop-grid" id="propGrid"></div>
+      </section>
+
+      <!-- PROPERTY DETAIL -->
+      <section class="view" id="v-pdetail">
+        <div id="pdetailBody"></div>
+      </section>
+
+      <!-- REPAIRS -->
+      <section class="view" id="v-repair">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="rq" placeholder="物件・箇所・業者で検索"></div>
+          <div class="chips" id="repairChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>記録番号</th><th>物件</th><th>修繕箇所</th><th>業者</th><th class="r">費用</th><th>実施日</th><th>状態</th></tr></thead>
+          <tbody id="repairRows"></tbody>
+        </table>
+      </section>
+
+      <!-- QUOTES / 見積 -->
+      <section class="view" id="v-quote">
+        <div class="create-grid">
+          <div class="formcard">
+            <div style="font-size:14px;font-weight:800;margin-bottom:13px">修繕記録・見積の登録</div>
+            <div class="fg"><label>物件</label><select id="qProp"></select></div>
+            <div class="fg"><label>修繕箇所（選ぶとAIが相場の費用を提案）</label>
+              <input id="qPart" list="partList" placeholder="例：屋上防水"></div>
+            <div class="fg2">
+              <div class="fg"><label>カテゴリ</label><select id="qCat"></select></div>
+              <div class="fg"><label>依頼業者</label><select id="qVendor"></select></div>
+            </div>
+            <div class="fg2">
+              <div class="fg"><label>見積金額（円）</label><input id="qAmt" type="number" min="0" placeholder="0"></div>
+              <div class="fg"><label>希望実施日</label><input id="qDate" type="date"></div>
+            </div>
+            <div class="fg"><label>不具合・依頼内容</label><textarea id="qMemo" placeholder="例：天井に雨染み。3階廊下のクロス浮きも確認。"></textarea></div>
+            <div class="aihint" id="qAiHint">✨ AIが類似工事の相場から見積金額を自動入力しました</div>
+            <div class="linkrow" style="margin-top:6px">
+              <button class="btn primary" id="qSubmit" style="flex:1;justify-content:center">⚡ AIで見積を作成して登録</button>
+              <button class="btn" id="qSample">サンプル</button>
+            </div>
+          </div>
+          <div>
+            <div class="panel">
+              <div class="ph"><h3>見積プレビュー</h3><span class="more" id="qStatusPill">下書き</span></div>
+              <div class="pb">
+                <div style="display:flex;align-items:center;gap:13px;margin-bottom:14px">
+                  <div class="ic" id="qIcon" style="width:48px;height:48px;border-radius:11px;display:grid;place-items:center;font-size:24px;color:#fff;background:var(--ink-3)">🏢</div>
+                  <div><div style="font-size:15px;font-weight:900" id="qPvProp">物件を選択</div>
+                  <div style="font-size:12px;color:var(--ink-3)" id="qPvPart">修繕箇所を入力</div></div>
+                </div>
+                <div style="background:var(--soft);border-left:5px solid var(--brand-dk);border-radius:8px;padding:14px 18px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center">
+                  <span style="font-weight:700">見積金額（税込）</span>
+                  <span class="mono" style="font-size:22px;font-weight:700;color:var(--brand-dk)" id="qPvAmt">¥0</span>
+                </div>
+                <table class="tbl" style="box-shadow:none">
+                  <tbody id="qPvRows">
+                    <tr><td style="color:var(--ink-3)">依頼業者</td><td class="r" id="qPvVendor">—</td></tr>
+                    <tr><td style="color:var(--ink-3)">カテゴリ</td><td class="r" id="qPvCat">—</td></tr>
+                    <tr><td style="color:var(--ink-3)">希望実施日</td><td class="r" id="qPvDate">—</td></tr>
+                  </tbody>
+                </table>
+                <div style="margin-top:12px;font-size:12px;color:var(--ink-2);background:var(--brand-soft);border-radius:9px;padding:11px 13px" id="qPvMemo">
+                  内容を入力すると、ここに依頼内容とAIの補足コメントが表示されます。
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VENDORS -->
+      <section class="view" id="v-vendor">
+        <table class="tbl">
+          <thead><tr><th>業者名</th><th>得意分野</th><th class="r">対応件数</th><th class="r">累計発注額</th><th class="r">平均対応日数</th><th>評価</th></tr></thead>
+          <tbody id="vendorRows"></tbody>
+        </table>
+      </section>
+
+      <!-- AI PLAN -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">修繕履歴から「修繕計画・予防保全提案」を自動作成</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">過去の修繕履歴 <b>32件</b> と建物の築年数をAIが分析し、来期の修繕計画と予防保全の提案を作成します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで計画を作成する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">3時間20分</div>
+              <ul>
+                <li>📚 過去の修繕台帳を物件ごとに見返す</li>
+                <li>📅 築年数と部位の寿命を手計算</li>
+                <li>📝 来期計画と概算費用をExcelで作成</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 全履歴と築年数を自動分析</li>
+                <li>🔮 部位ごとの劣化リスクを予測</li>
+                <li>📋 来期の修繕計画・概算費用を提案</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13.5px;font-weight:800;margin-bottom:12px">📋 AIが提案した来期の修繕計画</div>
+            <div id="genItems"></div>
+            <div style="font-size:13.5px;font-weight:800;margin:16px 0 12px">🔮 予防保全の提案（Before：壊れてから / After：壊れる前に）</div>
+            <div id="prevItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const TODAY=new Date(2026,4,30); // 2026-05-30 固定（デモ再現性）
+
+// カテゴリ定義（色付き）
+const CATS=[
+  {k:'roof',  n:'屋根・防水', c:'#2f6df0', icon:'🛠️'},
+  {k:'water', n:'給排水・設備',c:'#0ea5b7', icon:'🚰'},
+  {k:'elec',  n:'電気・空調', c:'#e3941f', icon:'⚡'},
+  {k:'wall',  n:'外壁・塗装', c:'#7c5cf0', icon:'🎨'},
+  {k:'common',n:'共用部・内装',c:'#16b877', icon:'🏠'},
+  {k:'safety',n:'消防・安全', c:'#e24a4a', icon:'🧯'},
+];
+const CATMAP=Object.fromEntries(CATS.map(c=>[c.k,c]));
+
+// 物件マスタ
+const PROPS=[
+  {id:'P01',name:'都町レジデンス',addr:'大分市都町2-3-1',type:'賃貸マンション',units:32,built:2008,grad:'linear-gradient(135deg,#2f6df0,#0ea5b7)'},
+  {id:'P02',name:'大手町ハイツ',  addr:'大分市大手町1-5-8',type:'賃貸マンション',units:24,built:2002,grad:'linear-gradient(135deg,#7c5cf0,#2f6df0)'},
+  {id:'P03',name:'明野ビレッジ',  addr:'大分市明野東3-12',type:'アパート',  units:12,built:2014,grad:'linear-gradient(135deg,#16b877,#0ea5b7)'},
+  {id:'P04',name:'中央町テナントビル',addr:'大分市中央町1-2-9',type:'店舗ビル',units:8, built:1998,grad:'linear-gradient(135deg,#e3941f,#e24a4a)'},
+  {id:'P05',name:'別府湾シーサイド',addr:'別府市北浜3-6-2',type:'賃貸マンション',units:40,built:2011,grad:'linear-gradient(135deg,#0ea5b7,#16b877)'},
+  {id:'P06',name:'駅南パークコート',addr:'大分市要町2-1-4',type:'分譲マンション',units:56,built:2005,grad:'linear-gradient(135deg,#1f57cf,#7c5cf0)'},
+];
+const PROPMAP=Object.fromEntries(PROPS.map(p=>[p.id,p]));
+
+// 業者マスタ
+const VENDORS=[
+  {name:'豊後防水工業',     cat:'roof',  rating:5},
+  {name:'大分設備サービス', cat:'water', rating:4},
+  {name:'みなみ電設',       cat:'elec',  rating:4},
+  {name:'大手町塗装',       cat:'wall',  rating:5},
+  {name:'おおいた総合メンテ',cat:'common',rating:4},
+  {name:'九州消防点検社',   cat:'safety',rating:5},
+];
+
+// 修繕箇所マスタ（品名→相場）
+const PARTS=[
+  {n:'屋上防水（ウレタン）',cat:'roof',p:1280000},
+  {n:'屋根材 部分補修',     cat:'roof',p:180000},
+  {n:'雨漏り 緊急補修',     cat:'roof',p:95000},
+  {n:'給水ポンプ 交換',     cat:'water',p:420000},
+  {n:'排水管 高圧洗浄',     cat:'water',p:88000},
+  {n:'給湯器 交換',         cat:'water',p:240000},
+  {n:'共用灯 LED化',        cat:'elec',p:135000},
+  {n:'分電盤 点検・更新',   cat:'elec',p:310000},
+  {n:'エレベーター 保守整備',cat:'elec',p:165000},
+  {n:'外壁塗装（全面）',     cat:'wall',p:3200000},
+  {n:'外壁 シーリング打替',  cat:'wall',p:680000},
+  {n:'エントランス 床補修',  cat:'common',p:220000},
+  {n:'廊下クロス 張替',     cat:'common',p:145000},
+  {n:'駐輪場 整備',         cat:'common',p:78000},
+  {n:'消火器 入替・点検',   cat:'safety',p:62000},
+  {n:'自動火災報知設備 点検',cat:'safety',p:88000},
+];
+
+const STATUSES=['done','done','done','prog','plan','quote','urgent','done'];
+const STLABEL={done:'完了',prog:'施工中',plan:'計画中',urgent:'要対応',quote:'見積中'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]||s}</span>`;}
+
+// seed repairs（再現性のある擬似乱数）
+let SEED=4242;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+let repairs=[];
+(function seed(){
+  for(let i=0;i<32;i++){
+    const prop=pick(PROPS);
+    const part=pick(PARTS);
+    const cat=CATMAP[part.cat];
+    const vendor=VENDORS.find(v=>v.cat===part.cat)||pick(VENDORS);
+    const cost=Math.round(part.p*(0.8+rnd()*0.5)/1000)*1000;
+    const monthBack=Math.floor(rnd()*8);
+    const date=new Date(TODAY.getFullYear(),TODAY.getMonth()-monthBack,1+Math.floor(rnd()*27));
+    let stt=pick(STATUSES);
+    if(date<new Date(TODAY.getFullYear(),TODAY.getMonth(),1)&&(stt==='plan'||stt==='quote'))stt='done';
+    const days=1+Math.floor(rnd()*14);
+    repairs.push({no:'R-'+(2026100+i+1),prop:prop.id,part:part.n,cat:part.cat,vendor:vendor.name,
+      cost,date,status:stt,days,memo:''});
+  }
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+const yenMan=n=>n>=10000?('約'+Math.round(n/10000)+'万円'):yen(n);
+const fmtD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtDS=d=>d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate();
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function catBadge(k){const c=CATMAP[k];return `<span class="tag-cat" style="background:${c.c}18;color:${c.c}">${c.icon} ${c.n}</span>`;}
+function stars(n){return '★★★★★'.slice(0,n)+'☆☆☆☆☆'.slice(0,5-n);}
+function buildingAge(p){return TODAY.getFullYear()-p.built;}
+// 建物健全度スコア（築年数が古い・最近修繕が無いほど低い）
+function healthScore(p){
+  const age=buildingAge(p);
+  const recent=repairs.filter(r=>r.prop===p.id&&r.status==='done').length;
+  let s=100-age*1.5+recent*2;
+  return Math.max(42,Math.min(98,Math.round(s)));
+}
+function healthColor(s){return s>=80?'var(--green)':s>=65?'var(--amber)':'var(--red)';}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','2026年'+(TODAY.getMonth()+1)+'月の修繕状況'],
+  prop:['物件別','保有物件ごとの修繕状況と健全度'],
+  pdetail:['物件カルテ','この物件の修繕履歴タイムライン'],
+  repair:['修繕記録','すべての修繕履歴を管理します'],
+  quote:['見積','修繕記録・見積を登録します（AIが相場を提案）'],
+  vendor:['業者','協力業者ごとの実績と評価'],
+  ai:['AI修繕計画','修繕履歴から来期計画・予防保全をAIが提案']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  // pdetail はメニュー上は「物件別」をハイライト
+  if(v==='pdetail')document.querySelector('.nav a[data-v="prop"]').classList.add('on');
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='repair'?'<button class="btn primary" onclick="go(\'quote\')">＋ 修繕を登録</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI修繕計画</button><button class="btn primary" onclick="go(\'quote\')">＋ 修繕を登録</button>'
+    : v==='prop'?'<button class="btn primary" onclick="go(\'quote\')">＋ 修繕を登録</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='prop')renderProp();
+  if(v==='repair')renderRepair();
+  if(v==='vendor')renderVendor();
+  if(v==='quote')renderQuotePreview();
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const tm=repairs.filter(r=>thisMonth(r.date));
+  const tmCost=tm.reduce((s,r)=>s+r.cost,0);
+  const ytdCost=repairs.reduce((s,r)=>s+r.cost,0);
+  const doneDays=repairs.filter(r=>r.status==='done');
+  const avgDays=doneDays.length?Math.round(doneDays.reduce((s,r)=>s+r.days,0)/doneDays.length):0;
+  const needPrev=PROPS.filter(p=>healthScore(p)<70).length;
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','今月の修繕件数',tm.length+'<small>件</small>',yenMan(tmCost),'up','前月比 +2件')}
+    ${kpi('#0ea5b7','今年度 修繕費用',yen(ytdCost),repairs.length+'件 累計','up','予算内')}
+    ${kpi('#e3941f','平均対応日数',avgDays+'<small>日</small>','発生→完了','warn','短縮余地あり')}
+    ${kpi('#e24a4a','要予防保全',needPrev+'<small>棟</small>','健全度70未満',needPrev?'down':'up',needPrev?'AI計画推奨':'良好')}`;
+  // trend（過去6ヶ月の費用）
+  const months=[];for(let k=5;k>=0;k--){const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1);months.push(d);}
+  const sums=months.map(m=>repairs.filter(r=>r.date.getMonth()===m.getMonth()&&r.date.getFullYear()===m.getFullYear()).reduce((s,r)=>s+r.cost,0));
+  const mx=Math.max(...sums,1);
+  $('trendBars').innerHTML=months.map((m,i)=>`
+    <div class="bar-row"><span class="mlabel">${m.getMonth()+1}月</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(sums[i]/mx*100)}"></div></div>
+      <span class="mval">${yenMan(sums[i])}</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // category breakdown
+  const catSum=CATS.map(c=>({...c,v:repairs.filter(r=>r.cat===c.k).reduce((s,r)=>s+r.cost,0)})).sort((a,b)=>b.v-a.v);
+  const cmx=Math.max(...catSum.map(c=>c.v),1);
+  $('catChart').innerHTML=catSum.map(c=>`
+    <div class="cat-row"><span class="sw" style="background:${c.c}"></span><span class="cn">${c.icon} ${c.n}</span><span class="cv">${yenMan(c.v)}</span></div>
+    <div class="cat-bar"><i style="background:${c.c};width:0" data-w="${Math.round(c.v/cmx*100)}"></i></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#catChart .cat-bar > i').forEach(b=>b.style.width=b.dataset.w+'%'),120);
+  // activity
+  const acts=[
+    {i:'✅',c:'#e6f8f0',t:'都町レジデンス の屋上防水が完了（¥1,280,000）',m:'2分前'},
+    {i:'📝',c:'#fdf3e2',t:'別府湾シーサイド の外壁シーリング見積を登録',m:'1時間前'},
+    {i:'⚡',c:'#e6f8f0',t:'AI修繕計画で 来期6件の計画を作成（概算 4,820万円）',m:'今日 9:14'},
+    {i:'⚠️',c:'#fdeaea',t:'中央町テナントビル の給水ポンプに劣化兆候',m:'今日 8:30'},
+    {i:'👷',c:'#eaf1ff',t:'豊後防水工業 へ R-2026115 を発注',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${a.m}</div></div></div>`).join('');
+  // alerts（健全度の低い物件）
+  const al=PROPS.map(p=>({p,s:healthScore(p)})).sort((a,b)=>a.s-b.s).slice(0,4);
+  $('alerts').innerHTML=al.map(({p,s})=>`<div class="act"><div class="ai" style="background:${healthColor(s)}22;color:${healthColor(s)}">🏢</div>
+    <div style="flex:1"><div class="at">${esc(p.name)}<span class="pill" style="margin-left:8px">築${buildingAge(p)}年</span></div>
+    <div class="am">健全度スコア ${s} ・ ${s<65?'外壁/防水の点検を推奨':'設備の予防点検を推奨'}</div></div>
+    <div style="font-weight:900;color:${healthColor(s)};font-size:16px;align-self:center">${s}</div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ PROPERTIES ============ */
+let propType='all';
+function renderPropChips(){
+  const types=['all',...new Set(PROPS.map(p=>p.type))];
+  const lab={all:'すべて'};
+  $('propChips').innerHTML=types.map(t=>`<button class="chip ${t===propType?'on':''}" data-t="${esc(t)}">${esc(lab[t]||t)}</button>`).join('');
+  $('propChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{propType=c.dataset.t;renderPropChips();renderProp();});
+}
+function renderProp(){
+  const q=($('pq').value||'').toLowerCase();
+  const list=PROPS.filter(p=>propType==='all'||p.type===propType)
+    .filter(p=>!q||(p.name+p.addr).toLowerCase().includes(q));
+  $('propGrid').innerHTML=list.length?list.map(p=>{
+    const inv=repairs.filter(r=>r.prop===p.id);
+    const cost=inv.reduce((s,r)=>s+r.cost,0);
+    const s=healthScore(p);
+    return `<div class="prop" onclick="openProp('${p.id}')">
+      <div class="img" style="background:${p.grad}">🏢<span class="yr">築${buildingAge(p)}年・${p.units}戸</span></div>
+      <div class="pbd">
+        <div class="pn">${esc(p.name)}</div>
+        <div class="pa">${esc(p.addr)}・${esc(p.type)}</div>
+        <div class="pmeta">
+          <div><b>${inv.length}</b><span>修繕件数</span></div>
+          <div><b class="tnum">${yenMan(cost)}</b><span>累計費用</span></div>
+        </div>
+        <div class="health"><div class="hl"><span>建物健全度スコア</span><span style="color:${healthColor(s)}">${s}</span></div>
+          <div class="ht"><div class="hf" style="width:${s}%;background:${healthColor(s)}"></div></div></div>
+      </div></div>`;
+  }).join(''):'<div class="empty-cell" style="grid-column:1/-1">該当する物件がありません</div>';
+}
+$('pq').addEventListener('input',renderProp);
+
+/* ============ PROPERTY DETAIL ============ */
+window.openProp=id=>{
+  const p=PROPMAP[id];if(!p)return;
+  const inv=repairs.filter(r=>r.prop===id).sort((a,b)=>b.date-a.date);
+  const cost=inv.reduce((s,r)=>s+r.cost,0);
+  const s=healthScore(p);
+  const catSum=CATS.map(c=>({...c,v:inv.filter(r=>r.cat===c.k).reduce((x,r)=>x+r.cost,0)})).filter(c=>c.v>0).sort((a,b)=>b.v-a.v);
+  const body=`
+    <div class="detail-head">
+      <div class="ic" style="background:${p.grad}">🏢</div>
+      <div style="flex:1">
+        <h2>${esc(p.name)}</h2>
+        <div class="da">${esc(p.addr)}・${esc(p.type)}・${p.units}戸・築${buildingAge(p)}年（${p.built}年竣工）</div>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+          <span class="pill">修繕 ${inv.length}件</span>
+          <span class="pill">累計 ${yen(cost)}</span>
+          <span class="pill" style="background:${healthColor(s)}1a;color:${healthColor(s)}">健全度 ${s}</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="btn primary" onclick="go('quote')">＋ 修繕を登録</button>
+        <button class="btn" onclick="go('ai')">⚡ AIで計画</button>
+      </div>
+    </div>
+    <div class="cols">
+      <div class="panel">
+        <div class="ph"><h3>修繕履歴タイムライン</h3><span class="more">${inv.length}件</span></div>
+        <div class="pb"><div class="timeline">${inv.length?inv.map(r=>`
+          <div class="tl ${r.status==='done'?'done':r.status==='urgent'?'urgent':''}">
+            <div class="td">${fmtDS(r.date)}・${esc(r.no)}</div>
+            <div class="tt">${esc(r.part)} ${catBadge(r.cat)}</div>
+            <div class="tm">${esc(r.vendor)}・${yen(r.cost)}・対応${r.days}日 ${stBadge(r.status)}</div>
+          </div>`).join(''):'<div class="empty-cell">修繕履歴はまだありません</div>'}</div></div>
+      </div>
+      <div class="panel">
+        <div class="ph"><h3>箇所カテゴリ別 費用</h3></div>
+        <div class="pb"><div class="cat">${catSum.length?catSum.map(c=>{
+          const cmx=Math.max(...catSum.map(x=>x.v),1);
+          return `<div class="cat-row"><span class="sw" style="background:${c.c}"></span><span class="cn">${c.icon} ${c.n}</span><span class="cv">${yenMan(c.v)}</span></div>
+          <div class="cat-bar"><i style="background:${c.c};width:${Math.round(c.v/cmx*100)}%"></i></div>`;
+        }).join(''):'<div class="empty-cell">データなし</div>'}</div>
+        <div style="margin-top:16px;background:var(--brand-soft);border-radius:10px;padding:13px 15px;font-size:12.5px;color:var(--ink-2)">
+          🔮 <b>AIの所見：</b>築${buildingAge(p)}年のため、${s<70?'外壁・防水の更新時期が近づいています。来期の大規模修繕を計画することを推奨します。':'設備は良好な状態です。給排水・電気の定期点検を継続してください。'}
+        </div></div>
+      </div>
+    </div>`;
+  $('pdetailBody').innerHTML=body;
+  go('pdetail');
+};
+
+/* ============ REPAIRS ============ */
+let filterCat='all';
+function renderRepairChips(){
+  const opts=[['all','すべて'],...CATS.map(c=>[c.k,c.icon+' '+c.n])];
+  $('repairChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterCat?'on':''}" data-c="${o[0]}">${o[1]}</button>`).join('');
+  $('repairChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterCat=c.dataset.c;renderRepairChips();renderRepair();});
+}
+function renderRepair(){
+  const q=($('rq').value||'').toLowerCase();
+  let rows=repairs.filter(r=>filterCat==='all'||r.cat===filterCat)
+    .filter(r=>{const p=PROPMAP[r.prop];return !q||((p?p.name:'')+r.part+r.vendor+r.no).toLowerCase().includes(q);})
+    .sort((a,b)=>b.date-a.date);
+  $('repairRows').innerHTML=rows.length?rows.map(r=>{const p=PROPMAP[r.prop];return `<tr onclick="openProp('${r.prop}')">
+    <td class="mono" style="font-size:12px">${esc(r.no)}</td><td><b>${esc(p?p.name:'-')}</b></td>
+    <td>${esc(r.part)}<br><span style="font-size:11px">${catBadge(r.cat)}</span></td>
+    <td style="color:var(--ink-2)">${esc(r.vendor)}</td><td class="r tnum"><b>${yen(r.cost)}</b></td>
+    <td style="color:var(--ink-2)">${fmtDS(r.date)}</td><td>${stBadge(r.status)}</td></tr>`;}).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する修繕記録がありません</td></tr>';
+}
+$('rq').addEventListener('input',renderRepair);
+
+/* ============ VENDORS ============ */
+function renderVendor(){
+  $('vendorRows').innerHTML=VENDORS.map(v=>{
+    const rs=repairs.filter(r=>r.vendor===v.name);
+    const cost=rs.reduce((s,r)=>s+r.cost,0);
+    const doneRs=rs.filter(r=>r.status==='done');
+    const avg=doneRs.length?Math.round(doneRs.reduce((s,r)=>s+r.days,0)/doneRs.length):'-';
+    const c=CATMAP[v.cat];
+    return `<tr><td><b>${esc(v.name)}</b></td><td>${catBadge(v.cat)}</td>
+      <td class="r tnum">${rs.length}件</td><td class="r tnum" style="color:var(--ink-2)">${yen(cost)}</td>
+      <td class="r tnum">${avg}${avg==='-'?'':'日'}</td><td><span class="stars">${stars(v.rating)}</span></td></tr>`;
+  }).join('');
+}
+
+/* ============ QUOTE / 見積登録 ============ */
+function fillQuoteSelects(){
+  $('qProp').innerHTML='<option value="">選択してください</option>'+PROPS.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
+  $('qCat').innerHTML='<option value="">選択してください</option>'+CATS.map(c=>`<option value="${c.k}">${c.icon} ${esc(c.n)}</option>`).join('');
+  $('qVendor').innerHTML='<option value="">未定</option>'+VENDORS.map(v=>`<option value="${esc(v.name)}">${esc(v.name)}</option>`).join('');
+}
+function renderQuotePreview(){
+  const p=PROPMAP[$('qProp').value];
+  const part=$('qPart').value;
+  const catK=$('qCat').value;
+  const cat=CATMAP[catK];
+  const vendor=$('qVendor').value;
+  const amt=+$('qAmt').value||0;
+  const date=$('qDate').value;
+  const memo=$('qMemo').value;
+  $('qPvProp').textContent=p?p.name:'物件を選択';
+  $('qPvPart').textContent=part||'修繕箇所を入力';
+  $('qIcon').style.background=p?p.grad:(cat?cat.c:'var(--ink-3)');
+  $('qIcon').textContent=cat?cat.icon:'🏢';
+  $('qPvAmt').textContent=yen(amt);
+  $('qPvVendor').textContent=vendor||'—';
+  $('qPvCat').innerHTML=cat?catBadge(catK):'—';
+  $('qPvDate').textContent=date?fmtDL(new Date(date)):'—';
+  $('qPvMemo').innerHTML=memo?('📝 '+esc(memo)):(part?'✨ AIコメント：類似工事の相場と築年数から、適正な見積範囲内です。':'内容を入力すると、ここに依頼内容とAIの補足コメントが表示されます。');
+}
+['qProp','qPart','qCat','qVendor','qAmt','qDate','qMemo'].forEach(id=>{
+  $(id).addEventListener('input',renderQuotePreview);
+  $(id).addEventListener('change',renderQuotePreview);
+});
+// 修繕箇所を入れたらAIが相場とカテゴリを自動提案
+$('qPart').addEventListener('input',()=>{
+  const hit=PARTS.find(x=>x.n===$('qPart').value);
+  if(hit){
+    if(!$('qAmt').value){$('qAmt').value=hit.p;}
+    $('qCat').value=hit.cat;
+    const v=VENDORS.find(x=>x.cat===hit.cat);if(v&&!$('qVendor').value)$('qVendor').value=v.name;
+    $('qAiHint').classList.add('show');setTimeout(()=>$('qAiHint').classList.remove('show'),2200);
+    renderQuotePreview();
+  }
+});
+$('qSample').addEventListener('click',()=>{
+  $('qProp').value='P05';$('qPart').value='外壁 シーリング打替';$('qCat').value='wall';
+  $('qVendor').value='大手町塗装';$('qAmt').value=680000;
+  $('qDate').value='2026-07-15';$('qMemo').value='南面のシーリングに亀裂。雨水侵入の懸念があるため早期対応を希望。';
+  renderQuotePreview();showToast('サンプルを入力しました');
+});
+$('qSubmit').addEventListener('click',async()=>{
+  const p=PROPMAP[$('qProp').value];const part=$('qPart').value.trim();
+  if(!p||!part){showToast('物件と修繕箇所を入力してください');return;}
+  const btn=$('qSubmit');btn.textContent='⚡ AIが見積を作成中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,800));
+  const catK=$('qCat').value||(PARTS.find(x=>x.n===part)||{}).cat||'common';
+  const amt=+$('qAmt').value||(PARTS.find(x=>x.n===part)||{}).p||100000;
+  const date=$('qDate').value?new Date($('qDate').value):TODAY;
+  const no='R-'+(2026100+repairs.length+1);
+  repairs.push({no,prop:p.id,part,cat:catK,vendor:$('qVendor').value||'未定',cost:amt,date,status:'quote',days:0,memo:$('qMemo').value});
+  btn.textContent='⚡ AIで見積を作成して登録';btn.disabled=false;
+  $('navQuote').textContent=repairs.filter(r=>r.status==='quote'||r.status==='plan').length;
+  showToast('見積 '+no+' を登録しました（修繕記録に追加）');
+  // reset
+  $('qProp').value='';$('qPart').value='';$('qCat').value='';$('qVendor').value='';$('qAmt').value='';$('qDate').value='';$('qMemo').value='';
+  renderQuotePreview();
+  setTimeout(()=>go('repair'),700);
+});
+
+/* ============ AI PLAN ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 分析中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:'+(s<10?'0':'')+Math.min(s,12);},110);
+  await new Promise(r=>setTimeout(r,1300));
+  clearInterval(t);$('baAfterT').textContent='12秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+
+  // 来期修繕計画：健全度の低い物件×劣化しやすい部位
+  const ranked=PROPS.map(p=>({p,s:healthScore(p)})).sort((a,b)=>a.s-b.s).slice(0,6);
+  const planParts=[
+    {part:'外壁塗装（全面）',cat:'wall',base:3200000,reason:'築年数から塗膜の耐用年数を超過'},
+    {part:'屋上防水（ウレタン）',cat:'roof',base:1280000,reason:'前回防水から10年経過の見込み'},
+    {part:'給水ポンプ 交換',cat:'water',base:420000,reason:'稼働音・劣化兆候のログあり'},
+    {part:'共用灯 LED化',cat:'elec',base:135000,reason:'電気代削減と球切れ防止'},
+    {part:'外壁 シーリング打替',cat:'wall',base:680000,reason:'シーリングの硬化・亀裂を予測'},
+    {part:'排水管 高圧洗浄',cat:'water',base:88000,reason:'詰まり予防の定期実施'},
+  ];
+  let total=0;
+  $('genItems').innerHTML=ranked.map((r,i)=>{
+    const pl=planParts[i%planParts.length];
+    const amt=Math.round(pl.base*(0.9+rnd()*0.3)/1000)*1000;total+=amt;
+    const q=['Q1（4-6月）','Q2（7-9月）','Q3（10-12月）','Q4（1-3月）'][i%4];
+    return `<div class="gen-item" data-i="${i}"><span class="ck">✓</span>
+      <div class="gx"><b>${esc(r.p.name)}</b>　${catBadge(pl.cat)}<div class="gm">${esc(pl.part)}・${esc(pl.reason)}</div></div>
+      <div class="gp"><div class="pr tnum">${yen(amt)}</div><div class="py">${q}・健全度${r.s}</div></div></div>`;
+  }).join('');
+
+  // 予防保全 Before/After 提案
+  const prevs=[
+    {t:'屋上防水の予防更新',tag:'防水',s:'雨漏りで天井・室内まで被害が及ぶ前に、10年周期で防水層を更新します。',
+      before:{l:'壊れてから',v:'¥2,400,000',m:'雨漏り→内装まで補修'},after:{l:'壊れる前に',v:'¥1,280,000',m:'防水層のみ更新'}},
+    {t:'給水ポンプの予兆保全',tag:'設備',s:'稼働音と電流値の異常を検知。断水トラブルになる前に部品交換します。',
+      before:{l:'故障で断水',v:'¥680,000',m:'緊急交換＋住民対応'},after:{l:'予兆で交換',v:'¥420,000',m:'計画的に部品交換'}},
+    {t:'外壁シーリングの定期打替',tag:'外壁',s:'硬化・亀裂から雨水が侵入し躯体を傷める前に、計画的に打ち替えます。',
+      before:{l:'躯体劣化後',v:'¥3,200,000',m:'外壁全面＋下地補修'},after:{l:'定期打替',v:'¥680,000',m:'シーリングのみ'}},
+  ];
+  $('prevItems').innerHTML=prevs.map((p,i)=>`<div class="prev-card" data-i="${i}">
+    <div class="pt"><span class="tag">${esc(p.tag)}</span>${esc(p.t)}</div>
+    <div class="ps">${esc(p.s)}</div>
+    <div class="pf">
+      <div>😓 ${esc(p.before.l)}<br><b>${esc(p.before.v)}</b><span>${esc(p.before.m)}</span></div>
+      <div style="align-self:center;font-size:18px;color:var(--green)">→</div>
+      <div>⚡ ${esc(p.after.l)}<br><b style="color:var(--green)">${esc(p.after.v)}</b><span>${esc(p.after.m)}</span></div>
+    </div></div>`).join('');
+
+  $('genList').classList.add('show');
+  $('aiSub').innerHTML='分析が完了しました。来期の修繕計画 <b>6件（概算 '+yen(total)+'）</b> と、予防保全の提案 <b>3件</b> を作成しました。';
+
+  // 段階的に表示
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,150));items[i].classList.add('in');}
+  const prevCards=[...$('prevItems').querySelectorAll('.prev-card')];
+  for(let i=0;i<prevCards.length;i++){await new Promise(r=>setTimeout(r,200));prevCards[i].classList.add('in');}
+
+  btn.disabled=false;btn.textContent='⚡ もう一度作成';
+  showToast('来期の修繕計画と予防保全提案を作成しました');
+});
+
+/* ============ INIT ============ */
+(function initDatalist(){
+  const dl=document.createElement('datalist');dl.id='partList';
+  dl.innerHTML=PARTS.map(p=>`<option value="${esc(p.n)}">`).join('');
+  document.body.appendChild(dl);
+})();
+fillQuoteSelects();renderQuotePreview();
+renderPropChips();renderRepairChips();renderDash();
+$('navQuote').textContent=repairs.filter(r=>r.status==='quote'||r.status==='plan').length;
+</script>
+</body>
+</html>

@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜収穫予測マシン（AI収量予測システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f8f4;--card:#ffffff;--soft:#eef4ee;--line:#e3ebe3;--line-2:#d2dfd2;
+  --ink:#1d2b22;--ink-2:#566256;--ink-3:#8a988e;
+  --brand:#1f9d57;--brand-dk:#157a42;--brand-soft:#e5f6ec;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--sun:#f0b429;--sun-soft:#fdf5e1;
+  --sb:#0f2417;--sb-2:#163022;--sb-ink:#bcd2c4;--sb-ink-2:#7d9686;
+  --shadow:0 1px 2px rgba(16,40,24,.04),0 4px 16px rgba(16,40,24,.05);
+  --shadow-lg:0 18px 50px rgba(16,40,24,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#37e29a,#a3e635,#f0b429,#37e29a);
+  display:grid;place-items:center;color:#04140a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(31,157,87,.4)}
+.nav a .badge{margin-left:auto;background:var(--sun);color:#3a2a00;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 86px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-fill.sun{background:linear-gradient(90deg,var(--sun),#f6d365)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* line/area chart */
+.chartwrap{position:relative}
+.legend{display:flex;gap:16px;font-size:11.5px;color:var(--ink-2);font-weight:600;margin-bottom:10px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:13px;height:4px;border-radius:2px;display:inline-block}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.good{background:var(--green-soft);color:var(--green)}
+.st.normal{background:var(--brand-soft);color:var(--brand)}
+.st.watch{background:var(--amber-soft);color:var(--amber)}
+.st.risk{background:var(--red-soft);color:var(--red)}
+.st.planned{background:var(--sun-soft);color:#b07d12}
+.st.shipped{background:var(--soft);color:var(--ink-3)}
+
+/* growth bar (mini) */
+.grow{height:8px;border-radius:99px;background:var(--soft);overflow:hidden;min-width:70px}
+.grow>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--green))}
+
+/* create form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--brand)}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* result paper */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:30px 32px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.pv-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
+.pv-title{font-size:21px;font-weight:900;letter-spacing:.14em;color:var(--brand-dk);border-bottom:3px solid var(--brand-dk);padding-bottom:5px}
+.pv-meta{text-align:right;font-size:11.5px;color:var(--ink-2)}
+.pv-meta .no{font-family:'Orbitron';color:var(--ink);font-weight:700}
+.pv-total{background:var(--brand-soft);border-left:5px solid var(--brand-dk);border-radius:6px;padding:13px 18px;margin:16px 0;display:flex;justify-content:space-between;align-items:center}
+.pv-total .a{font-family:'Orbitron';font-size:23px;font-weight:700;color:var(--brand-dk)}
+.predgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.predcell{background:var(--soft);border-radius:10px;padding:13px 15px}
+.predcell .pl{font-size:11px;color:var(--ink-3);font-weight:700}
+.predcell .pv{font-size:20px;font-weight:900;margin-top:3px;font-family:'Orbitron'}
+.predcell .ps{font-size:11px;color:var(--ink-2);margin-top:2px}
+.confbar{height:9px;border-radius:99px;background:var(--soft);overflow:hidden;margin-top:6px}
+.confbar>i{display:block;height:100%;background:linear-gradient(90deg,var(--brand),var(--green));border-radius:99px}
+.factor{display:flex;align-items:center;gap:8px;font-size:12px;padding:6px 0;border-top:1px solid var(--line)}
+.factor .fl{flex:1;color:var(--ink-2)}
+.factor .fv{font-weight:800}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#a3e635,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(163,230,53,.55)}}
+
+/* weather strip */
+.wstrip{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:4px}
+@media(max-width:680px){.wstrip{grid-template-columns:repeat(4,1fr)}}
+.wcell{background:var(--soft);border-radius:10px;padding:11px 8px;text-align:center}
+.wcell .wd{font-size:11px;color:var(--ink-3);font-weight:700}
+.wcell .we{font-size:22px;margin:3px 0}
+.wcell .wt{font-size:12px;font-weight:800}
+.wcell .wt small{color:var(--ink-3);font-weight:600}
+
+/* market mini cards */
+.mkgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
+@media(max-width:760px){.mkgrid{grid-template-columns:1fr}}
+.mkcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow)}
+.mkcard .mt{font-size:13px;font-weight:800;display:flex;align-items:center;gap:8px}
+.mkcard .mp{font-size:24px;font-weight:900;font-family:'Orbitron';margin-top:8px}
+.mkcard .mp small{font-size:13px;color:var(--ink-3);font-family:'Zen Kaku Gothic New';font-weight:700}
+.mkcard .mc{font-size:12px;font-weight:700;margin-top:4px}
+.mkspark{display:flex;align-items:flex-end;gap:3px;height:34px;margin-top:10px}
+.mkspark i{flex:1;background:var(--brand-soft);border-radius:2px 2px 0 0;min-height:3px}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+
+/* svg chart */
+.areaChart{width:100%;height:200px;display:block}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">収穫予測マシン<small>技マシン｜AI収量予測</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="crops"><span class="i">🌱</span>作物別予測</a>
+      <a data-v="trend"><span class="i">📈</span>収量推移</a>
+      <a data-v="ship"><span class="i">🚚</span>出荷計画<span class="badge" id="navPlan">0</span></a>
+      <a data-v="market"><span class="i">💹</span>市況</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI予測</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。圃場・収量・市況はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">2026年シーズンの収穫予測</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>作物別 予測収量（今シーズン）</h3><span class="more">単位 kg</span></div>
+            <div class="pb"><div class="bars" id="cropBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:16px">
+          <div class="ph"><h3>今週の気象見通し（大分市）</h3><span class="more">AI予測に反映済</span></div>
+          <div class="pb"><div class="wstrip" id="wstrip"></div></div>
+        </div>
+      </section>
+
+      <!-- CROPS -->
+      <section class="view" id="v-crops">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="作物名・圃場・品種で検索"></div>
+          <div class="chips" id="cropChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>作物 / 品種</th><th>圃場</th><th>生育ステージ</th><th class="r">予測収量</th><th class="r">前年比</th><th>収穫適期</th><th>状態</th></tr></thead>
+          <tbody id="cropRows"></tbody>
+        </table>
+      </section>
+
+      <!-- TREND -->
+      <section class="view" id="v-trend">
+        <div class="toolbar">
+          <div class="chips" id="trendChips"></div>
+        </div>
+        <div class="panel">
+          <div class="ph"><h3 id="trendTitle">月別 収量推移</h3><span class="more" id="trendUnit">単位 kg</span></div>
+          <div class="pb">
+            <div class="legend">
+              <span><i style="background:var(--brand)"></i>実績収量</span>
+              <span><i style="background:var(--sun)"></i>AI予測</span>
+              <span><i style="background:#c5cdd6"></i>前年実績</span>
+            </div>
+            <div class="chartwrap"><svg class="areaChart" id="areaChart" viewBox="0 0 720 200" preserveAspectRatio="none"></svg></div>
+            <div style="display:grid;grid-template-columns:repeat(12,1fr);font-size:10px;color:var(--ink-3);margin-top:6px;text-align:center" id="trendXAxis"></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>年次サマリー</h3></div>
+            <div class="pb"><div class="bars" id="yearBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>予測精度（AIモデル）</h3></div>
+            <div class="pb" id="accBox"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SHIPPING -->
+      <section class="view" id="v-ship">
+        <div class="kpis" id="shipKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>出荷計画（AI最適化）</h3>
+            <button class="btn green" id="optimize" style="margin-left:auto">⚡ AIで出荷を最適化</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>作物</th><th>出荷先</th><th class="r">予定数量</th><th>最適出荷日</th><th class="r">想定単価</th><th>状態</th><th></th></tr></thead>
+              <tbody id="shipRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- MARKET -->
+      <section class="view" id="v-market">
+        <div class="mkgrid" id="mkCards"></div>
+        <div class="panel">
+          <div class="ph"><h3>大分市中央卸売市場 主要青果 相場</h3><span class="more">前日比</span></div>
+          <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+            <thead><tr><th>品目</th><th>等級</th><th class="r">本日単価</th><th class="r">前日比</th><th class="r">平年比</th><th>AIコメント</th></tr></thead>
+            <tbody id="mkRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- AI PREDICT -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">生育データ＋気象データから収量・収穫時期を予測</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">圃場の <b>生育記録</b> と <b>7日間の気象予報</b> をAIが解析し、作物ごとの収量と最適な収穫時期を予測します。</div></div>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの勘と経験</span>
+              <div class="big" id="baBeforeT">毎日3時間</div>
+              <ul>
+                <li>📓 圃場を見回り生育を目視記録</li>
+                <li>🌦 天気予報を見て収穫日を勘で判断</li>
+                <li>📉 採れ過ぎ・不足で価格を取り逃す</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 生育＋気象を自動で統合解析</li>
+                <li>📅 作物別に収量・収穫適期を予測</li>
+                <li>💹 市況と掛け合わせ売上まで試算</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- input -->
+          <div class="create-grid" style="margin-top:20px">
+            <div class="formcard">
+              <div style="font-size:13px;font-weight:800;margin-bottom:12px">🌱 予測したい圃場の条件</div>
+              <div class="fg"><label>作物 / 品種</label>
+                <select id="iCrop"></select></div>
+              <div class="frow">
+                <div class="fg"><label>作付面積（a）</label><input id="iArea" type="number" min="0" value="30"></div>
+                <div class="fg"><label>定植からの日数</label><input id="iDays" type="number" min="0" value="62"></div>
+              </div>
+              <div class="frow">
+                <div class="fg"><label>平均気温（℃）</label><input id="iTemp" type="number" value="22"></div>
+                <div class="fg"><label>週間降水量（mm）</label><input id="iRain" type="number" value="38"></div>
+              </div>
+              <div class="fg"><label>生育状況（AIへの所見）</label>
+                <select id="iCond">
+                  <option value="good">良好（葉色濃く着果安定）</option>
+                  <option value="normal">平年並み</option>
+                  <option value="slow">やや遅れ（低温の影響）</option>
+                </select></div>
+              <div class="aihint" id="aiHint">✨ 気象データから生育の進み具合を自動補正しました</div>
+              <button class="btn primary" id="iRun" style="width:100%;justify-content:center;margin-top:6px">⚡ AIで収量を予測する</button>
+            </div>
+            <div>
+              <div class="paper" id="resultPaper">
+                <div class="pv-top">
+                  <div class="pv-title">AI 収量予測レポート</div>
+                  <div class="pv-meta"><div>予測ID：<span class="no" id="rNo">—</span></div><div>作成日：<span id="rDate">—</span></div><div>モデル：<span id="rModel">harvest-v3</span></div></div>
+                </div>
+                <div id="rCust" style="font-size:17px;font-weight:900;border-bottom:1.5px solid #1a2233;display:inline-block;min-width:200px;padding-bottom:4px;margin-bottom:6px">作物未選択</div>
+                <div style="font-size:11.5px;color:var(--ink-2)" id="rLead">左の条件を入力して「AIで収量を予測する」を押してください。</div>
+
+                <div class="predgrid">
+                  <div class="predcell"><div class="pl">予測収量</div><div class="pv" id="rYield">—</div><div class="ps" id="rYieldSub">—</div></div>
+                  <div class="predcell"><div class="pl">最適収穫時期</div><div class="pv" id="rHarvest">—</div><div class="ps" id="rHarvestSub">—</div></div>
+                </div>
+                <div class="pv-total"><span style="font-weight:700">想定売上（市況連動）</span><span class="a" id="rSales">¥0</span></div>
+
+                <div style="font-size:11.5px;font-weight:800;margin:14px 0 4px">予測の信頼度</div>
+                <div class="confbar"><i id="rConf" style="width:0%"></i></div>
+                <div style="font-size:11px;color:var(--ink-2);margin-top:4px" id="rConfTxt">—</div>
+
+                <div style="font-size:11.5px;font-weight:800;margin:16px 0 2px">AIが重視した要因</div>
+                <div id="rFactors"></div>
+              </div>
+              <div class="gen-list" id="genList" style="margin-top:0">
+                <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ 全圃場をまとめて再予測</div>
+                <div id="genItems"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+const kg=n=>Math.round(n).toLocaleString()+' kg';
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const TODAY=new Date();
+let SEED=4823;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+const MN=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+function addDays(d,n){return new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);}
+const fmtMD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtJ=d=>(d.getMonth()+1)+'月'+d.getDate()+'日';
+
+/* ============ DATA ============ */
+// crops: predicted yield (kg), last-year yield, unit price (yen/kg)
+const CROPS=[
+  {name:'トマト',variety:'桃太郎',field:'第1ハウス',stage:'着果期',yield:4200,last:3850,price:380,conf:92,status:'good',harvest:18},
+  {name:'いちご',variety:'紅ほっぺ',field:'第2ハウス',stage:'収穫期',yield:1850,last:1720,price:1450,conf:88,status:'good',harvest:5},
+  {name:'なす',variety:'千両二号',field:'露地A区',stage:'開花期',yield:2600,last:2900,price:320,conf:79,status:'watch',harvest:32},
+  {name:'ピーマン',variety:'京みどり',field:'露地B区',stage:'着果期',yield:3100,last:3050,price:410,conf:90,status:'normal',harvest:21},
+  {name:'きゅうり',variety:'夏すずみ',field:'第3ハウス',stage:'収穫期',yield:5400,last:5600,price:260,conf:85,status:'normal',harvest:3},
+  {name:'ほうれん草',variety:'アクティブ',field:'露地C区',stage:'生育期',yield:980,last:1240,price:540,conf:71,status:'risk',harvest:14},
+  {name:'だいこん',variety:'耐病総太り',field:'露地D区',stage:'肥大期',yield:6800,last:6500,price:130,conf:87,status:'normal',harvest:26},
+  {name:'ねぎ',variety:'夏扇',field:'露地E区',stage:'分けつ期',yield:2200,last:2050,price:480,conf:83,status:'good',harvest:40},
+];
+const STATUS_OPT=[['all','すべて'],['good','順調'],['normal','平年並み'],['watch','要注意'],['risk','下振れ警戒']];
+const STLABEL={good:'順調',normal:'平年並み',watch:'要注意',risk:'下振れ警戒',planned:'計画中',shipped:'出荷済'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]||s}</span>`;}
+
+// weather 7days
+const WEATHER=[
+  {d:'今日',e:'☀️',hi:26,lo:16},{d:'金',e:'⛅',hi:24,lo:15},{d:'土',e:'🌧',hi:21,lo:14},
+  {d:'日',e:'🌧',hi:20,lo:13},{d:'月',e:'⛅',hi:23,lo:15},{d:'火',e:'☀️',hi:27,lo:17},{d:'水',e:'☀️',hi:28,lo:18},
+];
+
+// shipping plan
+let SHIP=[
+  {crop:'いちご（紅ほっぺ）',dest:'大分中央青果市場',qty:420,price:1450,status:'planned',off:2},
+  {crop:'きゅうり（夏すずみ）',dest:'JA直売所 とれたて館',qty:1200,price:260,status:'planned',off:1},
+  {crop:'トマト（桃太郎）',dest:'スーパー丸和 大分中央店',qty:680,price:380,status:'planned',off:4},
+  {crop:'ピーマン（京みどり）',dest:'大分中央青果市場',qty:540,price:410,status:'planned',off:6},
+  {crop:'だいこん（耐病総太り）',dest:'業務用 大分給食センター',qty:2200,price:130,status:'shipped',off:-1},
+  {crop:'ねぎ（夏扇）',dest:'飲食卸 豊後ダイニング',qty:360,price:480,status:'planned',off:9},
+];
+
+// market
+const MARKET=[
+  {item:'トマト',grade:'秀L',price:412,d:6.2,heinen:8,c:'高値継続。出荷前倒しが有利'},
+  {item:'いちご',grade:'DX',price:1520,d:-3.1,heinen:-2,c:'最盛期で軟調。鮮度訴求を'},
+  {item:'なす',grade:'A品',price:298,d:2.4,heinen:-9,c:'平年安。需要喚起がカギ'},
+  {item:'きゅうり',grade:'2L',price:244,d:-1.8,heinen:-6,c:'供給増。直売併用を推奨'},
+  {item:'ピーマン',grade:'M秀',price:425,d:4.0,heinen:5,c:'堅調。計画通り出荷を'},
+  {item:'だいこん',grade:'L',price:128,d:0.8,heinen:-3,c:'安定。業務用は数量勝負'},
+  {item:'ほうれん草',grade:'束A',price:528,d:9.5,heinen:14,c:'品薄高。出荷量確保が課題'},
+  {item:'ねぎ',grade:'L白',price:486,d:1.2,heinen:4,c:'底堅い。等級アップ狙える'},
+];
+
+/* ============ ROUTING ============ */
+const TITLES={
+  dash:['ダッシュボード','2026年シーズンの収穫予測'],
+  crops:['作物別予測','圃場ごとのAI収量予測'],
+  trend:['収量推移','実績と予測の月別・年次トレンド'],
+  ship:['出荷計画','市況と収量から最適な出荷を組み立てます'],
+  market:['市況','大分市中央卸売市場の青果相場'],
+  ai:['AI予測','生育＋気象から収量と収穫時期を予測します'],
+};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI予測</button><button class="btn primary" onclick="go(\'crops\')">🌱 作物別を見る</button>'
+    : v==='crops'?'<button class="btn primary" onclick="go(\'ai\')">⚡ 新規にAI予測</button>'
+    : v==='market'?'<button class="btn" onclick="go(\'ship\')">🚚 出荷計画へ</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='crops')renderCrops();
+  if(v==='trend')renderTrend();
+  if(v==='ship')renderShip();
+  if(v==='market')renderMarket();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+function renderDash(){
+  const totalYield=CROPS.reduce((s,c)=>s+c.yield,0);
+  const totalLast=CROPS.reduce((s,c)=>s+c.last,0);
+  const yoy=Math.round((totalYield/totalLast-1)*1000)/10;
+  const sales=CROPS.reduce((s,c)=>s+c.yield*c.price,0);
+  // nearest harvest crop
+  const next=[...CROPS].sort((a,b)=>a.harvest-b.harvest)[0];
+  $('kpis').innerHTML=`
+    ${kpi('#1f9d57','予測収量 合計',kg(totalYield),CROPS.length+'品目','up','AI予測ベース')}
+    ${kpi(yoy>=0?'#16b877':'#e24a4a','前年比',(yoy>=0?'+':'')+yoy+'<small>%</small>','',yoy>=0?'up':'down',yoy>=0?'増収見込み':'減収警戒')}
+    ${kpi('#f0b429','最適出荷時期',next.harvest+'<small>日後</small>',esc(next.name),'warn',fmtJ(addDays(TODAY,next.harvest))+'頃')}
+    ${kpi('#0ea5b7','想定売上',yen(sales),'市況連動','up','粗利率を確保')}`;
+  // crop bars
+  const mx=Math.max(...CROPS.map(c=>c.yield));
+  $('cropBars').innerHTML=CROPS.map(c=>`
+    <div class="bar-row"><span class="mlabel">${esc(c.name)}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(c.yield/mx*100)}"></div></div>
+      <span class="mval">${kg(c.yield)}</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#cropBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // activity
+  const acts=[
+    {i:'⚡',c:'#e6f8f0',t:'AI予測を更新（全8圃場・信頼度 平均84%）',m:'10分前'},
+    {i:'🌧',c:'#e5f6ec',t:'週末の降雨を検知。ほうれん草の収穫を前倒し提案',m:'1時間前'},
+    {i:'📈',c:'#fdf5e1',t:'トマト相場が前日比 +6.2% に上昇',m:'今日 8:40'},
+    {i:'🚚',c:'#eef4ee',t:'だいこん 2,200kg を給食センターへ出荷完了',m:'今日 7:15'},
+    {i:'⚠️',c:'#fdeaea',t:'ほうれん草が前年比 -21%。低温の影響で下振れ警戒',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+  // weather
+  $('wstrip').innerHTML=WEATHER.map(w=>`<div class="wcell"><div class="wd">${esc(w.d)}</div><div class="we">${w.e}</div><div class="wt">${w.hi}°<small> / ${w.lo}°</small></div></div>`).join('');
+  $('navPlan').textContent=SHIP.filter(s=>s.status==='planned').length;
+}
+
+/* ============ CROPS ============ */
+let cropFilter='all';
+function renderCropChips(){
+  $('cropChips').innerHTML=STATUS_OPT.map(o=>`<button class="chip ${o[0]===cropFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('cropChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{cropFilter=c.dataset.s;renderCropChips();renderCrops();});
+}
+function renderCrops(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=CROPS.filter(c=>cropFilter==='all'||c.status===cropFilter)
+    .filter(c=>!q||(c.name+c.variety+c.field).toLowerCase().includes(q));
+  $('cropRows').innerHTML=rows.length?rows.map(c=>{
+    const yoy=Math.round((c.yield/c.last-1)*1000)/10;
+    return `<tr>
+      <td><b>${esc(c.name)}</b><div style="color:var(--ink-3);font-size:11px">${esc(c.variety)}</div></td>
+      <td style="color:var(--ink-2)">${esc(c.field)}</td>
+      <td><span class="st normal" style="background:var(--soft);color:var(--ink-2)">${esc(c.stage)}</span></td>
+      <td class="r tnum"><b>${kg(c.yield)}</b></td>
+      <td class="r tnum" style="color:${yoy>=0?'var(--green)':'var(--red)'};font-weight:800">${yoy>=0?'+':''}${yoy}%</td>
+      <td style="color:var(--ink-2)">${c.harvest<=0?'収穫中':fmtMD(addDays(TODAY,c.harvest))+'頃'}</td>
+      <td>${stBadge(c.status)}</td></tr>`;
+  }).join('') : '<tr><td colspan="7" class="empty-cell">該当する作物がありません</td></tr>';
+}
+
+/* ============ TREND ============ */
+let trendCrop='トマト';
+// build 12-month series per crop (deterministic)
+function seriesFor(name){
+  const c=CROPS.find(x=>x.name===name)||CROPS[0];
+  const base=c.yield/6;
+  const last=[],act=[],pred=[];
+  let s=name.length*97;const r=()=>{s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff;};
+  const curMonth=TODAY.getMonth();
+  for(let m=0;m<12;m++){
+    const season=0.55+0.45*Math.sin((m-3)/12*Math.PI*2); // peak around mid-year
+    const ly=base*season*(0.85+r()*0.25);
+    last.push(ly);
+    if(m<=curMonth){act.push(ly*(0.95+r()*0.2));pred.push(null);}
+    else {act.push(null);pred.push(ly*(1.02+r()*0.18));}
+  }
+  return {last,act,pred};
+}
+function renderTrendChips(){
+  $('trendChips').innerHTML=CROPS.map(c=>`<button class="chip ${c.name===trendCrop?'on':''}" data-c="${esc(c.name)}">${esc(c.name)}</button>`).join('');
+  $('trendChips').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{trendCrop=b.dataset.c;renderTrendChips();renderTrend();});
+}
+function renderTrend(){
+  $('trendTitle').textContent=trendCrop+' の月別 収量推移';
+  const {last,act,pred}=seriesFor(trendCrop);
+  const all=[...last,...act,...pred].filter(v=>v!=null);
+  const mx=Math.max(...all)*1.1;
+  const W=720,H=200,pad=10;
+  const x=i=>pad+i*((W-pad*2)/11);
+  const y=v=>H-pad-(v/mx)*(H-pad*2);
+  function path(arr){let d='',started=false;arr.forEach((v,i)=>{if(v==null){started=false;return;}d+=(started?'L':'M')+x(i).toFixed(1)+' '+y(v).toFixed(1)+' ';started=true;});return d.trim();}
+  // area under predicted+actual combined (continuous-ish): build composite of act then pred
+  const composite=act.map((v,i)=>v!=null?v:pred[i]);
+  let area='M'+pad+' '+(H-pad);composite.forEach((v,i)=>{if(v!=null)area+=' L'+x(i).toFixed(1)+' '+y(v).toFixed(1);});area+=' L'+(W-pad)+' '+(H-pad)+' Z';
+  $('areaChart').innerHTML=`
+    <defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1f9d57" stop-opacity=".22"/><stop offset="1" stop-color="#1f9d57" stop-opacity="0"/></linearGradient></defs>
+    <path d="${area}" fill="url(#ag)"/>
+    <path d="${path(last)}" fill="none" stroke="#c5cdd6" stroke-width="2" stroke-dasharray="5 4"/>
+    <path d="${path(act)}" fill="none" stroke="#1f9d57" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="${path(pred)}" fill="none" stroke="#f0b429" stroke-width="3" stroke-dasharray="2 5" stroke-linecap="round"/>
+    ${composite.map((v,i)=>v!=null?`<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="3" fill="${act[i]!=null?'#1f9d57':'#f0b429'}"/>`:'').join('')}`;
+  $('trendXAxis').innerHTML=MN.map(m=>`<div>${m.replace('月','')}</div>`).join('');
+  // year bars
+  const years=[['2022',CROPS.find(c=>c.name===trendCrop).last*5.4],['2023',CROPS.find(c=>c.name===trendCrop).last*5.7],['2024',CROPS.find(c=>c.name===trendCrop).last*5.9],['2025',CROPS.find(c=>c.name===trendCrop).last*6.0],['2026予測',CROPS.find(c=>c.name===trendCrop).yield*6.0]];
+  const ymx=Math.max(...years.map(y=>y[1]));
+  $('yearBars').innerHTML=years.map((yr,i)=>`<div class="bar-row"><span class="mlabel">${esc(yr[0])}</span>
+    <div class="bar-track"><div class="bar-fill ${i===years.length-1?'sun':''}" style="width:0" data-w="${Math.round(yr[1]/ymx*100)}"></div></div>
+    <span class="mval">${kg(yr[1])}</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#yearBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // accuracy box
+  $('accBox').innerHTML=`
+    <div style="display:flex;align-items:flex-end;gap:6px"><div style="font-size:34px;font-weight:900;font-family:'Orbitron';color:var(--brand)">94.2<small style="font-size:15px;color:var(--ink-3)">%</small></div>
+    <div style="font-size:12px;color:var(--ink-2);padding-bottom:8px">直近12ヶ月の実績との一致率</div></div>
+    <div class="bars" style="margin-top:14px">
+      <div class="bar-row"><span class="mlabel">収量予測</span><div class="bar-track"><div class="bar-fill" style="width:0" data-w="94"></div></div><span class="mval">±5.8%</span></div>
+      <div class="bar-row"><span class="mlabel">収穫時期</span><div class="bar-track"><div class="bar-fill" style="width:0" data-w="91"></div></div><span class="mval">±1.4日</span></div>
+      <div class="bar-row"><span class="mlabel">売上試算</span><div class="bar-track"><div class="bar-fill sun" style="width:0" data-w="88"></div></div><span class="mval">±7.1%</span></div>
+    </div>
+    <div style="font-size:11px;color:var(--ink-3);margin-top:12px">※ 気象庁の地域予報・過去5年の出荷実績・生育記録を学習したモデル harvest-v3 による推定です。</div>`;
+  setTimeout(()=>document.querySelectorAll('#accBox .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+}
+
+/* ============ SHIPPING ============ */
+function renderShip(){
+  const planned=SHIP.filter(s=>s.status==='planned');
+  const plannedRev=planned.reduce((s,x)=>s+x.qty*x.price,0);
+  const totalQty=SHIP.reduce((s,x)=>s+x.qty,0);
+  const next=[...planned].sort((a,b)=>a.off-b.off)[0];
+  $('shipKpis').innerHTML=`
+    ${kpi('#f0b429','出荷予定',planned.length+'<small>件</small>',kg(planned.reduce((s,x)=>s+x.qty,0)),'warn','調整中')}
+    ${kpi('#0ea5b7','予定売上',yen(plannedRev),'','up','市況連動')}
+    ${kpi('#1f9d57','直近の出荷',next?fmtMD(addDays(TODAY,next.off)):'—',next?esc(next.crop.split('（')[0]):'','up',next?next.off+'日後':'なし')}
+    ${kpi('#16b877','総取扱量',kg(totalQty),SHIP.length+'件','up','今シーズン累計')}`;
+  $('shipRows').innerHTML=SHIP.sort((a,b)=>a.off-b.off).map((s,idx)=>`<tr>
+    <td><b>${esc(s.crop)}</b></td>
+    <td style="color:var(--ink-2)">${esc(s.dest)}</td>
+    <td class="r tnum">${kg(s.qty)}</td>
+    <td style="color:var(--ink-2)">${s.off<0?'完了':fmtMD(addDays(TODAY,s.off))}</td>
+    <td class="r tnum">¥${s.price}<small style="color:var(--ink-3)">/kg</small></td>
+    <td>${stBadge(s.status)}</td>
+    <td class="r">${s.status==='planned'?`<button class="btn green" style="padding:6px 12px" onclick="markShipped(${idx})">出荷確定</button>`:'<span style="color:var(--ink-3);font-size:12px">—</span>'}</td></tr>`).join('');
+  $('navPlan').textContent=planned.length;
+}
+window.markShipped=idx=>{const s=SHIP.sort((a,b)=>a.off-b.off)[idx];if(s){s.status='shipped';s.off=-1;renderShip();showToast(s.crop.split('（')[0]+' の出荷を確定しました');}};
+$('optimize').addEventListener('click',async()=>{
+  const btn=$('optimize');btn.textContent='⚡ 最適化中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,1000));
+  // AI adjusts planned dates toward higher-price market windows
+  let moved=0;
+  SHIP.forEach(s=>{if(s.status==='planned'){const m=MARKET.find(x=>s.crop.startsWith(x.item));if(m&&m.d>0&&s.off>2){s.off=Math.max(1,s.off-2);moved++;}}});
+  btn.textContent='⚡ AIで出荷を最適化';btn.disabled=false;
+  renderShip();showToast('市況の高い日へ '+moved+'件の出荷を前倒し最適化しました');
+});
+
+/* ============ MARKET ============ */
+function spark(seed){let s=seed;const r=()=>{s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff;};
+  return Array.from({length:14},()=>30+r()*70);}
+function renderMarket(){
+  const top=MARKET.slice(0,3);
+  $('mkCards').innerHTML=top.map((m,i)=>{
+    const sp=spark(m.item.length*131+i);const mx=Math.max(...sp);
+    const up=m.d>=0;
+    return `<div class="mkcard"><div class="mt">${esc(m.item)} <span style="font-size:11px;color:var(--ink-3);font-weight:600">${esc(m.grade)}</span></div>
+      <div class="mp">¥${m.price}<small>/kg</small></div>
+      <div class="mc" style="color:${up?'var(--green)':'var(--red)'}">前日比 ${up?'▲':'▼'} ${Math.abs(m.d)}%</div>
+      <div class="mkspark">${sp.map(v=>`<i style="height:${Math.round(v/mx*100)}%;background:${up?'var(--green-soft)':'var(--red-soft)'}"></i>`).join('')}</div></div>`;
+  }).join('');
+  $('mkRows').innerHTML=MARKET.map(m=>`<tr>
+    <td><b>${esc(m.item)}</b></td>
+    <td style="color:var(--ink-2)">${esc(m.grade)}</td>
+    <td class="r tnum"><b>¥${m.price}</b></td>
+    <td class="r tnum" style="color:${m.d>=0?'var(--green)':'var(--red)'};font-weight:800">${m.d>=0?'+':''}${m.d}%</td>
+    <td class="r tnum" style="color:${m.heinen>=0?'var(--green)':'var(--red)'}">${m.heinen>=0?'+':''}${m.heinen}%</td>
+    <td style="color:var(--ink-2);font-size:12px">${esc(m.c)}</td></tr>`).join('');
+}
+
+/* ============ AI PREDICT ============ */
+function renderCropSelect(){$('iCrop').innerHTML=CROPS.map(c=>`<option value="${esc(c.name)}">${esc(c.name)}（${esc(c.variety)}）</option>`).join('');}
+$('iCond').addEventListener('change',()=>{$('aiHint').classList.add('show');setTimeout(()=>$('aiHint').classList.remove('show'),2000);});
+
+function computePrediction(){
+  const name=$('iCrop').value;
+  const c=CROPS.find(x=>x.name===name)||CROPS[0];
+  const area=+$('iArea').value||0;
+  const days=+$('iDays').value||0;
+  const temp=+$('iTemp').value||0;
+  const rain=+$('iRain').value||0;
+  const cond=$('iCond').value;
+  // per-area yield baseline (kg per a) from crop default assuming 30a
+  const perA=c.yield/30;
+  let mult=1;
+  // temperature factor (optimal ~22)
+  const tempPenalty=Math.max(0,1-Math.abs(temp-22)/25);
+  // rain factor (optimal ~35mm/week)
+  const rainPenalty=Math.max(0,1-Math.abs(rain-35)/90);
+  const condMult=cond==='good'?1.08:cond==='slow'?0.86:1.0;
+  // growth progress
+  const progress=Math.min(1.05,days/90);
+  mult=condMult*(0.55+0.25*tempPenalty+0.2*rainPenalty)*1+0; // weight
+  let predYield=perA*area*mult;
+  // harvest timing: remaining days based on progress, adjusted by temp
+  let remain=Math.max(0,Math.round((90-days)*(temp<18?1.15:temp>28?0.9:1)));
+  // confidence
+  let conf=Math.round(95*(0.6+0.25*tempPenalty+0.15*rainPenalty)-(cond==='slow'?6:0));
+  conf=Math.max(58,Math.min(96,conf));
+  const sales=predYield*c.price;
+  return {c,area,days,temp,rain,cond,predYield,remain,conf,sales,tempPenalty,rainPenalty,condMult,perA};
+}
+function paintResult(p,animate){
+  const c=p.c;
+  $('rCust').textContent=c.name+'（'+c.variety+'） / '+c.field;
+  $('rLead').textContent='作付面積 '+p.area+'a・定植から '+p.days+'日。気温'+p.temp+'℃／週間降水量'+p.rain+'mmを加味してAIが推定しました。';
+  $('rNo').textContent='PRD-'+(20260+Math.floor(rnd()*9000));
+  $('rDate').textContent=fmtJ(TODAY);
+  $('rYield').textContent=kg(p.predYield);
+  const yoy=Math.round((p.predYield/(c.last*p.area/30)-1)*1000)/10;
+  $('rYieldSub').textContent='前年比 '+(yoy>=0?'+':'')+yoy+'%（'+p.perA.toFixed(0)+'kg/a 換算）';
+  const hd=addDays(TODAY,p.remain);
+  $('rHarvest').textContent=p.remain<=0?'収穫適期':p.remain+'日後';
+  $('rHarvestSub').textContent=p.remain<=0?'すぐ収穫を':fmtJ(hd)+'頃が最適';
+  $('rSales').textContent=yen(p.sales);
+  $('rConfTxt').textContent='信頼度 '+p.conf+'%（過去5年の出荷実績と気象データに基づく推定）';
+  $('rConf').style.width=(animate?0:p.conf)+'%';
+  if(animate)setTimeout(()=>$('rConf').style.width=p.conf+'%',60);
+  const factors=[
+    ['🌡 気温の適合度',Math.round(p.tempPenalty*100)+'%'],
+    ['💧 降水量の適合度',Math.round(p.rainPenalty*100)+'%'],
+    ['🌱 生育状況の補正',(p.condMult>=1?'+':'')+Math.round((p.condMult-1)*100)+'%'],
+    ['📅 生育進度',Math.min(100,Math.round(p.days/90*100))+'%'],
+    ['💹 市況単価',yen(c.price)+'/kg'],
+  ];
+  $('rFactors').innerHTML=factors.map(f=>`<div class="factor"><span class="fl">${f[0]}</span><span class="fv">${esc(f[1])}</span></div>`).join('');
+}
+$('iRun').addEventListener('click',async()=>{
+  const btn=$('iRun');btn.disabled=true;btn.textContent='⚡ AIが解析中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,4);},150);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);$('baAfterT').textContent='4秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  const p=computePrediction();
+  paintResult(p,true);
+  btn.disabled=false;btn.textContent='⚡ 条件を変えて再予測';
+  showToast(p.c.name+' の収量を予測しました（信頼度 '+p.conf+'%）');
+  // batch list of all crops
+  $('genItems').innerHTML=CROPS.map((c,i)=>`<div class="gen-item" data-i="${i}"><span class="ck">✓</span><b style="flex:1">${esc(c.name)}</b><span style="color:var(--ink-3);font-size:12px">信頼度${c.conf}%</span><span class="tnum" style="font-weight:800">${kg(c.yield)}</span></div>`).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,140));items[i].classList.add('in');}
+});
+
+/* ============ INIT ============ */
+renderCropSelect();renderCropChips();renderTrendChips();renderDash();
+$('navPlan').textContent=SHIP.filter(s=>s.status==='planned').length;
+</script>
+</body>
+</html>

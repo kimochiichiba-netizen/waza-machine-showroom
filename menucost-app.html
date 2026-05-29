@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜メニュー原価マシン（原価・価格設計システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#e0622f;--brand-dk:#c24a1c;--brand-soft:#fcefe7;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#f0a23b;
+  --sb:#1a1410;--sb-2:#241a12;--sb-ink:#e0d3c4;--sb-ink-2:#a18d77;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#f0a23b,#e0622f,#d9b37a,#f0a23b);
+  display:grid;place-items:center;color:#2a1408;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(224,98,47,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:96px 1fr 56px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-fill.good{background:linear-gradient(90deg,var(--green),#5fd6a3)}
+.bar-fill.warn{background:linear-gradient(90deg,var(--amber),#f1c065)}
+.bar-fill.bad{background:linear-gradient(90deg,var(--red),#f0837f)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut */
+.donut-wrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.donut{width:128px;height:128px;border-radius:50%;flex-shrink:0;position:relative;
+  background:conic-gradient(var(--brand) 0 0);transition:background 1s cubic-bezier(.2,.8,.3,1)}
+.donut::after{content:"";position:absolute;inset:18px;border-radius:50%;background:var(--card)}
+.donut .dc{position:absolute;inset:0;display:grid;place-items:center;flex-direction:column;z-index:1;text-align:center}
+.donut .dc b{font-size:24px;font-weight:900;line-height:1}
+.donut .dc span{font-size:10px;color:var(--ink-3);font-weight:700}
+.legend{display:flex;flex-direction:column;gap:9px;font-size:12.5px}
+.legend .lr{display:flex;align-items:center;gap:9px}
+.legend .lr .sw{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.legend .lr b{margin-left:auto;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.good{background:var(--green-soft);color:var(--green)}
+.st.ok{background:var(--brand-soft);color:var(--brand)}
+.st.warn{background:var(--amber-soft);color:var(--amber)}
+.st.bad{background:var(--red-soft);color:var(--red)}
+.st.flat{background:var(--soft);color:var(--ink-3)}
+.tag-cat{background:var(--soft);color:var(--ink-2);font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px}
+.rate{font-weight:900;font-variant-numeric:tabular-nums}
+.rate.good{color:var(--green)}.rate.ok{color:var(--brand)}.rate.warn{color:var(--amber)}.rate.bad{color:var(--red)}
+.minibar{height:6px;border-radius:99px;background:var(--soft);overflow:hidden;margin-top:5px;width:90px}
+.minibar i{display:block;height:100%;border-radius:99px}
+
+/* cost calc */
+.calc-grid{display:grid;grid-template-columns:minmax(340px,440px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.calc-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--brand)}
+.line-head{display:grid;grid-template-columns:1fr 64px 70px 80px 28px;gap:7px;font-size:11px;color:var(--ink-3);font-weight:700;padding:0 2px 6px}
+.line-row{display:grid;grid-template-columns:1fr 64px 70px 80px 28px;gap:7px;margin-bottom:7px;align-items:center}
+.line-row input{padding:8px 9px;font-size:12.5px;border:1px solid var(--line-2);border-radius:8px;font-family:inherit;min-width:0}
+.line-row .calc-amt{font-size:12px;font-weight:700;text-align:right;color:var(--ink-2);font-variant-numeric:tabular-nums;padding-right:4px}
+.line-row .x{border:1px solid var(--line-2);background:var(--red-soft);color:var(--red);border-radius:7px;cursor:pointer;height:30px}
+.addline{width:100%;margin-top:3px;padding:9px;border:1px dashed var(--line-2);background:transparent;border-radius:8px;color:var(--brand);font-weight:700;font-size:12.5px;cursor:pointer}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* result card */
+.result{background:#fff;border:1px solid var(--line);border-radius:14px;padding:24px 26px;box-shadow:var(--shadow)}
+.result .rh{font-size:16px;font-weight:900;margin-bottom:16px;display:flex;align-items:center;gap:9px}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+@media(max-width:560px){.metrics{grid-template-columns:1fr}}
+.metric{background:var(--soft);border-radius:11px;padding:14px 15px}
+.metric .ml{font-size:11px;color:var(--ink-3);font-weight:700;margin-bottom:6px}
+.metric .mv{font-size:23px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1}
+.metric .mv small{font-size:13px;color:var(--ink-3)}
+.gauge{height:14px;border-radius:99px;background:linear-gradient(90deg,var(--green) 0%,var(--green) 33%,var(--amber) 33%,var(--amber) 55%,var(--red) 55%);position:relative;margin:6px 0 4px}
+.gauge .pin{position:absolute;top:-6px;width:4px;height:26px;border-radius:3px;background:var(--ink);transition:left .8s cubic-bezier(.2,.8,.3,1);box-shadow:0 0 0 3px #fff}
+.gauge-lab{display:flex;justify-content:space-between;font-size:10px;color:var(--ink-3);font-weight:700}
+.breakdown{margin-top:18px;border-top:1px solid var(--line);padding-top:14px}
+.breakdown .br{display:flex;justify-content:space-between;font-size:12.5px;padding:5px 2px;color:var(--ink-2)}
+.breakdown .br b{color:var(--ink)}
+.advice{margin-top:16px;background:var(--brand-soft);border:1px solid #f3d4c2;border-radius:11px;padding:14px 16px;font-size:12.5px;color:var(--brand-dk);display:flex;gap:10px}
+.advice .ai-ic{font-size:18px}
+
+/* price sim before/after */
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:grid;grid-template-columns:1fr auto auto auto;gap:11px;align-items:center;padding:11px 13px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;grid-column:auto}
+.gen-item .nm{flex:1;font-weight:700;display:flex;align-items:center;gap:9px}
+.gen-item .arrow-s{color:var(--ink-3);font-size:12px}
+.gen-item .old{color:var(--ink-3);text-decoration:line-through;font-variant-numeric:tabular-nums;font-size:12px}
+.gen-item .new{color:var(--green);font-weight:900;font-variant-numeric:tabular-nums}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#f0a23b,#e0622f);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(224,98,47,.4)}50%{box-shadow:0 0 40px rgba(240,162,59,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.scatter{position:relative;height:240px;background:var(--soft);border-radius:11px;margin-top:4px;overflow:hidden}
+.scatter .axis{position:absolute;background:var(--line-2)}
+.scatter .dot{position:absolute;width:13px;height:13px;border-radius:50%;transform:translate(-50%,50%);cursor:pointer;border:2px solid #fff;box-shadow:var(--shadow);transition:transform .15s}
+.scatter .dot:hover{transform:translate(-50%,50%) scale(1.4);z-index:5}
+.scatter .lbl{position:absolute;font-size:10px;color:var(--ink-3);font-weight:700}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">メニュー原価マシン<small>技マシン｜原価・価格設計</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="menu"><span class="i">🍽️</span>メニュー一覧</a>
+      <a data-v="calc"><span class="i">🧮</span>原価計算</a>
+      <a data-v="price"><span class="i">🏷️</span>価格設定<span class="badge" id="navReview">0</span></a>
+      <a data-v="profit"><span class="i">📈</span>利益分析</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI価格提案</a>
+    </nav>
+    <div class="org">
+      <div class="av">和</div>
+      <div><b>居酒屋 大分や 都町本店</b><span>デモ環境 / 店長</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。メニュー・原価はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">2026年5月の原価・利益状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>カテゴリ別 平均原価率</h3><span class="more">目安30%以下</span></div>
+            <div class="pb"><div class="bars" id="catBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>メニュー構成（原価率の健康度）</h3></div>
+            <div class="pb"><div class="donut-wrap">
+              <div class="donut" id="donut"><div class="dc"><b id="donutPct">—</b><span>適正の割合</span></div></div>
+              <div class="legend" id="donutLegend"></div>
+            </div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>要見直しメニュー（原価率が高い順）</h3><span class="more" onclick="go('price')">価格設定へ</span></div>
+            <div class="pb"><div class="bars" id="reviewBars"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MENU LIST -->
+      <section class="view" id="v-menu">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="メニュー名・カテゴリで検索"></div>
+          <div class="chips" id="catChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>メニュー名</th><th>カテゴリ</th><th class="r">売価(税抜)</th><th class="r">食材原価</th><th class="r">原価率</th><th class="r">粗利</th><th class="r">月販数</th><th>状態</th></tr></thead>
+          <tbody id="menuRows"></tbody>
+        </table>
+      </section>
+
+      <!-- COST CALC -->
+      <section class="view" id="v-calc">
+        <div class="calc-grid">
+          <div class="formcard">
+            <div class="fg"><label>メニュー名</label><input id="cName" placeholder="例：鶏のから揚げ 定食"></div>
+            <div class="fg" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div><label>カテゴリ</label><select id="cCat"></select></div>
+              <div><label>売価（税抜・円）</label><input id="cPrice" type="number" min="0" placeholder="880"></div>
+            </div>
+            <label style="font-size:12px;font-weight:700;color:var(--ink-2)">食材（食材名を選ぶとAIが相場の単価を提案）</label>
+            <div class="line-head" style="margin-top:7px"><div>食材名</div><div>使用量</div><div>単位原価</div><div>金額</div><div></div></div>
+            <div id="cLines"></div>
+            <button class="addline" id="cAdd">＋ 食材を追加</button>
+            <div class="aihint" id="cAiHint">✨ AIが市場相場から単位原価を自動入力しました</div>
+            <div class="linkrow" style="margin-top:16px">
+              <button class="btn primary" id="cCalc" style="flex:1;justify-content:center">⚡ AIで原価を計算して登録</button>
+              <button class="btn" id="cSample">サンプル</button>
+            </div>
+          </div>
+          <div>
+            <div class="result" id="cResult">
+              <div class="rh">🧮 <span id="rName">原価計算プレビュー</span></div>
+              <div class="metrics">
+                <div class="metric"><div class="ml">食材原価</div><div class="mv tnum" id="rCost">¥0</div></div>
+                <div class="metric"><div class="ml">原価率</div><div class="mv tnum"><span id="rRate">0</span><small>%</small></div></div>
+                <div class="metric"><div class="ml">粗利（1食）</div><div class="mv tnum" id="rProfit">¥0</div></div>
+              </div>
+              <div class="gauge-lab"><span>0%</span><span>原価率の目安</span><span>55%+</span></div>
+              <div class="gauge"><div class="pin" id="rPin" style="left:0%"></div></div>
+              <div class="gauge-lab"><span style="color:var(--green)">適正 〜30%</span><span style="color:var(--amber)">注意 〜45%</span><span style="color:var(--red)">危険 45%〜</span></div>
+              <div class="breakdown" id="rBreak"></div>
+              <div class="advice" id="rAdvice"><span class="ai-ic">💡</span><span id="rAdviceTxt">食材を入力すると、AIが原価率の評価と価格アドバイスを表示します。</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PRICE SETTING -->
+      <section class="view" id="v-price">
+        <div class="kpis" id="priceKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>原価率が目安(30%)を超えるメニュー</h3>
+            <button class="btn green" id="aiRepriceAll" style="margin-left:auto">⚡ AIで一括 値付け提案</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>メニュー名</th><th class="r">現売価</th><th class="r">原価率</th><th class="r">AI推奨売価</th><th class="r">改善後 原価率</th><th></th></tr></thead>
+              <tbody id="priceRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- PROFIT ANALYSIS -->
+      <section class="view" id="v-profit">
+        <div class="kpis" id="profitKpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>人気度 × 利益率 マップ</h3><span class="more">右上が稼ぎ頭</span></div>
+            <div class="pb">
+              <div class="scatter" id="scatter"></div>
+              <div style="display:flex;justify-content:space-between;font-size:10.5px;color:var(--ink-3);font-weight:700;margin-top:8px">
+                <span>← 売れていない</span><span>人気度（月販数）</span><span>よく売れる →</span></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>利益貢献 トップ（粗利×販売数）</h3></div>
+            <div class="pb"><div class="bars" id="profitBars"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI REPRICE -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">食材費の高騰を反映した適正価格をAIが提案</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">仕入データと市場相場から、原価率が目安を超える <b id="aiCount">—</b> 品の新しい売価をAIが一括で計算します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで価格を一括提案する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">3時間00分</div>
+              <ul>
+                <li>🧾 食材ごとに仕入伝票を電卓で集計</li>
+                <li>📋 メニュー1品ずつ原価率を手計算</li>
+                <li>🤔 値上げ幅を勘で決めて貼り替え</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 仕入データから原価率を自動算出</li>
+                <li>🏷️ 目標原価率に合う売価を逆算</li>
+                <li>📊 値ごろ感も考えた端数までAI提案</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ AIが提案した新しい売価（Before → After）</div>
+            <div id="genItems"></div>
+            <div id="genSummary" style="margin-top:12px;font-size:12.5px;color:var(--ink-2);font-weight:700;display:none"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const CATS=['前菜・サラダ','揚げ物','焼き物','刺身・海鮮','ご飯・麺','一品料理','デザート','ドリンク'];
+
+/* 食材マスタ（単位原価＝1単位あたりの仕入原価・円） */
+const INGREDIENTS=[
+  {n:'鶏もも肉(g)',p:1.4},{n:'豚バラ肉(g)',p:1.8},{n:'牛切り落とし(g)',p:3.2},{n:'まぐろ柵(g)',p:4.5},
+  {n:'サーモン(g)',p:3.0},{n:'白米(g)',p:0.5},{n:'うどん玉(個)',p:42},{n:'キャベツ(g)',p:0.3},
+  {n:'レタス(g)',p:0.8},{n:'トマト(g)',p:0.9},{n:'玉ねぎ(g)',p:0.4},{n:'じゃがいも(g)',p:0.35},
+  {n:'卵(個)',p:28},{n:'油揚げ(枚)',p:35},{n:'豆腐(丁)',p:60},{n:'ねぎ(g)',p:1.2},
+  {n:'生クリーム(ml)',p:1.5},{n:'バニラアイス(g)',p:1.8},{n:'いちご(g)',p:2.4},{n:'抹茶パウダー(g)',p:8},
+  {n:'唐揚げ粉(g)',p:1.1},{n:'サラダ油(ml)',p:0.4},{n:'醤油(ml)',p:0.6},{n:'みりん(ml)',p:0.9},
+  {n:'生ビール原液(ml)',p:0.7},{n:'レモンサワー原液(ml)',p:0.5},{n:'ハイボール原液(ml)',p:0.9},
+];
+function findIng(n){return INGREDIENTS.find(x=>x.n===n);}
+
+const TODAY=new Date();
+
+/* 疑似乱数（再現性のため固定シード） */
+let SEED=4821;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+
+/* メニューデータ（売価=税抜, 原価=食材原価合計, popularity=月販数） */
+let MENUS=[
+  {name:'鶏のから揚げ（5個）',cat:'揚げ物',price:580,cost:174,pop:412},
+  {name:'若鶏の唐揚げ定食',cat:'ご飯・麺',price:880,cost:330,pop:286},
+  {name:'本まぐろ 刺身盛り',cat:'刺身・海鮮',price:1280,cost:690,pop:198},
+  {name:'サーモンとアボカドサラダ',cat:'前菜・サラダ',price:780,cost:312,pop:154},
+  {name:'豚の生姜焼き定食',cat:'ご飯・麺',price:920,cost:285,pop:243},
+  {name:'だし巻き玉子',cat:'一品料理',price:480,cost:96,pop:321},
+  {name:'冷奴',cat:'前菜・サラダ',price:380,cost:72,pop:267},
+  {name:'肉じゃが',cat:'一品料理',price:580,cost:191,pop:178},
+  {name:'牛すじ煮込み',cat:'一品料理',price:680,cost:374,pop:201},
+  {name:'たこ焼き（8個）',cat:'揚げ物',price:520,cost:130,pop:288},
+  {name:'シーザーサラダ',cat:'前菜・サラダ',price:680,cost:204,pop:166},
+  {name:'カツ丼',cat:'ご飯・麺',price:850,cost:340,pop:212},
+  {name:'天ぷら盛り合わせ',cat:'揚げ物',price:1180,cost:590,pop:134},
+  {name:'焼き鳥盛り（5本）',cat:'焼き物',price:780,cost:265,pop:298},
+  {name:'カルパッチョ',cat:'刺身・海鮮',price:880,cost:466,pop:122},
+  {name:'明太子チャーハン',cat:'ご飯・麺',price:780,cost:218,pop:189},
+  {name:'抹茶アイス',cat:'デザート',price:420,cost:118,pop:176},
+  {name:'いちごパフェ',cat:'デザート',price:680,cost:347,pop:98},
+  {name:'生ビール（中）',cat:'ドリンク',price:550,cost:99,pop:684},
+  {name:'レモンサワー',cat:'ドリンク',price:450,cost:68,pop:521},
+  {name:'ハイボール',cat:'ドリンク',price:500,cost:95,pop:478},
+  {name:'特製海鮮丼',cat:'刺身・海鮮',price:1480,cost:830,pop:142},
+  {name:'豚キムチ',cat:'焼き物',price:680,cost:238,pop:155},
+  {name:'枝豆',cat:'前菜・サラダ',price:380,cost:99,pop:402},
+];
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const rateOf=m=>m.price>0?m.cost/m.price*100:0;
+const profitOf=m=>m.price-m.cost;
+/* 原価率→健康度クラス: 適正(<=30) ok寄り(<=35) 注意(<=45) 危険(>45) */
+function rateClass(r){if(r<=30)return 'good';if(r<=35)return 'ok';if(r<=45)return 'warn';return 'bad';}
+function rateLabel(r){if(r<=30)return '適正';if(r<=35)return '良好';if(r<=45)return '注意';return '要見直し';}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+const COLORS={good:'#16b877',ok:'#e0622f',warn:'#e3941f',bad:'#e24a4a'};
+
+/* ============ ROUTING ============ */
+const TITLES={
+  dash:['ダッシュボード','2026年'+(TODAY.getMonth()+1)+'月の原価・利益状況'],
+  menu:['メニュー一覧','全メニューの原価率と粗利を管理します'],
+  calc:['原価計算','食材を入れるとAIが原価率・適正価格を計算します'],
+  price:['価格設定','原価率が高いメニューの値付けを見直します'],
+  profit:['利益分析','人気度と利益率からメニューを評価します'],
+  ai:['AI価格提案','食材費の変動を反映した適正価格をAIが提案します']
+};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='menu'?'<button class="btn primary" onclick="go(\'calc\')">＋ メニュー追加</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI価格提案</button><button class="btn primary" onclick="go(\'calc\')">＋ メニュー追加</button>'
+    : v==='price'?'<button class="btn primary" onclick="go(\'ai\')">⚡ AI価格提案へ</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='menu')renderMenu();
+  if(v==='price')renderPrice();
+  if(v==='profit')renderProfit();
+  if(v==='ai')renderAiIntro();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const avgRate=MENUS.reduce((s,m)=>s+rateOf(m),0)/MENUS.length;
+  const totalProfit=MENUS.reduce((s,m)=>s+profitOf(m)*m.pop,0);
+  const review=MENUS.filter(m=>rateOf(m)>30);
+  const topPop=[...MENUS].sort((a,b)=>b.pop-a.pop)[0];
+  $('kpis').innerHTML=`
+    ${kpi('#e0622f','平均原価率',avgRate.toFixed(1)+'<small>%</small>',MENUS.length+'品','up','目安30%以内')}
+    ${kpi('#16b877','想定 月間粗利',yen(totalProfit),'','up','前月比 +8%')}
+    ${kpi('#e3941f','要見直しメニュー',review.length+'<small>品</small>','原価率30%超','warn','価格設定へ')}
+    ${kpi('#2f6df0','人気No.1',topPop.pop+'<small>食</small>',esc(topPop.name),'up','今月の看板')}`;
+
+  // category avg rate bars
+  const catData=CATS.map(c=>{const list=MENUS.filter(m=>m.cat===c);if(!list.length)return null;
+    const r=list.reduce((s,m)=>s+rateOf(m),0)/list.length;return {c,r};}).filter(Boolean).sort((a,b)=>b.r-a.r);
+  $('catBars').innerHTML=catData.map(d=>{const cl=rateClass(d.r);
+    return `<div class="bar-row"><span class="mlabel">${esc(d.c)}</span>
+      <div class="bar-track"><div class="bar-fill ${cl}" style="width:0" data-w="${Math.min(Math.round(d.r/55*100),100)}"></div></div>
+      <span class="mval rate ${cl}">${d.r.toFixed(0)}%</span></div>`;}).join('');
+  setTimeout(()=>document.querySelectorAll('#catBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+
+  // donut: health distribution
+  const buckets={good:0,ok:0,warn:0,bad:0};
+  MENUS.forEach(m=>buckets[rateClass(rateOf(m))]++);
+  const total=MENUS.length;
+  const segs=[['good','適正（〜30%）'],['ok','良好（〜35%）'],['warn','注意（〜45%）'],['bad','要見直し（45%超）']];
+  let acc=0;const stops=[];
+  segs.forEach(([k])=>{const from=acc/total*360;acc+=buckets[k];const to=acc/total*360;stops.push(`${COLORS[k]} ${from}deg ${to}deg`);});
+  $('donut').style.background=`conic-gradient(${stops.join(',')})`;
+  $('donutPct').textContent=Math.round(buckets.good/total*100)+'%';
+  $('donutLegend').innerHTML=segs.map(([k,lab])=>`<div class="lr"><span class="sw" style="background:${COLORS[k]}"></span>${lab}<b>${buckets[k]}品</b></div>`).join('');
+
+  // activity
+  const acts=[
+    {i:'⚡',c:'#fcefe7',t:'AI価格提案で 6品の売価を見直しました（平均原価率 -7pt）',m:'今日 10:24'},
+    {i:'🧮',c:'#e6f8f0',t:'「特製海鮮丼」を登録（原価率 56% → 要見直し）',m:'1時間前'},
+    {i:'📈',c:'#eaf1ff',t:'仕入データを取込み（まぐろ柵 +12% 高騰を検知）',m:'今日 8:40'},
+    {i:'⚠️',c:'#fdeaea',t:'「いちごパフェ」の原価率が 51% に上昇',m:'今日 8:30'},
+    {i:'🏷️',c:'#fdf3e2',t:'「焼き鳥盛り」の売価を 780円 に改定',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+
+  // review bars (high rate)
+  const rev=[...MENUS].sort((a,b)=>rateOf(b)-rateOf(a)).slice(0,6);
+  $('reviewBars').innerHTML=rev.map(m=>{const r=rateOf(m);const cl=rateClass(r);
+    return `<div class="bar-row"><span class="mlabel">${esc(m.name)}</span>
+      <div class="bar-track"><div class="bar-fill ${cl}" style="width:0" data-w="${Math.min(Math.round(r/70*100),100)}"></div></div>
+      <span class="mval rate ${cl}">${r.toFixed(0)}%</span></div>`;}).join('');
+  setTimeout(()=>document.querySelectorAll('#reviewBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+
+  $('navReview').textContent=review.length;
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?esc(sub)+' ・ ':''}${d}</div></div>`;}
+
+/* ============ MENU LIST ============ */
+let filterCat='all';
+function renderChips(){
+  const opts=[['all','すべて'],...CATS.map(c=>[c,c])];
+  $('catChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterCat?'on':''}" data-c="${esc(o[0])}">${esc(o[1])}</button>`).join('');
+  $('catChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterCat=c.dataset.c;renderChips();renderMenu();});
+}
+function renderMenu(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=MENUS.filter(m=>filterCat==='all'||m.cat===filterCat)
+    .filter(m=>!q||(m.name+m.cat).toLowerCase().includes(q))
+    .sort((a,b)=>rateOf(b)-rateOf(a));
+  $('menuRows').innerHTML=rows.length?rows.map(m=>{const r=rateOf(m);const cl=rateClass(r);
+    return `<tr>
+    <td><b>${esc(m.name)}</b></td>
+    <td><span class="tag-cat">${esc(m.cat)}</span></td>
+    <td class="r tnum"><b>${yen(m.price)}</b></td>
+    <td class="r tnum" style="color:var(--ink-2)">${yen(m.cost)}</td>
+    <td class="r"><span class="rate ${cl}">${r.toFixed(1)}%</span>
+      <div class="minibar" style="margin-left:auto"><i style="width:${Math.min(Math.round(r/70*100),100)}%;background:${COLORS[cl]}"></i></div></td>
+    <td class="r tnum">${yen(profitOf(m))}</td>
+    <td class="r tnum" style="color:var(--ink-2)">${m.pop}食</td>
+    <td><span class="st ${cl}">${rateLabel(r)}</span></td></tr>`;}).join('')
+    :'<tr><td colspan="8" class="empty-cell">該当するメニューがありません</td></tr>';
+}
+$('q').addEventListener('input',renderMenu);
+
+/* ============ COST CALC ============ */
+let cLines=[{n:'',q:'',p:''},{n:'',q:'',p:''}];
+function renderCatSelect(){$('cCat').innerHTML=CATS.map(c=>`<option>${esc(c)}</option>`).join('');}
+function renderLines(){
+  $('cLines').innerHTML=cLines.map((l,i)=>{
+    const amt=(+l.q||0)*(+l.p||0);
+    return `<div class="line-row" data-i="${i}">
+    <input class="ln" list="cIngList" placeholder="食材名" value="${esc(l.n)}">
+    <input class="lq" type="number" min="0" placeholder="量" value="${esc(l.q)}">
+    <input class="lp" type="number" min="0" step="0.1" placeholder="単価" value="${esc(l.p)}">
+    <span class="calc-amt">${yen(amt)}</span>
+    <button class="x">✕</button></div>`;}).join('');
+  $('cLines').querySelectorAll('.line-row').forEach(row=>{
+    const i=+row.dataset.i;
+    const ln=row.querySelector('.ln'),lq=row.querySelector('.lq'),lp=row.querySelector('.lp');
+    ln.oninput=()=>{cLines[i].n=ln.value;const h=findIng(ln.value);if(h&&!cLines[i].p){cLines[i].p=h.p;lp.value=h.p;$('cAiHint').classList.add('show');setTimeout(()=>$('cAiHint').classList.remove('show'),2000);}renderResult();syncAmt();};
+    lq.oninput=()=>{cLines[i].q=lq.value;renderResult();syncAmt();};
+    lp.oninput=()=>{cLines[i].p=lp.value;renderResult();syncAmt();};
+    row.querySelector('.x').onclick=()=>{cLines.splice(i,1);if(!cLines.length)cLines.push({n:'',q:'',p:''});renderLines();renderResult();};
+  });
+}
+function syncAmt(){$('cLines').querySelectorAll('.line-row').forEach(row=>{const i=+row.dataset.i;
+  row.querySelector('.calc-amt').textContent=yen((+cLines[i].q||0)*(+cLines[i].p||0));});}
+function renderResult(){
+  const name=$('cName').value.trim();
+  $('rName').textContent=name?esc(name):'原価計算プレビュー';
+  const price=+$('cPrice').value||0;
+  const cost=cLines.reduce((s,l)=>s+(+l.q||0)*(+l.p||0),0);
+  const rate=price>0?cost/price*100:0;
+  const profit=price-cost;
+  $('rCost').textContent=yen(cost);
+  $('rRate').textContent=price>0?rate.toFixed(1):'—';
+  $('rProfit').textContent=yen(profit);
+  $('rProfit').style.color=profit<0?'var(--red)':'var(--ink)';
+  // gauge pin 0-55%+ scale
+  const pinPct=Math.min(rate/55*100,100);
+  $('rPin').style.left=pinPct+'%';
+  // breakdown
+  const valid=cLines.filter(l=>l.n||+l.p>0);
+  $('rBreak').innerHTML=valid.length?valid.map(l=>{const a=(+l.q||0)*(+l.p||0);
+    return `<div class="br"><span>${esc(l.n)||'（食材）'} <span style="color:var(--ink-3)">×${+l.q||0}</span></span><b>${yen(a)}</b></div>`;}).join('')
+    +`<div class="br" style="border-top:1px dashed var(--line);margin-top:6px;padding-top:9px"><span>食材原価 合計</span><b style="color:var(--brand-dk)">${yen(cost)}</b></div>`
+    :'<div class="br" style="justify-content:center;color:var(--ink-3)">食材を入力すると内訳が表示されます</div>';
+  // advice
+  let txt;
+  if(price<=0||!valid.length){txt='食材と売価を入力すると、AIが原価率の評価と価格アドバイスを表示します。';}
+  else if(rate<=30){const ideal=Math.round(cost/0.30/10)*10;txt=`原価率 ${rate.toFixed(0)}% は適正です。利益体質の良いメニューです。あと ${yen(Math.max(0,price-ideal))} まで価格を下げても採算は合います。`;}
+  else if(rate<=45){const ideal=Math.round(cost/0.30/10)*10;txt=`原価率 ${rate.toFixed(0)}% はやや高めです。目安30%なら売価 ${yen(ideal)} が適正。盛り付け量の見直しか、+${yen(Math.max(0,ideal-price))} の値上げを推奨します。`;}
+  else {const ideal=Math.round(cost/0.30/10)*10;txt=`原価率 ${rate.toFixed(0)}% は危険水準です。このままでは利益が出にくいメニュー。売価 ${yen(ideal)} への改定、または食材構成の見直しを強く推奨します。`;}
+  $('rAdviceTxt').textContent=txt;
+}
+$('cName').addEventListener('input',renderResult);
+$('cPrice').addEventListener('input',renderResult);
+$('cAdd').addEventListener('click',()=>{cLines.push({n:'',q:'',p:''});renderLines();renderResult();});
+$('cSample').addEventListener('click',()=>{
+  $('cName').value='本まぐろ 刺身盛り';$('cCat').value='刺身・海鮮';$('cPrice').value=1280;
+  cLines=[{n:'まぐろ柵(g)',q:120,p:4.5},{n:'大根(つま)',q:40,p:0.3},{n:'醤油(ml)',q:15,p:0.6},{n:'わさび(g)',q:5,p:6}];
+  renderLines();renderResult();
+});
+$('cCalc').addEventListener('click',async()=>{
+  const name=$('cName').value.trim();
+  const price=+$('cPrice').value||0;
+  const valid=cLines.filter(l=>l.n||+l.p>0);
+  if(!name||!price||!valid.length){showToast('メニュー名・売価・食材を入力してください');return;}
+  const btn=$('cCalc');btn.textContent='⚡ AIが計算中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,800));
+  const cost=Math.round(cLines.reduce((s,l)=>s+(+l.q||0)*(+l.p||0),0));
+  MENUS.push({name,cat:$('cCat').value,price,cost,pop:0});
+  btn.textContent='⚡ AIで原価を計算して登録';btn.disabled=false;
+  const rate=cost/price*100;
+  showToast('「'+name+'」を登録しました（原価率 '+rate.toFixed(1)+'%）');
+  cLines=[{n:'',q:'',p:''},{n:'',q:'',p:''}];$('cName').value='';$('cPrice').value='';renderLines();renderResult();
+  setTimeout(()=>go('menu'),700);
+});
+
+/* ============ PRICE SETTING ============ */
+const TARGET_RATE=0.30;
+function suggestPrice(m){
+  // 目標原価率30%になる売価を逆算→値ごろ感のある端数(末尾80/00)に丸める
+  const ideal=m.cost/TARGET_RATE;
+  let rounded=Math.ceil(ideal/10)*10;
+  const tens=rounded%100;
+  if(tens>0&&tens<=80)rounded=Math.floor(rounded/100)*100+80;
+  else if(tens>80)rounded=Math.ceil(rounded/100)*100+80;
+  // 既存より下げる提案は避ける
+  return Math.max(rounded,m.price);
+}
+function renderPrice(){
+  const review=MENUS.filter(m=>rateOf(m)>30).sort((a,b)=>rateOf(b)-rateOf(a));
+  const avgRate=MENUS.reduce((s,m)=>s+rateOf(m),0)/MENUS.length;
+  const potential=review.reduce((s,m)=>{const np=suggestPrice(m);return s+(np-m.price)*m.pop;},0);
+  $('priceKpis').innerHTML=`
+    ${kpi('#e3941f','見直し対象',review.length+'<small>品</small>','原価率30%超','warn','要対応')}
+    ${kpi('#e0622f','平均原価率',avgRate.toFixed(1)+'<small>%</small>','','warn','改善余地あり')}
+    ${kpi('#16b877','改定で見込む増益',yen(potential),'/ 月','up','AI試算')}
+    ${kpi('#2f6df0','目標原価率',(TARGET_RATE*100)+'<small>%</small>','業界目安','up','基準値')}`;
+  $('priceRows').innerHTML=review.length?review.map(m=>{const r=rateOf(m);const np=suggestPrice(m);const nr=m.cost/np*100;
+    return `<tr>
+    <td><b>${esc(m.name)}</b> <span class="tag-cat">${esc(m.cat)}</span></td>
+    <td class="r tnum">${yen(m.price)}</td>
+    <td class="r"><span class="rate ${rateClass(r)}">${r.toFixed(1)}%</span></td>
+    <td class="r tnum"><b style="color:var(--green)">${yen(np)}</b></td>
+    <td class="r"><span class="rate ${rateClass(nr)}">${nr.toFixed(1)}%</span></td>
+    <td class="r"><button class="btn green" style="padding:6px 12px" onclick="applyPrice('${esc(m.name)}',${np})">採用</button></td></tr>`;}).join('')
+    :'<tr><td colspan="6" class="empty-cell">原価率が目安を超えるメニューはありません 🎉</td></tr>';
+  $('navReview').textContent=review.length;
+}
+window.applyPrice=(name,np)=>{const m=MENUS.find(x=>x.name===name);if(m){m.price=np;renderPrice();showToast('「'+name+'」の売価を '+yen(np)+' に改定しました');}};
+$('aiRepriceAll').addEventListener('click',()=>go('ai'));
+
+/* ============ PROFIT ANALYSIS ============ */
+function renderProfit(){
+  const totalProfit=MENUS.reduce((s,m)=>s+profitOf(m)*m.pop,0);
+  const best=[...MENUS].sort((a,b)=>profitOf(b)*b.pop-profitOf(a)*a.pop)[0];
+  const avgProfitRate=100-MENUS.reduce((s,m)=>s+rateOf(m),0)/MENUS.length;
+  const lowProfit=MENUS.filter(m=>profitOf(m)*m.pop<30000).length;
+  $('profitKpis').innerHTML=`
+    ${kpi('#16b877','想定 月間粗利',yen(totalProfit),MENUS.length+'品 合計','up','前月比 +8%')}
+    ${kpi('#2f6df0','平均 粗利率',avgProfitRate.toFixed(1)+'<small>%</small>','','up','健全')}
+    ${kpi('#e0622f','利益貢献No.1',yen(profitOf(best)*best.pop),esc(best.name),'up','稼ぎ頭')}
+    ${kpi('#e3941f','貢献の低いメニュー',lowProfit+'<small>品</small>','月粗利3万円未満','warn','整理候補')}`;
+
+  // scatter: x=pop, y=profit rate
+  const maxPop=Math.max(...MENUS.map(m=>m.pop));
+  $('scatter').innerHTML=
+    `<div class="axis" style="left:0;right:0;top:50%;height:1px"></div>
+     <div class="axis" style="top:0;bottom:0;left:50%;width:1px"></div>
+     <div class="lbl" style="right:8px;top:6px;color:var(--green)">★ 稼ぎ頭</div>
+     <div class="lbl" style="left:8px;bottom:6px;color:var(--red)">整理候補</div>
+     <div class="lbl" style="left:8px;top:6px">高利益・低人気</div>`
+    +MENUS.map(m=>{const pr=100-rateOf(m);
+      const x=8+(m.pop/maxPop)*84;const y=8+(1-Math.min(pr,80)/80)*84;
+      const cl=rateClass(rateOf(m));
+      return `<div class="dot" style="left:${x}%;bottom:${y}%;background:${COLORS[cl]}" title="${esc(m.name)}｜人気${m.pop}食・粗利率${pr.toFixed(0)}%"></div>`;}).join('');
+
+  // profit contribution bars
+  const top=[...MENUS].sort((a,b)=>profitOf(b)*b.pop-profitOf(a)*a.pop).slice(0,8);
+  const mx=profitOf(top[0])*top[0].pop||1;
+  $('profitBars').innerHTML=top.map(m=>{const v=profitOf(m)*m.pop;
+    return `<div class="bar-row"><span class="mlabel">${esc(m.name)}</span>
+      <div class="bar-track"><div class="bar-fill good" style="width:0" data-w="${Math.round(v/mx*100)}"></div></div>
+      <span class="mval">${yen(v)}</span></div>`;}).join('');
+  setTimeout(()=>document.querySelectorAll('#profitBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+}
+
+/* ============ AI REPRICE ============ */
+function renderAiIntro(){
+  const review=MENUS.filter(m=>rateOf(m)>30);
+  $('aiCount').textContent=review.length+'品';
+}
+$('aiRun').addEventListener('click',async()=>{
+  const review=MENUS.filter(m=>rateOf(m)>30).sort((a,b)=>rateOf(b)-rateOf(a));
+  if(!review.length){showToast('見直し対象のメニューはありません');return;}
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 計算中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},120);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+
+  const plan=review.map(m=>({m,np:suggestPrice(m),oldR:rateOf(m)}));
+  $('genItems').innerHTML=plan.map((p,i)=>{const nr=p.m.cost/p.np*100;
+    return `<div class="gen-item" data-i="${i}">
+      <span class="ck">✓</span>
+      <span class="nm">${esc(p.m.name)} <span class="tag-cat">${esc(p.m.cat)}</span></span>
+      <span><span class="old">${yen(p.m.price)}</span> <span class="arrow-s">→</span> <span class="new">${yen(p.np)}</span></span>
+      <span class="rate ${rateClass(nr)}" style="font-size:11.5px">原価率 ${p.oldR.toFixed(0)}%→${nr.toFixed(0)}%</span>
+    </div>`;}).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  let gain=0;
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,160));items[i].classList.add('in');
+    const p=plan[i];gain+=(p.np-p.m.price)*p.m.pop;p.m.price=p.np;}
+  const newAvg=MENUS.reduce((s,m)=>s+rateOf(m),0)/MENUS.length;
+  $('genSummary').style.display='block';
+  $('genSummary').textContent=`合計 ${plan.length}品 を改定。平均原価率は ${newAvg.toFixed(1)}% に改善、月間で約 ${yen(gain)} の増益見込みです。`;
+  btn.disabled=false;btn.textContent='⚡ もう一度提案';
+  showToast(plan.length+'品の価格を一括で見直しました（増益 約'+yen(gain)+'/月）');
+  $('navReview').textContent=MENUS.filter(m=>rateOf(m)>30).length;
+});
+
+/* ============ INIT ============ */
+(function(){const dl=document.createElement('datalist');dl.id='cIngList';
+  dl.innerHTML=INGREDIENTS.map(i=>`<option value="${esc(i.n)}">`).join('');document.body.appendChild(dl);})();
+renderCatSelect();renderLines();renderResult();renderChips();renderDash();
+$('navReview').textContent=MENUS.filter(m=>rateOf(m)>30).length;
+</script>
+</body>
+</html>

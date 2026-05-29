@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜申請書類作成マシン（士業向け申請書類自動作成）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cf0;--purple-soft:#efeaff;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.nav a .badge.amber{background:var(--amber)}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn.sm{padding:6px 12px;font-size:12px}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut / category */
+.cat{display:flex;flex-direction:column;gap:11px}
+.cat-row{display:flex;align-items:center;gap:10px;font-size:13px}
+.cat-row .sw{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.cat-row .nm{font-weight:600;color:var(--ink-2)}
+.cat-row .ct{margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums}
+.cat-row .pc{width:46px;text-align:right;color:var(--ink-3);font-size:12px;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.done{background:var(--green-soft);color:var(--green)}
+.st.review{background:var(--brand-soft);color:var(--brand)}
+.st.draft{background:var(--amber-soft);color:var(--amber)}
+.st.reject{background:var(--red-soft);color:var(--red)}
+.st.wait{background:var(--soft);color:var(--ink-3)}
+.st.submitted{background:var(--purple-soft);color:var(--purple)}
+
+/* create form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:64px;line-height:1.6}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* paper preview (application doc) */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:34px 36px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.pv-title{font-size:21px;font-weight:900;letter-spacing:.22em;text-align:center;border-bottom:3px double #1a2233;padding-bottom:9px;margin-bottom:20px}
+.pv-meta{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-2);margin-bottom:18px}
+.pv-meta .no{font-family:'Orbitron';color:var(--ink);font-weight:700}
+.docrow{display:grid;grid-template-columns:120px 1fr;border:1px solid var(--line-2);border-bottom:0;font-size:12px}
+.docrow:last-of-type{border-bottom:1px solid var(--line-2)}
+.docrow .k{background:var(--soft);padding:9px 11px;font-weight:700;color:var(--ink-2);border-right:1px solid var(--line-2);display:flex;align-items:center}
+.docrow .vv{padding:9px 11px;color:#1a2233;min-height:36px}
+.docrow .vv.empty{color:#aab2c4}
+.pv-body{margin-top:16px;font-size:12px;line-height:1.9;color:#1a2233;white-space:pre-wrap;border:1px solid var(--line-2);border-radius:6px;padding:13px 15px;background:#fcfdff;min-height:80px}
+.pv-body.empty{color:#aab2c4}
+.pv-seal{margin-top:18px;display:flex;justify-content:flex-end;align-items:center;gap:14px}
+.pv-seal .ofc{font-size:11px;color:var(--ink-2);text-align:right;line-height:1.7}
+.pv-seal .stamp{width:54px;height:54px;border:2px solid var(--red);border-radius:50%;display:grid;place-items:center;color:var(--red);font-weight:900;font-size:11px;line-height:1.2;text-align:center;transform:rotate(-8deg);opacity:.85}
+
+/* check / validation */
+.chk-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:900px){.chk-grid{grid-template-columns:1fr}}
+.chk-item{display:flex;gap:11px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;margin-bottom:9px;font-size:13px;align-items:flex-start}
+.chk-item .ci{width:24px;height:24px;border-radius:7px;flex-shrink:0;display:grid;place-items:center;font-size:13px;font-weight:900}
+.chk-item .ci.ok{background:var(--green-soft);color:var(--green)}
+.chk-item .ci.ng{background:var(--red-soft);color:var(--red)}
+.chk-item .ci.warn{background:var(--amber-soft);color:var(--amber)}
+.chk-item .ct{font-weight:700}
+.chk-item .cm{font-size:11.5px;color:var(--ink-3);margin-top:2px}
+.chk-item .fix{margin-left:auto;font-size:11.5px;font-weight:800;color:var(--green);align-self:center;white-space:nowrap}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* submit timeline */
+.tl{position:relative;padding-left:26px}
+.tl::before{content:"";position:absolute;left:8px;top:6px;bottom:6px;width:2px;background:var(--line-2)}
+.tl-item{position:relative;padding:0 0 16px 0;font-size:13px}
+.tl-item:last-child{padding-bottom:0}
+.tl-item .dot{position:absolute;left:-22px;top:3px;width:14px;height:14px;border-radius:50%;background:var(--card);border:3px solid var(--line-2)}
+.tl-item.done .dot{border-color:var(--green);background:var(--green)}
+.tl-item.now .dot{border-color:var(--brand);background:var(--brand);box-shadow:0 0 0 4px var(--brand-soft)}
+.tl-item .tt{font-weight:700}
+.tl-item .tm{font-size:11.5px;color:var(--ink-3)}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">申請書類作成マシン<small>技マシン｜士業向け</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">📁</span>案件一覧</a>
+      <a data-v="create"><span class="i">✏️</span>書類作成</a>
+      <a data-v="check"><span class="i">🔍</span>チェック<span class="badge amber" id="navCheck">0</span></a>
+      <a data-v="submit"><span class="i">📮</span>提出管理<span class="badge" id="navSubmit">0</span></a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI自動作成</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>きもち行政書士事務所</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。案件・依頼者はすべてサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">2026年5月の申請書類の状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>月次の作成件数推移</h3><span class="more">過去6ヶ月</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>書類カテゴリ別の件数</h3></div>
+            <div class="pb"><div class="cat" id="catList"></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>期限が近い案件</h3><span class="more" onclick="go('list')">すべて見る</span></div>
+            <div class="pb"><div class="acts" id="dueSoon"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="依頼者・書類名・案件番号で検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>案件番号</th><th>依頼者</th><th>書類種別</th><th>提出先</th><th>受任日</th><th>提出期限</th><th>状態</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- CREATE -->
+      <section class="view" id="v-create">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>書類種別</label>
+              <select id="cType"></select></div>
+            <div class="fg"><label>依頼者（氏名・法人名）</label><input id="cName" placeholder="例：株式会社みらい商事"></div>
+            <div class="fg2">
+              <div class="fg"><label>提出先（行政機関）</label><input id="cDest" placeholder="例：大分県庁"></div>
+              <div class="fg"><label>提出期限</label><input id="cDue" type="date"></div>
+            </div>
+            <div class="fg"><label>事業所所在地</label><input id="cAddr" placeholder="例：大分市都町○-○-○"></div>
+            <div class="fg"><label>申請の概要・補足メモ（AIが文章に整えます）</label>
+              <textarea id="cMemo" placeholder="例：建設業 内装仕上工事業 知事許可 新規 資本金500万 専任技術者あり"></textarea></div>
+            <div class="aihint" id="cAiHint">✨ AIが書類種別に応じた標準項目を自動入力しました</div>
+            <div class="linkrow" style="margin-top:16px">
+              <button class="btn primary" id="cIssue" style="flex:1;justify-content:center">⚡ AIで申請書類を作成</button>
+              <button class="btn" id="cSample">サンプル</button>
+            </div>
+          </div>
+          <div>
+            <div class="paper" id="cPaper">
+              <div class="pv-title" id="pTitle">申　請　書</div>
+              <div class="pv-meta"><div>案件番号：<span class="no" id="pNo">—</span></div><div>作成日：<span id="pDate">—</span></div></div>
+              <div class="docrow"><div class="k">提出先</div><div class="vv empty" id="pDest">—</div></div>
+              <div class="docrow"><div class="k">申請者</div><div class="vv empty" id="pName">—</div></div>
+              <div class="docrow"><div class="k">所在地</div><div class="vv empty" id="pAddr">—</div></div>
+              <div class="docrow"><div class="k">書類種別</div><div class="vv empty" id="pKind">—</div></div>
+              <div class="docrow"><div class="k">提出期限</div><div class="vv empty" id="pDueV">—</div></div>
+              <div style="font-size:11px;font-weight:700;color:var(--ink-2);margin:14px 0 6px">申請の趣旨</div>
+              <div class="pv-body empty" id="pBody">← 左の項目を入力すると、AIが申請書の文面を組み立てます。</div>
+              <div class="pv-seal">
+                <div class="ofc">上記のとおり申請します。<br>きもち行政書士事務所<br>行政書士　気持　太郎</div>
+                <div class="stamp">行政<br>書士印</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CHECK -->
+      <section class="view" id="v-check">
+        <div class="panel" style="margin-bottom:16px">
+          <div class="ph"><h3>不備チェック対象の選択</h3>
+            <select id="chkSelect" class="btn" style="margin-left:auto;max-width:280px"></select>
+            <button class="btn primary" id="chkRun">🔍 AIで不備チェック</button></div>
+          <div class="pb">
+            <div style="font-size:12.5px;color:var(--ink-2)">AIが記載漏れ・添付書類・形式・整合性を自動点検します。選んで「不備チェック」を押してください。</div>
+          </div>
+        </div>
+        <div class="chk-grid">
+          <div class="panel">
+            <div class="ph"><h3>😓 Before（手作業の目視チェック）</h3></div>
+            <div class="pb">
+              <div class="ba" style="grid-template-columns:1fr;margin:0">
+                <div class="col before" style="border-radius:10px">
+                  <div class="big" id="chkBeforeT">約 45分</div>
+                  <ul>
+                    <li>📄 申請書を1項目ずつ目視で確認</li>
+                    <li>📎 添付書類のチェックリストを手で照合</li>
+                    <li>🔁 差戻しのたびに最初からやり直し</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>⚡ After（AI不備チェック）</h3></div>
+            <div class="pb">
+              <div id="chkResult"><div class="empty-cell">対象を選んで「AIで不備チェック」を押すと結果が表示されます。</div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SUBMIT -->
+      <section class="view" id="v-submit">
+        <div class="kpis" id="submitKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>提出管理（チェック済み・提出待ちの案件）</h3>
+            <button class="btn green" id="batchSubmit" style="margin-left:auto">📮 まとめて電子申請</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>案件番号</th><th>依頼者</th><th>書類種別</th><th>提出先</th><th>提出期限</th><th>状態</th><th></th></tr></thead>
+              <tbody id="submitRows"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:16px">
+          <div class="ph"><h3>提出フローの進捗（サンプル案件）</h3></div>
+          <div class="pb">
+            <div class="tl">
+              <div class="tl-item done"><div class="dot"></div><div class="tt">情報入力・書類作成（AI）</div><div class="tm">5/27 14:02 完了</div></div>
+              <div class="tl-item done"><div class="dot"></div><div class="tt">AI不備チェック（充足率100%）</div><div class="tm">5/27 14:05 完了</div></div>
+              <div class="tl-item done"><div class="dot"></div><div class="tt">担当行政書士の最終確認</div><div class="tm">5/28 09:30 完了</div></div>
+              <div class="tl-item now"><div class="dot"></div><div class="tt">電子申請システムへ提出</div><div class="tm">本日 提出予定</div></div>
+              <div class="tl-item"><div class="dot"></div><div class="tt">受理・許可通知の受領</div><div class="tm">標準処理期間 約30日</div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI AUTO -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">ヒアリングメモから申請書類を自動作成</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">未着手の案件 <b id="aiPending">0件</b> について、ヒアリング内容からAIが申請書類一式を自動で作成・不備チェックします。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで一括作成する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">1件あたり 90分</div>
+              <ul>
+                <li>📚 様式を探して項目を1つずつ転記</li>
+                <li>⌨️ 申請理由・趣旨を文章で手書き</li>
+                <li>🔍 記載漏れ・添付漏れを目視で点検</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 ヒアリングメモを自動で項目化</li>
+                <li>📄 様式に沿った申請書を一括生成</li>
+                <li>✅ 不備チェックまで自動で実行</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ 作成された申請書類</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const CLIENTS=[
+  {name:'株式会社みらい商事',type:'法人',staff:'気持'},
+  {name:'大分中央クリニック',type:'法人',staff:'佐藤'},
+  {name:'豊後建設工業株式会社',type:'法人',staff:'田中'},
+  {name:'つくし介護サービス合同会社',type:'法人',staff:'田中'},
+  {name:'別府温泉ホテル株式会社',type:'法人',staff:'高橋'},
+  {name:'佐藤 健一',type:'個人',staff:'気持'},
+  {name:'大分海鮮市場株式会社',type:'法人',staff:'高橋'},
+  {name:'みどり運送有限会社',type:'法人',staff:'鈴木'},
+  {name:'鈴木 美咲',type:'個人',staff:'佐藤'},
+  {name:'おおいた青果流通株式会社',type:'法人',staff:'鈴木'},
+];
+// 書類種別マスタ（タイトル・提出先・趣旨テンプレ・標準添付）
+const DOCTYPES=[
+  {k:'kensetsu',n:'建設業許可申請',title:'建設業許可申請書',dest:'大分県土木建築部',cat:'許認可',
+    body:'建設業法第3条の規定に基づき、{name}は下記の建設工事業について知事許可（新規）を受けたく、関係書類を添えて申請いたします。',
+    docs:['登記事項証明書','納税証明書','専任技術者の資格証明','財務諸表']},
+  {k:'fudosan',n:'宅建業免許申請',title:'宅地建物取引業免許申請書',dest:'大分県土木建築部',cat:'許認可',
+    body:'宅地建物取引業法第3条の規定に基づき、{name}は宅地建物取引業の免許（新規）を受けたく、申請いたします。',
+    docs:['宅地建物取引士の登録証明','事務所の使用権原を証する書面','身分証明書']},
+  {k:'sangyo',n:'産業廃棄物収集運搬業許可',title:'産業廃棄物収集運搬業許可申請書',dest:'大分市環境部',cat:'許認可',
+    body:'廃棄物処理法第14条の規定に基づき、{name}は産業廃棄物収集運搬業の許可を受けたく、申請いたします。',
+    docs:['講習会修了証','車両の使用権原を証する書面','財務諸表','誓約書']},
+  {k:'houjin',n:'会社設立登記申請',title:'株式会社設立登記申請書',dest:'大分地方法務局',cat:'登記',
+    body:'会社法の規定に基づき、{name}の設立登記を申請いたします。発起設立により設立手続きを完了しております。',
+    docs:['定款（公証人認証済）','発起人の同意書','資本金の払込証明書','印鑑届書']},
+  {k:'hojokin',n:'補助金交付申請（IT導入）',title:'補助金交付申請書',dest:'独立行政法人 中小企業基盤整備機構',cat:'補助金',
+    body:'{name}は、業務効率化を目的としたITツール導入について、補助金の交付を申請いたします。事業計画は別紙のとおりです。',
+    docs:['事業計画書','見積書','決算書（直近2期）','gBizIDプライム']},
+  {k:'zairyu',n:'在留資格認定証明書交付申請',title:'在留資格認定証明書交付申請書',dest:'福岡出入国在留管理局 大分出張所',cat:'入管',
+    body:'出入国管理及び難民認定法の規定に基づき、{name}が受け入れる外国人について、在留資格認定証明書の交付を申請いたします。',
+    docs:['雇用契約書','申請人の履歴書','受入機関の登記事項証明書','決算文書']},
+  {k:'sozoku',n:'相続関係書類作成',title:'遺産分割協議書',dest:'大分地方法務局',cat:'相続',
+    body:'被相続人の遺産について、相続人全員の協議により、{name}を含む相続人間で下記のとおり分割することに合意いたしました。',
+    docs:['被相続人の戸籍（出生〜死亡）','相続人全員の戸籍','印鑑証明書','固定資産評価証明書']},
+  {k:'kaigo',n:'介護事業所指定申請',title:'介護保険事業者指定申請書',dest:'大分県福祉保健部',cat:'許認可',
+    body:'介護保険法の規定に基づき、{name}は指定居宅サービス事業者の指定を受けたく、申請いたします。',
+    docs:['運営規程','勤務形態一覧表','資格者証の写し','平面図']},
+];
+const TODAY=new Date();
+function ym(d){return (d.getMonth()+1)}
+let SEED=4071;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+const STATUSES=['done','submitted','review','draft','reject','wait','submitted','done'];
+let cases=[];
+(function seed(){
+  for(let i=0;i<24;i++){
+    const c=pick(CLIENTS);
+    const dt=pick(DOCTYPES);
+    const recv=new Date(TODAY.getFullYear(),TODAY.getMonth()-Math.floor(rnd()*3),1+Math.floor(rnd()*26));
+    const due=new Date(recv.getFullYear(),recv.getMonth()+1,5+Math.floor(rnd()*20));
+    let stt=pick(STATUSES);
+    cases.push({
+      no:'CS-'+(2026100+i+1),
+      client:c.name, staff:c.staff,
+      type:dt.k, typeName:dt.n, dest:dt.dest, cat:dt.cat,
+      recv, due, status:stt
+    });
+  }
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+const fmtS=d=>d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate();
+const STLABEL={done:'作成完了',review:'確認中',draft:'下書き',reject:'差戻し',wait:'未着手',submitted:'提出済'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]||s}</span>`;}
+function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function daysTo(d){return Math.ceil((d-TODAY)/86400000);}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function dtMaster(k){return DOCTYPES.find(d=>d.k===k);}
+
+/* ============ ROUTING ============ */
+const TITLES={
+  dash:['ダッシュボード','2026年'+ym(TODAY)+'月の申請書類の状況'],
+  list:['案件一覧','受任した申請案件を管理します'],
+  create:['書類作成','入力するとAIがリアルタイムで申請書を組み立てます'],
+  check:['不備チェック','AIが記載漏れ・添付漏れを自動点検します'],
+  submit:['提出管理','チェック済みの書類の提出を管理します'],
+  ai:['AI自動作成','ヒアリングメモから申請書類を一括で作成します']
+};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn primary" onclick="go(\'create\')">＋ 新規案件</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI自動作成</button><button class="btn primary" onclick="go(\'create\')">＋ 新規案件</button>'
+    : v==='check'?'<button class="btn" onclick="go(\'create\')">＋ 書類作成へ</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='check')renderCheckSelect();
+  if(v==='submit')renderSubmit();
+  if(v==='ai')renderAiSub();
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const tm=cases.filter(c=>thisMonth(c.recv));
+  const done=cases.filter(c=>c.status==='done'||c.status==='submitted').length;
+  const reject=cases.filter(c=>c.status==='reject').length;
+  const dueSoonN=cases.filter(c=>c.status!=='submitted'&&daysTo(c.due)>=0&&daysTo(c.due)<=7).length;
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','今月の案件',tm.length+'<small>件</small>','受任','up','前月比 +18%')}
+    ${kpi('#16b877','平均作成時間','8<small>分</small>','従来90分','up','94%短縮')}
+    ${kpi('#e24a4a','差戻し',reject+'<small>件</small>',cases.length+'件中','down',reject?'要修正':'なし')}
+    ${kpi('#e3941f','期限7日以内',dueSoonN+'<small>件</small>',' ','warn',dueSoonN?'要対応':'余裕あり')}`;
+  // trend
+  const months=[];for(let k=5;k>=0;k--){const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1);months.push(d);}
+  const counts=months.map(m=>cases.filter(c=>c.recv.getMonth()===m.getMonth()&&c.recv.getFullYear()===m.getFullYear()).length);
+  const mx=Math.max(...counts,1);
+  $('trendBars').innerHTML=months.map((m,i)=>`
+    <div class="bar-row"><span class="mlabel">${m.getMonth()+1}月</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(counts[i]/mx*100)}"></div></div>
+      <span class="mval">${counts[i]}件</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // category
+  const COLORS={'許認可':'#2f6df0','登記':'#16b877','補助金':'#e3941f','入管':'#7c5cf0','相続':'#0ea5b7'};
+  const cats={};cases.forEach(c=>{cats[c.cat]=(cats[c.cat]||0)+1;});
+  const total=cases.length;
+  $('catList').innerHTML=Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`
+    <div class="cat-row"><span class="sw" style="background:${COLORS[k]||'#8a94a6'}"></span>
+      <span class="nm">${esc(k)}</span><span class="ct tnum">${v}件</span><span class="pc">${Math.round(v/total*100)}%</span></div>`).join('');
+  // activity
+  const acts=[
+    {i:'⚡',c:'#e6f8f0',t:'AI自動作成で 5件の申請書類を作成（充足率100%）',m:'今日 9:14'},
+    {i:'✅',c:'#e6f8f0',t:'CS-2026108 建設業許可申請の不備チェック完了',m:'1時間前'},
+    {i:'📮',c:'#efeaff',t:'みらい商事 の補助金交付申請を電子申請で提出',m:'今日 8:30'},
+    {i:'⚠️',c:'#fdeaea',t:'豊後建設工業 の案件が差戻し（添付書類不足）',m:'昨日 16:40'},
+    {i:'✏️',c:'#eaf1ff',t:'佐藤 健一 様の遺産分割協議書を新規作成',m:'昨日 11:05'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+  // due soon
+  const ds=cases.filter(c=>c.status!=='submitted'&&daysTo(c.due)>=0).sort((a,b)=>a.due-b.due).slice(0,5);
+  $('dueSoon').innerHTML=ds.length?ds.map(c=>{
+    const d=daysTo(c.due);const col=d<=3?'#fdeaea':d<=7?'#fdf3e2':'#eaf1ff';const ic=d<=3?'🔴':d<=7?'🟠':'📅';
+    return `<div class="act"><div class="ai" style="background:${col}">${ic}</div><div style="flex:1"><div class="at">${esc(c.client)}<span style="color:var(--ink-3);font-weight:600;font-size:11px"> ／ ${esc(c.typeName)}</span></div><div class="am">提出期限 ${fmtS(c.due)}（あと${d}日）</div></div>${stBadge(c.status)}</div>`;
+  }).join('') : '<div class="empty-cell">期限が近い案件はありません 🎉</div>';
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub&&sub.trim()?esc(sub)+' ・ ':''}${esc(d)}</div></div>`;}
+
+/* ============ LIST ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['wait','未着手'],['draft','下書き'],['review','確認中'],['done','作成完了'],['submitted','提出済'],['reject','差戻し']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=cases.filter(c=>filterStatus==='all'||c.status===filterStatus)
+    .filter(c=>!q||(c.client+c.typeName+c.no+c.dest).toLowerCase().includes(q))
+    .sort((a,b)=>a.due-b.due);
+  $('listRows').innerHTML=rows.length?rows.map(c=>{
+    const d=daysTo(c.due);const dueCol=(c.status!=='submitted'&&d<=3)?'var(--red)':(c.status!=='submitted'&&d<=7)?'var(--amber)':'var(--ink-2)';
+    return `<tr onclick="openCase('${esc(c.no)}')">
+    <td class="mono" style="font-size:12px">${esc(c.no)}</td><td><b>${esc(c.client)}</b></td>
+    <td style="color:var(--ink-2)">${esc(c.typeName)}</td><td style="color:var(--ink-2)">${esc(c.dest)}</td>
+    <td style="color:var(--ink-2)">${fmtS(c.recv)}</td><td style="color:${dueCol};font-weight:700">${fmtS(c.due)}</td>
+    <td>${stBadge(c.status)}</td></tr>`;
+  }).join('') : '<tr><td colspan="7" class="empty-cell">該当する案件がありません</td></tr>';
+}
+window.openCase=no=>{const c=cases.find(x=>x.no===no);if(c){showToast(no+'（'+c.typeName+'）を開きました');}};
+$('q').addEventListener('input',renderList);
+
+/* ============ CREATE ============ */
+function renderTypeSelect(){
+  $('cType').innerHTML='<option value="">書類種別を選択</option>'+DOCTYPES.map(d=>`<option value="${d.k}">${d.n}</option>`).join('');
+}
+function buildBody(){
+  const k=$('cType').value;const m=dtMaster(k);
+  const name=$('cName').value.trim();
+  const memo=$('cMemo').value.trim();
+  if(!m)return '';
+  let body=m.body.replace('{name}',name||'（申請者名）');
+  if(memo)body+='\n\n【申請の補足】\n'+memo;
+  body+='\n\n【添付書類】\n'+m.docs.map((d,i)=>(i+1)+'. '+d).join('\n');
+  return body;
+}
+function renderPaper(){
+  const k=$('cType').value;const m=dtMaster(k);
+  // title
+  $('pTitle').textContent=m?m.title:'申　請　書';
+  // dest auto-suggest when empty
+  setVV('pDest',$('cDest').value || (m?m.dest:''));
+  setVV('pName',$('cName').value);
+  setVV('pAddr',$('cAddr').value);
+  setVV('pKind',m?m.n+'（'+m.cat+'）':'');
+  const due=$('cDue').value;
+  setVV('pDueV', due?due.replace(/-/g,'/'):'');
+  // body
+  const body=buildBody();
+  if(body){$('pBody').classList.remove('empty');$('pBody').textContent=body;}
+  else{$('pBody').classList.add('empty');$('pBody').textContent='← 左の項目を入力すると、AIが申請書の文面を組み立てます。';}
+}
+function setVV(id,val){const el=$(id);if(val&&String(val).trim()){el.classList.remove('empty');el.textContent=val;}else{el.classList.add('empty');el.textContent='—';}}
+['cName','cDest','cAddr','cMemo','cDue'].forEach(id=>$(id).addEventListener('input',renderPaper));
+$('cType').addEventListener('change',()=>{
+  const m=dtMaster($('cType').value);
+  if(m&&!$('cDest').value){$('cDest').value=m.dest;$('cAiHint').classList.add('show');setTimeout(()=>$('cAiHint').classList.remove('show'),2200);}
+  renderPaper();
+});
+$('cSample').addEventListener('click',()=>{
+  $('cType').value='kensetsu';$('cName').value='豊後建設工業株式会社';$('cDest').value='大分県土木建築部';
+  $('cAddr').value='大分市西大道○-○-○';
+  const d=new Date(TODAY.getFullYear(),TODAY.getMonth()+1,15);
+  $('cDue').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  $('cMemo').value='内装仕上工事業 知事許可 新規 資本金800万円 専任技術者あり 経営業務管理責任者あり';
+  renderPaper();showToast('サンプルを読み込みました');
+});
+$('cIssue').addEventListener('click',async()=>{
+  const k=$('cType').value;const m=dtMaster(k);
+  if(!k||!$('cName').value.trim()){showToast('書類種別と依頼者を入力してください');return;}
+  const btn=$('cIssue');btn.textContent='⚡ AIが作成中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,900));
+  const now=new Date();const no='CS-'+(2026100+cases.length+1);
+  $('pNo').textContent=no;$('pDate').textContent=fmtDL(now);
+  const dueVal=$('cDue').value?new Date($('cDue').value):new Date(now.getFullYear(),now.getMonth()+1,20);
+  cases.push({no,client:$('cName').value.trim(),staff:'気持',type:k,typeName:m.n,dest:$('cDest').value||m.dest,cat:m.cat,recv:now,due:dueVal,status:'done'});
+  btn.textContent='⚡ AIで申請書類を作成';btn.disabled=false;
+  showToast('申請書類 '+no+' を作成しました（案件一覧に追加）');
+  updateBadges();
+  setTimeout(()=>go('list'),800);
+});
+
+/* ============ CHECK ============ */
+function renderCheckSelect(){
+  const sel=cases.filter(c=>c.status!=='submitted');
+  $('chkSelect').innerHTML='<option value="">チェックする案件を選択</option>'+sel.map(c=>`<option value="${esc(c.no)}">${esc(c.no)}｜${esc(c.client)}｜${esc(c.typeName)}</option>`).join('');
+}
+$('chkRun').addEventListener('click',async()=>{
+  const no=$('chkSelect').value;
+  if(!no){showToast('チェックする案件を選んでください');return;}
+  const c=cases.find(x=>x.no===no);const m=dtMaster(c.type);
+  const btn=$('chkRun');btn.textContent='🔍 点検中…';btn.disabled=true;
+  $('chkResult').innerHTML='<div class="empty-cell">AIが申請書を点検しています…</div>';
+  await new Promise(r=>setTimeout(r,1000));
+  // deterministic-ish results from doc master
+  const checks=[
+    {type:'ok',t:'必須項目の記載',m:'申請者・所在地・提出先など必須項目はすべて記載されています'},
+    {type:'ok',t:'様式の形式',m:'提出先（'+m.dest+'）の最新様式に準拠しています'},
+  ];
+  // simulate one missing attachment + one warning depending on case
+  const missIdx=Math.floor(rnd()*m.docs.length);
+  checks.push({type:'ng',t:'添付書類の不足',m:'「'+m.docs[missIdx]+'」が添付されていません',fix:'AIが雛形を自動添付'});
+  if(rnd()>0.5)checks.push({type:'warn',t:'記載内容の整合性',m:'資本金の記載と財務諸表の数値に差異の可能性があります',fix:'要確認'});
+  else checks.push({type:'ok',t:'記載内容の整合性',m:'金額・日付・氏名の整合性に問題はありません'});
+  checks.push({type:'ok',t:'提出期限',m:'提出期限（'+fmtS(c.due)+'）まで余裕があります'});
+  const ok=checks.filter(x=>x.type==='ok').length;const ratio=Math.round(ok/checks.length*100);
+  const head=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+    <div style="font-size:13px;font-weight:800">${esc(c.no)}｜${esc(c.typeName)}</div>
+    <div class="st ${ratio===100?'done':'review'}" style="margin-left:auto">充足率 ${ratio}%</div></div>`;
+  $('chkResult').innerHTML=head+checks.map(x=>`
+    <div class="chk-item"><div class="ci ${x.type}">${x.type==='ok'?'✓':x.type==='ng'?'!':'△'}</div>
+    <div style="flex:1"><div class="ct">${esc(x.t)}</div><div class="cm">${esc(x.m)}</div></div>
+    ${x.fix?`<span class="fix">${esc(x.fix)} →</span>`:''}</div>`).join('');
+  // update case status
+  if(checks.some(x=>x.type==='ng')){c.status='reject';}else{c.status='done';}
+  btn.textContent='🔍 AIで不備チェック';btn.disabled=false;
+  updateBadges();renderCheckSelect();
+  showToast('不備チェック完了（充足率 '+ratio+'%）');
+});
+
+/* ============ SUBMIT ============ */
+function renderSubmit(){
+  const ready=cases.filter(c=>c.status==='done'||c.status==='review');
+  const submitted=cases.filter(c=>c.status==='submitted');
+  const sumReady=ready.length;
+  const dueSoon=ready.filter(c=>daysTo(c.due)>=0&&daysTo(c.due)<=7).length;
+  $('submitKpis').innerHTML=`
+    ${kpi('#16b877','提出待ち',sumReady+'<small>件</small>','チェック済','up','提出可能')}
+    ${kpi('#e3941f','期限7日以内',dueSoon+'<small>件</small>',' ','warn',dueSoon?'優先提出':'余裕あり')}
+    ${kpi('#7c5cf0','今月提出済',submitted.filter(c=>thisMonth(c.recv)).length+'<small>件</small>','','up','順調')}
+    ${kpi('#2f6df0','電子申請率','86<small>%</small>','','up','+12pt')}`;
+  $('submitRows').innerHTML=ready.length?ready.sort((a,b)=>a.due-b.due).map(c=>`<tr>
+    <td class="mono" style="font-size:12px">${esc(c.no)}</td><td><b>${esc(c.client)}</b></td>
+    <td style="color:var(--ink-2)">${esc(c.typeName)}</td><td style="color:var(--ink-2)">${esc(c.dest)}</td>
+    <td style="color:var(--ink-2)">${fmtS(c.due)}</td><td>${stBadge(c.status)}</td>
+    <td class="r"><button class="btn green sm" onclick="submitOne('${esc(c.no)}')">📮 提出</button></td></tr>`).join('')
+    : '<tr><td colspan="7" class="empty-cell">提出待ちの案件はありません 🎉</td></tr>';
+  $('navSubmit').textContent=ready.length;
+}
+window.submitOne=no=>{const c=cases.find(x=>x.no===no);if(c){c.status='submitted';renderSubmit();updateBadges();showToast(no+' を電子申請で提出しました');}};
+$('batchSubmit').addEventListener('click',async()=>{
+  const btn=$('batchSubmit');const ready=cases.filter(c=>c.status==='done'||c.status==='review');
+  if(!ready.length){showToast('提出待ちの案件がありません');return;}
+  btn.textContent='📮 送信中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,1000));
+  ready.forEach(c=>c.status='submitted');
+  btn.textContent='📮 まとめて電子申請';btn.disabled=false;
+  renderSubmit();updateBadges();showToast(ready.length+'件をまとめて電子申請で提出しました');
+});
+
+/* ============ AI AUTO ============ */
+function renderAiSub(){
+  const pending=cases.filter(c=>c.status==='wait').length;
+  $('aiPending').textContent=pending+'件';
+}
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 作成中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},120);
+  await new Promise(r=>setTimeout(r,1200));
+  clearInterval(t);$('baAfterT').textContent='1件 9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // pick up to 5 waiting cases (or sample clients)
+  let targets=cases.filter(c=>c.status==='wait').slice(0,5);
+  if(!targets.length){
+    targets=CLIENTS.slice(0,5).map((cl,i)=>{
+      const dt=DOCTYPES[i%DOCTYPES.length];const now=new Date();
+      const nc={no:'CS-'+(2026100+cases.length+1+i),client:cl.name,staff:cl.staff,type:dt.k,typeName:dt.n,dest:dt.dest,cat:dt.cat,recv:now,due:new Date(now.getFullYear(),now.getMonth()+1,20),status:'wait'};
+      cases.push(nc);return nc;
+    });
+  }
+  $('genItems').innerHTML=targets.map((c,i)=>`<div class="gen-item" data-i="${i}"><span class="ck">✓</span><b style="flex:1">${esc(c.client)}</b><span style="color:var(--ink-3);font-size:12px">${esc(c.typeName)}</span><span class="st done">充足率100%</span></div>`).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,200));items[i].classList.add('in');targets[i].status='done';}
+  btn.disabled=false;btn.textContent='⚡ もう一度作成';
+  updateBadges();renderAiSub();
+  showToast(items.length+'件の申請書類を一括作成しました');
+});
+
+/* ============ BADGES ============ */
+function updateBadges(){
+  $('navCheck').textContent=cases.filter(c=>c.status==='reject'||c.status==='draft').length;
+  $('navSubmit').textContent=cases.filter(c=>c.status==='done'||c.status==='review').length;
+}
+
+/* ============ INIT ============ */
+renderTypeSelect();renderChips();renderPaper();renderDash();updateBadges();
+</script>
+</body>
+</html>

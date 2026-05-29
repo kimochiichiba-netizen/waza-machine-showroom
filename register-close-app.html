@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜レジ締めマシン（日次締め・現金照合システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.nav a .badge.amber{background:var(--amber)}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+.mt16{margin-top:16px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 88px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut / payment mix */
+.mix{display:flex;flex-direction:column;gap:11px}
+.mix-row{display:flex;align-items:center;gap:10px;font-size:12.5px}
+.mix-row .sw{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.mix-row .nm2{color:var(--ink-2);font-weight:600;width:78px}
+.mix-row .tr{flex:1;height:8px;border-radius:99px;background:var(--soft);overflow:hidden}
+.mix-row .fl{height:100%;border-radius:99px;width:0;transition:width .9s cubic-bezier(.2,.8,.3,1)}
+.mix-row .va{font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink);width:96px;text-align:right}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.ok{background:var(--green-soft);color:var(--green)}
+.st.checking{background:var(--brand-soft);color:var(--brand)}
+.st.pending{background:var(--soft);color:var(--ink-3)}
+.st.diff{background:var(--red-soft);color:var(--red)}
+.st.minor{background:var(--amber-soft);color:var(--amber)}
+.diffpos{color:var(--green);font-weight:800}
+.diffneg{color:var(--red);font-weight:800}
+.diffzero{color:var(--ink-3);font-weight:700}
+
+/* count form */
+.count-grid{display:grid;grid-template-columns:minmax(330px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.count-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--brand)}
+.denom-head{display:grid;grid-template-columns:1fr 70px 110px;gap:8px;font-size:11px;color:var(--ink-3);font-weight:700;padding:0 2px 6px}
+.denom-row{display:grid;grid-template-columns:1fr 70px 110px;gap:8px;margin-bottom:7px;align-items:center;font-size:13px}
+.denom-row .dl{font-weight:700;color:var(--ink-2)}
+.denom-row input{padding:8px 9px;font-size:13px;border:1px solid var(--line-2);border-radius:8px;font-family:inherit;text-align:right;font-variant-numeric:tabular-nums}
+.denom-row input:focus{outline:none;border-color:var(--brand)}
+.denom-row .sub{text-align:right;font-variant-numeric:tabular-nums;font-weight:700;color:var(--ink)}
+.cashbox{background:var(--soft);border-radius:10px;padding:14px 16px;margin-top:6px}
+.cashline{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;color:var(--ink-2)}
+.cashline b{color:var(--ink)}
+.cashline.total{border-top:1px dashed var(--line-2);margin-top:5px;padding-top:10px;font-size:15px}
+.cashline.total b{font-size:18px}
+
+/* result paper */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:30px 32px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.pv-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
+.pv-title{font-size:21px;font-weight:900;letter-spacing:.16em;color:var(--brand-dk);border-bottom:3px solid var(--brand-dk);padding-bottom:5px}
+.pv-meta{text-align:right;font-size:11.5px;color:var(--ink-2)}
+.pv-meta .no{font-family:'Orbitron';color:var(--ink);font-weight:700}
+.pv-block{background:var(--soft);border-radius:8px;padding:13px 16px;margin:12px 0}
+.pv-block .r{display:flex;justify-content:space-between;padding:5px 0;font-size:13px;color:var(--ink-2)}
+.pv-block .r b{color:var(--ink);font-variant-numeric:tabular-nums}
+.pv-diff{border-left:5px solid var(--green);border-radius:6px;padding:14px 18px;margin:14px 0;display:flex;justify-content:space-between;align-items:center;background:var(--green-soft)}
+.pv-diff.bad{border-left-color:var(--red);background:var(--red-soft)}
+.pv-diff .a{font-family:'Orbitron';font-size:22px;font-weight:700;color:var(--green)}
+.pv-diff.bad .a{color:var(--red)}
+table.pv{width:100%;border-collapse:collapse;margin:12px 0}
+table.pv th{background:var(--brand-dk);color:#fff;font-size:11px;padding:8px 11px;text-align:left}
+table.pv th.r,table.pv td.r{text-align:right}
+table.pv td{padding:7px 11px;border-bottom:1px solid var(--line);font-size:12px;font-variant-numeric:tabular-nums}
+
+/* AI stage */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+.gen-item .ck.g{background:var(--green)}
+.gen-item .ck.a{background:var(--amber)}
+.gen-item .ck.r{background:var(--red)}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.muted{color:var(--ink-3)}
+.tag-store{display:inline-block;background:var(--soft);color:var(--ink-2);font-size:11px;font-weight:700;padding:2px 9px;border-radius:6px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">レジ締めマシン<small>技マシン｜日次締め・現金照合</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="close"><span class="i">🧾</span>日次締め</a>
+      <a data-v="cash"><span class="i">💴</span>現金照合</a>
+      <a data-v="sales"><span class="i">📈</span>売上集計</a>
+      <a data-v="diff"><span class="i">⚠️</span>差異<span class="badge amber" id="navDiff">0</span></a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI自動照合</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 店長</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。数値・店舗はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">本日のレジ締め状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>過去7日間の売上推移</h3><span class="more">日次</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>本日の支払い構成</h3></div>
+            <div class="pb"><div class="mix" id="payMix"></div></div>
+          </div>
+        </div>
+        <div class="cols mt16">
+          <div class="panel">
+            <div class="ph"><h3>店舗別 本日の締め状況</h3><span class="more" onclick="go('close')">日次締めへ</span></div>
+            <div class="pb" style="padding:0">
+              <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+                <thead><tr><th>店舗</th><th class="r">売上</th><th class="r">現金過不足</th><th>状態</th></tr></thead>
+                <tbody id="dashStoreRows"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- DAILY CLOSE -->
+      <section class="view" id="v-close">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="店舗名・担当者・日付で検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>日付</th><th>店舗</th><th>担当者</th><th class="r">レジ売上</th><th class="r">現金実査</th><th class="r">過不足</th><th>状態</th></tr></thead>
+          <tbody id="closeRows"></tbody>
+        </table>
+      </section>
+
+      <!-- CASH RECONCILE -->
+      <section class="view" id="v-cash">
+        <div class="count-grid">
+          <div class="formcard">
+            <div class="fg"><label>店舗</label><select id="rStore"></select></div>
+            <div class="fg"><label>レジ担当者</label><select id="rStaff"></select></div>
+            <div class="fg"><label>レジ売上（POSデータ）</label><input id="rSales" type="number" min="0" placeholder="例：248600"></div>
+            <label style="font-size:12px;font-weight:700;color:var(--ink-2)">金種別 現金実査（枚数を入力）</label>
+            <div class="denom-head" style="margin-top:7px"><div>金種</div><div>枚数</div><div>小計</div></div>
+            <div id="rDenoms"></div>
+            <div class="cashbox">
+              <div class="cashline"><span>釣銭準備金</span><b id="rFloat">¥30,000</b></div>
+              <div class="cashline"><span>現金合計（実査）</span><b id="rCashTotal">¥0</b></div>
+              <div class="cashline total"><span>差引 現金過不足</span><b id="rDiff" class="diffzero">¥0</b></div>
+            </div>
+            <div class="linkrow" style="margin-top:16px">
+              <button class="btn primary" id="rReconcile" style="flex:1;justify-content:center">⚡ AIで照合して締める</button>
+              <button class="btn" id="rSample">サンプル入力</button>
+            </div>
+          </div>
+          <div>
+            <div class="paper" id="rPaper">
+              <div class="pv-top">
+                <div class="pv-title">レジ締め報告書</div>
+                <div class="pv-meta"><div>締め番号：<span class="no" id="pNo">—</span></div><div>営業日：<span id="pDate">—</span></div><div>店舗：<span id="pStore">—</span></div></div>
+              </div>
+              <div class="pv-block">
+                <div class="r"><span>レジ売上（POS）</span><b id="pSales">¥0</b></div>
+                <div class="r"><span>現金売上（理論）</span><b id="pCashTheory">¥0</b></div>
+                <div class="r"><span>キャッシュレス売上</span><b id="pCashless">¥0</b></div>
+              </div>
+              <div class="pv-block">
+                <div class="r"><span>釣銭準備金</span><b id="pFloat">¥30,000</b></div>
+                <div class="r"><span>現金実査 合計</span><b id="pCashCount">¥0</b></div>
+                <div class="r"><span>差引（手元現金 − 釣銭）</span><b id="pCashNet">¥0</b></div>
+              </div>
+              <div class="pv-diff" id="pDiffBox">
+                <span style="font-weight:700">現金過不足</span><span class="a" id="pDiffVal">¥0</span>
+              </div>
+              <table class="pv"><thead><tr><th>金種</th><th class="r">枚数</th><th class="r">金額</th></tr></thead><tbody id="pDenomRows"></tbody></table>
+              <div style="margin-top:14px;font-size:11px;color:var(--ink-2);border-top:1px solid var(--line);padding-top:12px" id="pNote">
+                ※「AIで照合して締める」を押すと、POS売上・キャッシュレス明細・現金実査をAIが突合します。
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SALES -->
+      <section class="view" id="v-sales">
+        <div class="kpis" id="salesKpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>店舗別 本日売上</h3><span class="more">本日</span></div>
+            <div class="pb"><div class="bars" id="salesStoreBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>時間帯別 売上</h3><span class="more">本日</span></div>
+            <div class="pb"><div class="bars" id="salesHourBars"></div></div>
+          </div>
+        </div>
+        <div class="panel mt16">
+          <div class="ph"><h3>カテゴリ別 売上明細</h3></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>カテゴリ</th><th class="r">点数</th><th class="r">売上</th><th class="r">構成比</th><th class="r">前日比</th></tr></thead>
+              <tbody id="catRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- DIFF -->
+      <section class="view" id="v-diff">
+        <div class="kpis" id="diffKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>過不足が出た締め（要確認）</h3>
+            <button class="btn green" id="aiInvestigate" style="margin-left:auto">🔍 AIで原因を推定</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>日付</th><th>店舗</th><th>担当者</th><th class="r">過不足</th><th>AI推定原因</th><th></th></tr></thead>
+              <tbody id="diffRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI AUTO RECONCILE -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">レジデータから自動で締めて差異を検出</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">全 <b>5店舗</b> のPOS売上・キャッシュレス明細・現金実査データを、AIが自動で突合します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで一括照合する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">1店舗あたり 25分</div>
+              <ul>
+                <li>🧮 金種を1枚ずつ数えて電卓で合計</li>
+                <li>📋 POSレシートとカード明細を紙で突合</li>
+                <li>✍️ 過不足を手書きで日報に転記</li>
+                <li>📞 差異が出たら原因を後追いで調査</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 POS・カード・現金を自動で突合</li>
+                <li>📊 5店舗を一括で日次締め</li>
+                <li>⚠️ 過不足とその推定原因を自動検出</li>
+                <li>📄 日報・差異レポートまで自動生成</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ AI照合の結果（店舗別）</div>
+            <div id="genItems"></div>
+            <div id="genSummary" style="margin-top:12px;font-size:12.5px;color:var(--ink-2);display:none"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const STORES=[
+  {name:'都町本店',type:'飲食',staff:'佐藤 美咲'},
+  {name:'駅前カフェ店',type:'カフェ',staff:'田中 健'},
+  {name:'大分パルコ店',type:'物販',staff:'鈴木 葵'},
+  {name:'別府みやげ店',type:'物販',staff:'高橋 翔'},
+  {name:'弁当・惣菜店',type:'惣菜',staff:'渡辺 千夏'},
+];
+const STAFFS=['佐藤 美咲','田中 健','鈴木 葵','高橋 翔','渡辺 千夏','中村 海斗','小林 結衣'];
+const CATEGORIES=[
+  {n:'フード',base:0.42},{n:'ドリンク',base:0.23},{n:'スイーツ',base:0.12},
+  {n:'物販・グッズ',base:0.15},{n:'テイクアウト',base:0.08},
+];
+// 金種（紙幣・硬貨）
+const DENOMS=[
+  {n:'10,000円札',v:10000},{n:'5,000円札',v:5000},{n:'1,000円札',v:1000},
+  {n:'500円玉',v:500},{n:'100円玉',v:100},{n:'50円玉',v:50},{n:'10円玉',v:10},{n:'5円玉',v:5},{n:'1円玉',v:1},
+];
+const FLOAT=30000; // 釣銭準備金
+const TODAY=new Date();
+
+/* 乱数（再現性のあるシード） */
+let SEED=20260530;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+/* 締めデータの生成（過去7日 × 5店舗） */
+const STATUSES=['ok','ok','ok','minor','ok','ok','diff','ok'];
+let closings=[];
+(function seed(){
+  let id=0;
+  for(let d=6;d>=0;d--){
+    const date=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-d);
+    STORES.forEach(s=>{
+      id++;
+      const sales=120000+Math.floor(rnd()*220000);
+      const cashlessRate=0.45+rnd()*0.35; // 45〜80%キャッシュレス
+      const cashless=Math.round(sales*cashlessRate/10)*10;
+      const cashTheory=sales-cashless; // 理論現金売上
+      // 過不足：ほとんど0、たまに小さな差異
+      let diff=0;
+      const r=rnd();
+      if(r>0.82)diff=(Math.floor(rnd()*6)+1)*100*(rnd()>0.5?1:-1); // ±100〜600
+      else if(r>0.72)diff=(Math.floor(rnd()*9)+1)*(rnd()>0.5?1:-1); // ±1〜9円
+      let stt;
+      if(diff===0)stt='ok';
+      else if(Math.abs(diff)<=50)stt='minor';
+      else stt='diff';
+      // 当日の最新分は一部「未締め(pending)」にする
+      const isToday=(d===0);
+      if(isToday&&rnd()>0.5){stt='pending';diff=null;}
+      closings.push({
+        id:'CL-'+(20260000+id),date,store:s.name,type:s.type,staff:s.staff,
+        sales,cashless,cashTheory,diff,status:stt,custCount:Math.round(sales/(1400+rnd()*900))
+      });
+    });
+  }
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>(n<0?'-¥':'¥')+Math.abs(Math.round(n)).toLocaleString();
+const yenSigned=n=>n>0?'+¥'+Math.round(n).toLocaleString():(n<0?'-¥'+Math.abs(Math.round(n)).toLocaleString():'±¥0');
+const fmtD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STLABEL={ok:'照合OK',checking:'照合中',pending:'未締め',diff:'要確認',minor:'軽微差異'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]||s}</span>`;}
+function isToday(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear()&&d.getDate()===TODAY.getDate();}
+function diffCls(n){return n>0?'diffpos':n<0?'diffneg':'diffzero';}
+function diffCell(n){if(n==null)return '<span class="muted">—</span>';return `<span class="${diffCls(n)}">${yenSigned(n)}</span>`;}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+
+/* ============ ROUTING ============ */
+const TITLES={
+  dash:['ダッシュボード','本日 '+fmtDL(TODAY)+' のレジ締め状況'],
+  close:['日次締め','店舗ごとの締め状況を管理します'],
+  cash:['現金照合','金種を入力するとAIが過不足を自動計算します'],
+  sales:['売上集計','本日の売上をカテゴリ・時間帯で分析します'],
+  diff:['差異','過不足が出た締めの確認と原因推定'],
+  ai:['AI自動照合','レジデータから自動で締めて差異を検出します']
+};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='close'?'<button class="btn primary" onclick="go(\'cash\')">＋ レジを締める</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI自動照合</button><button class="btn primary" onclick="go(\'cash\')">＋ レジを締める</button>'
+    : v==='diff'?'<button class="btn" onclick="go(\'ai\')">⚡ AI自動照合</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='close')renderClose();
+  if(v==='sales')renderSales();
+  if(v==='diff')renderDiff();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function todayClosings(){return closings.filter(c=>isToday(c.date));}
+function renderDash(){
+  const td=todayClosings();
+  const salesSum=td.reduce((s,c)=>s+c.sales,0);
+  const custSum=td.reduce((s,c)=>s+c.custCount,0);
+  const avg=custSum?Math.round(salesSum/custSum):0;
+  const diffSum=td.reduce((s,c)=>s+(c.diff||0),0);
+  const diffWord=diffSum===0?'差異なし':(diffSum>0?'過剰':'不足');
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','本日売上',yen(salesSum),td.length+'店舗','up','前日比 +6.2%')}
+    ${kpi(diffSum===0?'#16b877':'#e3941f','現金過不足',yenSigned(diffSum),diffWord,diffSum===0?'up':'warn',diffSum===0?'すべて一致':'要確認あり')}
+    ${kpi('#0ea5b7','客数',custSum.toLocaleString()+'<small>人</small>','','up','前日比 +4.1%')}
+    ${kpi('#e3941f','客単価',yen(avg),'','up','前日比 +2.0%')}`;
+  // trend (7 days)
+  const days=[];for(let k=6;k>=0;k--){days.push(new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-k));}
+  const sums=days.map(dd=>closings.filter(c=>c.date.getDate()===dd.getDate()&&c.date.getMonth()===dd.getMonth()).reduce((s,c)=>s+c.sales,0));
+  const mx=Math.max(...sums,1);
+  $('trendBars').innerHTML=days.map((dd,i)=>`
+    <div class="bar-row"><span class="mlabel">${fmtD(dd)}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(sums[i]/mx*100)}"></div></div>
+      <span class="mval">${yen(sums[i])}</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // payment mix
+  const cashlessSum=td.reduce((s,c)=>s+c.cashless,0);
+  const cashSum=salesSum-cashlessSum;
+  const credit=Math.round(cashlessSum*0.62),qr=Math.round(cashlessSum*0.27),emoney=cashlessSum-credit-qr;
+  const mix=[
+    {n:'現金',v:cashSum,c:'#16b877'},
+    {n:'クレジット',v:credit,c:'#2f6df0'},
+    {n:'QRコード',v:qr,c:'#0ea5b7'},
+    {n:'電子マネー',v:emoney,c:'#e3941f'},
+  ];
+  const mmx=Math.max(...mix.map(m=>m.v),1);
+  $('payMix').innerHTML=mix.map(m=>`<div class="mix-row"><span class="sw" style="background:${m.c}"></span>
+    <span class="nm2">${m.n}</span><div class="tr"><div class="fl" style="width:0;background:${m.c}" data-w="${Math.round(m.v/mmx*100)}"></div></div>
+    <span class="va">${yen(m.v)}</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#payMix .fl').forEach(b=>b.style.width=b.dataset.w+'%'),120);
+  // store rows
+  $('dashStoreRows').innerHTML=td.map(c=>`<tr onclick="go('close')"><td><b>${esc(c.store)}</b> <span class="tag-store">${esc(c.type)}</span></td>
+    <td class="r tnum">${yen(c.sales)}</td><td class="r tnum">${diffCell(c.diff)}</td><td>${stBadge(c.status)}</td></tr>`).join('');
+  // activity
+  const acts=[
+    {i:'✅',c:'#e6f8f0',t:'都町本店 の日次締めが完了（過不足 ±¥0）',m:'3分前'},
+    {i:'⚡',c:'#e6f8f0',t:'AI自動照合で 5店舗を一括締め（一致率 98%）',m:'今日 22:10'},
+    {i:'⚠️',c:'#fdf3e2',t:'駅前カフェ店 で +¥300 の現金過剰を検出',m:'今日 21:48'},
+    {i:'💴',c:'#eaf1ff',t:'大分パルコ店 のキャッシュレス明細を取込',m:'今日 21:30'},
+    {i:'📈',c:'#eaf1ff',t:'本日売上が前日を上回りました（+6.2%）',m:'今日 20:00'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ DAILY CLOSE ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['ok','照合OK'],['minor','軽微差異'],['diff','要確認'],['pending','未締め']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderClose();});
+}
+function renderClose(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=closings.filter(c=>filterStatus==='all'||c.status===filterStatus)
+    .filter(c=>!q||(c.store+c.staff+fmtDL(c.date)+c.id).toLowerCase().includes(q))
+    .sort((a,b)=>b.date-a.date||a.store.localeCompare(b.store));
+  $('closeRows').innerHTML=rows.length?rows.map(c=>{
+    const cashCount=c.status==='pending'?null:(c.cashTheory+(c.diff||0));
+    return `<tr>
+    <td style="color:var(--ink-2)">${fmtD(c.date)}</td>
+    <td><b>${esc(c.store)}</b> <span class="tag-store">${esc(c.type)}</span></td>
+    <td style="color:var(--ink-2)">${esc(c.staff)}</td>
+    <td class="r tnum"><b>${yen(c.sales)}</b></td>
+    <td class="r tnum">${c.status==='pending'?'<span class="muted">—</span>':yen(cashCount)}</td>
+    <td class="r tnum">${diffCell(c.diff)}</td>
+    <td>${stBadge(c.status)}</td></tr>`;}).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する締めデータがありません</td></tr>';
+}
+$('q').addEventListener('input',renderClose);
+
+/* ============ CASH RECONCILE ============ */
+let rDenoms=DENOMS.map(d=>({...d,c:0}));
+function renderStoreSelect(){
+  $('rStore').innerHTML='<option value="">店舗を選択</option>'+STORES.map(s=>`<option>${s.name}</option>`).join('');
+  $('rStaff').innerHTML='<option value="">担当者を選択</option>'+STAFFS.map(s=>`<option>${s}</option>`).join('');
+}
+function renderDenoms(){
+  $('rDenoms').innerHTML=rDenoms.map((d,i)=>`<div class="denom-row" data-i="${i}">
+    <div class="dl">${d.n}</div>
+    <input class="dc" type="number" min="0" value="${d.c||''}" placeholder="0">
+    <div class="sub" id="dsub${i}">${yen((d.c||0)*d.v)}</div></div>`).join('');
+  $('rDenoms').querySelectorAll('.denom-row').forEach(row=>{
+    const i=+row.dataset.i;const inp=row.querySelector('.dc');
+    inp.oninput=()=>{rDenoms[i].c=Math.max(0,+inp.value||0);$('dsub'+i).textContent=yen(rDenoms[i].c*rDenoms[i].v);recalc();};
+  });
+}
+function cashCounted(){return rDenoms.reduce((s,d)=>s+d.c*d.v,0);}
+function recalc(){
+  const total=cashCounted();
+  $('rCashTotal').textContent=yen(total);
+  const sales=+$('rSales').value||0;
+  // 理論キャッシュレス比率 60%（POS取込想定）→ 現金理論売上
+  const cashTheory=Math.round(sales*0.4);
+  const net=total-FLOAT; // 手元現金から釣銭を引いた額＝当日現金売上(実)
+  const diff=net-cashTheory;
+  $('rDiff').textContent=yenSigned(diff);
+  $('rDiff').className='diff'+(diff>0?'pos':diff<0?'neg':'zero');
+}
+function renderReconcilePaper(committed){
+  const sales=+$('rSales').value||0;
+  const cashTheory=Math.round(sales*0.4);
+  const cashless=sales-cashTheory;
+  const total=cashCounted();
+  const net=total-FLOAT;
+  const diff=net-cashTheory;
+  $('pSales').textContent=yen(sales);
+  $('pCashTheory').textContent=yen(cashTheory);
+  $('pCashless').textContent=yen(cashless);
+  $('pFloat').textContent=yen(FLOAT);
+  $('pCashCount').textContent=yen(total);
+  $('pCashNet').textContent=yen(net);
+  $('pDiffVal').textContent=yenSigned(diff);
+  $('pDiffBox').className='pv-diff'+(diff!==0?' bad':'');
+  $('pStore').textContent=$('rStore').value||'—';
+  const used=rDenoms.filter(d=>d.c>0);
+  $('pDenomRows').innerHTML=used.length?used.map(d=>`<tr><td>${d.n}</td><td class="r">${d.c}枚</td><td class="r">${yen(d.c*d.v)}</td></tr>`).join('')
+    :'<tr><td colspan="3" style="text-align:center;color:#aab2c4;padding:12px">← 金種の枚数を入力してください</td></tr>';
+  if(committed){
+    const now=new Date();
+    $('pNo').textContent='CL-'+(20260000+closings.length+1);
+    $('pDate').textContent=fmtDL(now);
+    $('pNote').textContent=diff===0?'✅ AIが POS・キャッシュレス明細・現金実査を突合しました。過不足はありません。'
+      :'⚠️ AIが突合した結果、'+yenSigned(diff)+' の過不足を検出しました。差異タブで原因を確認できます。';
+  }
+}
+$('rStore').addEventListener('change',()=>renderReconcilePaper(false));
+$('rSales').addEventListener('input',()=>{recalc();renderReconcilePaper(false);});
+$('rSample').addEventListener('click',()=>{
+  $('rStore').value='都町本店';$('rStaff').value='佐藤 美咲';$('rSales').value=248600;
+  // サンプル金種：合計 = 釣銭30,000 + 現金売上(理論99,440 ≒) → 少しズレを残す
+  const counts=[7,3,18,12,28,9,15,4,6]; // 紙幣・硬貨
+  rDenoms=DENOMS.map((d,i)=>({...d,c:counts[i]}));
+  renderDenoms();recalc();renderReconcilePaper(false);
+  showToast('サンプルのレジデータを読み込みました');
+});
+$('rReconcile').addEventListener('click',async()=>{
+  if(!$('rStore').value||!(+$('rSales').value>0)){showToast('店舗とレジ売上を入力してください');return;}
+  const btn=$('rReconcile');btn.textContent='⚡ AIが照合中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,850));
+  renderReconcilePaper(true);
+  const sales=+$('rSales').value||0;const cashTheory=Math.round(sales*0.4);
+  const net=cashCounted()-FLOAT;const diff=net-cashTheory;
+  const now=new Date();
+  let stt=diff===0?'ok':(Math.abs(diff)<=50?'minor':'diff');
+  closings.push({
+    id:'CL-'+(20260000+closings.length+1),date:now,store:$('rStore').value,type:(STORES.find(s=>s.name===$('rStore').value)||{}).type||'店舗',
+    staff:$('rStaff').value||'—',sales,cashless:sales-cashTheory,cashTheory,diff,status:stt,custCount:Math.round(sales/1700)
+  });
+  btn.textContent='⚡ AIで照合して締める';btn.disabled=false;
+  updateBadges();
+  showToast(diff===0?'締め完了：過不足なしで照合OKです':'締め完了：'+yenSigned(diff)+' の過不足を検出しました');
+});
+
+/* ============ SALES ============ */
+function renderSales(){
+  const td=todayClosings();
+  const salesSum=td.reduce((s,c)=>s+c.sales,0);
+  const custSum=td.reduce((s,c)=>s+c.custCount,0);
+  const avg=custSum?Math.round(salesSum/custSum):0;
+  const cashlessSum=td.reduce((s,c)=>s+c.cashless,0);
+  $('salesKpis').innerHTML=`
+    ${kpi('#2f6df0','本日 総売上',yen(salesSum),'','up','前日比 +6.2%')}
+    ${kpi('#0ea5b7','取引件数',custSum.toLocaleString()+'<small>件</small>','','up','+4.1%')}
+    ${kpi('#e3941f','客単価',yen(avg),'','up','+2.0%')}
+    ${kpi('#16b877','キャッシュレス比率',(salesSum?Math.round(cashlessSum/salesSum*100):0)+'<small>%</small>','','up','+3pt')}`;
+  // store bars
+  const mxS=Math.max(...td.map(c=>c.sales),1);
+  $('salesStoreBars').innerHTML=td.map(c=>`<div class="bar-row"><span class="mlabel" style="width:auto">${esc(c.store)}</span>
+    <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(c.sales/mxS*100)}"></div></div>
+    <span class="mval">${yen(c.sales)}</span></div>`).join('');
+  // hour bars
+  const hours=['10時','12時','14時','16時','18時','20時'];
+  const weights=[0.10,0.26,0.12,0.10,0.22,0.20];
+  const hsum=hours.map((h,i)=>Math.round(salesSum*weights[i]/10)*10);
+  const mxH=Math.max(...hsum,1);
+  $('salesHourBars').innerHTML=hours.map((h,i)=>`<div class="bar-row"><span class="mlabel">${h}</span>
+    <div class="bar-track"><div class="bar-fill" style="width:0;background:linear-gradient(90deg,#e3941f,#f0b95a)" data-w="${Math.round(hsum[i]/mxH*100)}"></div></div>
+    <span class="mval">${yen(hsum[i])}</span></div>`).join('');
+  setTimeout(()=>{document.querySelectorAll('#salesStoreBars .bar-fill,#salesHourBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%');},80);
+  // category
+  $('catRows').innerHTML=CATEGORIES.map((cat,i)=>{
+    const amt=Math.round(salesSum*cat.base/10)*10;
+    const qty=Math.round(amt/(600+i*120));
+    const yoy=(rnd()*16-4);
+    return `<tr><td><b>${esc(cat.n)}</b></td><td class="r tnum">${qty.toLocaleString()}点</td>
+      <td class="r tnum"><b>${yen(amt)}</b></td><td class="r tnum">${Math.round(cat.base*100)}%</td>
+      <td class="r tnum"><span class="${yoy>=0?'diffpos':'diffneg'}">${yoy>=0?'+':''}${yoy.toFixed(1)}%</span></td></tr>`;
+  }).join('');
+}
+
+/* ============ DIFF ============ */
+const DIFF_REASONS=[
+  'お釣りの渡し間違い（100円単位）','キャッシュレス会計の現金二重計上','レジ袋代の登録漏れ',
+  '釣銭準備金の数え間違い','割引適用ミス（ポイント併用）','両替時の入力漏れ'];
+function diffList(){return closings.filter(c=>c.diff!=null&&c.diff!==0).sort((a,b)=>Math.abs(b.diff)-Math.abs(a.diff));}
+function renderDiff(){
+  const dl=diffList();
+  const over=dl.filter(c=>c.diff>0);const under=dl.filter(c=>c.diff<0);
+  const totalAbs=dl.reduce((s,c)=>s+Math.abs(c.diff),0);
+  $('diffKpis').innerHTML=`
+    ${kpi('#e3941f','差異が出た締め',dl.length+'<small>件</small>','過去7日','warn','要確認')}
+    ${kpi('#16b877','過剰（多い）',over.length+'<small>件</small>',yen(over.reduce((s,c)=>s+c.diff,0)),'up','返金/調整')}
+    ${kpi('#e24a4a','不足（少ない）',under.length+'<small>件</small>',yen(Math.abs(under.reduce((s,c)=>s+c.diff,0))),'down','要調査')}
+    ${kpi('#2f6df0','差異 累計(絶対値)',yen(totalAbs),'','up','許容内')}`;
+  $('diffRows').innerHTML=dl.length?dl.map((c,i)=>`<tr>
+    <td style="color:var(--ink-2)">${fmtD(c.date)}</td>
+    <td><b>${esc(c.store)}</b></td>
+    <td style="color:var(--ink-2)">${esc(c.staff)}</td>
+    <td class="r tnum">${diffCell(c.diff)}</td>
+    <td class="muted reason" data-i="${i}">—（未推定）</td>
+    <td class="r"><button class="btn" style="padding:6px 12px" onclick="resolveDiff('${esc(c.id)}')">調整済</button></td></tr>`).join('')
+    :'<tr><td colspan="6" class="empty-cell">過不足はありません 🎉</td></tr>';
+  updateBadges();
+}
+window.resolveDiff=id=>{const c=closings.find(x=>x.id===id);if(c){c.diff=0;c.status='ok';renderDiff();showToast(id+' を調整済にしました（過不足を解消）');}};
+$('aiInvestigate').addEventListener('click',async()=>{
+  const btn=$('aiInvestigate');btn.textContent='🔍 AIが推定中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,800));
+  const cells=[...$('diffRows').querySelectorAll('.reason')];
+  cells.forEach(cell=>{cell.textContent=pick(DIFF_REASONS);cell.classList.remove('muted');cell.style.color='var(--ink)';cell.style.fontWeight='600';});
+  btn.textContent='🔍 AIで原因を推定';btn.disabled=false;
+  showToast(cells.length+'件の差異について、AIが推定原因を表示しました');
+});
+
+/* ============ AI AUTO RECONCILE ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 照合中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},110);
+  await new Promise(r=>setTimeout(r,1150));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // 5店舗の照合結果を生成
+  const results=STORES.map(st=>{
+    const sales=120000+Math.floor(rnd()*220000);
+    const r=rnd();
+    let diff=0;
+    if(r>0.78)diff=(Math.floor(rnd()*5)+1)*100*(rnd()>0.5?1:-1);
+    else if(r>0.66)diff=(Math.floor(rnd()*8)+1)*(rnd()>0.5?1:-1);
+    return {store:st.name,type:st.type,sales,diff};
+  });
+  $('genItems').innerHTML=results.map((rz,i)=>{
+    const cls=rz.diff===0?'g':(Math.abs(rz.diff)<=50?'a':'r');
+    const mark=rz.diff===0?'✓':(Math.abs(rz.diff)<=50?'!':'✕');
+    const label=rz.diff===0?'過不足なし':yenSigned(rz.diff);
+    const lcls=rz.diff===0?'diffzero':(rz.diff>0?'diffpos':'diffneg');
+    return `<div class="gen-item" data-i="${i}"><span class="ck ${cls}">${mark}</span>
+      <b style="flex:1">${esc(rz.store)}</b>
+      <span class="tag-store">${esc(rz.type)}</span>
+      <span class="tnum muted" style="font-size:12px">売上 ${yen(rz.sales)}</span>
+      <span class="tnum ${lcls}" style="font-weight:800;width:88px;text-align:right">${label}</span></div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  const now=new Date();
+  for(let i=0;i<items.length;i++){
+    await new Promise(r=>setTimeout(r,200));items[i].classList.add('in');
+    const rz=results[i];
+    let stt=rz.diff===0?'ok':(Math.abs(rz.diff)<=50?'minor':'diff');
+    const cashTheory=Math.round(rz.sales*0.4);
+    closings.push({id:'CL-'+(20260000+closings.length+1),date:now,store:rz.store,type:rz.type,staff:'AI自動締め',
+      sales:rz.sales,cashless:rz.sales-cashTheory,cashTheory,diff:rz.diff,status:stt,custCount:Math.round(rz.sales/1700)});
+  }
+  const okN=results.filter(r=>r.diff===0).length;
+  const diffN=results.length-okN;
+  $('genSummary').style.display='block';
+  $('genSummary').innerHTML=`AIが <b>${results.length}店舗</b> を照合しました。<b class="diffpos">${okN}店舗</b> が過不足なし、<b class="${diffN?'diffneg':'diffzero'}">${diffN}店舗</b> で差異を検出。差異は「差異」タブで原因推定できます。`;
+  btn.disabled=false;btn.textContent='⚡ もう一度照合';
+  updateBadges();
+  showToast(results.length+'店舗を一括照合しました（差異 '+diffN+'件）');
+});
+
+/* ============ BADGES ============ */
+function updateBadges(){
+  const n=closings.filter(c=>c.diff!=null&&c.diff!==0).length;
+  const b=$('navDiff');b.textContent=n;b.style.display=n?'':'none';
+}
+
+/* ============ INIT ============ */
+renderStoreSelect();renderDenoms();recalc();renderReconcilePaper(false);renderChips();renderDash();updateBadges();
+</script>
+</body>
+</html>

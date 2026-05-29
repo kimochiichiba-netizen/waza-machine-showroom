@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜返品処理マシン（返品・返金管理システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#7b54e8;--brand-dk:#6238d4;--brand-soft:#f0eaff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--sky-soft:#e2f6f9;
+  --sb:#1a1230;--sb-2:#231640;--sb-ink:#cdc4e0;--sb-ink-2:#8a80a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#b89bff,#7b54e8,#4fd1e6,#b89bff);
+  display:grid;place-items:center;color:#fff;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(123,84,232,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 64px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* reason donut / breakdown */
+.reasons{display:flex;flex-direction:column;gap:11px}
+.reason-row{display:grid;grid-template-columns:1fr 46px;align-items:center;gap:10px;font-size:12.5px}
+.reason-row .rl{display:flex;align-items:center;gap:8px;color:var(--ink-2);font-weight:600}
+.reason-row .rl .sw{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.reason-row .rt{height:8px;border-radius:99px;background:var(--soft);overflow:hidden;grid-column:1/3;margin-top:-2px}
+.reason-row .rf{height:100%;border-radius:99px;width:0;transition:width .9s cubic-bezier(.2,.8,.3,1)}
+.reason-row .rv{text-align:right;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums}
+.reason-block{display:flex;flex-direction:column;gap:14px}
+.reason-item{font-size:12.5px}
+.reason-item .top{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.reason-item .sw{width:11px;height:11px;border-radius:3px}
+.reason-item .nm{color:var(--ink-2);font-weight:700;flex:1}
+.reason-item .vv{font-weight:800;color:var(--ink)}
+.reason-item .rt{height:9px;border-radius:99px;background:var(--soft);overflow:hidden}
+.reason-item .rf{height:100%;border-radius:99px;width:0;transition:width .9s cubic-bezier(.2,.8,.3,1)}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px;white-space:nowrap}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.received{background:var(--brand-soft);color:var(--brand)}
+.st.inspect{background:var(--amber-soft);color:var(--amber)}
+.st.refunded{background:var(--green-soft);color:var(--green)}
+.st.rejected{background:var(--red-soft);color:var(--red)}
+.st.applied{background:var(--soft);color:var(--ink-3)}
+.st.resale{background:var(--sky-soft);color:var(--sky)}
+
+/* tag */
+.tag-pill{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:7px;background:var(--soft);color:var(--ink-2)}
+
+/* progress steps */
+.steps{display:flex;align-items:center;gap:0;margin:4px 0 2px}
+.step{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;color:var(--ink-3)}
+.step .dot{width:18px;height:18px;border-radius:50%;background:var(--soft);display:grid;place-items:center;font-size:10px;color:var(--ink-3);border:1.5px solid var(--line-2)}
+.step.done{color:var(--green)}
+.step.done .dot{background:var(--green);color:#fff;border-color:var(--green)}
+.step.now{color:var(--brand)}
+.step.now .dot{background:var(--brand);color:#fff;border-color:var(--brand)}
+.step .bar{width:22px;height:2px;background:var(--line-2);margin:0 5px}
+.step.done .bar{background:var(--green)}
+
+/* create / intake form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:64px;line-height:1.5}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* paper preview (receipt) */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:30px 32px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.pv-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
+.pv-title{font-size:23px;font-weight:900;letter-spacing:.2em;color:var(--brand-dk);border-bottom:3px solid var(--brand-dk);padding-bottom:5px}
+.pv-meta{text-align:right;font-size:11.5px;color:var(--ink-2)}
+.pv-meta .no{font-family:'Orbitron';color:var(--ink);font-weight:700}
+.pv-cust{font-size:18px;font-weight:900;border-bottom:1.5px solid #1a2233;display:inline-block;min-width:220px;padding-bottom:5px;margin-bottom:8px}
+.pv-total{background:var(--soft);border-left:5px solid var(--brand-dk);border-radius:6px;padding:13px 18px;margin:16px 0;display:flex;justify-content:space-between;align-items:center}
+.pv-total .a{font-family:'Orbitron';font-size:22px;font-weight:700;color:var(--brand-dk)}
+.pv-kv{display:grid;grid-template-columns:96px 1fr;gap:6px 12px;font-size:12px;margin:14px 0}
+.pv-kv .k{color:var(--ink-3);font-weight:700}
+.pv-kv .v{color:#1a2233;font-weight:600}
+table.pv{width:100%;border-collapse:collapse;margin:8px 0 14px}
+table.pv th{background:var(--brand-dk);color:#fff;font-size:11px;padding:8px 11px;text-align:left}
+table.pv th.r,table.pv td.r{text-align:right}
+table.pv td{padding:8px 11px;border-bottom:1px solid var(--line);font-size:12px}
+.pv-note{margin-top:16px;font-size:11px;color:var(--ink-2);border-top:1px solid var(--line);padding-top:12px}
+
+/* detail modal */
+.modal{position:fixed;inset:0;background:rgba(16,24,40,.5);display:none;place-items:center;z-index:150;padding:20px}
+.modal.show{display:grid;animation:fade .2s}
+.modal .box{background:var(--card);border-radius:16px;max-width:620px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:var(--shadow-lg)}
+.modal .mh{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px}
+.modal .mh .x{margin-left:auto;border:1px solid var(--line-2);background:var(--card);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:15px;color:var(--ink-2)}
+.modal .mb{padding:20px 22px}
+.dl{display:grid;grid-template-columns:120px 1fr;gap:9px 14px;font-size:13px;margin-bottom:16px}
+.dl .k{color:var(--ink-3);font-weight:700}
+.dl .v{color:var(--ink);font-weight:600}
+.timeline{border-left:2px solid var(--line);padding-left:18px;margin-left:6px;display:flex;flex-direction:column;gap:14px}
+.tl{position:relative;font-size:12.5px}
+.tl::before{content:"";position:absolute;left:-25px;top:3px;width:12px;height:12px;border-radius:50%;background:var(--brand);border:2px solid #fff;box-shadow:0 0 0 2px var(--brand-soft)}
+.tl.muted::before{background:var(--line-2);box-shadow:0 0 0 2px var(--soft)}
+.tl .tt{font-weight:700;color:var(--ink)}
+.tl .tm{color:var(--ink-3);font-size:11px}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s;flex-wrap:wrap}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+.gen-item .gact{font-size:11px;color:var(--ink-3);font-weight:600;width:100%;padding-left:31px;margin-top:-2px}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#b89bff,#7b54e8);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(123,84,232,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* refund cards */
+.refund-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.rcard{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:16px;box-shadow:var(--shadow)}
+.rcard .rtop{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.rcard .rno{font-family:'Orbitron';font-size:12px;color:var(--ink-3)}
+.rcard .ramt{font-size:24px;font-weight:900;letter-spacing:-.02em;margin:4px 0}
+.rcard .rcust{font-size:13px;font-weight:700;color:var(--ink)}
+.rcard .rmeta{font-size:11.5px;color:var(--ink-3);margin-top:2px}
+.rcard .rfoot{display:flex;align-items:center;gap:8px;margin-top:13px;padding-top:12px;border-top:1px solid var(--line)}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.sectlabel{font-size:12px;font-weight:800;color:var(--ink-2);margin:18px 0 10px;letter-spacing:.02em}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">返品マシン<small>技マシン｜返品・返金管理</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">📦</span>返品一覧</a>
+      <a data-v="intake"><span class="i">📝</span>返品受付</a>
+      <a data-v="inspect"><span class="i">🔍</span>検品<span class="badge" id="navInspect">0</span></a>
+      <a data-v="refund"><span class="i">💸</span>返金<span class="badge" id="navRefund">0</span></a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI自動処理</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。数値・取引先・返品データはすべてサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">今月の返品状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>月次の返品件数推移</h3><span class="more">過去6ヶ月</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>返品理由の内訳</h3></div>
+            <div class="pb"><div class="reason-block" id="reasonBlock"></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>処理状況サマリー</h3></div>
+            <div class="pb"><div class="reasons" id="statusBars"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="取引先・商品・返品番号で検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>返品番号</th><th>取引先</th><th>商品</th><th>理由</th><th class="r">返金額</th><th>受付日</th><th>状態</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- INTAKE -->
+      <section class="view" id="v-intake">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>取引先</label>
+              <select id="iCust"></select></div>
+            <div class="fg"><label>対象商品（選ぶとAIが単価・元注文を提案）</label>
+              <input id="iItem" list="iItemList" placeholder="例：青果定期便（Lボックス）"></div>
+            <div class="fg2">
+              <div class="fg"><label>数量</label><input id="iQty" type="number" min="1" value="1"></div>
+              <div class="fg"><label>単価(税込)</label><input id="iPrice" type="number" min="0" placeholder="0"></div>
+            </div>
+            <div class="fg"><label>返品理由</label>
+              <select id="iReason"></select></div>
+            <div class="fg"><label>備考・お客様コメント</label>
+              <textarea id="iNote" placeholder="例：到着時に一部傷みがありました"></textarea></div>
+            <div class="aihint" id="iAiHint">✨ AIが元注文を照合し、単価と再販可否を自動判定しました</div>
+            <div class="linkrow" style="margin-top:8px">
+              <button class="btn primary" id="iSubmit" style="flex:1;justify-content:center">⚡ AIで受付して段取り</button>
+              <button class="btn" id="iSample">サンプル</button>
+            </div>
+          </div>
+          <div>
+            <div class="paper" id="iPaper">
+              <div class="pv-top">
+                <div class="pv-title">返 品 受 付 票</div>
+                <div class="pv-meta"><div>番号：<span class="no" id="pNo">—</span></div><div>受付日：<span id="pDate">—</span></div><div>受付者：AI自動受付</div></div>
+              </div>
+              <div><span class="pv-cust" id="pCust">　御中</span></div>
+              <div style="font-size:11.5px;color:var(--ink-2)">下記の通り返品を受け付けいたしました。</div>
+              <div class="pv-total"><span style="font-weight:700">返金予定額（税込）</span><span class="a" id="pGrand">¥0</span></div>
+              <table class="pv"><thead><tr><th>商品</th><th class="r" style="width:48px">数量</th><th class="r" style="width:88px">単価</th><th class="r" style="width:96px">金額</th></tr></thead><tbody id="pRows"></tbody></table>
+              <div class="pv-kv">
+                <div class="k">返品理由</div><div class="v" id="pReason">—</div>
+                <div class="k">再販可否</div><div class="v" id="pResale">—</div>
+                <div class="k">返金方法</div><div class="v" id="pMethod">—</div>
+                <div class="k">お客様コメント</div><div class="v" id="pNote">—</div>
+              </div>
+              <div class="pv-note">
+                ※ 検品完了後に返金処理へ進みます。再販可能な商品は自動で在庫に戻されます。<br>返金先：ご登録の口座／クレジットカードへ自動返金。
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- INSPECT -->
+      <section class="view" id="v-inspect">
+        <div class="panel">
+          <div class="ph"><h3>検品待ちの返品</h3>
+            <button class="btn green" id="aiInspect" style="margin-left:auto">🤖 AIで一括判定</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>返品番号</th><th>取引先</th><th>商品</th><th>理由</th><th class="r">返金額</th><th>再販判定</th><th></th></tr></thead>
+              <tbody id="inspectRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- REFUND -->
+      <section class="view" id="v-refund">
+        <div class="kpis" id="refundKpis"></div>
+        <div class="toolbar" style="margin-bottom:16px">
+          <div style="font-size:13px;color:var(--ink-2);font-weight:600">検品済みで返金待ちの返品を処理します。</div>
+          <button class="btn green" id="aiRefundAll" style="margin-left:auto">💸 全件まとめて自動返金</button>
+        </div>
+        <div class="refund-grid" id="refundCards"></div>
+      </section>
+
+      <!-- AI AUTO -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div style="min-width:200px;flex:1"><div style="font-size:16px;font-weight:900">返品申請から返金まで、AIが自動で段取り</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">新着の返品申請 <b id="aiQueue">5件</b> を、受付→検品→再販判定→返金まで一気通貫で自動処理します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで自動処理する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">1件 18分</div>
+              <ul>
+                <li>📑 元注文を探して返品理由を確認</li>
+                <li>🔍 商品を検品し再販できるか判断</li>
+                <li>📦 再販品を在庫に戻す／廃棄を記録</li>
+                <li>💸 返金額を計算して個別に振込・返金</li>
+                <li>✉️ お客様へ完了メールを手作業で送付</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 元注文を自動照合し理由を分類</li>
+                <li>🔍 写真とコメントから再販可否を判定</li>
+                <li>📦 再販品は自動で在庫に戻す</li>
+                <li>💸 返金額を計算し自動で返金実行</li>
+                <li>✉️ 完了メールまで自動送信</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ 自動処理した返品</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal" id="modal">
+  <div class="box">
+    <div class="mh">
+      <div><div style="font-size:11px;color:var(--ink-3);font-weight:700" class="mono" id="mNo">—</div>
+      <div style="font-size:16px;font-weight:900" id="mCust">—</div></div>
+      <span id="mStatus"></span>
+      <button class="x" id="mClose">✕</button>
+    </div>
+    <div class="mb" id="mBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const CUSTOMERS=[
+  {name:'大分中央クリニック',type:'医療',staff:'佐藤'},
+  {name:'さくら総合病院',type:'医療',staff:'佐藤'},
+  {name:'つくし介護センター',type:'介護',staff:'田中'},
+  {name:'豊後おおいた青果',type:'青果卸',staff:'鈴木'},
+  {name:'都町商店会',type:'小売',staff:'鈴木'},
+  {name:'別府温泉ホテル組合',type:'宿泊',staff:'高橋'},
+  {name:'大分海鮮市場',type:'飲食',staff:'高橋'},
+  {name:'みらい歯科医院',type:'医療',staff:'田中'},
+];
+const ITEMS=[
+  {n:'青果定期便（Lボックス）',p:9800},{n:'業務用野菜セット',p:12000},{n:'冷蔵トマト 2kg箱',p:3200},
+  {n:'有機きゅうり 1ケース',p:2800},{n:'大分産しいたけ 1箱',p:4500},{n:'カット野菜 業務用パック',p:6800},
+  {n:'季節フルーツ詰め合わせ',p:8400},{n:'葉物野菜セット',p:5200},{n:'根菜まとめ買いセット',p:7600},
+];
+const REASONS=[
+  {n:'品質不良（傷み）',c:'#e24a4a',resale:false},
+  {n:'数量・品違い',c:'#e3941f',resale:true},
+  {n:'配送遅延',c:'#7b54e8',resale:true},
+  {n:'注文ミス（顧客都合）',c:'#0ea5b7',resale:true},
+  {n:'過剰在庫の返品',c:'#16b877',resale:true},
+];
+const REFUND_METHODS=['口座振込（自動）','クレジット返金','次回請求から相殺','売掛金へ充当'];
+const TODAY=new Date();
+
+let SEED=4071;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+/* status: received(受付済) → inspect(検品待ち) → refunded(返金済) / rejected(返品否認) ; resale flag */
+const STATUS_POOL=['refunded','refunded','inspect','refunded','received','rejected','inspect','refunded'];
+
+let returns=[];
+(function seed(){
+  for(let i=0;i<24;i++){
+    const c=pick(CUSTOMERS);
+    const it=pick(ITEMS);
+    const qty=1+Math.floor(rnd()*4);
+    const reason=pick(REASONS);
+    const sub=qty*it.p;
+    const tax=Math.round(sub*0.1);
+    const grand=sub+tax;
+    const recv=new Date(TODAY.getFullYear(),TODAY.getMonth()-Math.floor(rnd()*3),1+Math.floor(rnd()*26));
+    let status=pick(STATUS_POOL);
+    // resale only meaningful if not rejected
+    let resale = reason.resale && rnd()>0.25;
+    if(reason.n==='品質不良（傷み）') resale=false;
+    const orderNo='ORD-'+(2025500+Math.floor(rnd()*400));
+    returns.push({
+      no:'RMA-'+(2026000+i+1),cust:c.name,custType:c.type,staff:c.staff,
+      item:it.n,qty,price:it.p,sub,tax,grand,reason:reason.n,reasonColor:reason.c,
+      resale,recv,orderNo,note:'',
+      method:resale?'次回請求から相殺':'口座振込（自動）',status
+    });
+  }
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+const fmtD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+const fmtDS=d=>d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate();
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STLABEL={received:'受付済',inspect:'検品待ち',refunded:'返金済',rejected:'返品否認',applied:'処理中'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]||s}</span>`;}
+function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function reasonColor(name){const r=REASONS.find(x=>x.n===name);return r?r.c:'#8a94a6';}
+function updateBadges(){
+  $('navInspect').textContent=returns.filter(r=>r.status==='inspect').length;
+  $('navRefund').textContent=returns.filter(r=>r.status==='received').length;
+}
+
+/* ============ ROUTING ============ */
+const TITLES={
+  dash:['ダッシュボード','今月の返品・返金状況'],
+  list:['返品一覧','受け付けた返品をまとめて管理します'],
+  intake:['返品受付','入力するとリアルタイムで受付票が組み上がります'],
+  inspect:['検品','返品商品の状態を確認し、再販可否を判定します'],
+  refund:['返金','検品済みの返品に返金を実行します'],
+  ai:['AI自動処理','返品申請から返金まで自動で段取りします']
+};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn primary" onclick="go(\'intake\')">＋ 返品を受け付ける</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI自動処理</button><button class="btn primary" onclick="go(\'intake\')">＋ 返品受付</button>'
+    : v==='inspect'?'<button class="btn" onclick="go(\'ai\')">⚡ AI自動処理</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='inspect')renderInspect();
+  if(v==='refund')renderRefund();
+  updateBadges();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const tm=returns.filter(r=>thisMonth(r.recv));
+  const refundedTm=tm.filter(r=>r.status==='refunded');
+  const refundSum=returns.filter(r=>r.status==='refunded').reduce((s,r)=>s+r.grand,0);
+  const resaleCount=returns.filter(r=>r.resale&&r.status!=='rejected').length;
+  const eligible=returns.filter(r=>r.status!=='rejected').length;
+  const resaleRate=eligible?Math.round(resaleCount/eligible*100):0;
+  $('kpis').innerHTML=`
+    ${kpi('#7b54e8','今月の返品',tm.length+'<small>件</small>','処理対象','up','前月比 -8%')}
+    ${kpi('#0ea5b7','平均処理日数','1.4<small>日</small>','受付→返金','up','短縮 -2.1日')}
+    ${kpi('#16b877','返金額（累計）',yen(refundSum),returns.filter(r=>r.status==='refunded').length+'件','up','自動返金')}
+    ${kpi('#e3941f','再販率',resaleRate+'<small>%</small>',resaleCount+'件 再販','warn','在庫に還元')}`;
+  // trend (counts)
+  const months=[];for(let k=5;k>=0;k--){const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1);months.push(d);}
+  const counts=months.map(m=>returns.filter(r=>r.recv.getMonth()===m.getMonth()&&r.recv.getFullYear()===m.getFullYear()).length);
+  const mx=Math.max(...counts,1);
+  $('trendBars').innerHTML=months.map((m,i)=>`
+    <div class="bar-row"><span class="mlabel">${m.getMonth()+1}月</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(counts[i]/mx*100)}"></div></div>
+      <span class="mval">${counts[i]}件</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // reasons breakdown
+  const total=returns.length||1;
+  $('reasonBlock').innerHTML=REASONS.map(rs=>{
+    const cnt=returns.filter(r=>r.reason===rs.n).length;
+    const pct=Math.round(cnt/total*100);
+    return `<div class="reason-item">
+      <div class="top"><span class="sw" style="background:${rs.c}"></span><span class="nm">${esc(rs.n)}</span><span class="vv">${cnt}件 / ${pct}%</span></div>
+      <div class="rt"><div class="rf" style="width:0;background:${rs.c}" data-w="${pct}"></div></div></div>`;
+  }).join('');
+  setTimeout(()=>document.querySelectorAll('#reasonBlock .rf').forEach(b=>b.style.width=b.dataset.w+'%'),120);
+  // status summary
+  const sts=[['received','受付済','#7b54e8'],['inspect','検品待ち','#e3941f'],['refunded','返金済','#16b877'],['rejected','返品否認','#e24a4a']];
+  $('statusBars').innerHTML=sts.map(s=>{
+    const cnt=returns.filter(r=>r.status===s[0]).length;const pct=Math.round(cnt/total*100);
+    return `<div class="reason-row"><div class="rl"><span class="sw" style="background:${s[2]}"></span>${s[1]}</div><div class="rv">${cnt}件</div>
+      <div class="rt"><div class="rf" style="width:0;background:${s[2]}" data-w="${pct}"></div></div></div>`;
+  }).join('');
+  setTimeout(()=>document.querySelectorAll('#statusBars .rf').forEach(b=>b.style.width=b.dataset.w+'%'),150);
+  // activity
+  const acts=[
+    {i:'💸',c:'#e6f8f0',t:'豊後おおいた青果 へ ¥10,780 を自動返金（RMA-2026008）',m:'5分前'},
+    {i:'🔍',c:'#fdf3e2',t:'AIが3件を検品判定（再販可 2件・廃棄 1件）',m:'38分前'},
+    {i:'📦',c:'#e2f6f9',t:'有機きゅうり 1ケースを在庫に戻しました',m:'1時間前'},
+    {i:'📝',c:'#f0eaff',t:'みらい歯科医院 より返品申請を受付（RMA-2026024）',m:'今日 9:02'},
+    {i:'✉️',c:'#e6f8f0',t:'大分中央クリニック へ返金完了メールを自動送信',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ LIST ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['received','受付済'],['inspect','検品待ち'],['refunded','返金済'],['rejected','返品否認']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=returns.filter(r=>filterStatus==='all'||r.status===filterStatus)
+    .filter(r=>!q||(r.cust+r.item+r.no+r.reason).toLowerCase().includes(q))
+    .sort((a,b)=>b.recv-a.recv);
+  $('listRows').innerHTML=rows.length?rows.map(r=>`<tr onclick="openDetail('${esc(r.no)}')">
+    <td class="mono" style="font-size:12px">${esc(r.no)}</td><td><b>${esc(r.cust)}</b></td>
+    <td style="color:var(--ink-2)">${esc(r.item)} <span style="color:var(--ink-3)">×${r.qty}</span></td>
+    <td><span class="tag-pill" style="color:${r.reasonColor}">${esc(r.reason)}</span></td>
+    <td class="r tnum"><b>${yen(r.grand)}</b></td><td style="color:var(--ink-2)">${fmtDS(r.recv)}</td><td>${stBadge(r.status)}</td></tr>`).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する返品がありません</td></tr>';
+}
+$('q').addEventListener('input',renderList);
+
+/* ============ DETAIL MODAL ============ */
+function openDetail(no){
+  const r=returns.find(x=>x.no===no);if(!r)return;
+  $('mNo').textContent=r.no;$('mCust').textContent=r.cust;$('mStatus').innerHTML=stBadge(r.status);
+  const steps=['received','inspect','refunded'];
+  const idx = r.status==='rejected'?1 : steps.indexOf(r.status);
+  const stepHtml=`<div class="steps">
+    ${['受付','検品','返金'].map((lab,i)=>{
+      let cls=i<idx?'done':(i===idx?'now':'');
+      if(r.status==='refunded')cls=i<=2?'done':'';
+      if(r.status==='rejected'&&i===2)cls='';
+      return `<div class="step ${cls}"><span class="dot">${i<idx||r.status==='refunded'?'✓':(i+1)}</span>${lab}</div>${i<2?'<span class="bar"></span>':''}`;
+    }).join('')}
+  </div>`;
+  $('mBody').innerHTML=`
+    ${stepHtml}
+    <div class="dl" style="margin-top:16px">
+      <div class="k">対象商品</div><div class="v">${esc(r.item)} ×${r.qty}</div>
+      <div class="k">元注文</div><div class="v mono" style="font-size:12px">${esc(r.orderNo)}</div>
+      <div class="k">返品理由</div><div class="v"><span class="tag-pill" style="color:${r.reasonColor}">${esc(r.reason)}</span></div>
+      <div class="k">返金予定額</div><div class="v tnum" style="font-size:15px;font-weight:900">${yen(r.grand)} <span style="font-weight:600;color:var(--ink-3);font-size:11px">(税込)</span></div>
+      <div class="k">再販判定</div><div class="v">${r.resale?'<span class="st resale">再販可能</span>':'<span class="st rejected">再販不可（廃棄）</span>'}</div>
+      <div class="k">返金方法</div><div class="v">${esc(r.method)}</div>
+      <div class="k">受付日</div><div class="v">${fmtDL(r.recv)}</div>
+      <div class="k">担当</div><div class="v">${esc(r.staff)}</div>
+      ${r.note?`<div class="k">コメント</div><div class="v">${esc(r.note)}</div>`:''}
+    </div>
+    <div class="sectlabel">処理タイムライン</div>
+    <div class="timeline">
+      <div class="tl"><div class="tt">返品申請を受付</div><div class="tm">${fmtDL(r.recv)} ・ ${esc(r.orderNo)} を自動照合</div></div>
+      ${r.status!=='received'?`<div class="tl"><div class="tt">${r.resale?'検品完了（再販可）':r.status==='rejected'?'検品完了（返品否認）':'検品完了（廃棄）'}</div><div class="tm">AIが商品状態と理由を判定</div></div>`:'<div class="tl muted"><div class="tt">検品待ち</div><div class="tm">検品で再販可否を判定します</div></div>'}
+      ${r.status==='refunded'?`<div class="tl"><div class="tt">返金実行 ${yen(r.grand)}</div><div class="tm">${esc(r.method)} ・ 完了メール送信済</div></div>`:r.status==='rejected'?`<div class="tl"><div class="tt">返品を否認</div><div class="tm">返品条件外のため返金対象外</div></div>`:'<div class="tl muted"><div class="tt">返金待ち</div><div class="tm">検品後に自動返金します</div></div>'}
+    </div>
+    <div class="linkrow" style="margin-top:18px">
+      ${r.status==='inspect'?`<button class="btn primary" style="flex:1;justify-content:center" onclick="inspectOne('${esc(r.no)}',true)">🔍 検品OK（返金へ）</button><button class="btn" onclick="inspectOne('${esc(r.no)}',false)">否認</button>`:''}
+      ${r.status==='received'?`<button class="btn green" style="flex:1;justify-content:center" onclick="refundOne('${esc(r.no)}')">💸 返金を実行</button>`:''}
+      ${(r.status==='refunded'||r.status==='rejected')?`<button class="btn" style="flex:1;justify-content:center" onclick="closeModal()">閉じる</button>`:''}
+    </div>`;
+  $('modal').classList.add('show');
+}
+window.openDetail=openDetail;
+function closeModal(){$('modal').classList.remove('show');}
+window.closeModal=closeModal;
+$('mClose').addEventListener('click',closeModal);
+$('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal();});
+
+window.inspectOne=(no,ok)=>{
+  const r=returns.find(x=>x.no===no);if(!r)return;
+  if(ok){r.status='received';showToast(no+' 検品OK・返金待ちにしました');}
+  else{r.status='rejected';showToast(no+' を返品否認にしました');}
+  closeModal();renderInspect();updateBadges();
+};
+window.refundOne=(no)=>{
+  const r=returns.find(x=>x.no===no);if(!r)return;
+  r.status='refunded';showToast(no+' へ '+yen(r.grand)+' を返金しました');
+  closeModal();renderRefund();updateBadges();
+};
+
+/* ============ INSPECT ============ */
+function renderInspect(){
+  const pend=returns.filter(r=>r.status==='inspect');
+  $('inspectRows').innerHTML=pend.length?pend.sort((a,b)=>a.recv-b.recv).map(r=>`<tr onclick="openDetail('${esc(r.no)}')">
+    <td class="mono" style="font-size:12px">${esc(r.no)}</td><td><b>${esc(r.cust)}</b></td>
+    <td style="color:var(--ink-2)">${esc(r.item)} <span style="color:var(--ink-3)">×${r.qty}</span></td>
+    <td><span class="tag-pill" style="color:${r.reasonColor}">${esc(r.reason)}</span></td>
+    <td class="r tnum"><b>${yen(r.grand)}</b></td>
+    <td>${r.resale?'<span class="st resale">再販可</span>':'<span class="st rejected">廃棄</span>'}</td>
+    <td class="r" onclick="event.stopPropagation()"><button class="btn green" style="padding:6px 12px" onclick="inspectOne('${esc(r.no)}',true)">検品OK</button></td></tr>`).join('')
+    :'<tr><td colspan="7" class="empty-cell">検品待ちはありません 🎉</td></tr>';
+}
+$('aiInspect').addEventListener('click',async()=>{
+  const btn=$('aiInspect');const pend=returns.filter(r=>r.status==='inspect');
+  if(!pend.length){showToast('検品待ちはありません');return;}
+  btn.textContent='🤖 判定中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,950));
+  let ok=0,ng=0;
+  pend.forEach(r=>{ if(r.reason==='品質不良（傷み）' && rnd()>0.6){r.status='rejected';ng++;} else {r.status='received';ok++;} });
+  btn.textContent='🤖 AIで一括判定';btn.disabled=false;
+  renderInspect();updateBadges();
+  showToast('AIが '+(ok+ng)+'件を判定（返金へ '+ok+'件・否認 '+ng+'件）');
+});
+
+/* ============ REFUND ============ */
+function renderRefund(){
+  const ready=returns.filter(r=>r.status==='received');
+  const sum=ready.reduce((s,r)=>s+r.grand,0);
+  const resaleReady=ready.filter(r=>r.resale).length;
+  $('refundKpis').innerHTML=`
+    ${kpi('#7b54e8','返金待ち',ready.length+'<small>件</small>','検品済','warn','要処理')}
+    ${kpi('#16b877','返金待ち額',yen(sum),'','warn','自動返金可')}
+    ${kpi('#0ea5b7','再販に戻せる',resaleReady+'<small>件</small>','在庫還元','up','原価回収')}
+    ${kpi('#e3941f','平均返金時間','約9<small>秒</small>','AI自動','up','-99%')}`;
+  $('refundCards').innerHTML=ready.length?ready.sort((a,b)=>b.grand-a.grand).map(r=>`
+    <div class="rcard">
+      <div class="rtop"><span class="rno">${esc(r.no)}</span>${r.resale?'<span class="st resale" style="margin-left:auto">再販可</span>':'<span class="st rejected" style="margin-left:auto">廃棄</span>'}</div>
+      <div class="rcust">${esc(r.cust)}</div>
+      <div class="rmeta">${esc(r.item)} ×${r.qty} ・ <span style="color:${r.reasonColor}">${esc(r.reason)}</span></div>
+      <div class="ramt tnum">${yen(r.grand)}</div>
+      <div class="rmeta">返金方法：${esc(r.method)}</div>
+      <div class="rfoot">
+        <button class="btn green" style="flex:1;justify-content:center;padding:8px" onclick="refundOne('${esc(r.no)}')">💸 返金を実行</button>
+        <button class="btn" style="padding:8px 12px" onclick="openDetail('${esc(r.no)}')">詳細</button>
+      </div>
+    </div>`).join('')
+    :'<div class="empty-cell" style="grid-column:1/-1;background:var(--card);border:1px solid var(--line);border-radius:14px">返金待ちはありません 🎉</div>';
+}
+$('aiRefundAll').addEventListener('click',async()=>{
+  const btn=$('aiRefundAll');const ready=returns.filter(r=>r.status==='received');
+  if(!ready.length){showToast('返金待ちはありません');return;}
+  btn.textContent='💸 返金処理中…';btn.disabled=true;
+  const sum=ready.reduce((s,r)=>s+r.grand,0);
+  await new Promise(r=>setTimeout(r,1000));
+  ready.forEach(r=>r.status='refunded');
+  btn.textContent='💸 全件まとめて自動返金';btn.disabled=false;
+  renderRefund();updateBadges();
+  showToast(ready.length+'件・'+yen(sum)+' を自動で返金しました');
+});
+
+/* ============ INTAKE ============ */
+function renderCustSelect(){$('iCust').innerHTML='<option value="">選択してください</option>'+CUSTOMERS.map(c=>`<option>${esc(c.name)}</option>`).join('');}
+function renderReasonSelect(){$('iReason').innerHTML='<option value="">選択してください</option>'+REASONS.map(r=>`<option>${esc(r.n)}</option>`).join('');}
+function renderIntakePaper(){
+  const cust=$('iCust').value;
+  $('pCust').textContent=(cust||'')+'　御中';
+  const item=$('iItem').value;const qty=+$('iQty').value||0;const price=+$('iPrice').value||0;
+  const sub=qty*price;const tax=Math.round(sub*0.1);const grand=sub+tax;
+  $('pRows').innerHTML=(item||price)?`<tr><td>${esc(item)||'（商品）'}</td><td class="r">${qty}</td><td class="r">${yen(price)}</td><td class="r">${yen(sub)}</td></tr>`
+    :'<tr><td colspan="4" style="text-align:center;color:#aab2c4;padding:14px">← 商品を入力してください</td></tr>';
+  $('pGrand').textContent=yen(grand);
+  const reason=$('iReason').value;
+  $('pReason').textContent=reason||'—';
+  const rObj=REASONS.find(x=>x.n===reason);
+  const resale = rObj? (rObj.resale && reason!=='品質不良（傷み）') : null;
+  $('pResale').textContent=reason?(resale?'再販可能（在庫へ戻す）':'再販不可（廃棄）'):'—';
+  $('pMethod').textContent=reason?(resale?'次回請求から相殺':'口座振込（自動）'):'—';
+  const note=$('iNote').value;
+  $('pNote').textContent=note?note:'—';
+}
+['iCust','iItem','iQty','iPrice','iReason','iNote'].forEach(id=>{
+  $(id).addEventListener('input',renderIntakePaper);
+  $(id).addEventListener('change',renderIntakePaper);
+});
+$('iItem').addEventListener('input',()=>{
+  const h=ITEMS.find(x=>x.n===$('iItem').value);
+  if(h&&!$('iPrice').value){$('iPrice').value=h.p;$('iAiHint').classList.add('show');setTimeout(()=>$('iAiHint').classList.remove('show'),2200);renderIntakePaper();}
+});
+$('iSample').addEventListener('click',()=>{
+  $('iCust').value='豊後おおいた青果';$('iItem').value='冷蔵トマト 2kg箱';
+  $('iQty').value=3;$('iPrice').value=3200;$('iReason').value='品質不良（傷み）';
+  $('iNote').value='到着時に一部が傷んでいました。写真添付済み。';
+  renderIntakePaper();
+});
+$('iSubmit').addEventListener('click',async()=>{
+  const cust=$('iCust').value,item=$('iItem').value,reason=$('iReason').value;
+  const qty=+$('iQty').value||0,price=+$('iPrice').value||0;
+  if(!cust||!item||!price||!reason){showToast('取引先・商品・単価・理由を入力してください');return;}
+  const btn=$('iSubmit');btn.textContent='⚡ AIが段取り中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,800));
+  const no='RMA-'+(2026000+returns.length+1);
+  const sub=qty*price;const tax=Math.round(sub*0.1);const grand=sub+tax;
+  const rObj=REASONS.find(x=>x.n===reason);
+  const resale = rObj? (rObj.resale && reason!=='品質不良（傷み）') : false;
+  const c=CUSTOMERS.find(x=>x.name===cust);
+  returns.push({
+    no,cust,custType:c?c.type:'—',staff:c?c.staff:'—',
+    item,qty,price,sub,tax,grand,reason,reasonColor:reasonColor(reason),
+    resale,recv:new Date(),orderNo:'ORD-'+(2025500+Math.floor(rnd()*400)),
+    note:$('iNote').value,method:resale?'次回請求から相殺':'口座振込（自動）',status:'inspect'
+  });
+  $('pNo').textContent=no;$('pDate').textContent=fmtDL(new Date());
+  btn.textContent='⚡ AIで受付して段取り';btn.disabled=false;
+  showToast('返品 '+no+' を受付しました（検品へ）');
+  updateBadges();
+  setTimeout(()=>go('list'),750);
+});
+
+/* ============ AI AUTO ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 処理中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},110);
+  await new Promise(r=>setTimeout(r,1200));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // 5 new auto-processed returns
+  const targets=[];
+  for(let i=0;i<5;i++){
+    const c=pick(CUSTOMERS);const it=pick(ITEMS);const qty=1+Math.floor(rnd()*3);const reason=pick(REASONS);
+    const sub=qty*it.p;const grand=sub+Math.round(sub*0.1);
+    const resale=reason.resale&&reason.n!=='品質不良（傷み）'&&rnd()>0.3;
+    targets.push({c,it,qty,reason,grand,resale});
+  }
+  $('genItems').innerHTML=targets.map((t,i)=>`
+    <div class="gen-item" data-i="${i}"><span class="ck">✓</span>
+      <b style="flex:1">${esc(t.c.name)}</b>
+      <span style="color:var(--ink-3);font-size:12px">${esc(t.it.n)} ×${t.qty}</span>
+      <span class="tnum" style="font-weight:800">${yen(t.grand)}</span>
+      <span class="gact">理由「${esc(t.reason.n)}」を分類 → ${t.resale?'再販可・在庫へ戻す':'廃棄'} → 返金実行 → 完了メール送信</span>
+    </div>`).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  let totalRefund=0;
+  for(let i=0;i<items.length;i++){
+    await new Promise(r=>setTimeout(r,200));items[i].classList.add('in');
+    const t=targets[i];const sub=t.qty*t.it.p;const tax=Math.round(sub*0.1);
+    totalRefund+=t.grand;
+    returns.push({
+      no:'RMA-'+(2026000+returns.length+1),cust:t.c.name,custType:t.c.type,staff:t.c.staff,
+      item:t.it.n,qty:t.qty,price:t.it.p,sub,tax,grand:t.grand,reason:t.reason.n,reasonColor:t.reason.c,
+      resale:t.resale,recv:new Date(),orderNo:'ORD-'+(2025500+Math.floor(rnd()*400)),
+      note:'',method:t.resale?'次回請求から相殺':'口座振込（自動）',status:'refunded'
+    });
+  }
+  btn.disabled=false;btn.textContent='⚡ もう一度処理';
+  updateBadges();
+  showToast(items.length+'件を受付〜返金まで自動処理（計'+yen(totalRefund)+'）');
+});
+
+/* ============ INIT ============ */
+(()=>{const dl=document.createElement('datalist');dl.id='iItemList';dl.innerHTML=ITEMS.map(i=>`<option value="${esc(i.n)}">`).join('');document.body.appendChild(dl);})();
+renderCustSelect();renderReasonSelect();renderIntakePaper();renderChips();renderDash();updateBadges();
+</script>
+</body>
+</html>

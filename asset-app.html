@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜固定資産管理マシン（固定資産・減価償却システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cf0;--purple-soft:#efeaff;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:70px 1fr 96px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut / composition */
+.donut-wrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.donut{width:140px;height:140px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;position:relative}
+.donut::after{content:"";position:absolute;width:88px;height:88px;border-radius:50%;background:var(--card)}
+.donut .dc{position:relative;z-index:1;text-align:center}
+.donut .dc b{font-size:18px;font-weight:900;display:block;line-height:1}
+.donut .dc span{font-size:10.5px;color:var(--ink-3);font-weight:700}
+.legend{flex:1;min-width:160px;display:flex;flex-direction:column;gap:9px}
+.legend .lg{display:flex;align-items:center;gap:9px;font-size:12.5px}
+.legend .lg .sw{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.legend .lg .nm{color:var(--ink-2);font-weight:600}
+.legend .lg .vl{margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.active{background:var(--green-soft);color:var(--green)}
+.st.depreciating{background:var(--brand-soft);color:var(--brand)}
+.st.fulldep{background:var(--soft);color:var(--ink-3)}
+.st.disposed{background:var(--red-soft);color:var(--red)}
+.st.renew{background:var(--amber-soft);color:var(--amber)}
+.cat-tag{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:7px;background:var(--soft);color:var(--ink-2)}
+
+/* mini progress bar in table */
+.miniwrap{display:flex;align-items:center;gap:8px}
+.minibar{flex:1;height:7px;border-radius:99px;background:var(--soft);overflow:hidden;min-width:60px}
+.minibar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky))}
+.minibar.warn i{background:linear-gradient(90deg,var(--amber),#f3b34f)}
+.minibar.done i{background:var(--ink-3)}
+.minipct{font-size:11px;font-weight:800;color:var(--ink-2);width:34px;text-align:right}
+
+/* create / form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg.row{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--brand)}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* asset detail card (paper-like) */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:28px 30px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.pv-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
+.pv-title{font-size:20px;font-weight:900;letter-spacing:.1em;color:var(--brand-dk);border-bottom:3px solid var(--brand-dk);padding-bottom:5px}
+.pv-meta{text-align:right;font-size:11.5px;color:var(--ink-2)}
+.pv-meta .no{font-family:'Orbitron';color:var(--ink);font-weight:700}
+.pv-name{font-size:18px;font-weight:900;margin-bottom:4px}
+.pv-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 18px;margin:16px 0;border-top:1px solid var(--line)}
+.pv-grid .pr{display:flex;justify-content:space-between;padding:8px 2px;border-bottom:1px solid var(--line);font-size:12px}
+.pv-grid .pr span{color:var(--ink-2)}
+.pv-grid .pr b{font-weight:800}
+.pv-book{background:var(--soft);border-left:5px solid var(--brand-dk);border-radius:6px;padding:13px 18px;margin:14px 0;display:flex;justify-content:space-between;align-items:center}
+.pv-book .a{font-family:'Orbitron';font-size:22px;font-weight:700;color:var(--brand-dk)}
+table.pv{width:100%;border-collapse:collapse;margin-top:8px}
+table.pv th{background:var(--brand-dk);color:#fff;font-size:11px;padding:7px 10px;text-align:left}
+table.pv th.r,table.pv td.r{text-align:right}
+table.pv td{padding:7px 10px;border-bottom:1px solid var(--line);font-size:11.5px}
+table.pv tr.cur td{background:var(--brand-soft);font-weight:800}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s;flex-wrap:wrap}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900}
+.gen-calc{font-size:11px;color:var(--ink-3);width:100%;padding-left:31px;margin-top:-2px}
+.gen-calc b{color:var(--brand);font-weight:800}
+
+/* before/after calc demo (the asset->depreciation focus) */
+.calc-form{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin:16px 0}
+@media(max-width:760px){.calc-form{grid-template-columns:1fr 1fr}}
+.calc-form .cf label{font-size:11px;font-weight:700;color:var(--ink-2);display:block;margin-bottom:5px}
+.calc-form .cf input,.calc-form .cf select{width:100%;padding:9px 10px;border:1px solid var(--line-2);border-radius:8px;font-family:inherit;font-size:13px}
+.calc-form .cf input:focus,.calc-form .cf select:focus{outline:none;border-color:var(--brand)}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(16,24,40,.45);display:none;align-items:center;justify-content:center;z-index:150;padding:20px}
+.modal.show{display:flex;animation:fade .25s}
+.modal .box{background:var(--card);border-radius:16px;max-width:560px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg)}
+.modal .mh{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.modal .mh h3{font-size:15px;font-weight:900}
+.modal .mh .cl{margin-left:auto;border:0;background:var(--soft);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:14px;color:var(--ink-2)}
+.modal .mb{padding:18px 20px}
+.modal .mf{padding:14px 20px;border-top:1px solid var(--line);display:flex;gap:9px;justify-content:flex-end}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.section-note{font-size:12px;color:var(--ink-3);margin-bottom:14px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">固定資産管理マシン<small>技マシン｜固定資産・減価償却</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">🗂️</span>資産台帳</a>
+      <a data-v="dep"><span class="i">📉</span>減価償却</a>
+      <a data-v="stock"><span class="i">📋</span>棚卸</a>
+      <a data-v="dispose"><span class="i">🗑️</span>除却<span class="badge" id="navRenew">0</span></a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI自動計算</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。資産・金額はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">2026年度の固定資産状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>資産分類別の取得価額</h3><span class="more">全資産</span></div>
+            <div class="pb"><div class="bars" id="catBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>簿価の内訳</h3></div>
+            <div class="pb"><div class="donut-wrap"><div class="donut" id="donut"><div class="dc"><b id="donutTotal">¥0</b><span>帳簿価額</span></div></div><div class="legend" id="donutLegend"></div></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>今期の月次償却費</h3><span class="more">12ヶ月</span></div>
+            <div class="pb"><div class="bars" id="depBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ASSET LIST (台帳) -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="資産名・管理番号・分類で検索"></div>
+          <div class="chips" id="catChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>管理番号</th><th>資産名</th><th>分類</th><th class="r">取得価額</th><th class="r">帳簿価額</th><th>償却進捗</th><th>状態</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- DEPRECIATION (減価償却) -->
+      <section class="view" id="v-dep">
+        <div class="kpis" id="depKpis"></div>
+        <div class="panel" style="margin-bottom:16px">
+          <div class="ph"><h3>今期 減価償却スケジュール</h3>
+            <button class="btn primary" id="runDep" style="margin-left:auto">⚡ AIで今期分を自動計算</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>管理番号</th><th>資産名</th><th>方法</th><th class="r">取得価額</th><th class="r">期首簿価</th><th class="r">当期償却費</th><th class="r">期末簿価</th></tr></thead>
+              <tbody id="depRows"></tbody>
+              <tfoot><tr style="background:var(--soft);font-weight:900"><td colspan="5" style="padding:12px 16px;border-top:2px solid var(--line-2)">合計</td><td class="r tnum" id="depTotal" style="padding:12px 16px;border-top:2px solid var(--line-2);color:var(--brand)">¥0</td><td class="r tnum" id="depBookTotal" style="padding:12px 16px;border-top:2px solid var(--line-2)">¥0</td></tr></tfoot>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- STOCKTAKE (棚卸) -->
+      <section class="view" id="v-stock">
+        <div class="section-note">現物確認のチェック状況です。「確認」を押すと棚卸済みとして記録されます。AI画像照合にも対応（デモ）。</div>
+        <div class="kpis" id="stockKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>現物棚卸チェックリスト</h3>
+            <button class="btn green" id="bulkCheck" style="margin-left:auto">📷 AI画像照合で一括確認</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>管理番号</th><th>資産名</th><th>設置場所</th><th>管理者</th><th>棚卸状況</th><th></th></tr></thead>
+              <tbody id="stockRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- DISPOSE (除却) -->
+      <section class="view" id="v-dispose">
+        <div class="section-note">耐用年数を超えた・要更新の資産です。除却すると除却損が計上され、台帳から外れます（デモ）。</div>
+        <div class="panel">
+          <div class="ph"><h3>除却・更新候補の資産</h3></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>管理番号</th><th>資産名</th><th>取得日</th><th class="r">帳簿価額</th><th>状態</th><th></th></tr></thead>
+              <tbody id="disposeRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI AUTO CALC -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">資産を登録すると減価償却を自動計算</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">取得価額・分類を入れるだけで、AIが耐用年数・償却率・全年度の償却スケジュールを自動作成します。</div></div>
+          </div>
+
+          <div class="calc-form">
+            <div class="cf"><label>資産名</label><input id="aName" placeholder="例：業務用冷蔵庫" value="軽トラック（配送用）"></div>
+            <div class="cf"><label>資産分類</label><select id="aCat"></select></div>
+            <div class="cf"><label>取得価額（円）</label><input id="aPrice" type="number" min="0" value="1800000"></div>
+            <div class="cf"><label>取得年月</label><input id="aDate" type="month" value="2026-04"></div>
+          </div>
+
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">約 40分／件</div>
+              <ul>
+                <li>📚 耐用年数表から該当区分を手で探す</li>
+                <li>🧮 償却率を調べて電卓で年度ごと計算</li>
+                <li>📝 固定資産台帳に転記・残高チェック</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 分類から耐用年数・償却率を自動判定</li>
+                <li>📈 全年度の償却スケジュールを一括生成</li>
+                <li>✅ 台帳へ自動登録・残高まで確定</li>
+              </ul>
+            </div>
+          </div>
+
+          <div style="text-align:center;margin-top:18px">
+            <button class="btn primary" id="aiRun" style="padding:13px 32px;font-size:14px">⚡ AIで減価償却を自動計算する</button>
+          </div>
+
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ AIが計算した償却スケジュール</div>
+            <div id="genSummary" style="font-size:12.5px;color:var(--ink-2);margin-bottom:12px"></div>
+            <table class="pv" style="border:1px solid var(--line);border-radius:8px;overflow:hidden">
+              <thead><tr><th>年度</th><th class="r">期首簿価</th><th class="r">償却費</th><th class="r">期末簿価</th></tr></thead>
+              <tbody id="genItems"></tbody>
+            </table>
+            <div style="text-align:right;margin-top:14px"><button class="btn green" id="aiSave">この内容で台帳に登録する</button></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- ASSET DETAIL MODAL -->
+<div class="modal" id="modal">
+  <div class="box">
+    <div class="mh"><h3>資産詳細</h3><button class="cl" id="modalClose">✕</button></div>
+    <div class="mb" id="modalBody"></div>
+    <div class="mf"><button class="btn" id="modalClose2">閉じる</button><button class="btn primary" id="modalRecalc">⚡ AIで償却を再計算</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+// 資産分類マスタ：耐用年数(年)・償却方法・色
+const CATEGORIES=[
+  {n:'建物・建物附属設備',life:15,method:'定額',color:'#2f6df0'},
+  {n:'車両運搬具',life:5,method:'定率',color:'#0ea5b7'},
+  {n:'機械装置',life:8,method:'定率',color:'#16b877'},
+  {n:'器具備品',life:6,method:'定額',color:'#e3941f'},
+  {n:'医療機器',life:6,method:'定額',color:'#7c5cf0'},
+  {n:'ソフトウェア',life:5,method:'定額',color:'#e24a4a'},
+];
+const CATMAP={};CATEGORIES.forEach(c=>CATMAP[c.n]=c);
+// 償却率（定率法・参考値）
+const RATE_DECLINE={5:0.400,6:0.333,8:0.250,15:0.133};
+const LOCATIONS=['本社1F','本社2F','大分中央センター','配送センター','別府支店','倉庫A'];
+const STAFFS=['佐藤','田中','鈴木','高橋','渡辺'];
+const ASSET_DEFS=[
+  {name:'業務用冷凍冷蔵庫',cat:'器具備品',price:680000,age:2},
+  {name:'軽貨物トラック',cat:'車両運搬具',price:1650000,age:3},
+  {name:'青果仕分けコンベア',cat:'機械装置',price:3200000,age:1},
+  {name:'業務用エアコン（本社）',cat:'建物・建物附属設備',price:1450000,age:6},
+  {name:'デジタル体組成計',cat:'医療機器',price:520000,age:2},
+  {name:'介護記録システム',cat:'ソフトウェア',price:980000,age:1},
+  {name:'4tユニック車',cat:'車両運搬具',price:4800000,age:4},
+  {name:'真空冷却機',cat:'機械装置',price:2750000,age:5},
+  {name:'会議用プロジェクター',cat:'器具備品',price:280000,age:3},
+  {name:'電子カルテ端末 一式',cat:'医療機器',price:1380000,age:2},
+  {name:'冷蔵ショーケース',cat:'器具備品',price:430000,age:7},
+  {name:'倉庫フォークリフト',cat:'機械装置',price:2100000,age:6},
+  {name:'受発注管理ソフト',cat:'ソフトウェア',price:640000,age:4},
+  {name:'配送用ハイエース',cat:'車両運搬具',price:2980000,age:2},
+  {name:'業務用製氷機',cat:'器具備品',price:390000,age:5},
+  {name:'本社ビル外壁改修',cat:'建物・建物附属設備',price:5600000,age:8},
+  {name:'超音波診断装置',cat:'医療機器',price:3400000,age:3},
+  {name:'自動野菜洗浄機',cat:'機械装置',price:1880000,age:9},
+];
+
+const TODAY=new Date(2026,4,30); // 2026-05-30
+const FY=2026; // 今年度
+let SEED=7919;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+// 定額法の年償却費
+function straightAnnual(price,life){return Math.floor(price*0.9/life);} // 残存簿価1円方式の簡易：90%/耐用年数（デモ）
+// 定率法の償却率
+function declineRate(life){return RATE_DECLINE[life]||0.2;}
+
+// 資産1件の累計償却・簿価を経過年数から算出
+function computeAsset(a){
+  const cat=CATMAP[a.cat];const life=cat.life;
+  let book=a.price;let acc=0;const schedule=[];
+  const acqYear=FY-a.age;
+  for(let y=0;y<=a.age;y++){
+    if(book<=1){schedule.push({year:acqYear+y,open:book,dep:0,close:book});continue;}
+    let dep;
+    if(cat.method==='定率'){dep=Math.floor(book*declineRate(life));}
+    else{dep=straightAnnual(a.price,life);}
+    if(y>=life){dep=0;} // 耐用年数超過
+    if(book-dep<1){dep=book-1;} // 残存1円
+    if(dep<0)dep=0;
+    const close=book-dep;
+    schedule.push({year:acqYear+y,open:book,dep,close});
+    acc+=dep;book=close;
+  }
+  return {life,method:cat.method,book,acc,schedule,acqYear};
+}
+
+let assets=[];
+(function seed(){
+  ASSET_DEFS.forEach((d,i)=>{
+    const c=computeAsset(d);
+    const acqM=1+Math.floor(rnd()*12);
+    const acqDate=new Date(c.acqYear,acqM-1,1+Math.floor(rnd()*26));
+    let status;
+    if(d.age>=c.life){status=(rnd()>0.5?'renew':'fulldep');}
+    else if(c.book<=1){status='fulldep';}
+    else{status=(d.age===0?'active':'depreciating');}
+    assets.push({
+      id:'FA-'+String(1001+i),
+      name:d.name,cat:d.cat,price:d.price,
+      acqDate,life:c.life,method:c.method,
+      book:c.book,acc:c.acc,schedule:c.schedule,
+      loc:pick(LOCATIONS),staff:pick(STAFFS),
+      status,checked:rnd()>0.55
+    });
+  });
+})();
+
+// 今期(=今年度)の各資産の当期償却費
+function currentYearDep(a){
+  const row=a.schedule.find(s=>s.year===FY);
+  return row?row.dep:0;
+}
+function currentYearOpen(a){
+  const row=a.schedule.find(s=>s.year===FY);
+  return row?row.open:a.book;
+}
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+const yenM=n=>{const m=n/10000;return '¥'+(Math.round(m*10)/10).toLocaleString()+'万';};
+const fmtD=d=>d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate();
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月';
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STLABEL={active:'稼働中',depreciating:'償却中',fulldep:'償却済',disposed:'除却済',renew:'要更新'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]||s}</span>`;}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function depPct(a){return Math.min(100,Math.round(a.acc/a.price*100));}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','2026年度の固定資産状況'],list:['資産台帳','登録された固定資産を一覧・検索します'],
+  dep:['減価償却','今期の償却費を自動計算します'],stock:['棚卸','現物確認の進捗を管理します'],
+  dispose:['除却','耐用年数超過・要更新資産の除却処理'],ai:['AI自動計算','資産登録→減価償却スケジュールを自動作成']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn" onclick="go(\'ai\')">⚡ AI自動計算</button><button class="btn primary" onclick="go(\'ai\')">＋ 資産を登録</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'dep\')">📉 減価償却</button><button class="btn primary" onclick="go(\'ai\')">＋ 資産を登録</button>'
+    : v==='dep'?'<button class="btn primary" onclick="go(\'ai\')">＋ 資産を登録</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='dep')renderDep();
+  if(v==='stock')renderStock();
+  if(v==='dispose')renderDispose();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const totalPrice=assets.reduce((s,a)=>s+a.price,0);
+  const totalBook=assets.reduce((s,a)=>s+a.book,0);
+  const thisYearDep=assets.reduce((s,a)=>s+currentYearDep(a),0);
+  const renewN=assets.filter(a=>a.status==='renew').length;
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','資産総額（取得価額）',yen(totalPrice),assets.length+'件 登録','up','前年比 +6%')}
+    ${kpi('#0ea5b7','今期 償却費',yen(thisYearDep),'損金算入見込','up','確定')}
+    ${kpi('#16b877','帳簿価額（簿価）',yen(totalBook),'','up','資産計上中')}
+    ${kpi('#e3941f','要更新の資産',renewN+'件',' ',renewN?'warn':'up',renewN?'除却検討':'なし')}`;
+
+  // category bars (取得価額)
+  const catSums=CATEGORIES.map(c=>({c,sum:assets.filter(a=>a.cat===c.n).reduce((s,a)=>s+a.price,0)})).filter(x=>x.sum>0).sort((a,b)=>b.sum-a.sum);
+  const mx=Math.max(...catSums.map(x=>x.sum),1);
+  $('catBars').innerHTML=catSums.map(x=>`
+    <div class="bar-row"><span class="mlabel" style="font-size:11.5px">${esc(x.c.n.length>7?x.c.n.slice(0,6)+'…':x.c.n)}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0;background:linear-gradient(90deg,${x.c.color},${x.c.color}aa)" data-w="${Math.round(x.sum/mx*100)}"></div></div>
+      <span class="mval">${yenM(x.sum)}</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#catBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+
+  // donut (簿価内訳 by category)
+  const bookSums=CATEGORIES.map(c=>({c,sum:assets.filter(a=>a.cat===c.n).reduce((s,a)=>s+a.book,0)})).filter(x=>x.sum>0).sort((a,b)=>b.sum-a.sum);
+  const bookTotal=bookSums.reduce((s,x)=>s+x.sum,0)||1;
+  let acc=0;const stops=bookSums.map(x=>{const from=acc/bookTotal*360;acc+=x.sum;const to=acc/bookTotal*360;return `${x.c.color} ${from}deg ${to}deg`;}).join(',');
+  $('donut').style.background=`conic-gradient(${stops})`;
+  $('donutTotal').textContent=yenM(bookTotal);
+  $('donutLegend').innerHTML=bookSums.map(x=>`<div class="lg"><span class="sw" style="background:${x.c.color}"></span><span class="nm">${esc(x.c.n)}</span><span class="vl">${Math.round(x.sum/bookTotal*100)}%</span></div>`).join('');
+
+  // 月次償却費 (今期の年額を12分割イメージ＋季節揺らぎ)
+  const monthly=[];const yearDep=assets.reduce((s,a)=>s+currentYearDep(a),0);
+  for(let m=0;m<12;m++){monthly.push(Math.round(yearDep/12*(0.9+rnd()*0.2)));}
+  const fyMonths=['4月','5月','6月','7月','8月','9月','10月','11月','12月','1月','2月','3月'];
+  const mmx=Math.max(...monthly,1);
+  $('depBars').innerHTML=monthly.map((v,i)=>`
+    <div class="bar-row"><span class="mlabel">${fyMonths[i]}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(v/mmx*100)}"></div></div>
+      <span class="mval">${yenM(v)}</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#depBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+
+  const acts=[
+    {i:'⚡',c:'#e6f8f0',t:'AI自動計算で 18件の償却スケジュールを再計算',m:'5分前'},
+    {i:'🗑️',c:'#fdeaea',t:'冷蔵ショーケース を除却（除却損 ¥1）',m:'1時間前'},
+    {i:'📋',c:'#eaf1ff',t:'棚卸：配送センターの12件を現物確認済に',m:'今日 10:20'},
+    {i:'➕',c:'#e6f8f0',t:'配送用ハイエース を資産台帳に登録',m:'昨日'},
+    {i:'⚠️',c:'#fdf3e2',t:'倉庫フォークリフト が耐用年数を超過しました',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${a.t}</div><div class="am">${a.m}</div></div></div>`).join('');
+
+  $('navRenew').textContent=assets.filter(a=>a.status==='renew').length;
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ ASSET LIST ============ */
+let filterCat='all';
+function renderChips(){
+  const opts=[['all','すべて']].concat(CATEGORIES.map(c=>[c.n,c.n]));
+  $('catChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterCat?'on':''}" data-c="${esc(o[0])}">${esc(o[1])}</button>`).join('');
+  $('catChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterCat=c.dataset.c;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=assets.filter(a=>filterCat==='all'||a.cat===filterCat)
+    .filter(a=>!q||(a.name+a.cat+a.id).toLowerCase().includes(q))
+    .filter(a=>a.status!=='disposed')
+    .sort((a,b)=>b.price-a.price);
+  $('listRows').innerHTML=rows.length?rows.map(a=>{
+    const p=depPct(a);const cls=p>=100?'done':(a.status==='renew'?'warn':'');
+    return `<tr onclick="openAsset('${esc(a.id)}')">
+    <td class="mono" style="font-size:12px">${esc(a.id)}</td><td><b>${esc(a.name)}</b></td>
+    <td><span class="cat-tag" style="color:${CATMAP[a.cat].color}">${esc(a.cat)}</span></td>
+    <td class="r tnum">${yen(a.price)}</td><td class="r tnum"><b>${yen(a.book)}</b></td>
+    <td><div class="miniwrap"><div class="minibar ${cls}"><i style="width:${p}%"></i></div><span class="minipct">${p}%</span></div></td>
+    <td>${stBadge(a.status)}</td></tr>`;
+  }).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する資産がありません</td></tr>';
+}
+$('q').addEventListener('input',renderList);
+
+/* ============ ASSET DETAIL MODAL ============ */
+let modalAssetId=null;
+function openAsset(id){
+  const a=assets.find(x=>x.id===id);if(!a)return;modalAssetId=id;
+  const cat=CATMAP[a.cat];
+  const rateTxt=a.method==='定率'?(Math.round(declineRate(a.life)*1000)/10)+'%（定率）':'—（定額）';
+  $('modalBody').innerHTML=`
+    <div class="paper" style="border:0;box-shadow:none;padding:0">
+      <div class="pv-top">
+        <div><div class="pv-name">${esc(a.name)}</div><span class="cat-tag" style="color:${cat.color}">${esc(a.cat)}</span> ${stBadge(a.status)}</div>
+        <div class="pv-meta"><div>管理番号</div><div class="no">${esc(a.id)}</div></div>
+      </div>
+      <div class="pv-grid">
+        <div class="pr"><span>取得価額</span><b>${yen(a.price)}</b></div>
+        <div class="pr"><span>取得年月</span><b>${fmtDL(a.acqDate)}</b></div>
+        <div class="pr"><span>償却方法</span><b>${esc(a.method)}法</b></div>
+        <div class="pr"><span>耐用年数</span><b>${a.life}年</b></div>
+        <div class="pr"><span>償却率</span><b>${rateTxt}</b></div>
+        <div class="pr"><span>累計償却額</span><b>${yen(a.acc)}</b></div>
+        <div class="pr"><span>設置場所</span><b>${esc(a.loc)}</b></div>
+        <div class="pr"><span>管理者</span><b>${esc(a.staff)}</b></div>
+      </div>
+      <div class="pv-book"><span style="font-weight:700">現在の帳簿価額（簿価）</span><span class="a">${yen(a.book)}</span></div>
+      <div style="font-size:12px;font-weight:800;margin-bottom:4px">償却スケジュール（AI自動計算）</div>
+      <table class="pv">
+        <thead><tr><th>年度</th><th class="r">期首簿価</th><th class="r">償却費</th><th class="r">期末簿価</th></tr></thead>
+        <tbody>${a.schedule.map(s=>`<tr class="${s.year===FY?'cur':''}"><td>${s.year}年度</td><td class="r">${yen(s.open)}</td><td class="r">${yen(s.dep)}</td><td class="r">${yen(s.close)}</td></tr>`).join('')}</tbody>
+      </table>
+    </div>`;
+  $('modal').classList.add('show');
+}
+window.openAsset=openAsset;
+$('modalClose').onclick=$('modalClose2').onclick=()=>$('modal').classList.remove('show');
+$('modal').addEventListener('click',e=>{if(e.target===$('modal'))$('modal').classList.remove('show');});
+$('modalRecalc').onclick=async()=>{
+  const btn=$('modalRecalc');btn.textContent='⚡ 計算中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,800));
+  btn.textContent='⚡ AIで償却を再計算';btn.disabled=false;
+  showToast(modalAssetId+' の償却スケジュールを再計算しました');
+};
+
+/* ============ DEPRECIATION ============ */
+function renderDep(){
+  const active=assets.filter(a=>a.status!=='disposed');
+  const thisYearDep=active.reduce((s,a)=>s+currentYearDep(a),0);
+  const fullCount=active.filter(a=>a.book<=1).length;
+  const bookTotal=active.reduce((s,a)=>s+a.book,0);
+  $('depKpis').innerHTML=`
+    ${kpi('#0ea5b7','今期 償却費 合計',yen(thisYearDep),active.length+'件 対象','up','損金算入')}
+    ${kpi('#2f6df0','期末 簿価 合計',yen(bookTotal),'','up','確定')}
+    ${kpi('#7c5cf0','定率法 対象',active.filter(a=>a.method==='定率').length+'件',active.filter(a=>a.method==='定額').length+'件 定額','up','自動判定')}
+    ${kpi('#8a94a6','償却完了',fullCount+'件',' ',fullCount?'warn':'up',fullCount?'簿価1円':'なし')}`;
+
+  const rows=active.filter(a=>currentYearDep(a)>0||a.book>1).sort((a,b)=>currentYearDep(b)-currentYearDep(a));
+  $('depRows').innerHTML=rows.length?rows.map(a=>{
+    const open=currentYearOpen(a);const dep=currentYearDep(a);const close=open-dep;
+    return `<tr onclick="openAsset('${esc(a.id)}')">
+      <td class="mono" style="font-size:12px">${esc(a.id)}</td><td><b>${esc(a.name)}</b></td>
+      <td><span class="cat-tag">${esc(a.method)}法</span></td>
+      <td class="r tnum">${yen(a.price)}</td><td class="r tnum">${yen(open)}</td>
+      <td class="r tnum" style="color:var(--brand);font-weight:800">${yen(dep)}</td><td class="r tnum">${yen(close)}</td></tr>`;
+  }).join('') : '<tr><td colspan="7" class="empty-cell">今期の償却対象はありません</td></tr>';
+  $('depTotal').textContent=yen(rows.reduce((s,a)=>s+currentYearDep(a),0));
+  $('depBookTotal').textContent=yen(rows.reduce((s,a)=>s+(currentYearOpen(a)-currentYearDep(a)),0));
+}
+$('runDep').addEventListener('click',async()=>{
+  const btn=$('runDep');btn.textContent='⚡ 計算中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,1000));
+  btn.textContent='⚡ AIで今期分を自動計算';btn.disabled=false;
+  const n=assets.filter(a=>a.status!=='disposed'&&currentYearDep(a)>0).length;
+  showToast(n+'件の当期償却費を自動計算しました（仕訳プレビュー作成済）');
+});
+
+/* ============ STOCKTAKE ============ */
+function renderStock(){
+  const active=assets.filter(a=>a.status!=='disposed');
+  const done=active.filter(a=>a.checked).length;
+  const pct=Math.round(done/active.length*100);
+  $('stockKpis').innerHTML=`
+    ${kpi('#16b877','棚卸 完了',done+'<small>/'+active.length+'件</small>',pct+'% 完了','up','進行中')}
+    ${kpi('#e3941f','未確認',(active.length-done)+'件',' ',active.length-done?'warn':'up',active.length-done?'要確認':'完了')}
+    ${kpi('#2f6df0','対象拠点',LOCATIONS.length+'拠点','','up','全社')}
+    ${kpi('#7c5cf0','AI照合精度','99.2<small>%</small>','画像照合','up','高精度')}`;
+  $('stockRows').innerHTML=active.map(a=>`<tr>
+    <td class="mono" style="font-size:12px">${esc(a.id)}</td><td><b>${esc(a.name)}</b></td>
+    <td style="color:var(--ink-2)">${esc(a.loc)}</td><td style="color:var(--ink-2)">${esc(a.staff)}</td>
+    <td>${a.checked?'<span class="st active">確認済</span>':'<span class="st renew">未確認</span>'}</td>
+    <td class="r">${a.checked?'<span style="color:var(--ink-3);font-size:12px">—</span>':`<button class="btn green" style="padding:6px 14px" onclick="checkStock('${esc(a.id)}')">確認</button>`}</td></tr>`).join('');
+}
+window.checkStock=id=>{const a=assets.find(x=>x.id===id);if(a){a.checked=true;renderStock();showToast(a.name+' を棚卸済にしました');}};
+$('bulkCheck').addEventListener('click',async()=>{
+  const btn=$('bulkCheck');btn.textContent='📷 AI照合中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,1100));
+  let n=0;assets.filter(a=>a.status!=='disposed'&&!a.checked).forEach(a=>{a.checked=true;n++;});
+  btn.textContent='📷 AI画像照合で一括確認';btn.disabled=false;
+  renderStock();showToast('AI画像照合で '+n+'件を一括で棚卸済にしました');
+});
+
+/* ============ DISPOSE ============ */
+function renderDispose(){
+  const cand=assets.filter(a=>a.status==='renew'||(a.status==='fulldep'&&a.book<=1));
+  $('disposeRows').innerHTML=cand.length?cand.map(a=>`<tr>
+    <td class="mono" style="font-size:12px">${esc(a.id)}</td><td><b>${esc(a.name)}</b></td>
+    <td style="color:var(--ink-2)">${fmtDL(a.acqDate)}</td><td class="r tnum"><b>${yen(a.book)}</b></td>
+    <td>${stBadge(a.status)}</td>
+    <td class="r"><button class="btn" style="padding:6px 14px;border-color:var(--red);color:var(--red)" onclick="disposeAsset('${esc(a.id)}')">🗑️ 除却</button></td></tr>`).join('')
+    : '<tr><td colspan="6" class="empty-cell">除却・更新候補の資産はありません 🎉</td></tr>';
+  $('navRenew').textContent=assets.filter(a=>a.status==='renew').length;
+}
+window.disposeAsset=id=>{
+  const a=assets.find(x=>x.id===id);if(!a)return;
+  a.status='disposed';
+  renderDispose();
+  showToast(a.name+' を除却しました（除却損 '+yen(a.book>1?a.book:0)+' を計上）');
+  $('navRenew').textContent=assets.filter(a=>a.status==='renew').length;
+};
+
+/* ============ AI AUTO CALC ============ */
+function renderCatSelect(){$('aCat').innerHTML=CATEGORIES.map(c=>`<option value="${esc(c.n)}">${esc(c.n)}（耐用${c.life}年・${c.method}法）</option>`).join('');$('aCat').value='車両運搬具';}
+let lastCalc=null;
+$('aiRun').addEventListener('click',async()=>{
+  const name=$('aName').value.trim();
+  const catName=$('aCat').value;
+  const price=+$('aPrice').value||0;
+  if(!name||price<=0){showToast('資産名と取得価額を入力してください');return;}
+  const cat=CATMAP[catName];
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 計算中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},110);
+  await new Promise(r=>setTimeout(r,1200));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+
+  // build full schedule from acquisition
+  const life=cat.life;let book=price;const schedule=[];const acqY=FY;
+  for(let y=0;y<life;y++){
+    let dep;
+    if(cat.method==='定率'){dep=Math.floor(book*declineRate(life));}
+    else{dep=straightAnnual(price,life);}
+    if(book-dep<1)dep=book-1;if(dep<0)dep=0;
+    const close=book-dep;
+    schedule.push({year:acqY+y,open:book,dep,close});
+    book=close;
+  }
+  lastCalc={name,cat:catName,price,life,method:cat.method,schedule,acqDate:new Date(+($('aDate').value.split('-')[0]),(+($('aDate').value.split('-')[1])||1)-1,1)};
+
+  const rateTxt=cat.method==='定率'?(Math.round(declineRate(life)*1000)/10)+'%':'1/'+life;
+  $('genSummary').innerHTML=`<b>${esc(name)}</b>（${esc(catName)}） → AIが <b style="color:var(--brand)">耐用年数 ${life}年・${cat.method}法・償却率 ${rateTxt}</b> と判定。初年度償却費は <b style="color:var(--brand)">${yen(schedule[0].dep)}</b> です。`;
+  $('genItems').innerHTML=schedule.map(s=>`<tr><td>${s.year}年度</td><td class="r tnum">${yen(s.open)}</td><td class="r tnum" style="color:var(--brand);font-weight:800">${yen(s.dep)}</td><td class="r tnum">${yen(s.close)}</td></tr>`).join('');
+  $('genList').classList.add('show');
+  btn.disabled=false;btn.textContent='⚡ もう一度計算';
+  showToast(life+'年分の償却スケジュールを自動作成しました');
+});
+$('aiSave').addEventListener('click',()=>{
+  if(!lastCalc){showToast('先にAI計算を実行してください');return;}
+  const id='FA-'+String(1001+assets.length);
+  assets.push({
+    id,name:lastCalc.name,cat:lastCalc.cat,price:lastCalc.price,
+    acqDate:lastCalc.acqDate,life:lastCalc.life,method:lastCalc.method,
+    book:lastCalc.schedule[0].close,acc:lastCalc.schedule[0].dep,
+    schedule:lastCalc.schedule,loc:'本社1F',staff:'佐藤',status:'active',checked:false
+  });
+  showToast('資産 '+id+'「'+lastCalc.name+'」を台帳に登録しました');
+  setTimeout(()=>go('list'),700);
+});
+
+/* ============ INIT ============ */
+renderCatSelect();renderChips();renderDash();
+$('navRenew').textContent=assets.filter(a=>a.status==='renew').length;
+</script>
+</body>
+</html>

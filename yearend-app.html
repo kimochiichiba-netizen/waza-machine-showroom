@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜年末調整マシン（年末調整自動化システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:78px 1fr 64px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut / progress ring */
+.ring-wrap{display:flex;align-items:center;gap:22px}
+.ring{--p:0;--c:var(--green);width:128px;height:128px;border-radius:50%;flex-shrink:0;
+  background:conic-gradient(var(--c) calc(var(--p)*1%),var(--soft) 0);display:grid;place-items:center;position:relative;transition:--p 1s}
+.ring::after{content:"";position:absolute;inset:13px;border-radius:50%;background:var(--card)}
+.ring .rin{position:relative;z-index:1;text-align:center}
+.ring .rin b{font-size:26px;font-weight:900;display:block;line-height:1}
+.ring .rin span{font-size:10.5px;color:var(--ink-3);font-weight:700}
+.ring-leg{display:flex;flex-direction:column;gap:9px;font-size:12.5px}
+.ring-leg .lg{display:flex;align-items:center;gap:9px}
+.ring-leg .lg .sw{width:11px;height:11px;border-radius:3px}
+.ring-leg .lg b{margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.done{background:var(--green-soft);color:var(--green)}
+.st.review{background:var(--brand-soft);color:var(--brand)}
+.st.collected{background:var(--brand-soft);color:var(--brand)}
+.st.waiting{background:var(--soft);color:var(--ink-3)}
+.st.alert{background:var(--red-soft);color:var(--red)}
+.st.partial{background:var(--amber-soft);color:var(--amber)}
+.tag-type{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;background:var(--soft);color:var(--ink-2)}
+
+/* amount delta */
+.delta.plus{color:var(--green);font-weight:800}
+.delta.minus{color:var(--red);font-weight:800}
+
+/* create form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,400px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--brand)}
+.fg .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* paper preview (源泉徴収票 style) */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:30px 34px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.pv-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
+.pv-title{font-size:21px;font-weight:900;letter-spacing:.14em;color:var(--brand-dk);border-bottom:3px solid var(--brand-dk);padding-bottom:5px}
+.pv-meta{text-align:right;font-size:11.5px;color:var(--ink-2)}
+.pv-meta .no{font-family:'Orbitron';color:var(--ink);font-weight:700}
+.pv-cust{font-size:18px;font-weight:900;border-bottom:1.5px solid #1a2233;display:inline-block;min-width:200px;padding-bottom:5px;margin-bottom:8px}
+.pv-result{background:var(--green-soft);border-left:5px solid var(--green);border-radius:6px;padding:13px 18px;margin:16px 0;display:flex;justify-content:space-between;align-items:center}
+.pv-result.minus{background:var(--red-soft);border-left-color:var(--red)}
+.pv-result .a{font-family:'Orbitron';font-size:22px;font-weight:700;color:var(--green)}
+.pv-result.minus .a{color:var(--red)}
+table.pv{width:100%;border-collapse:collapse;margin-bottom:8px}
+table.pv th{background:var(--brand-dk);color:#fff;font-size:11px;padding:8px 11px;text-align:left}
+table.pv th.r,table.pv td.r{text-align:right}
+table.pv td{padding:8px 11px;border-bottom:1px solid var(--line);font-size:12px}
+table.pv td.lbl{color:var(--ink-2)}
+.pv-sums{margin-left:auto;width:260px}
+.pv-sums .r{display:flex;justify-content:space-between;padding:6px 10px;font-size:12px;color:var(--ink-2)}
+.pv-sums .r.g{background:var(--brand-dk);color:#fff;border-radius:6px;margin-top:5px;padding:9px 10px;font-weight:800}
+
+/* AI stage */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900}
+.gen-sum{display:none;margin-top:16px;padding:14px 16px;border-radius:11px;background:var(--brand-soft);border:1px solid #c5d9ff;font-size:13px;align-items:center;gap:14px}
+.gen-sum.show{display:flex;animation:fade .4s}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.av-emp{width:28px;height:28px;border-radius:50%;background:var(--brand-soft);color:var(--brand-dk);display:inline-grid;place-items:center;font-weight:800;font-size:12px;margin-right:8px;vertical-align:middle}
+
+/* doc checklist mini */
+.docpill{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:6px;margin:1px}
+.docpill.ok{background:var(--green-soft);color:var(--green)}
+.docpill.no{background:var(--soft);color:var(--ink-3)}
+
+/* calc table */
+.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:980px){.calc-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">年末調整マシン<small>技マシン｜年末調整自動化</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="emp"><span class="i">👥</span>対象者</a>
+      <a data-v="docs"><span class="i">📥</span>書類回収<span class="badge" id="navWait">0</span></a>
+      <a data-v="calc"><span class="i">🧮</span>計算</a>
+      <a data-v="refund"><span class="i">💴</span>還付</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI自動計算</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 経理担当</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。従業員名・金額はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">令和7年分 年末調整の進捗状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>書類の回収状況</h3><span class="more">令和7年分</span></div>
+            <div class="pb">
+              <div class="ring-wrap">
+                <div class="ring" id="dashRing"><div class="rin"><b id="ringPct">0%</b><span>回収率</span></div></div>
+                <div class="ring-leg" id="ringLeg"></div>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+        <div style="height:16px"></div>
+        <div class="panel">
+          <div class="ph"><h3>部署別 進捗</h3><span class="more">提出/対象</span></div>
+          <div class="pb"><div class="bars" id="deptBars"></div></div>
+        </div>
+      </section>
+
+      <!-- EMPLOYEES (対象者) -->
+      <section class="view" id="v-emp">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="qEmp" placeholder="氏名・社員番号・部署で検索"></div>
+          <div class="chips" id="empChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>社員番号</th><th>氏名</th><th>部署</th><th class="r">推定年収</th><th>扶養</th><th>提出状況</th></tr></thead>
+          <tbody id="empRows"></tbody>
+        </table>
+      </section>
+
+      <!-- DOCS (書類回収) -->
+      <section class="view" id="v-docs">
+        <div class="kpis" id="docsKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>提出書類のチェック状況</h3>
+            <button class="btn primary" id="remindAll" style="margin-left:auto">✉️ 未提出者へ一括リマインド</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>氏名</th><th>提出書類</th><th>不足書類</th><th>提出状況</th><th></th></tr></thead>
+              <tbody id="docsRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- CALC (計算) -->
+      <section class="view" id="v-calc">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>対象者</label><select id="cEmp"></select></div>
+            <div class="fg row2">
+              <div><label>給与収入</label><input id="cIncome" type="number" placeholder="0"></div>
+              <div><label>源泉徴収税額（仮）</label><input id="cWithheld" type="number" placeholder="0"></div>
+            </div>
+            <div class="fg row2">
+              <div><label>社会保険料</label><input id="cSocial" type="number" placeholder="0"></div>
+              <div><label>生命保険料控除</label><input id="cLife" type="number" placeholder="0"></div>
+            </div>
+            <div class="fg row2">
+              <div><label>扶養人数</label><input id="cDep" type="number" min="0" value="0"></div>
+              <div><label>地震保険料控除</label><input id="cQuake" type="number" placeholder="0"></div>
+            </div>
+            <div class="fg"><label>住宅ローン控除</label><input id="cLoan" type="number" placeholder="0"></div>
+            <div class="aihint" id="cAiHint">✨ AIが控除額を自動で計算しました</div>
+            <div class="linkrow" style="margin-top:16px">
+              <button class="btn primary" id="cCalc" style="flex:1;justify-content:center">⚡ AIで計算して確定</button>
+              <button class="btn" id="cSample">サンプル</button>
+            </div>
+          </div>
+          <div>
+            <div class="paper" id="cPaper">
+              <div class="pv-top">
+                <div class="pv-title">年末調整 計算結果</div>
+                <div class="pv-meta"><div>整理番号：<span class="no" id="pNo">—</span></div><div>対象年度：令和7年分</div><div>計算日：<span id="pDate">—</span></div></div>
+              </div>
+              <div><span class="pv-cust" id="pEmp">　様</span></div>
+              <div style="font-size:11.5px;color:var(--ink-2)">下記のとおり過不足額を精算いたします。</div>
+              <div class="pv-result" id="pResultBox"><span style="font-weight:700" id="pResultLbl">還付額（差引）</span><span class="a" id="pResult">¥0</span></div>
+              <table class="pv">
+                <thead><tr><th>項目</th><th class="r">金額</th></tr></thead>
+                <tbody id="pRows"></tbody>
+              </table>
+              <div class="pv-sums">
+                <div class="r"><span>課税所得</span><span id="pTaxable">¥0</span></div>
+                <div class="r"><span>算出年税額</span><span id="pYearTax">¥0</span></div>
+                <div class="r"><span>源泉徴収税額（合計）</span><span id="pWithheldSum">¥0</span></div>
+                <div class="r g"><span id="pDiffLbl">差引還付額</span><span id="pDiff">¥0</span></div>
+              </div>
+              <div style="margin-top:18px;font-size:11px;color:var(--ink-2);border-top:1px solid var(--line);padding-top:12px">
+                ※本計算は技マシンのデモです。実際の確定には源泉徴収簿・各種証明書の確認が必要です。
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- REFUND (還付) -->
+      <section class="view" id="v-refund">
+        <div class="kpis" id="refundKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>過不足精算 一覧</h3>
+            <button class="btn green" id="exportPay" style="margin-left:auto">📤 給与計算へ反映データを出力</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>氏名</th><th>部署</th><th class="r">年税額</th><th class="r">源泉徴収済</th><th class="r">過不足額</th><th>区分</th></tr></thead>
+              <tbody id="refundRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI AUTO CALC -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">回収済みの申告書からAIが一括計算</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">提出済みの申告書 <b id="aiCnt">0件</b> を読み取り、控除計算・過不足精算をAIが自動で行います。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで一括計算する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">3日（約14時間）</div>
+              <ul>
+                <li>📄 申告書を1枚ずつ目視で確認</li>
+                <li>🧮 控除額・課税所得を電卓で計算</li>
+                <li>📋 源泉徴収票へ転記・過不足を精算</li>
+                <li>✏️ 計算ミスの見直し・やり直し</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 申告書・証明書を自動で読み取り</li>
+                <li>📐 控除・課税所得・年税額を自動計算</li>
+                <li>💴 過不足額（還付/徴収）を自動精算</li>
+                <li>✅ 検算済みで計算ミスゼロ</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ 計算が完了した対象者</div>
+            <div id="genItems"></div>
+          </div>
+          <div class="gen-sum" id="genSum">
+            <div class="orb" style="width:42px;height:42px;font-size:18px;margin:0">💴</div>
+            <div><div style="font-weight:900;font-size:14px" id="genSumTop">—</div>
+            <div style="color:var(--ink-2);font-size:12px" id="genSumBot">—</div></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmtDL=d=>'令和'+(d.getFullYear()-2018)+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+const TODAY=new Date(2025,11,5); // 令和7年12月5日 デモ基準日
+let SEED=70707;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+
+/* ============ TAX MODEL (簡易・デモ用) ============ */
+// 給与所得控除(令和) 概算
+function kyuyoControl(income){
+  if(income<=1625000)return 550000;
+  if(income<=1800000)return income*0.4-100000;
+  if(income<=3600000)return income*0.3+80000;
+  if(income<=6600000)return income*0.2+440000;
+  if(income<=8500000)return income*0.1+1100000;
+  return 1950000;
+}
+// 所得税 累進(課税所得)
+function shotokuzei(taxable){
+  if(taxable<=0)return 0;
+  let t;
+  if(taxable<=1950000)t=taxable*0.05;
+  else if(taxable<=3300000)t=taxable*0.10-97500;
+  else if(taxable<=6950000)t=taxable*0.20-427500;
+  else if(taxable<=9000000)t=taxable*0.23-636000;
+  else t=taxable*0.33-1536000;
+  return Math.floor(t*1.021); // 復興特別所得税込
+}
+// 1人の年末調整計算
+function calcYearEnd(e){
+  const income=e.income;
+  const kyuyo=kyuyoControl(income);
+  const giveAfterKyuyo=income-kyuyo; // 給与所得
+  const basic=480000; // 基礎控除
+  const dep=e.dep*380000; // 扶養控除(概算)
+  const lifeCtl=Math.min(e.life||0,40000);
+  const quakeCtl=Math.min(e.quake||0,50000);
+  const deductions=basic+e.social+dep+lifeCtl+quakeCtl;
+  const taxable=Math.max(0,Math.floor((giveAfterKyuyo-deductions)/1000)*1000);
+  let yearTax=shotokuzei(taxable);
+  yearTax=Math.max(0,yearTax-(e.loan||0)); // 住宅ローン控除(税額控除)
+  yearTax=Math.floor(yearTax/100)*100;
+  const diff=e.withheld-yearTax; // +なら還付 / -なら徴収
+  return {kyuyo,giveAfterKyuyo,basic,dep,lifeCtl,quakeCtl,social:e.social,deductions,taxable,yearTax,withheld:e.withheld,diff,
+    loan:e.loan||0,life:e.life||0,quake:e.quake||0};
+}
+
+/* ============ DATA ============ */
+const DEPTS=['配送','青果営業','管理','製造','総務'];
+const LAST=['佐藤','鈴木','高橋','田中','渡辺','伊藤','山本','中村','小林','加藤','吉田','山田','佐々木','松本','井上','木村','林','清水','森','池永'];
+const FIRST=['健太','美咲','大輔','由美','翔','彩','直樹','恵子','拓也','麻衣','和也','里奈','悠太','7陽子','涼','楓','駿','咲','蓮','優'];
+const FIRST2=['健太','美咲','大輔','由美','翔','彩','直樹','恵子','拓也','麻衣','和也','里奈','悠太','陽子','涼','楓','駿','咲','蓮','優'];
+const DOCKINDS=[
+  {k:'扶養控除等申告書',req:true},
+  {k:'保険料控除申告書',req:false},
+  {k:'生命保険料控除証明書',req:false},
+  {k:'地震保険料控除証明書',req:false},
+  {k:'基礎控除申告書',req:true},
+  {k:'住宅ローン控除証明書',req:false},
+];
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+// build employees
+let employees=[];
+(function seed(){
+  for(let i=0;i<28;i++){
+    const name=pick(LAST)+' '+pick(FIRST2);
+    const dept=pick(DEPTS);
+    const income=Math.round((2600000+rnd()*5200000)/10000)*10000;
+    const dep=rnd()<0.45?(rnd()<0.6?1:(rnd()<0.7?2:3)):0;
+    const social=Math.round(income*(0.142+rnd()*0.01)/1000)*1000;
+    const life=rnd()<0.6?Math.round((20000+rnd()*60000)/1000)*1000:0;
+    const quake=rnd()<0.3?Math.round((10000+rnd()*40000)/1000)*1000:0;
+    const loan=rnd()<0.18?Math.round((80000+rnd()*200000)/1000)*1000:0;
+    // 仮の源泉徴収済(若干多め徴収=還付になりやすい)
+    const baseTax=shotokuzei(Math.max(0,Math.floor((income-kyuyoControl(income)-480000-social-dep*380000)/1000)*1000));
+    const withheld=Math.max(0,Math.round(baseTax*(1.02+rnd()*0.18)/100)*100);
+    // 提出書類
+    const has={};
+    let submitted='waiting';
+    const r=rnd();
+    DOCKINDS.forEach(d=>has[d.k]=false);
+    if(r<0.66){ // 提出済み(一部不足あり)
+      DOCKINDS.forEach(d=>{ if(d.req||rnd()<0.7) has[d.k]=true; });
+      if(loan>0) has['住宅ローン控除証明書']=rnd()<0.7;
+      if(life>0) has['生命保険料控除証明書']=rnd()<0.85; else has['生命保険料控除証明書']=false;
+      if(quake>0) has['地震保険料控除証明書']=rnd()<0.8; else has['地震保険料控除証明書']=false;
+      const missingReq=DOCKINDS.some(d=>d.req&&!has[d.k]);
+      const missingAny=(life>0&&!has['生命保険料控除証明書'])||(quake>0&&!has['地震保険料控除証明書'])||(loan>0&&!has['住宅ローン控除証明書']);
+      submitted = missingReq?'partial':(missingAny?'partial':'collected');
+    } else if(r<0.82){ // 一部のみ
+      has['扶養控除等申告書']=true; submitted='partial';
+    } else { // 未提出
+      submitted='waiting';
+    }
+    employees.push({
+      id:'E-'+String(101+i),name,dept,income,dep,social,life,quake,loan,withheld,
+      docs:has,submitted, calc:null
+    });
+  }
+})();
+
+/* status labels */
+const SUBLABEL={collected:'回収済',partial:'一部不足',waiting:'未提出'};
+const SUBCLASS={collected:'collected',partial:'partial',waiting:'waiting'};
+function subBadge(s){return `<span class="st ${SUBCLASS[s]}">${SUBLABEL[s]}</span>`;}
+
+/* ============ ROUTING ============ */
+const TITLES={
+  dash:['ダッシュボード','令和7年分 年末調整の進捗状況'],
+  emp:['対象者','年末調整の対象となる従業員を管理します'],
+  docs:['書類回収','申告書・控除証明書の提出状況を管理します'],
+  calc:['計算','控除額・過不足額をAIが自動で計算します'],
+  refund:['還付','過不足精算と給与反映データを管理します'],
+  ai:['AI自動計算','申告書からAIが一括で控除計算・精算を行います']
+};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='dash'?'<button class="btn" onclick="go(\'docs\')">📥 書類回収</button><button class="btn primary" onclick="go(\'ai\')">⚡ AI自動計算</button>'
+    : v==='emp'?'<button class="btn primary" onclick="go(\'ai\')">⚡ AI一括計算</button>'
+    : v==='calc'?'<button class="btn" onclick="go(\'refund\')">💴 還付一覧</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='emp')renderEmp();
+  if(v==='docs')renderDocs();
+  if(v==='refund')renderRefund();
+  if(v==='ai')renderAiHeader();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const total=employees.length;
+  const collected=employees.filter(e=>e.submitted==='collected').length;
+  const partial=employees.filter(e=>e.submitted==='partial').length;
+  const waiting=employees.filter(e=>e.submitted==='waiting').length;
+  const pct=Math.round((collected)/total*100);
+  // refund estimate (全員仮計算)
+  let refundSum=0,collectSum=0,refundCnt=0,collectCnt=0;
+  employees.forEach(e=>{const c=e.calc||calcYearEnd(e);if(c.diff>=0){refundSum+=c.diff;refundCnt++;}else{collectSum+=-c.diff;collectCnt++;}});
+  const alertN=partial+waiting;
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','対象者数',total+'<small>名</small>','5部署','up','確定済 '+collected+'名')}
+    ${kpi('#16b877','回収率',pct+'<small>%</small>','',pct>=70?'up':'warn',collected+'/'+total+'名 提出')}
+    ${kpi('#0ea5b7','還付見込み総額',yen(refundSum),refundCnt+'名','up','12月給与で還付')}
+    ${kpi('#e3941f','要確認',alertN+'<small>件</small>',waiting+'名 未提出','warn','リマインド推奨')}`;
+  // ring
+  const ring=$('dashRing');ring.style.setProperty('--c','var(--green)');
+  $('ringPct').textContent=pct+'%';
+  setTimeout(()=>ring.style.setProperty('--p',pct),80);
+  $('ringLeg').innerHTML=[
+    ['var(--green)','回収済',collected],
+    ['var(--amber)','一部不足',partial],
+    ['var(--ink-3)','未提出',waiting],
+  ].map(r=>`<div class="lg"><span class="sw" style="background:${r[0]}"></span>${r[1]}<b>${r[2]}名</b></div>`).join('');
+  // dept bars
+  const mx=Math.max(...DEPTS.map(d=>employees.filter(e=>e.dept===d).length),1);
+  $('deptBars').innerHTML=DEPTS.map(d=>{
+    const all=employees.filter(e=>e.dept===d);
+    const sub=all.filter(e=>e.submitted!=='waiting').length;
+    const w=Math.round(sub/Math.max(all.length,1)*100);
+    return `<div class="bar-row"><span class="mlabel">${d}</span>
+      <div class="bar-track"><div class="bar-fill" data-w="${w}"></div></div>
+      <span class="mval">${sub}/${all.length}</span></div>`;
+  }).join('');
+  setTimeout(()=>document.querySelectorAll('#deptBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // activity
+  const acts=[
+    {i:'⚡',c:'#e6f8f0',t:'AI自動計算で 12名分の過不足を算出（検算済み）',m:'10分前'},
+    {i:'📥',c:'#eaf1ff',t:'佐藤 健太 さんが 保険料控除申告書 を提出',m:'38分前'},
+    {i:'⚠️',c:'#fdeaea',t:'渡辺 麻衣 さんの 生命保険料控除証明書 が不足',m:'1時間前'},
+    {i:'✉️',c:'#eaf1ff',t:'未提出 5名へリマインドメールを送信',m:'今日 9:20'},
+    {i:'💴',c:'#e6f8f0',t:'還付見込みデータを給与計算へ出力',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ EMPLOYEES ============ */
+let empFilter='all';
+function renderEmpChips(){
+  const opts=[['all','すべて'],['collected','回収済'],['partial','一部不足'],['waiting','未提出'],['dep','扶養あり']];
+  $('empChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===empFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('empChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{empFilter=c.dataset.s;renderEmpChips();renderEmp();});
+}
+function renderEmp(){
+  const q=($('qEmp').value||'').toLowerCase();
+  let rows=employees.filter(e=>{
+    if(empFilter==='dep')return e.dep>0;
+    if(empFilter!=='all')return e.submitted===empFilter;
+    return true;
+  }).filter(e=>!q||(e.name+e.id+e.dept).toLowerCase().includes(q));
+  $('empRows').innerHTML=rows.length?rows.map(e=>`<tr onclick="openCalc('${esc(e.id)}')">
+    <td class="mono" style="font-size:12px">${esc(e.id)}</td>
+    <td><span class="av-emp">${esc(e.name[0])}</span><b>${esc(e.name)}</b></td>
+    <td><span class="tag-type">${esc(e.dept)}</span></td>
+    <td class="r tnum">${yen(e.income)}</td>
+    <td>${e.dep>0?'<b>'+e.dep+'名</b>':'<span style="color:var(--ink-3)">なし</span>'}</td>
+    <td>${subBadge(e.submitted)}</td></tr>`).join('')
+    :'<tr><td colspan="6" class="empty-cell">該当する対象者がいません</td></tr>';
+}
+$('qEmp').addEventListener('input',renderEmp);
+window.openCalc=id=>{const e=employees.find(x=>x.id===id);if(!e)return;go('calc');fillCalcForm(e);};
+
+/* ============ DOCS ============ */
+function reqDocsFor(e){
+  // この従業員に必要な書類
+  const need=['扶養控除等申告書','基礎控除申告書'];
+  if(e.life>0)need.push('生命保険料控除証明書');
+  if(e.quake>0)need.push('地震保険料控除証明書');
+  if(e.loan>0)need.push('住宅ローン控除証明書');
+  return need;
+}
+function renderDocs(){
+  const total=employees.length;
+  const collected=employees.filter(e=>e.submitted==='collected').length;
+  const partial=employees.filter(e=>e.submitted==='partial').length;
+  const waiting=employees.filter(e=>e.submitted==='waiting').length;
+  $('docsKpis').innerHTML=`
+    ${kpi('#16b877','回収済',collected+'<small>名</small>','','up','確認完了')}
+    ${kpi('#e3941f','一部不足',partial+'<small>名</small>','','warn','証明書待ち')}
+    ${kpi('#8a94a6','未提出',waiting+'<small>名</small>','','down','要リマインド')}
+    ${kpi('#2f6df0','回収率',Math.round(collected/total*100)+'<small>%</small>','','up','+8pt（前日比）')}`;
+  $('docsRows').innerHTML=employees.map(e=>{
+    const need=reqDocsFor(e);
+    const submitted=need.filter(k=>e.docs[k]);
+    const missing=need.filter(k=>!e.docs[k]);
+    return `<tr>
+      <td><span class="av-emp">${esc(e.name[0])}</span><b>${esc(e.name)}</b><div style="font-size:11px;color:var(--ink-3);margin-left:36px">${esc(e.dept)}</div></td>
+      <td>${submitted.length?submitted.map(k=>`<span class="docpill ok">✓ ${esc(k)}</span>`).join(''):'<span style="color:var(--ink-3)">—</span>'}</td>
+      <td>${missing.length?missing.map(k=>`<span class="docpill no">${esc(k)}</span>`).join(''):'<span style="color:var(--green);font-weight:700">不足なし</span>'}</td>
+      <td>${subBadge(e.submitted)}</td>
+      <td class="r">${e.submitted==='collected'?'<span style="color:var(--green)">✓ 確認済</span>':`<button class="btn" style="padding:6px 12px" onclick="remindOne('${esc(e.id)}')">催促</button>`}</td>
+    </tr>`;
+  }).join('');
+  $('navWait').textContent=waiting+partial;
+}
+window.remindOne=id=>{const e=employees.find(x=>x.id===id);if(e)showToast(e.name+' さんへ提出リマインドを送信しました');};
+$('remindAll').addEventListener('click',async()=>{
+  const btn=$('remindAll');btn.disabled=true;btn.textContent='✉️ 送信中…';
+  await new Promise(r=>setTimeout(r,800));
+  const n=employees.filter(e=>e.submitted!=='collected').length;
+  btn.disabled=false;btn.textContent='✉️ 未提出者へ一括リマインド';
+  showToast(n+'名へリマインドメールを一括送信しました');
+});
+
+/* ============ CALC ============ */
+function renderEmpSelect(){
+  $('cEmp').innerHTML='<option value="">選択してください</option>'+employees.map(e=>`<option value="${esc(e.id)}">${esc(e.name)}（${esc(e.dept)}）</option>`).join('');
+}
+function fillCalcForm(e){
+  $('cEmp').value=e.id;
+  $('cIncome').value=e.income;$('cWithheld').value=e.withheld;$('cSocial').value=e.social;
+  $('cLife').value=e.life;$('cDep').value=e.dep;$('cQuake').value=e.quake;$('cLoan').value=e.loan;
+  $('cAiHint').classList.add('show');setTimeout(()=>$('cAiHint').classList.remove('show'),2000);
+  renderPaper();
+}
+$('cEmp').addEventListener('change',()=>{const e=employees.find(x=>x.id===$('cEmp').value);if(e)fillCalcForm(e);else renderPaper();});
+['cIncome','cWithheld','cSocial','cLife','cDep','cQuake','cLoan'].forEach(id=>$(id).addEventListener('input',renderPaper));
+function readForm(){
+  return {
+    income:+$('cIncome').value||0, withheld:+$('cWithheld').value||0, social:+$('cSocial').value||0,
+    life:+$('cLife').value||0, dep:+$('cDep').value||0, quake:+$('cQuake').value||0, loan:+$('cLoan').value||0
+  };
+}
+function renderPaper(){
+  const e=employees.find(x=>x.id===$('cEmp').value);
+  $('pEmp').textContent=(e?e.name:'')+'　様';
+  const f=readForm();const c=calcYearEnd(f);
+  $('pRows').innerHTML=[
+    ['給与収入',yen(f.income)],
+    ['給与所得控除',yen(c.kyuyo)],
+    ['給与所得',yen(c.giveAfterKyuyo)],
+    ['基礎控除',yen(c.basic)],
+    ['社会保険料控除',yen(c.social)],
+    ['扶養控除（'+f.dep+'名）',yen(c.dep)],
+    ['生命保険料控除',yen(c.lifeCtl)],
+    ['地震保険料控除',yen(c.quakeCtl)],
+    ['住宅ローン控除',c.loan?'-'+yen(c.loan):'¥0'],
+  ].map(r=>`<tr><td class="lbl">${r[0]}</td><td class="r tnum">${r[1]}</td></tr>`).join('');
+  $('pTaxable').textContent=yen(c.taxable);
+  $('pYearTax').textContent=yen(c.yearTax);
+  $('pWithheldSum').textContent=yen(c.withheld);
+  const refund=c.diff>=0;
+  $('pResultLbl').textContent=refund?'還付額（差引）':'追加徴収額（差引）';
+  $('pResult').textContent=(refund?'+':'-')+yen(Math.abs(c.diff));
+  $('pResultBox').classList.toggle('minus',!refund);
+  $('pDiffLbl').textContent=refund?'差引還付額':'差引徴収額';
+  $('pDiff').textContent=(refund?'+':'-')+yen(Math.abs(c.diff));
+}
+$('cSample').addEventListener('click',()=>{
+  const e=employees.find(x=>x.submitted==='collected'&&x.dep>0)||employees[0];
+  fillCalcForm(e);
+});
+$('cCalc').addEventListener('click',async()=>{
+  if(!$('cEmp').value){showToast('対象者を選択してください');return;}
+  const btn=$('cCalc');btn.textContent='⚡ AIが計算中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,800));
+  const now=TODAY;const e=employees.find(x=>x.id===$('cEmp').value);
+  const c=calcYearEnd(readForm());
+  if(e){e.calc=c;Object.assign(e,readForm());}
+  $('pNo').textContent='YEA-'+(e?e.id.replace('E-',''):'000');
+  $('pDate').textContent=fmtDL(now);
+  btn.textContent='⚡ AIで計算して確定';btn.disabled=false;
+  const refund=c.diff>=0;
+  showToast((e?e.name:'対象者')+' を確定しました（'+(refund?'還付 ':'徴収 ')+yen(Math.abs(c.diff))+'）');
+  setTimeout(()=>go('refund'),700);
+});
+
+/* ============ REFUND ============ */
+function renderRefund(){
+  const data=employees.map(e=>({e,c:e.calc||calcYearEnd(e)}));
+  const refunds=data.filter(d=>d.c.diff>=0);
+  const collects=data.filter(d=>d.c.diff<0);
+  const refundSum=refunds.reduce((s,d)=>s+d.c.diff,0);
+  const collectSum=collects.reduce((s,d)=>s+(-d.c.diff),0);
+  const confirmed=employees.filter(e=>e.calc).length;
+  $('refundKpis').innerHTML=`
+    ${kpi('#0ea5b7','還付 合計',yen(refundSum),refunds.length+'名','up','12月給与で精算')}
+    ${kpi('#e24a4a','追加徴収 合計',yen(collectSum),collects.length+'名','down','徴収必要')}
+    ${kpi('#16b877','差引 純還付額',yen(refundSum-collectSum),'','up','会社負担分')}
+    ${kpi('#2f6df0','計算確定',confirmed+'/'+employees.length+'<small>名</small>','','up','残り '+(employees.length-confirmed)+'名')}`;
+  $('refundRows').innerHTML=data.sort((a,b)=>b.c.diff-a.c.diff).map(({e,c})=>{
+    const refund=c.diff>=0;
+    return `<tr onclick="openCalc('${esc(e.id)}')">
+      <td><span class="av-emp">${esc(e.name[0])}</span><b>${esc(e.name)}</b></td>
+      <td><span class="tag-type">${esc(e.dept)}</span></td>
+      <td class="r tnum">${yen(c.yearTax)}</td>
+      <td class="r tnum">${yen(c.withheld)}</td>
+      <td class="r tnum"><span class="delta ${refund?'plus':'minus'}">${refund?'+':'-'}${yen(Math.abs(c.diff))}</span></td>
+      <td>${refund?'<span class="st done">還付</span>':'<span class="st alert">追加徴収</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+$('exportPay').addEventListener('click',async()=>{
+  const btn=$('exportPay');btn.disabled=true;btn.textContent='📤 出力中…';
+  await new Promise(r=>setTimeout(r,800));
+  btn.disabled=false;btn.textContent='📤 給与計算へ反映データを出力';
+  showToast('過不足精算データ（'+employees.length+'名）を給与計算ソフトへ出力しました');
+});
+
+/* ============ AI AUTO CALC ============ */
+function submittedTargets(){return employees.filter(e=>e.submitted!=='waiting');}
+function renderAiHeader(){
+  $('aiCnt').textContent=submittedTargets().length+'件';
+}
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 計算中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  $('genItems').innerHTML='';$('genList').classList.remove('show');$('genSum').classList.remove('show');
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent=Math.min(s,9)+'秒';},120);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  const targets=submittedTargets();
+  $('genItems').innerHTML=targets.map((e,i)=>{
+    const c=calcYearEnd(e);e.calc=c;
+    const refund=c.diff>=0;
+    return `<div class="gen-item" data-i="${i}">
+      <span class="ck">✓</span>
+      <span class="av-emp" style="margin:0">${esc(e.name[0])}</span>
+      <b style="flex:1">${esc(e.name)}</b>
+      <span style="color:var(--ink-3);font-size:12px">${esc(e.dept)}</span>
+      <span class="delta ${refund?'plus':'minus'}" style="font-weight:800;min-width:96px;text-align:right">${refund?'還付 +':'徴収 -'}${yen(Math.abs(c.diff))}</span>
+    </div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  let refundSum=0,collectSum=0,rc=0,cc=0;
+  for(let i=0;i<items.length;i++){
+    await new Promise(r=>setTimeout(r,70));
+    items[i].classList.add('in');
+    const c=targets[i].calc;
+    if(c.diff>=0){refundSum+=c.diff;rc++;}else{collectSum+=-c.diff;cc++;}
+  }
+  $('genSumTop').textContent='還付 '+rc+'名／'+yen(refundSum)+'　・　追加徴収 '+cc+'名／'+yen(collectSum);
+  $('genSumBot').textContent='差引 純還付額 '+yen(refundSum-collectSum)+' ／ AIが全件検算済み・計算ミスゼロ';
+  $('genSum').classList.add('show');
+  btn.disabled=false;btn.textContent='⚡ もう一度計算';
+  showToast(items.length+'名分の年末調整をAIが一括計算しました');
+});
+
+/* ============ INIT ============ */
+renderEmpSelect();renderEmpChips();renderPaper();renderDash();renderAiHeader();
+$('navWait').textContent=employees.filter(e=>e.submitted!=='collected').length;
+</script>
+</body>
+</html>

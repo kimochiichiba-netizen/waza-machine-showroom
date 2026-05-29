@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜服薬管理マシン（医療・介護向け服薬管理システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#0e9f8e;--brand-dk:#0a7d6f;--brand-soft:#e3f7f3;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#2f9bd6;
+  --sb:#0c1f29;--sb-2:#10303a;--sb-ink:#bcd4d0;--sb-ink-2:#6f8a89;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(14,159,142,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* schedule ring (donut) */
+.donut-wrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.donut{--p:0;width:128px;height:128px;border-radius:50%;flex-shrink:0;
+  background:conic-gradient(var(--green) calc(var(--p)*1%),var(--soft) 0);display:grid;place-items:center;transition:--p 1s}
+.donut::after{content:"";position:absolute}
+.donut .hole{width:92px;height:92px;border-radius:50%;background:var(--card);display:grid;place-items:center;text-align:center}
+.donut .hole b{font-size:24px;font-weight:900;display:block;line-height:1}
+.donut .hole span{font-size:10.5px;color:var(--ink-3);font-weight:700}
+.legend{display:flex;flex-direction:column;gap:9px;font-size:12.5px}
+.legend .lg{display:flex;align-items:center;gap:8px}
+.legend .lg .sw{width:11px;height:11px;border-radius:4px}
+.legend .lg b{font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl th.c,table.tbl td.c{text-align:center}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.done{background:var(--green-soft);color:var(--green)}
+.st.waiting{background:var(--brand-soft);color:var(--brand)}
+.st.soon{background:var(--amber-soft);color:var(--amber)}
+.st.missed{background:var(--red-soft);color:var(--red)}
+.st.refused{background:var(--soft);color:var(--ink-3)}
+.st.low{background:var(--red-soft);color:var(--red)}
+.st.mid{background:var(--amber-soft);color:var(--amber)}
+.st.ok{background:var(--green-soft);color:var(--green)}
+.avatar{width:30px;height:30px;border-radius:9px;display:inline-grid;place-items:center;font-weight:800;font-size:12px;color:#fff;flex-shrink:0}
+.resident{display:flex;align-items:center;gap:10px}
+.resident .meta{font-size:11px;color:var(--ink-3);font-weight:500}
+
+/* med pills (timeline) */
+.pill-row{display:flex;gap:5px}
+.pill{width:30px;height:24px;border-radius:6px;display:grid;place-items:center;font-size:11px;font-weight:800;border:1px solid var(--line-2)}
+.pill.done{background:var(--green-soft);color:var(--green);border-color:#bdebd4}
+.pill.miss{background:var(--red-soft);color:var(--red);border-color:#f3c9c9}
+.pill.wait{background:var(--soft);color:var(--ink-3)}
+.pill.refuse{background:#fff;color:var(--ink-3);border-style:dashed}
+
+/* progress mini */
+.mini{display:flex;align-items:center;gap:8px}
+.mini .tk{flex:1;height:7px;border-radius:99px;background:var(--soft);overflow:hidden;min-width:60px}
+.mini .fl{height:100%;border-radius:99px}
+.mini b{font-size:12px;font-variant-numeric:tabular-nums;width:38px;text-align:right}
+
+/* form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:64px}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.timing-pick{display:flex;gap:7px;flex-wrap:wrap}
+.tp{padding:8px 13px;border:1px solid var(--line-2);border-radius:8px;font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;background:var(--card);transition:all .15s}
+.tp.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+.aihint{font-size:11px;color:var(--green);margin-top:6px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* schedule card preview */
+.card-prev{background:#fff;border:1px solid var(--line);border-radius:12px;padding:22px 24px;box-shadow:var(--shadow)}
+.cp-top{display:flex;align-items:center;gap:13px;border-bottom:1px solid var(--line);padding-bottom:15px;margin-bottom:15px}
+.cp-top .av{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;font-weight:900;font-size:17px;color:#fff}
+.cp-top .nm{font-size:18px;font-weight:900}
+.cp-top .rm{font-size:12px;color:var(--ink-3)}
+.cp-sec{font-size:12px;font-weight:800;color:var(--brand-dk);letter-spacing:.04em;margin:16px 0 9px}
+.sched-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+@media(max-width:520px){.sched-grid{grid-template-columns:repeat(2,1fr)}}
+.sched-cell{border:1px solid var(--line);border-radius:10px;padding:11px;text-align:center;background:var(--soft)}
+.sched-cell .t{font-size:11px;color:var(--ink-3);font-weight:700}
+.sched-cell .h{font-family:'Orbitron';font-size:17px;font-weight:700;color:var(--brand-dk);margin:3px 0}
+.sched-cell .c{font-size:10.5px;color:var(--ink-2);font-weight:700}
+.med-line{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:12.5px}
+.med-line:last-child{border-bottom:0}
+.med-line .mi{width:26px;height:26px;border-radius:7px;background:var(--brand-soft);display:grid;place-items:center;font-size:13px;flex-shrink:0}
+.med-line .nm{font-weight:700;flex:1}
+.med-line .ds{color:var(--ink-3);font-size:11.5px}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+.gen-item.alert .ck{background:var(--amber)}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#0e9f8e);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* alert cards */
+.alert-card{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);border-left-width:4px;border-radius:12px;padding:14px 16px;margin-bottom:11px;box-shadow:var(--shadow)}
+.alert-card.crit{border-left-color:var(--red)}
+.alert-card.warn{border-left-color:var(--amber)}
+.alert-card.info{border-left-color:var(--brand)}
+.alert-card .ic{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;font-size:19px;flex-shrink:0}
+.alert-card.crit .ic{background:var(--red-soft)}
+.alert-card.warn .ic{background:var(--amber-soft)}
+.alert-card.info .ic{background:var(--brand-soft)}
+.alert-card .body{flex:1;min-width:0}
+.alert-card .ti{font-weight:800;font-size:13.5px}
+.alert-card .ds{font-size:12px;color:var(--ink-2);margin-top:2px}
+.alert-card .tm{font-size:11px;color:var(--ink-3);margin-top:3px}
+.alert-card .act-btns{display:flex;gap:7px;flex-shrink:0}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.tag-pill{font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:6px;background:var(--soft);color:var(--ink-2)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">服薬管理マシン<small>技マシン｜服薬・残薬管理</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="residents"><span class="i">🧑‍🦳</span>入居者一覧</a>
+      <a data-v="records"><span class="i">💊</span>服薬記録</a>
+      <a data-v="stock"><span class="i">📦</span>残薬<span class="badge" id="navStock">0</span></a>
+      <a data-v="alerts"><span class="i">🔔</span>アラート<span class="badge" id="navAlerts">0</span></a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AIチェック</a>
+      <a data-v="schedule"><span class="i">📝</span>処方→スケジュール作成</a>
+    </nav>
+    <div class="org">
+      <div class="av">桜</div>
+      <div><b>さくら苑（特養）</b><span>デモ環境 / 看護師</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。入居者名・お薬はすべて架空のサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">本日の服薬状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>本日の服薬遵守率</h3><span class="more" onclick="go('records')">服薬記録へ</span></div>
+            <div class="pb">
+              <div class="donut-wrap">
+                <div class="donut" id="donut" style="position:relative"><div class="hole"><b id="donutP">0%</b><span>遵守率</span></div></div>
+                <div class="legend" id="donutLegend"></div>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:16px">
+          <div class="ph"><h3>時間帯別 服薬完了状況（本日）</h3><span class="more">朝・昼・夕・就寝前</span></div>
+          <div class="pb"><div class="bars" id="trendBars"></div></div>
+        </div>
+      </section>
+
+      <!-- RESIDENTS -->
+      <section class="view" id="v-residents">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="rq" placeholder="入居者名・部屋番号・担当で検索"></div>
+          <div class="chips" id="resChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>入居者</th><th>部屋</th><th>服用中のお薬</th><th>本日の服薬状況</th><th>遵守率(7日)</th><th>状態</th></tr></thead>
+          <tbody id="resRows"></tbody>
+        </table>
+      </section>
+
+      <!-- RECORDS -->
+      <section class="view" id="v-records">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="recq" placeholder="入居者名で検索"></div>
+          <div class="chips" id="recChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>時刻</th><th>入居者</th><th>お薬</th><th>タイミング</th><th>記録者</th><th>状態</th><th class="c">操作</th></tr></thead>
+          <tbody id="recRows"></tbody>
+        </table>
+      </section>
+
+      <!-- STOCK -->
+      <section class="view" id="v-stock">
+        <div class="kpis" id="stockKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>残薬モニタリング</h3>
+            <button class="btn green" id="autoOrder" style="margin-left:auto">📋 不足分を一括で発注リスト化</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>お薬</th><th>入居者</th><th class="r">残量</th><th>残り日数</th><th>状態</th><th class="c">操作</th></tr></thead>
+              <tbody id="stockRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ALERTS -->
+      <section class="view" id="v-alerts">
+        <div class="toolbar">
+          <div class="chips" id="alertChips"></div>
+          <button class="btn" id="ackAll" style="margin-left:auto">すべて対応済みにする</button>
+        </div>
+        <div id="alertList"></div>
+      </section>
+
+      <!-- SCHEDULE CREATE (処方→スケジュール) -->
+      <section class="view" id="v-schedule">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>入居者</label><select id="sRes"></select></div>
+            <div class="fg"><label>処方内容（処方箋の文面を貼り付け）</label>
+              <textarea id="sRx" placeholder="例：アムロジピン錠5mg 1錠 朝食後／メトホルミン錠250mg 2錠 朝夕食後／酸化マグネシウム330mg 1錠 就寝前"></textarea></div>
+            <div class="fg"><label>服薬タイミング（AIが処方から自動判定）</label>
+              <div class="timing-pick" id="sTiming"></div></div>
+            <div class="aihint" id="sAiHint">✨ AIが処方文を解析し、服薬スケジュールを自動で組みました</div>
+            <div class="linkrow" style="margin-top:16px">
+              <button class="btn primary" id="sBuild" style="flex:1;justify-content:center">⚡ AIでスケジュール作成</button>
+              <button class="btn" id="sSample">サンプル</button>
+            </div>
+          </div>
+          <div>
+            <div class="card-prev" id="sPaper">
+              <div class="cp-top">
+                <div class="av" id="spAv" style="background:var(--brand)">—</div>
+                <div><div class="nm" id="spName">入居者を選択してください</div><div class="rm" id="spRoom">—</div></div>
+              </div>
+              <div class="cp-sec">⏰ 服薬スケジュール</div>
+              <div class="sched-grid" id="spSched"></div>
+              <div class="cp-sec">💊 お薬リスト</div>
+              <div id="spMeds"><div style="text-align:center;color:#aab2c4;padding:14px;font-size:12.5px">← 処方内容を入力するとAIが組み上げます</div></div>
+              <div style="margin-top:16px;font-size:11px;color:var(--ink-2);border-top:1px solid var(--line);padding-top:12px">
+                ⚠️ 生成されたスケジュールは飲み忘れ通知・残薬管理に自動で連携されます。最終確認は薬剤師・看護師が行ってください。
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI CHECK -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">AIが全入居者の服薬状況を一括チェック</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">入居者 <b id="aiResCount">0名</b> ・ 本日の服薬予定 <b id="aiDoseCount">0回</b> を、飲み忘れ・残薬不足・飲み合わせの観点でAIが点検します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで一括チェックする</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">1時間20分</div>
+              <ul>
+                <li>📋 入居者ごとに服薬記録を目視確認</li>
+                <li>⌨️ 飲み忘れ・残薬を手帳に転記</li>
+                <li>📞 家族・薬局へ電話で連絡</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 全記録をAIが自動点検</li>
+                <li>🔔 飲み忘れ・残薬不足を即検知</li>
+                <li>✉️ 通知文を自動で下書き作成</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ AIチェック結果</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const COLORS=['#0e9f8e','#2f9bd6','#e3941f','#e24a4a','#7c5cff','#16b877','#d6438f','#0a7d6f'];
+const TIMINGS=['朝食後','昼食後','夕食後','就寝前'];
+const MEDS=[
+  {n:'アムロジピン錠5mg',use:'血圧',timing:['朝食後'],icon:'💊'},
+  {n:'メトホルミン錠250mg',use:'糖尿病',timing:['朝食後','夕食後'],icon:'💊'},
+  {n:'ドネペジル錠5mg',use:'認知症',timing:['朝食後'],icon:'🧠'},
+  {n:'酸化マグネシウム330mg',use:'便秘',timing:['就寝前'],icon:'💊'},
+  {n:'ランソプラゾールOD15mg',use:'胃',timing:['朝食後'],icon:'💊'},
+  {n:'ロキソプロフェン60mg',use:'痛み止め',timing:['昼食後'],icon:'💊'},
+  {n:'ワルファリン錠1mg',use:'抗凝固',timing:['夕食後'],icon:'🩸'},
+  {n:'センノシド錠12mg',use:'便秘',timing:['就寝前'],icon:'💊'},
+  {n:'ビオフェルミン錠',use:'整腸',timing:['朝食後','夕食後'],icon:'💊'},
+  {n:'リスペリドン錠1mg',use:'精神安定',timing:['就寝前'],icon:'🧠'},
+];
+const STAFF=['田中(看)','佐藤(看)','鈴木(介)','高橋(介)','渡辺(看)'];
+const RES_NAMES=[
+  ['山田 タケシ','男',88],['佐々木 ハル','女',91],['中村 ヨシオ','男',79],['小林 キミエ','女',85],
+  ['加藤 ススム','男',82],['吉田 トミ','女',94],['松本 マサル','男',77],['井上 サチコ','女',89],
+  ['木村 イサオ','男',83],['林 ノブコ','女',87],['清水 タダシ','男',90],['森 ハナ','女',92],
+];
+
+// seeded rng
+let SEED=4173;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+function pickN(a,n){const c=[...a];const o=[];while(o.length<n&&c.length)o.push(c.splice(Math.floor(rnd()*c.length),1)[0]);return o;}
+
+// build residents
+let residents=[];
+RES_NAMES.forEach((rn,idx)=>{
+  const floor=2+Math.floor(idx/4);
+  const room=floor+''+String(1+(idx%4)).padStart(2,'0');
+  const meds=pickN(MEDS,2+Math.floor(rnd()*3));
+  // build today's doses per timing
+  const doseMap={};TIMINGS.forEach(t=>doseMap[t]=[]);
+  meds.forEach(m=>m.timing.forEach(t=>doseMap[t].push(m)));
+  // status per timing: done/miss/wait/refuse based on current hour-ish
+  const timingStatus={};
+  TIMINGS.forEach((t,ti)=>{
+    if(!doseMap[t].length){timingStatus[t]='none';return;}
+    const r=rnd();
+    if(ti<=2){ // past timings
+      timingStatus[t]= r<0.82?'done': r<0.92?'refuse':'miss';
+    }else{
+      timingStatus[t]= r<0.3?'done':'wait'; // bedtime mostly waiting
+    }
+  });
+  // 7-day adherence
+  const adh=Math.round(72+rnd()*27);
+  residents.push({
+    id:'R'+room,name:rn[0],sex:rn[1],age:rn[2],room,floor,
+    color:COLORS[idx%COLORS.length],staff:pick(STAFF),
+    meds,doseMap,timingStatus,adherence:adh,
+    note: idx%5===0?'嚥下に注意（粉砕指示あり）': idx%4===0?'拒薬傾向あり':'',
+  });
+});
+
+// stock data
+let stock=[];
+residents.forEach(r=>{
+  r.meds.forEach(m=>{
+    if(rnd()<0.55)return; // not every med tracked
+    const days=Math.floor(rnd()*22);
+    stock.push({med:m.n,res:r.name,room:r.room,days,qty:days* (m.timing.length), color:r.color});
+  });
+});
+// guarantee a few low ones
+stock.sort((a,b)=>a.days-b.days);
+
+// records (today's log) - flatten doses that are done/miss/refuse
+let records=[];
+residents.forEach(r=>{
+  TIMINGS.forEach((t,ti)=>{
+    const st=r.timingStatus[t];
+    if(st==='none'||st==='wait')return;
+    const baseH=[8,12,18,21][ti];
+    r.doseMap[t].forEach(m=>{
+      records.push({time:`${String(baseH).padStart(2,'0')}:${String(Math.floor(rnd()*55)).padStart(2,'0')}`,
+        res:r.name,resObj:r,med:m.n,timing:t,staff:r.staff,status:st});
+    });
+  });
+});
+records.sort((a,b)=>a.time<b.time?1:-1);
+
+// alerts
+let alerts=[];
+let aid=0;
+residents.forEach(r=>{
+  TIMINGS.forEach(t=>{ if(r.timingStatus[t]==='miss'){
+    alerts.push({id:++aid,level:'crit',icon:'⚠️',ti:`飲み忘れ：${r.name} 様（${r.room}）`,ds:`${t}のお薬が未服用です。`,tm:'本日',ack:false,cat:'miss'});
+  }});
+});
+stock.filter(s=>s.days<=3).slice(0,4).forEach(s=>{
+  alerts.push({id:++aid,level:'warn',icon:'📦',ti:`残薬不足：${s.med}`,ds:`${s.res} 様（${s.room}）— 残り約${s.days}日分です。`,tm:'本日',ack:false,cat:'stock'});
+});
+alerts.push({id:++aid,level:'warn',icon:'🩸',ti:'飲み合わせ注意：佐々木 ハル 様',ds:'ワルファリンとロキソプロフェンの併用に注意が必要です。薬剤師へ確認を推奨。',tm:'09:40',ack:false,cat:'interaction'});
+alerts.push({id:++aid,level:'info',icon:'📅',ti:'処方更新：中村 ヨシオ 様',ds:'来週月曜より降圧薬の用量が変更されます。スケジュール再作成をおすすめします。',tm:'昨日',ack:false,cat:'rx'});
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function initial(name){return name.replace(/\s.*/,'').charAt(0);}
+const STLABEL={done:'服薬済',waiting:'予定',soon:'まもなく',missed:'飲み忘れ',refused:'拒薬',low:'要発注',mid:'残少',ok:'十分'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]||s}</span>`;}
+function adhClass(a){return a>=90?'ok':a>=80?'mid':'low';}
+function adhColor(a){return a>=90?'var(--green)':a>=80?'var(--amber)':'var(--red)';}
+
+/* ============ ROUTING ============ */
+const TITLES={
+  dash:['ダッシュボード','本日の服薬状況'],
+  residents:['入居者一覧','入居者ごとの服薬状況を管理します'],
+  records:['服薬記録','本日の服薬実施記録'],
+  stock:['残薬管理','お薬の残量と発注タイミングを管理します'],
+  alerts:['アラート','飲み忘れ・残薬不足・飲み合わせの通知'],
+  ai:['AIチェック','全入居者の服薬状況をAIが一括点検します'],
+  schedule:['処方→スケジュール作成','処方内容からAIが服薬スケジュールを自動作成します'],
+};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AIチェック</button><button class="btn primary" onclick="go(\'schedule\')">＋ スケジュール作成</button>'
+    : v==='residents'?'<button class="btn primary" onclick="go(\'schedule\')">＋ スケジュール作成</button>'
+    : v==='alerts'?'<button class="btn primary" onclick="go(\'ai\')">⚡ AIで再点検</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='residents')renderRes();
+  if(v==='records')renderRec();
+  if(v==='stock')renderStock();
+  if(v==='alerts')renderAlerts();
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+function todayDoseCount(){let n=0;residents.forEach(r=>TIMINGS.forEach(t=>{if(r.doseMap[t].length)n+=r.doseMap[t].length;}));return n;}
+function todayDoneCount(){let n=0;residents.forEach(r=>TIMINGS.forEach(t=>{if(r.timingStatus[t]==='done')n+=r.doseMap[t].length;}));return n;}
+function todayMissCount(){return alerts.filter(a=>a.cat==='miss'&&!a.ack).length;}
+
+function renderDash(){
+  const total=todayDoseCount();
+  const done=todayDoneCount();
+  const miss=residents.reduce((s,r)=>s+TIMINGS.filter(t=>r.timingStatus[t]==='miss').reduce((x,t)=>x+r.doseMap[t].length,0),0);
+  const refuse=residents.reduce((s,r)=>s+TIMINGS.filter(t=>r.timingStatus[t]==='refuse').reduce((x,t)=>x+r.doseMap[t].length,0),0);
+  const wait=total-done-miss-refuse;
+  const compliance=Math.round((done/(done+miss+refuse||1))*100);
+  const lowStock=stock.filter(s=>s.days<=3).length;
+  $('kpis').innerHTML=`
+    ${kpi('#0e9f8e','管理人数',residents.length+'<small>名</small>','入居者','up','全員モニタリング中')}
+    ${kpi('#16b877','服薬遵守率',compliance+'<small>%</small>',done+'/'+(done+miss+refuse)+'回','up','目標95%')}
+    ${kpi('#e3941f','残薬アラート',lowStock+'<small>件</small>','残り3日以内',lowStock?'warn':'up',lowStock?'要発注':'なし')}
+    ${kpi('#e24a4a','誤薬',miss+refuse===0?'0<small>件</small>':'0<small>件</small>','本日','up','誤薬ゼロ継続中')}`;
+
+  // donut
+  const segs=[['done',done,'var(--green)','服薬済'],['wait',wait<0?0:wait,'#cdd6e4','予定/未'],['refuse',refuse,'var(--ink-3)','拒薬'],['miss',miss,'var(--red)','飲み忘れ']];
+  const sum=segs.reduce((s,x)=>s+x[1],0)||1;
+  let acc=0;const stops=[];
+  segs.forEach(s=>{const from=acc/sum*100;acc+=s[1];const to=acc/sum*100;stops.push(`${s[2]} ${from.toFixed(1)}% ${to.toFixed(1)}%`);});
+  $('donut').style.background=`conic-gradient(${stops.join(',')})`;
+  $('donutP').textContent=compliance+'%';
+  $('donutLegend').innerHTML=segs.map(s=>`<div class="lg"><span class="sw" style="background:${s[2]}"></span>${s[3]} <b style="margin-left:6px">${s[1]}回</b></div>`).join('');
+
+  // activity
+  const acts=[
+    {i:'💊',c:'#e6f8f0',t:'山田 タケシ 様（201）朝食後のお薬を服薬済に記録',m:'3分前'},
+    {i:'🔔',c:'#fdeaea',t:'飲み忘れアラート：松本 マサル 様（301）昼食後',m:'25分前'},
+    {i:'⚡',c:'#e3f7f3',t:'AIチェック完了：飲み忘れ2件・残薬不足3件を検知',m:'今日 10:05'},
+    {i:'📦',c:'#fdf3e2',t:'酸化マグネシウム の残薬が残り2日分になりました',m:'今日 9:30'},
+    {i:'📝',c:'#e3f7f3',t:'中村 ヨシオ 様の処方からスケジュールを自動作成',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${a.t}</div><div class="am">${a.m}</div></div></div>`).join('');
+
+  // time-of-day bars
+  const tdata=TIMINGS.map(t=>{
+    let tot=0,dn=0;
+    residents.forEach(r=>{if(r.doseMap[t].length){tot+=r.doseMap[t].length;if(r.timingStatus[t]==='done')dn+=r.doseMap[t].length;}});
+    return {t,tot,dn,pct:tot?Math.round(dn/tot*100):0};
+  });
+  $('trendBars').innerHTML=tdata.map(d=>`
+    <div class="bar-row"><span class="mlabel">${d.t.replace('食後','').replace('就寝前','就寝')}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${d.pct}"></div></div>
+      <span class="mval">${d.dn}/${d.tot}回 (${d.pct}%)</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+}
+
+/* ============ RESIDENTS ============ */
+let resFilter='all';
+function pillRow(r){
+  return '<div class="pill-row">'+TIMINGS.map(t=>{
+    const st=r.timingStatus[t];
+    if(st==='none')return `<div class="pill wait" title="${t}：なし" style="opacity:.35">–</div>`;
+    const cls=st==='done'?'done':st==='miss'?'miss':st==='refuse'?'refuse':'wait';
+    const lab=t.charAt(0)==='就'?'就':t.charAt(0);
+    return `<div class="pill ${cls}" title="${t}">${lab}</div>`;
+  }).join('')+'</div>';
+}
+function renderResChips(){
+  const opts=[['all','すべて'],['miss','飲み忘れあり'],['low','遵守率低'],['note','特記あり']];
+  $('resChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===resFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('resChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{resFilter=c.dataset.s;renderResChips();renderRes();});
+}
+function renderRes(){
+  const q=($('rq').value||'').toLowerCase();
+  let rows=residents.filter(r=>{
+    if(resFilter==='miss')return TIMINGS.some(t=>r.timingStatus[t]==='miss');
+    if(resFilter==='low')return r.adherence<85;
+    if(resFilter==='note')return !!r.note;
+    return true;
+  }).filter(r=>!q||(r.name+r.room+r.staff).toLowerCase().includes(q));
+  $('resRows').innerHTML=rows.length?rows.map(r=>{
+    const hasMiss=TIMINGS.some(t=>r.timingStatus[t]==='miss');
+    const stat=hasMiss?'missed':(r.adherence>=90?'done':'soon');
+    return `<tr onclick="openRes('${esc(r.id)}')">
+    <td><div class="resident"><span class="avatar" style="background:${r.color}">${esc(initial(r.name))}</span>
+      <div><b>${esc(r.name)}</b><div class="meta">${r.sex} / ${r.age}歳 ・ 担当 ${esc(r.staff)}${r.note?' ・ <span class="tag-pill" style="background:var(--amber-soft);color:var(--amber)">特記</span>':''}</div></div></div></td>
+    <td class="mono" style="font-size:12px">${esc(r.room)}</td>
+    <td><b>${r.meds.length}剤</b> <span style="color:var(--ink-3);font-size:11.5px">${esc(r.meds.map(m=>m.n.replace(/錠.*|OD.*/,'')).slice(0,2).join('・'))}…</span></td>
+    <td>${pillRow(r)}</td>
+    <td><div class="mini"><div class="tk"><div class="fl" style="width:${r.adherence}%;background:${adhColor(r.adherence)}"></div></div><b>${r.adherence}%</b></div></td>
+    <td>${stBadge(stat)}</td></tr>`;
+  }).join('')
+  :'<tr><td colspan="6" class="empty-cell">該当する入居者がいません</td></tr>';
+}
+window.openRes=id=>{const r=residents.find(x=>x.id===id);if(r){go('schedule');$('sRes').value=r.name;loadResToForm(r);showToast(r.name+' 様のスケジュールを表示');}};
+
+/* ============ RECORDS ============ */
+let recFilter='all';
+function recBadge(s){const map={done:'done',miss:'missed',refuse:'refused'};return stBadge(map[s]||s);}
+function renderRecChips(){
+  const opts=[['all','すべて'],['done','服薬済'],['miss','飲み忘れ'],['refuse','拒薬']];
+  $('recChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===recFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('recChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{recFilter=c.dataset.s;renderRecChips();renderRec();});
+}
+function renderRec(){
+  const q=($('recq').value||'').toLowerCase();
+  let rows=records.filter(x=>recFilter==='all'||x.status===recFilter).filter(x=>!q||x.res.toLowerCase().includes(q));
+  $('recRows').innerHTML=rows.length?rows.map((x,i)=>`<tr>
+    <td class="mono" style="font-size:12.5px">${esc(x.time)}</td>
+    <td><div class="resident"><span class="avatar" style="background:${x.resObj.color};width:26px;height:26px;font-size:11px">${esc(initial(x.res))}</span><b>${esc(x.res)}</b></div></td>
+    <td>${esc(x.med)}</td>
+    <td><span class="tag-pill">${esc(x.timing)}</span></td>
+    <td style="color:var(--ink-2)">${esc(x.staff)}</td>
+    <td>${recBadge(x.status)}</td>
+    <td class="c">${x.status==='miss'?`<button class="btn green" style="padding:5px 11px" onclick="markDone(${i})">服薬済に</button>`:'<span style="color:var(--ink-3);font-size:11px">—</span>'}</td></tr>`).join('')
+  :'<tr><td colspan="7" class="empty-cell">該当する記録がありません</td></tr>';
+}
+window.markDone=i=>{
+  const visible=records.filter(x=>recFilter==='all'||x.status===recFilter).filter(x=>!($('recq').value||'')||x.res.toLowerCase().includes(($('recq').value||'').toLowerCase()));
+  const rec=visible[i];if(!rec)return;rec.status='done';
+  // remove related miss alert
+  alerts.forEach(a=>{if(a.cat==='miss'&&a.ti.includes(rec.res))a.ack=true;});
+  renderRec();updateBadges();showToast(rec.res+' 様 のお薬を服薬済に記録しました');
+};
+
+/* ============ STOCK ============ */
+function stockState(d){return d<=3?'low':d<=7?'mid':'ok';}
+function renderStockKpis(){
+  const low=stock.filter(s=>s.days<=3).length;const mid=stock.filter(s=>s.days>3&&s.days<=7).length;
+  $('stockKpis').innerHTML=`
+    ${kpi('#0e9f8e','管理中のお薬',stock.length+'<small>品目</small>','全入居者','up','モニタリング中')}
+    ${kpi('#e24a4a','要発注（3日以内）',low+'<small>件</small>','至急',low?'down':'up',low?'発注推奨':'なし')}
+    ${kpi('#e3941f','残少（7日以内）',mid+'<small>件</small>','早めに',mid?'warn':'up','確認')}
+    ${kpi('#16b877','十分な在庫',stock.filter(s=>s.days>7).length+'<small>件</small>','','up','安心')}`;
+}
+function renderStock(){
+  renderStockKpis();
+  $('stockRows').innerHTML=stock.sort((a,b)=>a.days-b.days).map((s,i)=>{
+    const stt=stockState(s.days);const pct=Math.min(100,Math.round(s.days/21*100));
+    return `<tr>
+    <td><b>${esc(s.med)}</b></td>
+    <td><div class="resident"><span class="avatar" style="background:${s.color};width:24px;height:24px;font-size:10px">${esc(initial(s.res))}</span><span style="font-size:12.5px">${esc(s.res)} <span style="color:var(--ink-3)">(${esc(s.room)})</span></span></div></td>
+    <td class="r tnum"><b>${s.qty}</b> 錠</td>
+    <td><div class="mini" style="max-width:160px"><div class="tk"><div class="fl" style="width:${pct}%;background:${stt==='low'?'var(--red)':stt==='mid'?'var(--amber)':'var(--green)'}"></div></div><b>${s.days}日</b></div></td>
+    <td>${stBadge(stt)}</td>
+    <td class="c">${s.days<=7?`<button class="btn ${s.days<=3?'green':''}" style="padding:5px 11px" onclick="orderOne(${i})">発注</button>`:'<span style="color:var(--ink-3);font-size:11px">十分</span>'}</td></tr>`;
+  }).join('');
+  updateBadges();
+}
+window.orderOne=i=>{
+  const sorted=stock.sort((a,b)=>a.days-b.days);const s=sorted[i];if(!s)return;
+  s.days=30;s.qty=30*2;
+  renderStock();showToast(s.med+' を発注リストに追加しました（残量を補充）');
+};
+$('autoOrder').addEventListener('click',async()=>{
+  const btn=$('autoOrder');btn.textContent='📋 集計中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,800));
+  const need=stock.filter(s=>s.days<=7);const n=need.length;
+  need.forEach(s=>{s.days=30;s.qty=60;});
+  btn.textContent='📋 不足分を一括で発注リスト化';btn.disabled=false;
+  renderStock();showToast(n+'品目の不足分を発注リストにまとめました');
+});
+
+/* ============ ALERTS ============ */
+let alertFilter='all';
+function renderAlertChips(){
+  const opts=[['all','すべて'],['crit','緊急'],['warn','注意'],['info','お知らせ']];
+  $('alertChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===alertFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('alertChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{alertFilter=c.dataset.s;renderAlertChips();renderAlerts();});
+}
+function renderAlerts(){
+  let rows=alerts.filter(a=>!a.ack).filter(a=>alertFilter==='all'||a.level===alertFilter);
+  $('alertList').innerHTML=rows.length?rows.map(a=>`
+    <div class="alert-card ${a.level}">
+      <div class="ic">${a.icon}</div>
+      <div class="body"><div class="ti">${esc(a.ti)}</div><div class="ds">${esc(a.ds)}</div><div class="tm">${esc(a.tm)}</div></div>
+      <div class="act-btns">
+        ${a.cat==='miss'?`<button class="btn green" style="padding:7px 12px" onclick="ackAlert(${a.id},true)">服薬対応</button>`:''}
+        <button class="btn" style="padding:7px 12px" onclick="ackAlert(${a.id})">対応済み</button>
+      </div>
+    </div>`).join('')
+  :'<div class="alert-card info" style="justify-content:center;color:var(--ink-3)"><div class="ic">🎉</div><div class="body"><div class="ti">未対応のアラートはありません</div><div class="ds">すべて対応済みです。</div></div></div>';
+}
+window.ackAlert=(id,solved)=>{const a=alerts.find(x=>x.id===id);if(a){a.ack=true;renderAlerts();updateBadges();showToast(solved?'服薬対応を記録しました':'アラートを対応済みにしました');}};
+$('ackAll').addEventListener('click',()=>{alerts.forEach(a=>a.ack=true);renderAlerts();updateBadges();showToast('すべてのアラートを対応済みにしました');});
+
+function updateBadges(){
+  $('navAlerts').textContent=alerts.filter(a=>!a.ack).length;
+  $('navStock').textContent=stock.filter(s=>s.days<=3).length;
+}
+
+/* ============ SCHEDULE CREATE ============ */
+let sTimingSel=[];
+function renderResSelect(){$('sRes').innerHTML='<option value="">選択してください</option>'+residents.map(r=>`<option>${r.name}</option>`).join('');}
+function renderTimingPick(){
+  $('sTiming').innerHTML=TIMINGS.map(t=>`<button class="tp ${sTimingSel.includes(t)?'on':''}" data-t="${t}">${t}</button>`).join('');
+  $('sTiming').querySelectorAll('.tp').forEach(b=>b.onclick=()=>{
+    const t=b.dataset.t;if(sTimingSel.includes(t))sTimingSel=sTimingSel.filter(x=>x!==t);else sTimingSel.push(t);
+    renderTimingPick();
+  });
+}
+// parse prescription text into meds
+function parseRx(text){
+  const found=[];
+  MEDS.forEach(m=>{
+    const key=m.n.replace(/錠.*|OD.*|\d+mg.*/,'').replace(/[（(].*/,'');
+    const short=m.n.split(/錠|OD|\d/)[0];
+    if(text.includes(short)&&short.length>=2)found.push(m);
+  });
+  return found;
+}
+function buildSchedFromMeds(meds){
+  const byTiming={};TIMINGS.forEach(t=>byTiming[t]=[]);
+  meds.forEach(m=>m.timing.forEach(t=>byTiming[t].push(m)));
+  return byTiming;
+}
+function renderSchedPreview(meds){
+  const byTiming=buildSchedFromMeds(meds);
+  const hours={'朝食後':'08:00','昼食後':'12:00','夕食後':'18:00','就寝前':'21:00'};
+  $('spSched').innerHTML=TIMINGS.map(t=>{
+    const cnt=byTiming[t].length;
+    return `<div class="sched-cell" style="${cnt?'background:var(--brand-soft);border-color:var(--brand)':''}">
+      <div class="t">${t}</div><div class="h">${hours[t]}</div><div class="c" style="${cnt?'color:var(--brand-dk)':'color:var(--ink-3)'}">${cnt?cnt+'剤':'なし'}</div></div>`;
+  }).join('');
+  $('spMeds').innerHTML=meds.length?meds.map(m=>`<div class="med-line">
+    <div class="mi">${m.icon}</div><div class="nm">${esc(m.n)}</div>
+    <div class="ds">${esc(m.use)} ・ ${esc(m.timing.join('/'))}</div></div>`).join('')
+    :'<div style="text-align:center;color:#aab2c4;padding:14px;font-size:12.5px">← 処方内容を入力するとAIが組み上げます</div>';
+}
+function loadResToForm(r){
+  $('spAv').style.background=r.color;$('spAv').textContent=initial(r.name);
+  $('spName').textContent=r.name+' 様';$('spRoom').textContent=r.room+'号室 ・ '+r.sex+'/'+r.age+'歳';
+  sTimingSel=[...new Set(r.meds.flatMap(m=>m.timing))];renderTimingPick();
+  renderSchedPreview(r.meds);
+  $('sRx').value=r.meds.map(m=>`${m.n} 1錠 ${m.timing.join('・')}`).join('\n');
+}
+$('sRes').addEventListener('change',()=>{
+  const r=residents.find(x=>x.name===$('sRes').value);
+  if(r){loadResToForm(r);}else{$('spName').textContent='入居者を選択してください';$('spRoom').textContent='—';$('spAv').textContent='—';renderSchedPreview([]);$('spSched').innerHTML='';}
+});
+$('sRx').addEventListener('input',()=>{
+  const meds=parseRx($('sRx').value);
+  sTimingSel=[...new Set(meds.flatMap(m=>m.timing))];renderTimingPick();
+  renderSchedPreview(meds);
+});
+$('sSample').addEventListener('click',()=>{
+  $('sRes').value='小林 キミエ';
+  const r=residents.find(x=>x.name==='小林 キミエ');if(r){$('spAv').style.background=r.color;$('spAv').textContent=initial(r.name);$('spName').textContent=r.name+' 様';$('spRoom').textContent=r.room+'号室 ・ '+r.sex+'/'+r.age+'歳';}
+  $('sRx').value='アムロジピン錠5mg 1錠 朝食後\nメトホルミン錠250mg 2錠 朝夕食後\n酸化マグネシウム330mg 1錠 就寝前\nドネペジル錠5mg 1錠 朝食後';
+  const meds=parseRx($('sRx').value);sTimingSel=[...new Set(meds.flatMap(m=>m.timing))];renderTimingPick();renderSchedPreview(meds);
+});
+$('sBuild').addEventListener('click',async()=>{
+  if(!$('sRes').value){showToast('入居者を選択してください');return;}
+  const meds=parseRx($('sRx').value);
+  if(!meds.length){showToast('処方内容を入力してください（お薬名を含めてください）');return;}
+  const btn=$('sBuild');btn.textContent='⚡ AIが解析中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,900));
+  btn.textContent='⚡ AIでスケジュール作成';btn.disabled=false;
+  $('sAiHint').classList.add('show');setTimeout(()=>$('sAiHint').classList.remove('show'),2600);
+  // apply to resident
+  const r=residents.find(x=>x.name===$('sRes').value);
+  if(r){r.meds=meds;const dm={};TIMINGS.forEach(t=>dm[t]=[]);meds.forEach(m=>m.timing.forEach(t=>dm[t].push(m)));r.doseMap=dm;}
+  showToast($('sRes').value+' 様の服薬スケジュールを作成しました（飲み忘れ通知に連携）');
+});
+
+/* ============ AI CHECK ============ */
+$('aiResCount').textContent=residents.length+'名';
+$('aiDoseCount').textContent=todayDoseCount()+'回';
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 点検中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,7);},120);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);$('baAfterT').textContent='7秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // build results
+  const missList=residents.filter(r=>TIMINGS.some(t=>r.timingStatus[t]==='miss'));
+  const lowStock=stock.filter(s=>s.days<=3);
+  const results=[];
+  results.push({alert:false,t:`服薬遵守率を全${residents.length}名分を集計しました`,r:'問題なし'});
+  missList.slice(0,3).forEach(r=>results.push({alert:true,t:`飲み忘れ：${r.name} 様（${r.room}）`,r:'要対応'}));
+  lowStock.slice(0,3).forEach(s=>results.push({alert:true,t:`残薬不足：${s.med}（${s.res} 様）`,r:`残${s.days}日`}));
+  results.push({alert:true,t:`飲み合わせ注意：ワルファリン併用 1件`,r:'薬剤師確認'});
+  results.push({alert:false,t:`通知文の下書きを ${missList.length+lowStock.length}件 自動作成しました`,r:'完了'});
+
+  $('genItems').innerHTML=results.map((x,i)=>`<div class="gen-item ${x.alert?'alert':''}" data-i="${i}">
+    <span class="ck">${x.alert?'!':'✓'}</span><b style="flex:1">${esc(x.t)}</b>
+    <span class="tag-pill" style="${x.alert?'background:var(--amber-soft);color:var(--amber)':'background:var(--green-soft);color:var(--green)'}">${esc(x.r)}</span></div>`).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,170));items[i].classList.add('in');}
+  btn.disabled=false;btn.textContent='⚡ もう一度チェック';
+  showToast('AIチェック完了：飲み忘れ'+Math.min(missList.length,3)+'件・残薬不足'+Math.min(lowStock.length,3)+'件を検知');
+});
+
+/* ============ INIT ============ */
+renderResChips();renderRecChips();renderAlertChips();renderResSelect();renderTimingPick();renderSchedPreview([]);
+renderDash();updateBadges();
+</script>
+</body>
+</html>

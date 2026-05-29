@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜1on1記録マシン（面談記録システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#6a44e3;--brand-dk:#5331c4;--brand-soft:#efeaff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#3aa7d6;--pink:#e0609c;
+  --sb:#16122e;--sb-2:#1f1a3c;--sb-ink:#cbc6e0;--sb-ink-2:#857fa6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#a78bfa,#6a44e3,#e0609c,#a78bfa);
+  display:grid;place-items:center;color:#fff;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(106,68,227,.4)}
+.nav a .badge{margin-left:auto;background:var(--amber);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut / satisfaction */
+.satwrap{display:flex;align-items:center;gap:20px}
+.donut{width:120px;height:120px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;position:relative;
+  background:conic-gradient(var(--green) 0 var(--p,0%),var(--soft) 0)}
+.donut::before{content:"";position:absolute;width:84px;height:84px;border-radius:50%;background:var(--card)}
+.donut .dn{position:relative;text-align:center}
+.donut .dn b{font-size:24px;font-weight:900}
+.donut .dn span{font-size:10px;color:var(--ink-3);font-weight:700;display:block}
+.satleg{flex:1;font-size:12.5px}
+.satleg .lr{display:flex;align-items:center;gap:8px;padding:5px 0}
+.satleg .lr .sw{width:10px;height:10px;border-radius:3px}
+.satleg .lr b{margin-left:auto;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.done{background:var(--green-soft);color:var(--green)}
+.st.scheduled{background:var(--brand-soft);color:var(--brand)}
+.st.draft{background:var(--amber-soft);color:var(--amber)}
+.st.canceled{background:var(--soft);color:var(--ink-3)}
+.st.open{background:var(--red-soft);color:var(--red)}
+.st.progress{background:var(--amber-soft);color:var(--amber)}
+.st.closed{background:var(--green-soft);color:var(--green)}
+.st.plain{background:var(--soft);color:var(--ink-2)}
+.st.plain::before{display:none}
+
+/* mood */
+.mood{font-size:15px}
+
+/* avatar in tables */
+.av-mini{width:26px;height:26px;border-radius:7px;display:inline-grid;place-items:center;color:#fff;font-weight:800;font-size:11px;flex-shrink:0}
+.namecell{display:flex;align-items:center;gap:9px}
+
+/* create form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card);resize:vertical}
+.fg textarea{min-height:120px;line-height:1.7}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.moodpick{display:flex;gap:7px}
+.moodpick button{flex:1;padding:9px 0;border:1px solid var(--line-2);background:var(--card);border-radius:9px;font-size:18px;cursor:pointer;transition:all .15s}
+.moodpick button.on{border-color:var(--brand);background:var(--brand-soft);transform:scale(1.05)}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* record paper preview */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:30px 32px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.pv-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;border-bottom:3px solid var(--brand-dk);padding-bottom:12px}
+.pv-title{font-size:21px;font-weight:900;letter-spacing:.1em;color:var(--brand-dk)}
+.pv-meta{text-align:right;font-size:11.5px;color:var(--ink-2)}
+.pv-meta .no{font-family:'Orbitron';color:var(--ink);font-weight:700}
+.pv-who{display:flex;gap:14px;margin-bottom:16px}
+.pv-who .box{flex:1;background:var(--soft);border-radius:9px;padding:11px 13px}
+.pv-who .box .k{font-size:10.5px;color:var(--ink-3);font-weight:700}
+.pv-who .box .vv{font-size:15px;font-weight:900;margin-top:2px}
+.pv-sec{margin-top:14px}
+.pv-sec .sh{font-size:12px;font-weight:800;color:var(--brand-dk);border-left:4px solid var(--brand);padding-left:9px;margin-bottom:7px}
+.pv-sec .bd{font-size:12.5px;color:#2b3442;white-space:pre-wrap;min-height:20px}
+.pv-todo{list-style:none}
+.pv-todo li{padding:5px 0;display:flex;gap:8px;align-items:flex-start;font-size:12.5px}
+.pv-todo li::before{content:"□";color:var(--brand);font-weight:900}
+
+/* AI summary stage */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+
+/* memo input for AI */
+.memo-input{width:100%;padding:13px 14px;border:1px solid var(--line-2);border-radius:11px;font-family:inherit;font-size:13px;line-height:1.8;min-height:130px;background:var(--soft);resize:vertical}
+.memo-input:focus{outline:none;border-color:var(--brand);background:var(--card)}
+
+/* AI result blocks */
+.ai-result{margin-top:18px;border-top:1px solid var(--line);padding-top:18px;display:none}
+.ai-result.show{display:block;animation:fade .4s}
+.res-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:820px){.res-grid{grid-template-columns:1fr}}
+.res-card{border:1px solid var(--line);border-radius:11px;padding:15px 16px;background:var(--card)}
+.res-card .rh{font-size:12.5px;font-weight:800;display:flex;align-items:center;gap:7px;margin-bottom:11px}
+.res-card .rh .ico{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;font-size:13px}
+.res-line{font-size:12.5px;color:#2b3442;padding:4px 0;display:flex;gap:8px;align-items:flex-start;opacity:0;transform:translateX(-8px);transition:all .35s}
+.res-line.in{opacity:1;transform:none}
+.res-line .bul{color:var(--brand);font-weight:900;flex-shrink:0}
+.res-todo{display:flex;align-items:flex-start;gap:9px;padding:7px 0;border-bottom:1px solid var(--line);font-size:12.5px;opacity:0;transform:translateX(-8px);transition:all .35s}
+.res-todo.in{opacity:1;transform:none}
+.res-todo:last-child{border-bottom:0}
+.res-todo .cb{width:18px;height:18px;border:2px solid var(--brand);border-radius:5px;flex-shrink:0;margin-top:1px;display:grid;place-items:center;color:var(--brand);font-weight:900;font-size:11px}
+.res-todo .ow{margin-left:auto;font-size:11px;color:var(--ink-3);white-space:nowrap}
+
+/* before/after compare table */
+.cmp{width:100%;border-collapse:collapse;margin-top:6px;font-size:12.5px}
+.cmp th{background:var(--soft);font-size:11px;color:var(--ink-2);font-weight:700;text-align:left;padding:9px 12px}
+.cmp td{padding:9px 12px;border-top:1px solid var(--line);vertical-align:top}
+.cmp .ar{color:var(--ink-3);font-weight:900;text-align:center;width:30px}
+.delta{font-weight:800;font-size:11px;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.delta.up{background:var(--green-soft);color:var(--green)}
+.delta.same{background:var(--soft);color:var(--ink-3)}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#a78bfa,#6a44e3);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(106,68,227,.4)}50%{box-shadow:0 0 40px rgba(167,139,250,.55)}}
+
+/* timeline (review) */
+.tl{position:relative;padding-left:26px}
+.tl::before{content:"";position:absolute;left:8px;top:4px;bottom:4px;width:2px;background:var(--line)}
+.tl-item{position:relative;padding:0 0 18px 0}
+.tl-item::before{content:"";position:absolute;left:-22px;top:4px;width:12px;height:12px;border-radius:50%;background:var(--brand);border:2px solid var(--card);box-shadow:0 0 0 2px var(--brand-soft)}
+.tl-item .td{font-size:11px;color:var(--ink-3);font-weight:700}
+.tl-item .tt{font-size:13px;font-weight:700;margin-top:1px}
+.tl-item .tm{font-size:12px;color:var(--ink-2);margin-top:3px}
+
+/* progress bar (review goals) */
+.goalrow{padding:12px 0;border-bottom:1px solid var(--line)}
+.goalrow:last-child{border-bottom:0}
+.goalrow .gt{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;margin-bottom:7px}
+.goalrow .gp{margin-left:auto;font-size:12px;color:var(--ink-2);font-weight:800}
+.gtrack{height:9px;border-radius:99px;background:var(--soft);overflow:hidden}
+.gfill{height:100%;border-radius:99px;width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.tag-soft{font-size:11px;font-weight:700;color:var(--ink-2);background:var(--soft);padding:2px 9px;border-radius:99px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">1on1記録マシン<small>技マシン｜面談記録</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">🗒️</span>面談記録</a>
+      <a data-v="sched"><span class="i">📅</span>スケジュール<span class="badge" id="navSched">0</span></a>
+      <a data-v="issue"><span class="i">🎯</span>課題管理<span class="badge" id="navIssue">0</span></a>
+      <a data-v="review"><span class="i">🔄</span>振り返り</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI要約</a>
+      <a data-v="create"><span class="i">✏️</span>面談を記録</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 人事管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。人物・面談内容はすべてサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">今月の1on1実施状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>月次の面談実施数</h3><span class="more">過去6ヶ月</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>満足度の内訳</h3></div>
+            <div class="pb"><div class="satwrap" id="satWrap"></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>近日の予定面談</h3><span class="more" onclick="go('sched')">すべて見る</span></div>
+            <div class="pb" style="padding:6px 0"><div id="dashUpcoming"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST (面談記録) -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="メンバー・担当・キーワードで検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>面談ID</th><th>メンバー</th><th>面談者</th><th>実施日</th><th>状態</th><th>気分</th><th class="r">満足度</th><th>テーマ</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- SCHEDULE -->
+      <section class="view" id="v-sched">
+        <div class="kpis" id="schedKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>予定されている1on1</h3>
+            <button class="btn green" id="autoSchedule" style="margin-left:auto">🪄 AIで来月の日程を自動調整</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>予定日</th><th>メンバー</th><th>面談者</th><th>前回からの間隔</th><th>状態</th><th></th></tr></thead>
+              <tbody id="schedRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ISSUES (課題管理) -->
+      <section class="view" id="v-issue">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="qIssue" placeholder="課題・メンバーで検索"></div>
+          <div class="chips" id="issueChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>課題</th><th>メンバー</th><th>カテゴリ</th><th>起票日</th><th>継続回数</th><th>状態</th><th></th></tr></thead>
+          <tbody id="issueRows"></tbody>
+        </table>
+      </section>
+
+      <!-- REVIEW (振り返り) -->
+      <section class="view" id="v-review">
+        <div class="toolbar">
+          <label style="font-size:12px;font-weight:700;color:var(--ink-2)">メンバーを選択</label>
+          <select id="reviewSel" style="padding:9px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card);min-width:200px"></select>
+        </div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>面談の履歴</h3><span class="more" id="reviewCount"></span></div>
+            <div class="pb"><div class="tl" id="reviewTl"></div></div>
+          </div>
+          <div>
+            <div class="panel" style="margin-bottom:16px">
+              <div class="ph"><h3>満足度の推移</h3></div>
+              <div class="pb"><div class="bars" id="reviewSat"></div></div>
+            </div>
+            <div class="panel">
+              <div class="ph"><h3>目標の達成状況</h3></div>
+              <div class="pb"><div id="reviewGoals"></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CREATE (面談を記録) -->
+      <section class="view" id="v-create">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg-row">
+              <div class="fg"><label>メンバー</label><select id="cMember"></select></div>
+              <div class="fg"><label>面談者</label><select id="cInterviewer"></select></div>
+            </div>
+            <div class="fg-row">
+              <div class="fg"><label>実施日</label><input id="cDate" type="date"></div>
+              <div class="fg"><label>テーマ</label><select id="cTheme"></select></div>
+            </div>
+            <div class="fg"><label>メンバーの気分</label>
+              <div class="moodpick" id="cMood">
+                <button data-m="😟" type="button">😟</button>
+                <button data-m="😐" type="button">😐</button>
+                <button data-m="🙂" type="button" class="on">🙂</button>
+                <button data-m="😊" type="button">😊</button>
+                <button data-m="🤩" type="button">🤩</button>
+              </div>
+            </div>
+            <div class="fg"><label>面談メモ（話した内容をそのまま入力）</label>
+              <textarea id="cMemo" placeholder="例：最近の業務量について相談あり。残業が増えていて少し疲れ気味。新しい受注システムの担当を任されてやりがいはあるが、引き継ぎ資料が不足している。来期はリーダー業務にも挑戦したい意向。"></textarea></div>
+            <div class="aihint" id="cAiHint">✨ AIがメモから要約・ToDoの下書きを作成しました</div>
+            <div class="linkrow" style="margin-top:8px">
+              <button class="btn primary" id="cSave" style="flex:1;justify-content:center">⚡ AIで仕上げて記録</button>
+              <button class="btn" id="cSample">サンプル</button>
+            </div>
+          </div>
+          <div>
+            <div class="paper" id="cPaper">
+              <div class="pv-top">
+                <div class="pv-title">1on1 面談記録</div>
+                <div class="pv-meta"><div>記録番号：<span class="no" id="pNo">—</span></div><div>実施日：<span id="pDate">—</span></div></div>
+              </div>
+              <div class="pv-who">
+                <div class="box"><div class="k">メンバー</div><div class="vv" id="pMember">—</div></div>
+                <div class="box"><div class="k">面談者</div><div class="vv" id="pInterviewer">—</div></div>
+                <div class="box"><div class="k">気分</div><div class="vv mood" id="pMood">🙂</div></div>
+              </div>
+              <div class="pv-sec"><div class="sh">テーマ</div><div class="bd" id="pTheme">—</div></div>
+              <div class="pv-sec"><div class="sh">面談メモ</div><div class="bd" id="pMemo">← 左の入力欄にメモを記入してください</div></div>
+              <div class="pv-sec" id="pSummaryWrap" style="display:none"><div class="sh">✨ AI要約</div><div class="bd" id="pSummary"></div></div>
+              <div class="pv-sec" id="pTodoWrap" style="display:none"><div class="sh">✨ AIが抽出したToDo</div><ul class="pv-todo" id="pTodo"></ul></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI SUMMARY -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">面談メモをAIが要約・ToDo化・前回比較</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">話した内容のメモを貼り付けるだけ。AIが<b>要約・次のToDo・前回との変化</b>を自動で整理します。</div></div>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">25分／件</div>
+              <ul>
+                <li>📝 走り書きメモを清書</li>
+                <li>🔁 前回の記録を探して見比べる</li>
+                <li>✅ 宿題（ToDo）を手で書き出す</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 メモを3行に自動要約</li>
+                <li>📊 前回比較を自動生成</li>
+                <li>✅ ToDoを担当付きで自動抽出</li>
+              </ul>
+            </div>
+          </div>
+
+          <div style="margin-top:20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <select id="aiMember" style="padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card);min-width:180px"></select>
+            <span class="tag-soft" id="aiPrevTag">前回記録あり</span>
+          </div>
+          <textarea class="memo-input" id="aiMemo" style="margin-top:12px" placeholder="ここに面談メモを貼り付けてください。例：受注システムの担当を任されてやりがいを感じている。一方で残業が月20時間ほど増えており、引き継ぎ資料が不足している点が負担。来期はチームリーダーに挑戦したい。家庭との両立のため在宅勤務日を増やせないか相談したい。"></textarea>
+          <div style="display:flex;gap:9px;margin-top:12px">
+            <button class="btn primary" id="aiRun">⚡ AIで要約・整理する</button>
+            <button class="btn" id="aiSample">サンプルメモを入れる</button>
+          </div>
+
+          <div class="ai-result" id="aiResult">
+            <div class="res-grid">
+              <div class="res-card">
+                <div class="rh"><span class="ico" style="background:var(--brand-soft);color:var(--brand)">📄</span>AI要約（3行）</div>
+                <div id="resSummary"></div>
+              </div>
+              <div class="res-card">
+                <div class="rh"><span class="ico" style="background:var(--green-soft);color:var(--green)">✅</span>抽出されたToDo</div>
+                <div id="resTodo"></div>
+              </div>
+            </div>
+            <div class="res-card" style="margin-top:14px">
+              <div class="rh"><span class="ico" style="background:var(--amber-soft);color:var(--amber)">🔄</span>前回との比較（Before / After）</div>
+              <table class="cmp">
+                <thead><tr><th style="width:34%">観点</th><th style="width:30%">前回</th><th class="ar"></th><th style="width:30%">今回</th><th>変化</th></tr></thead>
+                <tbody id="resCompare"></tbody>
+              </table>
+            </div>
+            <div style="margin-top:16px;text-align:right">
+              <button class="btn green" id="aiSaveRecord">この内容で面談記録に保存</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const COLORS=['#6a44e3','#16b877','#e3941f','#3aa7d6','#e0609c','#e24a4a','#5331c4','#0ea5b7'];
+const MEMBERS=[
+  {name:'佐々木 美咲',dept:'営業部',color:'#6a44e3'},
+  {name:'田村 健太',dept:'開発部',color:'#16b877'},
+  {name:'中島 由香',dept:'カスタマーサポート',color:'#e3941f'},
+  {name:'松本 大輔',dept:'開発部',color:'#3aa7d6'},
+  {name:'小林 彩花',dept:'管理部',color:'#e0609c'},
+  {name:'渡辺 翔',dept:'営業部',color:'#e24a4a'},
+  {name:'加藤 沙織',dept:'カスタマーサポート',color:'#5331c4'},
+  {name:'山口 拓也',dept:'物流部',color:'#0ea5b7'},
+];
+const INTERVIEWERS=['鈴木 部長','高橋 課長','伊藤 マネージャー'];
+const THEMES=['業務の進捗・課題','キャリア・目標','体調・メンタル','人間関係・チーム','スキル・成長','業務量・働き方'];
+const MOODS=['😟','😐','🙂','😊','🤩'];
+const ISSUE_CATS=['業務量','キャリア','スキル','人間関係','体調','評価・処遇'];
+
+const TODAY=new Date();
+function ym(d){return (d.getMonth()+1)}
+
+/* deterministic PRNG so demo data is stable */
+let SEED=4071;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+function pint(min,max){return min+Math.floor(rnd()*(max-min+1));}
+
+const REC_STATUSES=['done','done','done','scheduled','done','done','canceled'];
+
+/* seed meeting records */
+let records=[];
+(function seed(){
+  let id=1;
+  for(let k=4;k>=0;k--){
+    // each past month, several members had 1on1
+    const cnt=pint(4,7);
+    const used=new Set();
+    for(let j=0;j<cnt;j++){
+      let m=pick(MEMBERS);let guard=0;
+      while(used.has(m.name)&&guard++<10)m=pick(MEMBERS);
+      used.add(m.name);
+      const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-k,pint(2,26));
+      let status= k===0 ? pick(['done','done','scheduled','done']) : 'done';
+      if(rnd()<0.06)status='canceled';
+      const isFuture=d>TODAY;
+      if(isFuture)status='scheduled';
+      const sat=status==='done'?pint(3,5):0;
+      records.push({
+        id:'1ON1-'+(2600+id++),
+        member:m.name,dept:m.dept,
+        interviewer:pick(INTERVIEWERS),
+        date:d,status,
+        mood:status==='done'?MOODS[sat-1>=0?sat-1:2]:'🙂',
+        sat,theme:pick(THEMES),
+        memo:''
+      });
+    }
+  }
+  // a few upcoming scheduled in next month
+  for(let j=0;j<4;j++){
+    const m=MEMBERS[j];
+    const d=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+pint(1,18));
+    records.push({id:'1ON1-'+(2600+id++),member:m.name,dept:m.dept,interviewer:pick(INTERVIEWERS),date:d,status:'scheduled',mood:'🙂',sat:0,theme:pick(THEMES),memo:''});
+  }
+})();
+
+/* seed issues */
+let issues=[];
+(function seedIssues(){
+  const titles=[
+    {t:'残業時間が月20時間を超過',cat:'業務量'},
+    {t:'リーダー業務への挑戦を希望',cat:'キャリア'},
+    {t:'引き継ぎ資料の不足',cat:'業務量'},
+    {t:'新システムの操作習熟が必要',cat:'スキル'},
+    {t:'評価制度への納得感が低い',cat:'評価・処遇'},
+    {t:'チーム内のコミュニケーション不足',cat:'人間関係'},
+    {t:'在宅勤務日の拡大を相談',cat:'働き方'},
+    {t:'資格取得の支援を希望',cat:'スキル'},
+    {t:'体調面の不安（睡眠不足）',cat:'体調'},
+    {t:'担当顧客の偏り',cat:'業務量'},
+  ];
+  const sts=['open','progress','progress','closed','open','progress','closed','open','progress','open'];
+  let id=1;
+  titles.forEach((x,i)=>{
+    const m=MEMBERS[i%MEMBERS.length];
+    const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-pint(0,3),pint(1,26));
+    issues.push({id:'ISS-'+(100+id++),title:x.t,cat:x.cat,member:m.name,date:d,status:sts[i],cnt:pint(1,4)});
+  });
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const fmtD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+const fmtSlash=d=>d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate();
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function memberColor(name){const m=MEMBERS.find(x=>x.name===name);return m?m.color:'#6a44e3';}
+function initials(name){const parts=String(name).trim().split(/\s+/);return (parts[0]||'').charAt(0)+(parts[1]||'').charAt(0);}
+const REC_STLABEL={done:'実施済',scheduled:'予定',draft:'下書き',canceled:'中止'};
+function recStBadge(s){return `<span class="st ${s}">${REC_STLABEL[s]}</span>`;}
+const ISS_STLABEL={open:'未対応',progress:'対応中',closed:'解決済'};
+function issStBadge(s){return `<span class="st ${s}">${ISS_STLABEL[s]}</span>`;}
+function satStars(n){if(!n)return '<span style="color:var(--ink-3)">—</span>';return '<span style="color:#e3941f">'+'★'.repeat(n)+'</span><span style="color:var(--line-2)">'+'★'.repeat(5-n)+'</span>';}
+function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function avMini(name){return `<span class="av-mini" style="background:${memberColor(name)}">${esc(initials(name))}</span>`;}
+
+/* ============ ROUTING ============ */
+const TITLES={
+  dash:['ダッシュボード','今月（'+ym(TODAY)+'月）の1on1実施状況'],
+  list:['面談記録','実施した1on1の記録を管理します'],
+  sched:['スケジュール','予定されている1on1を管理します'],
+  issue:['課題管理','面談で出た課題の継続状況を管理します'],
+  review:['振り返り','メンバーごとの変化を時系列で振り返ります'],
+  ai:['AI要約','面談メモから要約・ToDo・前回比較を自動生成します'],
+  create:['面談を記録','メモを入力するとAIが記録を仕上げます']
+};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn primary" onclick="go(\'create\')">＋ 面談を記録</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI要約</button><button class="btn primary" onclick="go(\'create\')">＋ 面談を記録</button>'
+    : v==='issue'?'<button class="btn primary" onclick="go(\'ai\')">⚡ メモから課題を抽出</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='sched')renderSched();
+  if(v==='issue')renderIssues();
+  if(v==='review')renderReview();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const tm=records.filter(r=>thisMonth(r.date)&&r.status==='done');
+  const tmScheduled=records.filter(r=>thisMonth(r.date)&&r.status==='scheduled').length;
+  const target=MEMBERS.length;
+  const rate=Math.round(tm.length/target*100);
+  const openIssues=issues.filter(i=>i.status!=='closed').length;
+  const doneSat=records.filter(r=>r.status==='done'&&r.sat>0);
+  const avgSat=doneSat.length?(doneSat.reduce((s,r)=>s+r.sat,0)/doneSat.length):0;
+
+  $('kpis').innerHTML=`
+    ${kpi('#6a44e3','今月の実施数',tm.length+'<small>件</small>',target+'名中 '+tm.length+'名','up','予定 '+tmScheduled+'件')}
+    ${kpi('#16b877','実施率',rate+'<small>%</small>','','up','前月比 +8pt')}
+    ${kpi('#e3941f','継続課題',openIssues+'<small>件</small>','要対応 '+issues.filter(i=>i.status==='open').length+'件','warn','フォロー中')}
+    ${kpi('#e0609c','平均満足度',avgSat.toFixed(1)+'<small>/5</small>','',avgSat>=3.5?'up':'down',avgSat>=3.5?'良好':'要観察')}`;
+
+  // trend bars (実施数)
+  const months=[];for(let k=5;k>=0;k--){const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1);months.push(d);}
+  const cnts=months.map(m=>records.filter(r=>r.status==='done'&&r.date.getMonth()===m.getMonth()&&r.date.getFullYear()===m.getFullYear()).length);
+  const mx=Math.max(...cnts,1);
+  $('trendBars').innerHTML=months.map((m,i)=>`
+    <div class="bar-row"><span class="mlabel">${m.getMonth()+1}月</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(cnts[i]/mx*100)}"></div></div>
+      <span class="mval">${cnts[i]}件</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+
+  // satisfaction donut
+  const buckets={5:0,4:0,3:0,2:0,1:0};
+  doneSat.forEach(r=>buckets[r.sat]++);
+  const totalSat=doneSat.length||1;
+  const highRatio=Math.round((buckets[5]+buckets[4])/totalSat*100);
+  const legColors={5:'#16b877',4:'#3aa7d6',3:'#e3941f',2:'#e0609c',1:'#e24a4a'};
+  const legLabels={5:'とても満足',4:'満足',3:'ふつう',2:'やや不満',1:'不満'};
+  $('satWrap').innerHTML=`
+    <div class="donut" style="--p:${highRatio}%"><div class="dn"><b>${highRatio}%</b><span>満足以上</span></div></div>
+    <div class="satleg">${[5,4,3,2,1].map(k=>`<div class="lr"><span class="sw" style="background:${legColors[k]}"></span>${legLabels[k]}<b>${buckets[k]}件</b></div>`).join('')}</div>`;
+
+  // upcoming
+  const up=records.filter(r=>r.status==='scheduled'&&r.date>=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate())).sort((a,b)=>a.date-b.date).slice(0,5);
+  $('dashUpcoming').innerHTML=up.length?up.map(r=>`
+    <div class="act" style="padding:10px 18px;border-bottom:1px solid var(--line)">
+      <div class="namecell" style="flex:1">${avMini(r.member)}<div><div class="at">${esc(r.member)}</div><div class="am">${esc(r.theme)} ・ ${esc(r.interviewer)}</div></div></div>
+      <div style="text-align:right"><div style="font-weight:800;font-size:13px">${fmtSlash(r.date)}</div><div class="am">${recStBadge(r.status)}</div></div>
+    </div>`).join('')
+    :'<div class="empty-cell">予定はありません</div>';
+
+  // activity feed
+  const acts=[
+    {i:'⚡',c:'#efeaff',t:'AI要約で 佐々木 美咲 さんの面談メモを整理（ToDo 3件抽出）',m:'12分前'},
+    {i:'✅',c:'#e6f8f0',t:'課題「引き継ぎ資料の不足」を解決済にしました',m:'1時間前'},
+    {i:'🗒️',c:'#efeaff',t:'田村 健太 さんの1on1記録を作成しました',m:'今日 10:20'},
+    {i:'⚠️',c:'#fdeaea',t:'中島 由香 さんは前回から60日以上 面談していません',m:'今日 9:05'},
+    {i:'📅',c:'#eaf1ff',t:'来月の1on1日程を 4件 自動調整しました',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${a.t}</div><div class="am">${a.m}</div></div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ LIST (面談記録) ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['done','実施済'],['scheduled','予定'],['canceled','中止']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=records.filter(r=>filterStatus==='all'||r.status===filterStatus)
+    .filter(r=>!q||(r.member+r.interviewer+r.theme+r.id).toLowerCase().includes(q))
+    .sort((a,b)=>b.date-a.date);
+  $('listRows').innerHTML=rows.length?rows.map(r=>`<tr>
+    <td class="mono" style="font-size:11.5px">${esc(r.id)}</td>
+    <td><div class="namecell">${avMini(r.member)}<div><b>${esc(r.member)}</b><div style="font-size:11px;color:var(--ink-3)">${esc(r.dept)}</div></div></div></td>
+    <td style="color:var(--ink-2)">${esc(r.interviewer)}</td>
+    <td style="color:var(--ink-2)">${fmtSlash(r.date)}</td>
+    <td>${recStBadge(r.status)}</td>
+    <td class="mood">${r.status==='done'?r.mood:'<span style="color:var(--ink-3)">—</span>'}</td>
+    <td class="r">${satStars(r.sat)}</td>
+    <td><span class="tag-soft">${esc(r.theme)}</span></td></tr>`).join('')
+    :'<tr><td colspan="8" class="empty-cell">該当する面談記録がありません</td></tr>';
+}
+$('q').addEventListener('input',renderList);
+
+/* ============ SCHEDULE ============ */
+function lastDoneBefore(member,date){
+  const past=records.filter(r=>r.member===member&&r.status==='done'&&r.date<date).sort((a,b)=>b.date-a.date);
+  return past[0]?past[0].date:null;
+}
+function renderSched(){
+  const sched=records.filter(r=>r.status==='scheduled').sort((a,b)=>a.date-b.date);
+  const now=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate());
+  const overdue=MEMBERS.filter(m=>{
+    const last=records.filter(r=>r.member===m.name&&r.status==='done').sort((a,b)=>b.date-a.date)[0];
+    if(!last)return true;
+    return (now-last.date)/86400000>45;
+  });
+  $('schedKpis').innerHTML=`
+    ${kpi('#6a44e3','予定件数',sched.length+'<small>件</small>','','up','調整済')}
+    ${kpi('#16b877','今週の予定',sched.filter(r=>(r.date-now)/86400000<=7&&r.date>=now).length+'<small>件</small>','','up','直近')}
+    ${kpi('#e3941f','間隔が空いている',overdue.length+'<small>名</small>','45日以上','warn','要設定')}
+    ${kpi('#3aa7d6','次回最短',sched[0]?fmtSlash(sched[0].date):'—','','up',sched[0]?esc(sched[0].member):'—')}`;
+  $('schedRows').innerHTML=sched.length?sched.map(r=>{
+    const last=lastDoneBefore(r.member,r.date);
+    const gap=last?Math.round((r.date-last)/86400000)+'日ぶり':'初回';
+    return `<tr>
+      <td style="font-weight:800">${fmtSlash(r.date)}</td>
+      <td><div class="namecell">${avMini(r.member)}<b>${esc(r.member)}</b></div></td>
+      <td style="color:var(--ink-2)">${esc(r.interviewer)}</td>
+      <td><span class="tag-soft">${gap}</span></td>
+      <td>${recStBadge(r.status)}</td>
+      <td class="r"><button class="btn primary" style="padding:6px 12px" onclick="startMeeting('${esc(r.id)}')">記録する</button></td></tr>`;
+  }).join('')
+    :'<tr><td colspan="6" class="empty-cell">予定はありません</td></tr>';
+  $('navSched').textContent=sched.length;
+}
+window.startMeeting=id=>{
+  const r=records.find(x=>x.id===id);
+  if(r){go('create');$('cMember').value=r.member;$('cInterviewer').value=r.interviewer;$('cTheme').value=r.theme;renderPaper();showToast(esc(r.member)+' さんの面談記録を開始します');}
+};
+$('autoSchedule').addEventListener('click',async()=>{
+  const btn=$('autoSchedule');btn.textContent='🪄 日程を計算中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,900));
+  let added=0;
+  MEMBERS.forEach(m=>{
+    const hasFuture=records.some(r=>r.member===m.name&&r.status==='scheduled'&&r.date>TODAY);
+    if(!hasFuture){
+      const d=new Date(TODAY.getFullYear(),TODAY.getMonth()+1,pint(3,25));
+      records.push({id:'1ON1-'+(2600+records.length+1),member:m.name,dept:m.dept,interviewer:pick(INTERVIEWERS),date:d,status:'scheduled',mood:'🙂',sat:0,theme:pick(THEMES),memo:''});
+      added++;
+    }
+  });
+  btn.textContent='🪄 AIで来月の日程を自動調整';btn.disabled=false;
+  renderSched();showToast('来月の1on1を '+added+'件 自動で日程調整しました');
+});
+
+/* ============ ISSUES ============ */
+let issueFilter='all';
+function renderIssueChips(){
+  const opts=[['all','すべて'],['open','未対応'],['progress','対応中'],['closed','解決済']];
+  $('issueChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===issueFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('issueChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{issueFilter=c.dataset.s;renderIssueChips();renderIssues();});
+}
+function renderIssues(){
+  const q=($('qIssue').value||'').toLowerCase();
+  let rows=issues.filter(i=>issueFilter==='all'||i.status===issueFilter)
+    .filter(i=>!q||(i.title+i.member+i.cat).toLowerCase().includes(q))
+    .sort((a,b)=>b.cnt-a.cnt);
+  $('issueRows').innerHTML=rows.length?rows.map(i=>`<tr>
+    <td><b>${esc(i.title)}</b></td>
+    <td><div class="namecell">${avMini(i.member)}<span>${esc(i.member)}</span></div></td>
+    <td><span class="tag-soft">${esc(i.cat)}</span></td>
+    <td style="color:var(--ink-2)">${fmtSlash(i.date)}</td>
+    <td>${i.cnt>=3?'<span style="color:var(--red);font-weight:800">'+i.cnt+'回 継続</span>':i.cnt+'回'}</td>
+    <td>${issStBadge(i.status)}</td>
+    <td class="r">${i.status!=='closed'?`<button class="btn green" style="padding:6px 12px" onclick="closeIssue('${esc(i.id)}')">解決</button>`:'<span style="color:var(--ink-3);font-size:12px">完了</span>'}</td></tr>`).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する課題がありません</td></tr>';
+  $('navIssue').textContent=issues.filter(i=>i.status!=='closed').length;
+}
+window.closeIssue=id=>{const i=issues.find(x=>x.id===id);if(i){i.status='closed';renderIssues();showToast('課題「'+i.title+'」を解決済にしました');}};
+$('qIssue').addEventListener('input',renderIssues);
+
+/* ============ REVIEW (振り返り) ============ */
+function renderReviewSelect(){
+  $('reviewSel').innerHTML=MEMBERS.map(m=>`<option value="${esc(m.name)}">${esc(m.name)}（${esc(m.dept)}）</option>`).join('');
+}
+function renderReview(){
+  const name=$('reviewSel').value||MEMBERS[0].name;
+  const recs=records.filter(r=>r.member===name&&r.status==='done').sort((a,b)=>b.date-a.date);
+  $('reviewCount').textContent=recs.length+'件';
+  // timeline
+  $('reviewTl').innerHTML=recs.length?recs.map(r=>`
+    <div class="tl-item">
+      <div class="td">${fmtDL(r.date)} ・ ${esc(r.interviewer)}</div>
+      <div class="tt">${r.mood} ${esc(r.theme)} <span style="font-size:11px;color:var(--ink-3)">満足度 ${satStars(r.sat)}</span></div>
+      <div class="tm">${esc(reviewNote(r))}</div>
+    </div>`).join('')
+    :'<div class="empty-cell">この方の実施済み記録はまだありません</div>';
+  // satisfaction trend (oldest->newest)
+  const asc=[...recs].reverse();
+  $('reviewSat').innerHTML=asc.length?asc.map(r=>`
+    <div class="bar-row"><span class="mlabel">${fmtD(r.date)}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${r.sat*20}"></div></div>
+      <span class="mval">${r.sat}/5</span></div>`).join('')
+    :'<div class="empty-cell">データなし</div>';
+  setTimeout(()=>document.querySelectorAll('#reviewSat .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // goals (derived from issues for this member)
+  const mine=issues.filter(i=>i.member===name);
+  const goalsBase=mine.length?mine:[{title:'業務目標の達成',status:'progress'},{title:'スキルアップ',status:'open'}];
+  $('reviewGoals').innerHTML=goalsBase.map((g,idx)=>{
+    const pct=g.status==='closed'?100:g.status==='progress'?pint(45,80):pint(10,35);
+    const col=g.status==='closed'?'var(--green)':g.status==='progress'?'var(--brand)':'var(--amber)';
+    return `<div class="goalrow"><div class="gt">${g.title?esc(g.title):'目標'}<span class="gp">${pct}%</span></div>
+      <div class="gtrack"><div class="gfill" data-w="${pct}" style="background:${col};width:0"></div></div></div>`;
+  }).join('');
+  setTimeout(()=>document.querySelectorAll('#reviewGoals .gfill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+}
+function reviewNote(r){
+  const notes={
+    '業務の進捗・課題':'担当案件の進捗を確認。優先順位を再整理し、ボトルネックを共有。',
+    'キャリア・目標':'中期のキャリア希望をヒアリング。挑戦したい役割を確認した。',
+    '体調・メンタル':'体調・睡眠の状況を確認。無理のない範囲で業務調整を合意。',
+    '人間関係・チーム':'チーム内の連携について相談。役割分担を見直すことに。',
+    'スキル・成長':'伸ばしたいスキルを確認。研修・OJTの計画を立てた。',
+    '業務量・働き方':'業務量と働き方を確認。在宅日や残業の調整方針を相談。'
+  };
+  return notes[r.theme]||'面談内容を記録。';
+}
+$('reviewSel').addEventListener('change',renderReview);
+
+/* ============ CREATE (面談を記録) ============ */
+let curMood='🙂';
+function fillSelect(el,arr,withPlaceholder){
+  el.innerHTML=(withPlaceholder?'<option value="">選択してください</option>':'')+arr.map(x=>`<option>${esc(x)}</option>`).join('');
+}
+function setupCreate(){
+  fillSelect($('cMember'),MEMBERS.map(m=>m.name),true);
+  fillSelect($('cInterviewer'),INTERVIEWERS,true);
+  fillSelect($('cTheme'),THEMES,true);
+  $('cDate').value=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()).toISOString().slice(0,10);
+  $('cMood').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    $('cMood').querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');curMood=b.dataset.m;renderPaper();
+  });
+}
+function renderPaper(){
+  $('pMember').textContent=$('cMember').value||'—';
+  $('pInterviewer').textContent=$('cInterviewer').value||'—';
+  $('pTheme').textContent=$('cTheme').value||'—';
+  $('pMood').textContent=curMood;
+  const memo=$('cMemo').value.trim();
+  $('pMemo').textContent=memo||'← 左の入力欄にメモを記入してください';
+  const d=$('cDate').value?new Date($('cDate').value):TODAY;
+  $('pDate').textContent=fmtDL(d);
+  // hide AI parts until generated again
+  $('pSummaryWrap').style.display='none';$('pTodoWrap').style.display='none';
+}
+['cMember','cInterviewer','cTheme','cDate','cMemo'].forEach(id=>$(id).addEventListener('input',renderPaper));
+$('cMember').addEventListener('change',renderPaper);
+$('cInterviewer').addEventListener('change',renderPaper);
+$('cTheme').addEventListener('change',renderPaper);
+
+function aiDigest(memo){
+  // very light heuristic "AI" — extract sentences for summary, todo-like phrases
+  const text=memo.replace(/\n/g,'。');
+  const sentences=text.split(/[。.!?！？]/).map(s=>s.trim()).filter(s=>s.length>3);
+  const summary=sentences.slice(0,3).map((s,i)=>['現状','課題・要望','今後の意向'][i]+'：'+s).slice(0,3);
+  if(!summary.length)summary.push('面談内容を記録しました。');
+  // todos: pick sentences with action keywords or default ones
+  const kw=['したい','必要','不足','相談','検討','調整','改善','支援','確認','挑戦','増やせ','見直'];
+  let todos=sentences.filter(s=>kw.some(k=>s.includes(k))).slice(0,4);
+  if(todos.length<2)todos=todos.concat(['次回までに進捗を確認する','関連資料を共有する']).slice(0,3);
+  const owners=['本人','面談者','上長'];
+  return {summary,todos:todos.map((t,i)=>({t,owner:owners[i%owners.length]}))};
+}
+$('cSample').addEventListener('click',()=>{
+  $('cMember').value='佐々木 美咲';$('cInterviewer').value='鈴木 部長';$('cTheme').value='業務量・働き方';
+  $('cMood').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.m==='🙂'));curMood='🙂';
+  $('cMemo').value='受注システムの担当を任されてやりがいを感じている。一方で残業が月20時間ほど増えており、引き継ぎ資料が不足している点が負担。来期はチームリーダーに挑戦したい。家庭との両立のため在宅勤務日を増やせないか相談したい。';
+  renderPaper();
+});
+$('cSave').addEventListener('click',async()=>{
+  const memo=$('cMemo').value.trim();
+  if(!$('cMember').value||!$('cInterviewer').value||!memo){showToast('メンバー・面談者・メモを入力してください');return;}
+  const btn=$('cSave');btn.textContent='⚡ AIが仕上げ中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,800));
+  const dg=aiDigest(memo);
+  $('pSummary').textContent=dg.summary.join('\n');
+  $('pTodo').innerHTML=dg.todos.map(t=>`<li>${esc(t.t)}<span style="margin-left:auto;font-size:11px;color:var(--ink-3)">（${esc(t.owner)}）</span></li>`).join('');
+  $('pSummaryWrap').style.display='block';$('pTodoWrap').style.display='block';
+  const d=$('cDate').value?new Date($('cDate').value):new Date();
+  const no='1ON1-'+(2600+records.length+1);$('pNo').textContent=no;
+  const satMap={'😟':1,'😐':2,'🙂':3,'😊':4,'🤩':5};
+  records.push({id:no,member:$('cMember').value,dept:(MEMBERS.find(m=>m.name===$('cMember').value)||{}).dept||'',interviewer:$('cInterviewer').value,date:d,status:'done',mood:curMood,sat:satMap[curMood]||3,theme:$('cTheme').value||'業務の進捗・課題',memo});
+  btn.textContent='⚡ AIで仕上げて記録';btn.disabled=false;
+  showToast('面談記録 '+no+' を保存しました（要約・ToDoを自動作成）');
+  setTimeout(()=>go('list'),900);
+});
+
+/* ============ AI SUMMARY ============ */
+function setupAi(){
+  fillSelect($('aiMember'),MEMBERS.map(m=>m.name),false);
+  $('aiMember').addEventListener('change',updatePrevTag);
+  updatePrevTag();
+}
+function updatePrevTag(){
+  const name=$('aiMember').value;
+  const prev=records.filter(r=>r.member===name&&r.status==='done').sort((a,b)=>b.date-a.date)[0];
+  $('aiPrevTag').textContent=prev?('前回：'+fmtSlash(prev.date)+'（満足度 '+prev.sat+'/5）'):'前回記録なし（初回）';
+}
+const SAMPLE_MEMO='受注システムの担当を任されてやりがいを感じている。一方で残業が月20時間ほど増えており、引き継ぎ資料が不足している点が負担。来期はチームリーダーに挑戦したい。家庭との両立のため在宅勤務日を増やせないか相談したい。前回課題だった顧客対応のばらつきは、テンプレ整備で改善できた。';
+$('aiSample').addEventListener('click',()=>{$('aiMemo').value=SAMPLE_MEMO;showToast('サンプルメモを入力しました');});
+
+$('aiRun').addEventListener('click',async()=>{
+  const memo=$('aiMemo').value.trim();
+  if(!memo){showToast('面談メモを入力してください');return;}
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 解析中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,6);},120);
+  await new Promise(r=>setTimeout(r,1200));
+  clearInterval(t);$('baAfterT').textContent='6秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+
+  const dg=aiDigest(memo);
+  // summary
+  $('resSummary').innerHTML=dg.summary.map(s=>`<div class="res-line"><span class="bul">›</span><span>${esc(s)}</span></div>`).join('');
+  // todos
+  $('resTodo').innerHTML=dg.todos.map(td=>`<div class="res-todo"><span class="cb">✓</span><span>${esc(td.t)}</span><span class="ow">担当：${esc(td.owner)}</span></div>`).join('');
+  // before/after compare
+  const name=$('aiMember').value;
+  const prev=records.filter(r=>r.member===name&&r.status==='done').sort((a,b)=>b.date-a.date)[0];
+  const prevSat=prev?prev.sat:3;
+  const curSat=Math.min(5,prevSat+(memo.includes('改善')||memo.includes('やりがい')?1:0));
+  const rows=[
+    {k:'満足度',before:prevSat+'/5',after:curSat+'/5',up:curSat>prevSat},
+    {k:'主な関心事',before:prev?'顧客対応のばらつき':'（初回のため記録なし）',after:'業務量・キャリア志向',up:false},
+    {k:'残業の状況',before:prev?'月12時間':'—',after:'月20時間（増加）',up:false,warn:true},
+    {k:'前回ToDoの消化',before:prev?'2件中 1件':'—',after:'テンプレ整備で改善',up:true},
+  ];
+  $('resCompare').innerHTML=rows.map(r=>`<tr>
+    <td style="font-weight:700">${esc(r.k)}</td>
+    <td style="color:var(--ink-3)">${esc(r.before)}</td>
+    <td class="ar">→</td>
+    <td style="font-weight:700">${esc(r.after)}</td>
+    <td>${r.up?'<span class="delta up">改善 ↑</span>':r.warn?'<span class="delta" style="background:var(--red-soft);color:var(--red)">注意 ↑</span>':'<span class="delta same">変化</span>'}</td></tr>`).join('');
+
+  $('aiResult').classList.add('show');
+  // staggered reveal
+  const lines=[...$('resSummary').querySelectorAll('.res-line'),...$('resTodo').querySelectorAll('.res-todo')];
+  for(let i=0;i<lines.length;i++){await new Promise(r=>setTimeout(r,160));lines[i].classList.add('in');}
+  btn.disabled=false;btn.textContent='⚡ もう一度 要約・整理する';
+  showToast('AIが要約・ToDo・前回比較を生成しました');
+});
+$('aiSaveRecord').addEventListener('click',()=>{
+  const name=$('aiMember').value;
+  const no='1ON1-'+(2600+records.length+1);
+  const dep=(MEMBERS.find(m=>m.name===name)||{}).dept||'';
+  records.push({id:no,member:name,dept:dep,interviewer:pick(INTERVIEWERS),date:new Date(),status:'done',mood:'😊',sat:4,theme:'業務量・働き方',memo:$('aiMemo').value.trim()});
+  showToast('面談記録 '+no+' に保存しました');
+  setTimeout(()=>go('list'),700);
+});
+
+/* ============ INIT ============ */
+setupCreate();renderPaper();
+renderChips();renderIssueChips();
+renderReviewSelect();
+setupAi();
+renderDash();
+$('navSched').textContent=records.filter(r=>r.status==='scheduled').length;
+$('navIssue').textContent=issues.filter(i=>i.status!=='closed').length;
+</script>
+</body>
+</html>

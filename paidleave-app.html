@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜有給管理マシン（有給休暇管理システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:60px 1fr 64px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut */
+.donut-wrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.donut{width:130px;height:130px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;position:relative}
+.donut .hole{width:88px;height:88px;border-radius:50%;background:var(--card);display:grid;place-items:center;text-align:center}
+.donut .hole b{font-size:24px;font-weight:900;line-height:1}
+.donut .hole span{font-size:10.5px;color:var(--ink-3);font-weight:700}
+.legend{display:flex;flex-direction:column;gap:9px;font-size:12.5px}
+.legend .lg{display:flex;align-items:center;gap:8px}
+.legend .lg .sq{width:11px;height:11px;border-radius:3px}
+.legend .lg .n{color:var(--ink-2);font-weight:600}
+.legend .lg .vv{margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl th.c,table.tbl td.c{text-align:center}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px;vertical-align:middle}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px;white-space:nowrap}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.ok{background:var(--green-soft);color:var(--green)}
+.st.approved{background:var(--green-soft);color:var(--green)}
+.st.pending{background:var(--amber-soft);color:var(--amber)}
+.st.warn{background:var(--amber-soft);color:var(--amber)}
+.st.rejected{background:var(--soft);color:var(--ink-3)}
+.st.danger{background:var(--red-soft);color:var(--red)}
+
+/* mini progress bar inside cells */
+.mini{height:7px;border-radius:99px;background:var(--soft);overflow:hidden;width:90px;display:inline-block;vertical-align:middle}
+.mini i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky))}
+.mini.g i{background:linear-gradient(90deg,var(--green),#38d39a)}
+.mini.a i{background:linear-gradient(90deg,var(--amber),#f0b350)}
+.mini.r i{background:linear-gradient(90deg,var(--red),#f17a7a)}
+
+.av-name{display:flex;align-items:center;gap:9px}
+.av-name .av{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;color:#fff;font-weight:800;font-size:12px}
+
+/* form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:64px}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.fg-2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+.bal-card{background:linear-gradient(135deg,#1f57cf,#0ea5b7);border-radius:14px;padding:20px;color:#fff;box-shadow:var(--shadow);margin-bottom:16px}
+.bal-card .bl{font-size:12px;opacity:.85;font-weight:700}
+.bal-card .bv{font-family:'Orbitron';font-size:38px;font-weight:700;margin:4px 0;line-height:1}
+.bal-card .bv small{font-size:16px;opacity:.85}
+.bal-card .bsub{font-size:11.5px;opacity:.8;margin-top:4px}
+.bal-card .bsplit{display:flex;gap:18px;margin-top:14px;border-top:1px solid rgba(255,255,255,.2);padding-top:13px}
+.bal-card .bsplit div b{display:block;font-size:18px;font-weight:900;font-variant-numeric:tabular-nums}
+.bal-card .bsplit div span{font-size:10.5px;opacity:.8}
+
+/* request preview / approval lane */
+.req-prev{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:var(--shadow)}
+.req-prev .rh{display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);padding-bottom:13px;margin-bottom:14px}
+.req-prev .rh .ttl{font-size:15px;font-weight:900}
+.req-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+.req-row span{color:var(--ink-2)}
+.req-row b{font-weight:800}
+.req-flow{display:flex;align-items:center;gap:6px;margin-top:16px;flex-wrap:wrap}
+.req-flow .step{flex:1;min-width:90px;text-align:center;background:var(--soft);border-radius:10px;padding:10px 6px;font-size:11.5px;font-weight:700;color:var(--ink-2)}
+.req-flow .step b{display:block;font-size:18px;margin-bottom:3px}
+.req-flow .step.done{background:var(--green-soft);color:var(--green)}
+.req-flow .ar{color:var(--ink-3);font-size:14px}
+
+/* AI stage */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ai-stage+.ai-stage{margin-top:18px}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto;flex-shrink:0}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* alert cards */
+.alert-card{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--amber);border-radius:12px;padding:15px 18px;margin-bottom:11px;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow);opacity:0;transform:translateY(8px);transition:all .4s}
+.alert-card.in{opacity:1;transform:none}
+.alert-card.danger{border-left-color:var(--red)}
+.alert-card.ok{border-left-color:var(--green)}
+.alert-card .ico{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;font-size:19px;flex-shrink:0}
+.alert-card .body{flex:1;min-width:0}
+.alert-card .body b{font-weight:800;font-size:13.5px}
+.alert-card .body p{font-size:12px;color:var(--ink-2);margin-top:2px}
+.alert-card .meta{text-align:right;flex-shrink:0}
+.alert-card .meta .days{font-family:'Orbitron';font-weight:700;font-size:20px}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.section-note{font-size:12px;color:var(--ink-3);margin-bottom:14px}
+.calwrap{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.cal-h{font-size:11px;color:var(--ink-3);font-weight:700;text-align:center;padding:4px 0}
+.cal-d{aspect-ratio:1;border:1px solid var(--line);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;font-weight:700;position:relative;background:var(--card)}
+.cal-d.off{color:var(--ink-3);background:var(--soft);opacity:.55}
+.cal-d.leave{background:var(--brand-soft);border-color:var(--brand);color:var(--brand-dk)}
+.cal-d .tag{font-size:8.5px;font-weight:800;margin-top:1px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">有給管理マシン<small>技マシン｜有給休暇管理</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="status"><span class="i">📅</span>取得状況</a>
+      <a data-v="request"><span class="i">✏️</span>有給申請</a>
+      <a data-v="grant"><span class="i">🎁</span>付与管理</a>
+      <a data-v="duty"><span class="i">⚖️</span>5日義務<span class="badge" id="navDuty">0</span></a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AIアラート</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。従業員名・取得状況はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">2026年度の有給取得状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>部署別 平均取得日数</h3><span class="more">2026年度</span></div>
+            <div class="pb"><div class="bars" id="deptBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>取得状況の内訳</h3></div>
+            <div class="pb">
+              <div class="donut-wrap">
+                <div class="donut" id="donut"><div class="hole"><b id="donutRate">0%</b><span>平均取得率</span></div></div>
+                <div class="legend" id="donutLegend"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>5日取得義務の状況</h3><span class="more" onclick="go('duty')">詳細</span></div>
+            <div class="pb"><div class="acts" id="dutyMini"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- STATUS -->
+      <section class="view" id="v-status">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="従業員名・部署で検索"></div>
+          <div class="chips" id="deptChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr>
+            <th>従業員</th><th>部署</th><th>入社日</th><th class="c">勤続</th>
+            <th class="r">付与日数</th><th class="r">取得日数</th><th class="r">残日数</th>
+            <th>取得率</th><th>5日義務</th>
+          </tr></thead>
+          <tbody id="statusRows"></tbody>
+        </table>
+      </section>
+
+      <!-- REQUEST -->
+      <section class="view" id="v-request">
+        <div class="create-grid">
+          <div>
+            <div class="formcard">
+              <div class="fg"><label>申請する従業員</label><select id="rEmp"></select></div>
+              <div class="aihint" id="rBalHint">✨ AIが残日数と取得状況を自動表示しました</div>
+              <div class="fg-2">
+                <div class="fg"><label>取得開始日</label><input id="rStart" type="date"></div>
+                <div class="fg"><label>取得日数</label>
+                  <select id="rDays"><option value="1">1日</option><option value="0.5">半休（0.5日）</option><option value="2">2日</option><option value="3">3日</option><option value="5">5日（連続）</option></select>
+                </div>
+              </div>
+              <div class="fg"><label>区分</label>
+                <select id="rType"><option>年次有給休暇</option><option>時間単位年休</option><option>計画的付与</option></select>
+              </div>
+              <div class="fg"><label>理由（任意）</label><textarea id="rReason" placeholder="例：私用のため"></textarea></div>
+              <div class="linkrow" style="margin-top:6px">
+                <button class="btn primary" id="rSubmit" style="flex:1;justify-content:center">⚡ AIでチェックして申請</button>
+                <button class="btn" id="rSample">サンプル</button>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="bal-card" id="rBalCard">
+              <div class="bl">選択中の従業員の有給残</div>
+              <div class="bv tnum" id="rBalDays">—<small> 日</small></div>
+              <div class="bsub" id="rBalName">従業員を選んでください</div>
+              <div class="bsplit">
+                <div><b class="tnum" id="rBalGrant">—</b><span>今年度付与</span></div>
+                <div><b class="tnum" id="rBalTaken">—</b><span>取得済</span></div>
+                <div><b class="tnum" id="rBalDuty">—</b><span>5日義務まで</span></div>
+              </div>
+            </div>
+            <div class="req-prev">
+              <div class="rh"><span style="font-size:22px">📝</span><div><div class="ttl">申請内容プレビュー</div><div style="font-size:11.5px;color:var(--ink-3)">入力するとリアルタイムで組み上がります</div></div></div>
+              <div class="req-row"><span>従業員</span><b id="pvEmp">—</b></div>
+              <div class="req-row"><span>取得日</span><b id="pvDate">—</b></div>
+              <div class="req-row"><span>日数</span><b id="pvDays">—</b></div>
+              <div class="req-row"><span>区分</span><b id="pvType">—</b></div>
+              <div class="req-row"><span>申請後の残日数</span><b id="pvAfter">—</b></div>
+              <div class="req-flow">
+                <div class="step done"><b>📨</b>申請</div><span class="ar">→</span>
+                <div class="step"><b>👤</b>上長承認</div><span class="ar">→</span>
+                <div class="step"><b>🏢</b>労務確認</div><span class="ar">→</span>
+                <div class="step"><b>✅</b>確定</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- GRANT -->
+      <section class="view" id="v-grant">
+        <div class="ai-stage" style="margin-bottom:18px">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="grantOrb">🤖</div>
+            <div style="flex:1;min-width:200px"><div style="font-size:16px;font-weight:900">勤続年数から付与日数を自動計算</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="grantSub">労基法の法定付与日数（入社半年で10日〜最大20日）を、入社日からAIが全員分まとめて計算します。</div></div>
+            <button class="btn primary" id="grantRun" style="margin-left:auto">⚡ AIで全員分を自動計算</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="grBeforeT">1時間30分</div>
+              <ul>
+                <li>📋 一人ずつ入社日を確認</li>
+                <li>📖 勤続年数を法定表と突合</li>
+                <li>⌨️ 付与日数を台帳に手入力</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="grAfterT">— </div>
+              <ul style="opacity:.4" id="grAfterList">
+                <li>🤖 入社日から勤続年数を判定</li>
+                <li>📐 法定付与表を自動適用</li>
+                <li>🎁 全員の付与日数を一括反映</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="grantGen">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">🎁 自動計算された付与日数</div>
+            <div id="grantItems"></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="ph"><h3>法定付与日数テーブル（フルタイム）</h3><span class="more">労働基準法 第39条</span></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>勤続年数</th><th class="c">0.5年</th><th class="c">1.5年</th><th class="c">2.5年</th><th class="c">3.5年</th><th class="c">4.5年</th><th class="c">5.5年</th><th class="c">6.5年以上</th></tr></thead>
+              <tbody><tr style="cursor:default">
+                <td><b>付与日数</b></td><td class="c">10日</td><td class="c">11日</td><td class="c">12日</td><td class="c">14日</td><td class="c">16日</td><td class="c">18日</td><td class="c"><b style="color:var(--brand)">20日</b></td>
+              </tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- DUTY (5日義務) -->
+      <section class="view" id="v-duty">
+        <div class="kpis" id="dutyKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>年5日取得義務の進捗（付与10日以上が対象）</h3>
+            <button class="btn green" id="dutyRemind" style="margin-left:auto">📨 未達者へ一括リマインド</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>従業員</th><th>部署</th><th>基準日</th><th class="r">取得済</th><th>義務（5日）達成度</th><th>期限</th><th>状態</th><th></th></tr></thead>
+              <tbody id="dutyRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI ALERT -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div style="flex:1;min-width:200px"><div style="font-size:16px;font-weight:900">5日義務リスクをAIが自動検知</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">全従業員の取得ペースをAIが分析し、年5日に届かないリスクのある人を、期限と必要日数つきで自動で洗い出します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIでアラートを生成</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="alBeforeT">毎月 2時間</div>
+              <ul>
+                <li>📊 台帳から取得日数を集計</li>
+                <li>🔍 一人ずつ5日達成を目視確認</li>
+                <li>📞 未達者へ個別に連絡・督促</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="alAfterT">— </div>
+              <ul style="opacity:.4" id="alAfterList">
+                <li>🤖 取得ペースを自動分析</li>
+                <li>🚨 未達リスクを期限つきで検知</li>
+                <li>✉️ 対象者へ通知文を自動作成</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="alertGen">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">🚨 検知されたアラート</div>
+            <div id="alertItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const TODAY=new Date(2026,4,30); // 2026-05-30 (デモ固定基準日)
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function fmtDL(d){return d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';}
+function fmtS(d){return (d.getMonth()+1)+'/'+d.getDate();}
+function avColor(name){const c=['#2f6df0','#16b877','#e3941f','#0ea5b7','#9b6ef0','#e24a4a','#1f9d8f','#d9700f'];let h=0;for(const ch of name)h=(h*31+ch.charCodeAt(0))&0xffff;return c[h%c.length];}
+
+/* ============ 法定付与日数 ============ */
+// 勤続年数(0.5年単位)に応じた法定付与日数
+function legalGrant(years){
+  if(years<0.5)return 0;
+  if(years<1.5)return 10;
+  if(years<2.5)return 11;
+  if(years<3.5)return 12;
+  if(years<4.5)return 14;
+  if(years<5.5)return 16;
+  if(years<6.5)return 18;
+  return 20;
+}
+function tenureYears(joinDate){return ((TODAY-joinDate)/(365.25*24*3600*1000));}
+function tenureLabel(y){
+  const yr=Math.floor(y);const mo=Math.round((y-yr)*12);
+  return yr+'年'+(mo?mo+'ヶ月':'');
+}
+
+/* ============ DATA ============ */
+// 従業員マスタ（リアルな日本語ダミー）
+const RAW=[
+  {name:'佐藤 健一',dept:'医療事務',join:'2014-04-01',taken:3,carry:8},
+  {name:'鈴木 美咲',dept:'看護',join:'2018-04-01',taken:5,carry:6},
+  {name:'高橋 翔太',dept:'介護',join:'2021-10-01',taken:1,carry:2},
+  {name:'田中 由香',dept:'看護',join:'2016-04-01',taken:7,carry:9},
+  {name:'伊藤 大輔',dept:'リハビリ',join:'2013-04-01',taken:0,carry:10},
+  {name:'渡辺 さくら',dept:'医療事務',join:'2022-04-01',taken:2,carry:0},
+  {name:'山本 拓也',dept:'介護',join:'2010-04-01',taken:4,carry:12},
+  {name:'中村 葵',dept:'看護',join:'2023-10-01',taken:0,carry:0},
+  {name:'小林 誠',dept:'リハビリ',join:'2019-04-01',taken:6,carry:4},
+  {name:'加藤 結衣',dept:'医療事務',join:'2024-04-01',taken:1,carry:0},
+  {name:'吉田 隆',dept:'介護',join:'2009-04-01',taken:8,carry:5},
+  {name:'山田 七海',dept:'看護',join:'2020-04-01',taken:2,carry:3},
+  {name:'佐々木 涼',dept:'リハビリ',join:'2025-10-01',taken:0,carry:0},
+  {name:'松本 一郎',dept:'介護',join:'2012-04-01',taken:5,carry:7},
+  {name:'井上 香織',dept:'医療事務',join:'2017-04-01',taken:9,carry:6},
+  {name:'木村 駿',dept:'看護',join:'2021-04-01',taken:1,carry:1},
+];
+// 派生計算：付与日数・残日数・取得率・義務対象・基準日
+let EMP=RAW.map((e,idx)=>{
+  const join=new Date(e.join);
+  const ty=tenureYears(join);
+  const grant=legalGrant(ty);
+  const carry=Math.min(e.carry,Math.max(0,20-grant)); // 繰越上限ざっくり
+  const total=grant+carry;
+  const remain=Math.max(0,total-e.taken);
+  const rate=total>0?Math.round(e.taken/total*100):0;
+  // 基準日：直近の付与基準（入社月日基準で当年度）
+  const baseMonth=join.getMonth();const baseDay=join.getDate();
+  let base=new Date(TODAY.getFullYear(),baseMonth,baseDay);
+  if(base>TODAY)base=new Date(TODAY.getFullYear()-1,baseMonth,baseDay);
+  const dutyDeadline=new Date(base.getFullYear()+1,base.getMonth(),base.getDate()-1);
+  const dutyTarget=grant>=10; // 年10日以上付与＝5日義務対象
+  const dutyTaken=Math.min(e.taken,5);
+  return {id:idx,name:e.name,dept:e.dept,join,ty,grant,carry,total,taken:e.taken,remain,rate,base,dutyDeadline,dutyTarget,dutyTaken};
+});
+
+const DEPTS=['看護','介護','医療事務','リハビリ'];
+
+/* ============ ROUTING ============ */
+const TITLES={
+  dash:['ダッシュボード','2026年度の有給取得状況'],
+  status:['取得状況','従業員ごとの付与・取得・残日数'],
+  request:['有給申請','入力すると申請内容がリアルタイムで組み上がります'],
+  grant:['付与管理','勤続年数から付与日数を自動計算します'],
+  duty:['年5日取得義務','取得義務の進捗と未達者を管理します'],
+  ai:['AIアラート','5日義務リスクをAIが自動検知します']
+};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='status'?'<button class="btn primary" onclick="go(\'request\')">＋ 有給申請</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AIアラート</button><button class="btn primary" onclick="go(\'request\')">＋ 有給申請</button>'
+    : v==='duty'?'<button class="btn" onclick="go(\'ai\')">⚡ AIで分析</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='status')renderStatus();
+  if(v==='duty')renderDuty();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function avgTaken(){return EMP.reduce((s,e)=>s+e.taken,0)/EMP.length;}
+function avgRate(){const t=EMP.filter(e=>e.total>0);return Math.round(t.reduce((s,e)=>s+e.rate,0)/t.length);}
+function dutyTargets(){return EMP.filter(e=>e.dutyTarget);}
+function dutyUnmet(){return dutyTargets().filter(e=>e.dutyTaken<5);}
+function totalRemain(){return EMP.reduce((s,e)=>s+e.remain,0);}
+
+function renderDash(){
+  const unmet=dutyUnmet().length;
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','平均取得日数',avgTaken().toFixed(1)+'<small> 日</small>','全'+EMP.length+'名','up','前年比 +0.9日')}
+    ${kpi('#16b877','平均取得率',avgRate()+'<small>%</small>','','up','目標70%へ前進')}
+    ${kpi('#e24a4a','5日義務 未達者',unmet+'<small> 名</small>','対象'+dutyTargets().length+'名',unmet?'down':'up',unmet?'要対応':'達成')}
+    ${kpi('#e3941f','有給残 合計',totalRemain()+'<small> 日</small>','','warn','失効前に消化を')}`;
+
+  // 部署別 平均取得日数
+  const deptAvg=DEPTS.map(d=>{const list=EMP.filter(e=>e.dept===d);return {d,v:list.length?list.reduce((s,e)=>s+e.taken,0)/list.length:0};});
+  const mx=Math.max(...deptAvg.map(x=>x.v),1);
+  $('deptBars').innerHTML=deptAvg.map(x=>`
+    <div class="bar-row"><span class="mlabel">${x.d}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(x.v/mx*100)}"></div></div>
+      <span class="mval">${x.v.toFixed(1)}日</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#deptBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+
+  // donut: 取得済 / 残（未消化）
+  const taken=EMP.reduce((s,e)=>s+e.taken,0);
+  const remain=totalRemain();
+  const tot=taken+remain||1;
+  const deg=Math.round(taken/tot*360);
+  $('donut').style.background=`conic-gradient(var(--green) 0 ${deg}deg, var(--soft) ${deg}deg 360deg)`;
+  $('donutRate').textContent=Math.round(taken/tot*100)+'%';
+  $('donutLegend').innerHTML=`
+    <div class="lg"><span class="sq" style="background:var(--green)"></span><span class="n">取得済</span><span class="vv">${taken}日</span></div>
+    <div class="lg"><span class="sq" style="background:var(--soft);border:1px solid var(--line-2)"></span><span class="n">未消化（残）</span><span class="vv">${remain}日</span></div>
+    <div class="lg"><span class="sq" style="background:var(--brand)"></span><span class="n">付与合計</span><span class="vv">${EMP.reduce((s,e)=>s+e.total,0)}日</span></div>`;
+
+  // activity
+  const acts=[
+    {i:'✅',c:'#e6f8f0',t:'鈴木 美咲 の有給申請（6/3〜1日）を承認しました',m:'12分前'},
+    {i:'🎁',c:'#eaf1ff',t:'AIが新年度の付与日数を16名分 自動計算',m:'今日 9:02'},
+    {i:'🚨',c:'#fdeaea',t:'伊藤 大輔 が5日義務 未達（残り期限59日）',m:'今日 8:40'},
+    {i:'📨',c:'#eaf1ff',t:'高橋 翔太 へ取得促進リマインドを送信',m:'昨日'},
+    {i:'📅',c:'#fdf3e2',t:'計画的付与（夏季）の下書きを作成',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${a.m}</div></div></div>`).join('');
+
+  // duty mini
+  const um=dutyUnmet().sort((a,b)=>a.dutyDeadline-b.dutyDeadline).slice(0,4);
+  $('dutyMini').innerHTML=um.length?um.map(e=>{
+    const need=5-e.dutyTaken;const dleft=Math.max(0,Math.round((e.dutyDeadline-TODAY)/86400000));
+    return `<div class="act"><div class="ai" style="background:${dleft<60?'#fdeaea':'#fdf3e2'}">${dleft<60?'🔴':'🟠'}</div>
+      <div style="flex:1"><div class="at">${esc(e.name)}<span style="color:var(--ink-3);font-weight:600">（${esc(e.dept)}）</span></div>
+      <div class="am">あと${need}日 取得が必要 ・ 期限まで${dleft}日</div></div></div>`;
+  }).join('') : '<div class="empty-cell">未達者はいません 🎉</div>';
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ STATUS ============ */
+let filterDept='all';
+function renderChips(){
+  const opts=[['all','すべて'],...DEPTS.map(d=>[d,d])];
+  $('deptChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterDept?'on':''}" data-d="${esc(o[0])}">${esc(o[1])}</button>`).join('');
+  $('deptChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterDept=c.dataset.d;renderChips();renderStatus();});
+}
+function rateCls(r){return r>=70?'g':r>=40?'a':'r';}
+function renderStatus(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=EMP.filter(e=>filterDept==='all'||e.dept===filterDept)
+    .filter(e=>!q||(e.name+e.dept).toLowerCase().includes(q))
+    .sort((a,b)=>a.rate-b.rate);
+  $('statusRows').innerHTML=rows.length?rows.map(e=>{
+    const dutyBadge=!e.dutyTarget?'<span class="st rejected">対象外</span>'
+      :e.dutyTaken>=5?'<span class="st approved">達成</span>'
+      :'<span class="st warn">未達 '+(5-e.dutyTaken)+'日</span>';
+    return `<tr onclick="openEmp(${e.id})">
+      <td><div class="av-name"><div class="av" style="background:${avColor(e.name)}">${esc(e.name[0])}</div><b>${esc(e.name)}</b></div></td>
+      <td style="color:var(--ink-2)">${esc(e.dept)}</td>
+      <td style="color:var(--ink-2)">${fmtDL(e.join).replace('年','/').replace('月','/').replace('日','')}</td>
+      <td class="c" style="color:var(--ink-2)">${tenureLabel(e.ty)}</td>
+      <td class="r tnum"><b>${e.total}日</b></td>
+      <td class="r tnum">${e.taken}日</td>
+      <td class="r tnum"><b style="color:${e.remain<=0?'var(--red)':'var(--ink)'}">${e.remain}日</b></td>
+      <td><span class="mini ${rateCls(e.rate)}"><i style="width:${e.rate}%"></i></span> <span class="tnum" style="font-size:11.5px;color:var(--ink-2);font-weight:700">${e.rate}%</span></td>
+      <td>${dutyBadge}</td></tr>`;
+  }).join('') : '<tr><td colspan="9" class="empty-cell">該当する従業員がいません</td></tr>';
+}
+$('q').addEventListener('input',renderStatus);
+window.openEmp=id=>{const e=EMP.find(x=>x.id===id);if(e)showToast(e.name+'｜付与'+e.total+'日 / 取得'+e.taken+'日 / 残'+e.remain+'日');};
+
+/* ============ REQUEST ============ */
+function renderEmpSelect(){$('rEmp').innerHTML='<option value="">選択してください</option>'+EMP.map(e=>`<option value="${e.id}">${esc(e.name)}（${esc(e.dept)}）</option>`).join('');}
+function selectedEmp(){const v=$('rEmp').value;return v===''?null:EMP.find(e=>e.id===+v);}
+function renderBal(){
+  const e=selectedEmp();
+  if(!e){
+    $('rBalDays').innerHTML='—<small> 日</small>';$('rBalName').textContent='従業員を選んでください';
+    $('rBalGrant').textContent='—';$('rBalTaken').textContent='—';$('rBalDuty').textContent='—';
+    return;
+  }
+  $('rBalDays').innerHTML=e.remain+'<small> 日</small>';
+  $('rBalName').textContent=e.name+'（勤続 '+tenureLabel(e.ty)+'）';
+  $('rBalGrant').textContent=e.total+'日';$('rBalTaken').textContent=e.taken+'日';
+  const dutyNeed=e.dutyTarget?Math.max(0,5-e.dutyTaken)+'日':'—';
+  $('rBalDuty').textContent=dutyNeed;
+  $('rBalHint').classList.add('show');setTimeout(()=>$('rBalHint').classList.remove('show'),2000);
+}
+function renderPv(){
+  const e=selectedEmp();
+  const days=parseFloat($('rDays').value)||0;
+  const start=$('rStart').value;
+  $('pvEmp').textContent=e?e.name:'—';
+  $('pvDate').textContent=start?fmtDL(new Date(start)):'—';
+  $('pvDays').textContent=days?days+'日':'—';
+  $('pvType').textContent=$('rType').value;
+  $('pvAfter').textContent=e?Math.max(0,e.remain-days)+'日':'—';
+}
+$('rEmp').addEventListener('change',()=>{renderBal();renderPv();});
+['rStart','rDays','rType'].forEach(id=>$(id).addEventListener('input',renderPv));
+$('rSample').addEventListener('click',()=>{
+  $('rEmp').value=String(EMP.find(e=>e.name==='高橋 翔太').id);
+  const d=new Date(TODAY);d.setDate(d.getDate()+4);
+  $('rStart').value=d.toISOString().slice(0,10);
+  $('rDays').value='1';$('rType').value='年次有給休暇';$('rReason').value='私用のため';
+  renderBal();renderPv();
+});
+$('rSubmit').addEventListener('click',async()=>{
+  const e=selectedEmp();const days=parseFloat($('rDays').value)||0;const start=$('rStart').value;
+  if(!e||!start){showToast('従業員と取得日を入力してください');return;}
+  if(days>e.remain){showToast('⚠️ 残日数（'+e.remain+'日）を超える申請です');return;}
+  const btn=$('rSubmit');btn.textContent='⚡ AIがチェック中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,800));
+  // 反映：取得日数を増やし、再計算
+  e.taken+=days;e.remain=Math.max(0,e.total-e.taken);e.rate=e.total>0?Math.round(e.taken/e.total*100):0;
+  e.dutyTaken=Math.min(e.taken,5);
+  btn.textContent='⚡ AIでチェックして申請';btn.disabled=false;
+  showToast(e.name+' の有給申請（'+days+'日）を受付・承認フローへ');
+  renderBal();renderPv();
+  setTimeout(()=>go('status'),700);
+});
+
+/* ============ GRANT (AI自動計算) ============ */
+$('grantRun').addEventListener('click',async()=>{
+  const btn=$('grantRun');btn.disabled=true;btn.textContent='⚡ 計算中…';
+  $('grantOrb').classList.add('spin');$('grantOrb').textContent='⚡';
+  $('grAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('grAfterT').textContent='0:0'+Math.min(s,9);},110);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);$('grAfterT').textContent='9秒';
+  $('grantOrb').classList.remove('spin');$('grantOrb').textContent='✅';
+  const list=EMP.slice().sort((a,b)=>b.ty-a.ty);
+  $('grantItems').innerHTML=list.map((e,i)=>`<div class="gen-item" data-i="${i}">
+      <span class="ck" style="background:var(--brand)">${e.grant}</span>
+      <b style="flex:1">${esc(e.name)}</b>
+      <span style="color:var(--ink-3);font-size:12px">${esc(e.dept)} ・ 勤続${tenureLabel(e.ty)}</span>
+      <span class="tnum" style="font-weight:800;color:var(--brand)">付与 ${e.grant}日</span></div>`).join('');
+  $('grantGen').classList.add('show');
+  const items=[...$('grantItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,90));items[i].classList.add('in');}
+  btn.disabled=false;btn.textContent='⚡ もう一度計算';
+  showToast(items.length+'名分の付与日数を自動計算しました');
+});
+
+/* ============ DUTY (5日義務) ============ */
+function renderDuty(){
+  const targets=dutyTargets();
+  const unmet=dutyUnmet();
+  const met=targets.length-unmet.length;
+  const urgent=unmet.filter(e=>(e.dutyDeadline-TODAY)/86400000<60).length;
+  $('dutyKpis').innerHTML=`
+    ${kpi('#2f6df0','義務対象者',targets.length+'<small> 名</small>','付与10日以上','up','全員管理中')}
+    ${kpi('#16b877','達成済',met+'<small> 名</small>','','up','順調')}
+    ${kpi('#e3941f','未達者',unmet.length+'<small> 名</small>','','warn','要フォロー')}
+    ${kpi('#e24a4a','期限60日以内',urgent+'<small> 名</small>','','down',urgent?'至急対応':'なし')}`;
+  $('dutyRows').innerHTML=targets.sort((a,b)=>(a.dutyTaken-b.dutyTaken)||(a.dutyDeadline-b.dutyDeadline)).map(e=>{
+    const pct=Math.round(e.dutyTaken/5*100);
+    const dleft=Math.round((e.dutyDeadline-TODAY)/86400000);
+    const done=e.dutyTaken>=5;
+    const stt=done?'<span class="st approved">達成</span>':(dleft<60?'<span class="st danger">至急</span>':'<span class="st warn">未達</span>');
+    return `<tr onclick="openEmp(${e.id})">
+      <td><div class="av-name"><div class="av" style="background:${avColor(e.name)}">${esc(e.name[0])}</div><b>${esc(e.name)}</b></div></td>
+      <td style="color:var(--ink-2)">${esc(e.dept)}</td>
+      <td style="color:var(--ink-2)">${fmtS(e.base)}</td>
+      <td class="r tnum"><b>${e.dutyTaken} / 5日</b></td>
+      <td><span class="mini ${done?'g':(dleft<60?'r':'a')}"><i style="width:${pct}%"></i></span> <span class="tnum" style="font-size:11.5px;color:var(--ink-2);font-weight:700">${pct}%</span></td>
+      <td style="color:${dleft<60&&!done?'var(--red)':'var(--ink-2)'}">${fmtDL(e.dutyDeadline).replace('年','/').replace('月','/').replace('日','')}（あと${dleft}日）</td>
+      <td>${stt}</td>
+      <td class="r">${done?'<span style="color:var(--green);font-weight:700">✓</span>':`<button class="btn green" style="padding:6px 12px" onclick="event.stopPropagation();remind(${e.id})">促進</button>`}</td></tr>`;
+  }).join('');
+  $('navDuty').textContent=unmet.length;
+}
+window.remind=id=>{const e=EMP.find(x=>x.id===id);if(e)showToast(e.name+' へ取得促進の通知を送信しました');};
+$('dutyRemind').addEventListener('click',async()=>{
+  const btn=$('dutyRemind');const unmet=dutyUnmet();
+  if(!unmet.length){showToast('未達者はいません 🎉');return;}
+  btn.disabled=true;btn.textContent='📨 送信中…';
+  await new Promise(r=>setTimeout(r,900));
+  btn.disabled=false;btn.textContent='📨 未達者へ一括リマインド';
+  showToast('未達 '+unmet.length+'名へ取得促進リマインドを一括送信しました');
+});
+
+/* ============ AI ALERT ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 分析中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('alAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('alAfterT').textContent='0:0'+Math.min(s,6);},120);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);$('alAfterT').textContent='6秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // リスク判定：未達者＋残少 失効リスク
+  const unmet=dutyUnmet().map(e=>{
+    const dleft=Math.max(0,Math.round((e.dutyDeadline-TODAY)/86400000));
+    return {e,kind:dleft<60?'danger':'warn',ico:dleft<60?'🚨':'⚠️',
+      title:e.name+'（'+e.dept+'）',
+      msg:'年5日義務まであと'+(5-e.dutyTaken)+'日 ・ 期限 '+fmtS(e.dutyDeadline)+'（残り'+dleft+'日）',
+      days:(5-e.dutyTaken)+'日',right:'必要',dleft};
+  });
+  const expire=EMP.filter(e=>e.remain>=12&&e.dutyTaken>=5).slice(0,2).map(e=>({
+    e,kind:'warn',ico:'⏳',title:e.name+'（'+e.dept+'）',
+    msg:'未消化が'+e.remain+'日。来年度の付与で失効するリスクがあります',days:e.remain+'日',right:'残'
+  }));
+  const alerts=[...unmet.sort((a,b)=>a.dleft-b.dleft),...expire];
+  $('alertItems').innerHTML=alerts.length?alerts.map((a,i)=>`
+    <div class="alert-card ${a.kind}" data-i="${i}">
+      <div class="ico" style="background:${a.kind==='danger'?'var(--red-soft)':'var(--amber-soft)'}">${a.ico}</div>
+      <div class="body"><b>${esc(a.title)}</b><p>${esc(a.msg)}</p></div>
+      <div class="meta"><div class="days" style="color:${a.kind==='danger'?'var(--red)':'var(--amber)'}">${a.days}</div><span style="font-size:10.5px;color:var(--ink-3);font-weight:700">${a.right}</span></div>
+    </div>`).join('') : '<div class="alert-card ok in"><div class="ico" style="background:var(--green-soft)">🎉</div><div class="body"><b>リスクは検出されませんでした</b><p>全員が順調に取得しています</p></div></div>';
+  $('alertGen').classList.add('show');
+  const cards=[...$('alertItems').querySelectorAll('.alert-card')];
+  for(let i=0;i<cards.length;i++){await new Promise(r=>setTimeout(r,160));cards[i].classList.add('in');}
+  btn.disabled=false;btn.textContent='⚡ もう一度分析';
+  showToast(alerts.length+'件のアラートを検知しました');
+});
+
+/* ============ INIT ============ */
+renderEmpSelect();renderBal();renderPv();renderChips();renderDash();
+$('navDuty').textContent=dutyUnmet().length;
+</script>
+</body>
+</html>

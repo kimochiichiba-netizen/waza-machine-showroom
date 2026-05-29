@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜資金繰り予測マシン（資金繰り管理システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cff;--purple-soft:#efeaff;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.nav a .badge.amber{background:var(--amber)}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn.sm{padding:6px 12px;font-size:12px}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* line chart (svg) */
+.chartwrap{position:relative}
+.chart-legend{display:flex;gap:16px;font-size:11.5px;color:var(--ink-2);font-weight:600;margin-bottom:6px;flex-wrap:wrap}
+.chart-legend .lg{display:inline-flex;align-items:center;gap:6px}
+.chart-legend .sw{width:14px;height:4px;border-radius:2px}
+.chart-legend .sw.dash{background:linear-gradient(90deg,var(--purple) 60%,transparent 60%);background-size:7px 4px}
+svg.linechart{width:100%;height:240px;display:block}
+svg.linechart .grid{stroke:var(--line);stroke-width:1}
+svg.linechart .zero{stroke:var(--red);stroke-width:1;stroke-dasharray:4 3;opacity:.6}
+svg.linechart .axlbl{fill:var(--ink-3);font-size:10px;font-family:'Zen Kaku Gothic New',sans-serif}
+svg.linechart .dot{fill:#fff;stroke-width:2.5}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:60px 1fr 96px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-fill.in{background:linear-gradient(90deg,var(--green),#37e29a)}
+.bar-fill.out{background:linear-gradient(90deg,var(--amber),#f0b35a)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.confirmed{background:var(--green-soft);color:var(--green)}
+.st.scheduled{background:var(--brand-soft);color:var(--brand)}
+.st.forecast{background:var(--purple-soft);color:var(--purple)}
+.st.risk{background:var(--red-soft);color:var(--red)}
+.st.pending{background:var(--amber-soft);color:var(--amber)}
+.io{display:inline-flex;align-items:center;gap:5px;font-weight:800;font-size:11.5px;padding:3px 9px;border-radius:7px}
+.io.in{background:var(--green-soft);color:var(--green)}
+.io.out{background:var(--amber-soft);color:#c47b15}
+.amt-in{color:var(--green);font-weight:800}
+.amt-out{color:var(--red);font-weight:800}
+
+/* cashflow table (monthly) */
+.cf-tbl td.r,.cf-tbl th.r{text-align:right}
+.cf-tbl tbody tr.total td{background:var(--soft);font-weight:800}
+.cf-neg{color:var(--red);font-weight:800}
+
+/* create / input form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,400px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--brand)}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.seg{display:flex;gap:6px}
+.seg button{flex:1;padding:10px;border:1px solid var(--line-2);background:var(--card);border-radius:9px;font-weight:700;font-size:13px;cursor:pointer;transition:all .15s;color:var(--ink-2)}
+.seg button.on.in{background:var(--green-soft);border-color:var(--green);color:var(--green)}
+.seg button.on.out{background:var(--amber-soft);border-color:var(--amber);color:#c47b15}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* loan card */
+.loancards{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+@media(max-width:760px){.loancards{grid-template-columns:1fr}}
+.loancard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.loancard .bk{font-size:13px;font-weight:900;display:flex;align-items:center;gap:8px}
+.loancard .bk .lg{width:30px;height:30px;border-radius:8px;background:var(--brand-soft);display:grid;place-items:center;font-size:15px}
+.loancard .prog{height:8px;border-radius:99px;background:var(--soft);overflow:hidden;margin:12px 0 6px}
+.loancard .prog i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky))}
+.loanrow{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;color:var(--ink-2)}
+.loanrow b{color:var(--ink);font-weight:800}
+
+/* AI generate (before/after) */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900}
+.gen-item .ck.warn{background:var(--amber)}
+
+/* result summary box */
+.resbox{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.resbox.show{display:block;animation:fade .4s}
+.res-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:760px){.res-grid{grid-template-columns:1fr}}
+.res-cell{background:var(--soft);border-radius:11px;padding:14px}
+.res-cell .l{font-size:11.5px;color:var(--ink-3);font-weight:700}
+.res-cell .v{font-size:20px;font-weight:900;margin-top:4px}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* alert banner */
+.alert{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:12px;margin-bottom:16px;font-size:13px}
+.alert.warn{background:var(--amber-soft);border:1px solid #f0d9a6;color:#8a6212}
+.alert.danger{background:var(--red-soft);border:1px solid #f3c0c0;color:#a4332f}
+.alert.ok{background:var(--green-soft);border:1px solid #bdebd4;color:#0f7a4f}
+.alert .ico{font-size:18px}
+.alert b{font-weight:900}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.scenario-tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">資金繰り予測マシン<small>技マシン｜資金繰り管理</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="flow"><span class="i">💴</span>入出金予定<span class="badge amber" id="navPending">0</span></a>
+      <a data-v="table"><span class="i">📋</span>資金繰り表</a>
+      <a data-v="forecast"><span class="i">📈</span>予測</a>
+      <a data-v="loan"><span class="i">🏦</span>借入管理</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI資金予測</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。数値・取引先はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">2026年5月の資金繰り状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div id="dashAlert"></div>
+        <div class="kpis" id="kpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>資金繰り推移（現預金残高）</h3><span class="more" onclick="go('forecast')">予測を見る →</span></div>
+          <div class="pb">
+            <div class="chart-legend">
+              <span class="lg"><span class="sw" style="background:var(--brand)"></span>実績残高</span>
+              <span class="lg"><span class="sw dash"></span>AI予測残高</span>
+              <span class="lg"><span class="sw" style="background:var(--red)"></span>資金ショートライン（0円）</span>
+            </div>
+            <div class="chartwrap" id="dashChart"></div>
+          </div>
+        </div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>今月の入出金内訳</h3><span class="more" onclick="go('flow')">明細 →</span></div>
+            <div class="pb"><div class="bars" id="ioBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FLOW (入出金予定) -->
+      <section class="view" id="v-flow">
+        <div class="create-grid">
+          <div class="formcard">
+            <div style="font-size:14px;font-weight:900;margin-bottom:14px">入出金予定を追加</div>
+            <div class="fg"><label>区分</label>
+              <div class="seg" id="fSeg">
+                <button class="on in" data-io="in">＋ 入金</button>
+                <button data-io="out">－ 出金</button>
+              </div>
+            </div>
+            <div class="fg"><label>項目（選ぶとAIが金額を提案）</label>
+              <input id="fName" list="catList" placeholder="例：青果売上 / 仕入 / 給与"></div>
+            <div class="aihint" id="fAiHint">✨ AIが過去実績から金額を自動入力しました</div>
+            <div class="fg2">
+              <div class="fg"><label>金額（円）</label><input id="fAmt" type="number" min="0" placeholder="0"></div>
+              <div class="fg"><label>予定日</label><input id="fDate" type="date"></div>
+            </div>
+            <div class="fg"><label>取引先 / 摘要</label><input id="fMemo" placeholder="例：大分中央クリニック"></div>
+            <button class="btn primary" id="fAdd" style="width:100%;justify-content:center">＋ 予定に追加</button>
+          </div>
+          <div>
+            <div class="toolbar">
+              <div class="search"><span class="ic">🔍</span><input id="fq" placeholder="項目・取引先で検索"></div>
+              <div class="chips" id="ioChips"></div>
+            </div>
+            <table class="tbl">
+              <thead><tr><th>予定日</th><th>区分</th><th>項目</th><th>取引先 / 摘要</th><th class="r">金額</th><th>状態</th></tr></thead>
+              <tbody id="flowRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TABLE (資金繰り表) -->
+      <section class="view" id="v-table">
+        <div class="panel">
+          <div class="ph"><h3>月次 資金繰り表（実績 ＋ AI予測）</h3>
+            <button class="btn sm" style="margin-left:auto" onclick="go('ai')">⚡ AIで予測更新</button></div>
+          <div class="pb" style="padding:0;overflow-x:auto">
+            <table class="tbl cf-tbl" style="border:0;box-shadow:none;border-radius:0;min-width:680px">
+              <thead><tr id="cfHead"></tr></thead>
+              <tbody id="cfBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div style="font-size:11.5px;color:var(--ink-3);padding:4px 4px">※ 翌月以降（予測欄）はAIが入出金予定・過去実績の季節性から自動算出した推計値です。</div>
+      </section>
+
+      <!-- FORECAST (予測) -->
+      <section class="view" id="v-forecast">
+        <div id="fcAlert"></div>
+        <div class="scenario-tabs" id="scenTabs"></div>
+        <div class="kpis" id="fcKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>3ヶ月先までの残高予測</h3><span class="more" id="scenLabel">標準シナリオ</span></div>
+          <div class="pb">
+            <div class="chart-legend">
+              <span class="lg"><span class="sw" style="background:var(--brand)"></span>実績</span>
+              <span class="lg"><span class="sw dash"></span>予測</span>
+              <span class="lg"><span class="sw" style="background:var(--red)"></span>0円ライン</span>
+            </div>
+            <div class="chartwrap" id="fcChart"></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="ph"><h3>予測の根拠（AIが検知した要因）</h3></div>
+          <div class="pb"><div class="acts" id="fcFactors"></div></div>
+        </div>
+      </section>
+
+      <!-- LOAN (借入管理) -->
+      <section class="view" id="v-loan">
+        <div class="kpis" id="loanKpis"></div>
+        <div class="loancards" id="loanCards"></div>
+        <div class="panel" style="margin-top:16px">
+          <div class="ph"><h3>今後12ヶ月の返済予定</h3></div>
+          <div class="pb"><div class="bars" id="repayBars"></div></div>
+        </div>
+      </section>
+
+      <!-- AI FORECAST -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">入出金予定から3ヶ月先の資金繰りを予測</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">登録済みの入出金予定 <b id="aiCount">0</b>件 と過去24ヶ月の実績から、AIが資金ショートの危険日まで自動で予測します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで予測する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">3時間20分</div>
+              <ul>
+                <li>📒 通帳・売掛・買掛を1件ずつ転記</li>
+                <li>🧮 Excelで翌月以降を手計算</li>
+                <li>😰 「来月、資金足りる？」が読めない</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 入出金予定を自動集計</li>
+                <li>📈 季節性を加味し3ヶ月先まで予測</li>
+                <li>🚨 資金ショート日を事前に警告</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ AIが算出した月次予測</div>
+            <div id="genItems"></div>
+          </div>
+          <div class="resbox" id="resBox">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">📊 予測サマリー</div>
+            <div class="res-grid" id="resGrid"></div>
+            <div id="resAlert" style="margin-top:14px"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>(n<0?'-¥':'¥')+Math.abs(Math.round(n)).toLocaleString();
+const man=n=>{const v=n/10000;return (v<0?'-':'')+Math.abs(Math.round(v)).toLocaleString()+'万';};
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const TODAY=new Date(2026,4,30); // 2026-05-30 固定（デモ）
+const fmtMD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtMDL=d=>d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate();
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+let SEED=7777;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+
+/* ============ DATA ============ */
+const OPENING_BALANCE=12480000; // 期首（6ヶ月前）の現預金
+const CATEGORIES=[
+  {n:'青果売上（病院・クリニック）',io:'in',base:3800000},
+  {n:'青果売上（飲食・宿泊）',io:'in',base:1600000},
+  {n:'AI業務自動化 月額利用料',io:'in',base:520000},
+  {n:'システム初期導入費',io:'in',base:200000},
+  {n:'補助金入金',io:'in',base:0},
+  {n:'仕入（青果市場）',io:'out',base:2900000},
+  {n:'人件費・給与',io:'out',base:2400000},
+  {n:'配送・燃料費',io:'out',base:380000},
+  {n:'家賃・地代',io:'out',base:280000},
+  {n:'外注費',io:'out',base:420000},
+  {n:'借入返済',io:'out',base:540000},
+  {n:'消費税・税金',io:'out',base:0},
+];
+const PARTNERS_IN=['大分中央クリニック','さくら総合病院','つくし介護センター','大分海鮮市場','別府温泉ホテル組合','みらい歯科医院','都町商店会'];
+const PARTNERS_OUT=['大分中央青果市場','九州運送','大分銀行','大家（都町ビル）','クラウド外注LLC','大分労働局'];
+
+/* 月次実績（過去6ヶ月）と予測（先3ヶ月）の現預金残高を生成 */
+const months=[];
+for(let k=6;k>=-3;k--){
+  const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1);
+  months.push(d);
+}
+// months[0..6] = 実績（当月含む7点）, months[7..9] = 予測3ヶ月
+// 月次の入金/出金を季節性つきで作る
+function seasonal(base,m){
+  // 12月・3月は売上増、1月・8月は出金増（賞与・税）
+  const mo=m.getMonth();
+  let f=1+(rnd()-0.5)*0.08;
+  if(mo===11||mo===2)f*=1.18;          // 繁忙期
+  if(mo===7)f*=0.92;                    // 夏枯れ
+  return Math.round(base*f);
+}
+const monthFlows=months.map((m,idx)=>{
+  let inSum=0,outSum=0;const items=[];
+  CATEGORIES.forEach(c=>{
+    let amt=c.base;
+    if(c.n==='補助金入金') amt=(m.getMonth()===6)?1500000:0;       // 7月に補助金
+    else if(c.n==='消費税・税金') amt=(m.getMonth()===4||m.getMonth()===7)?([4,7].includes(m.getMonth())?1100000:0):0;
+    else amt=seasonal(c.base,m);
+    if(amt<=0)return;
+    items.push({n:c.n,io:c.io,amt});
+    if(c.io==='in')inSum+=amt;else outSum+=amt;
+  });
+  return {m,inSum,outSum,net:inSum-outSum,items,forecast:idx>6};
+});
+// 期末残高を積み上げ
+let run=OPENING_BALANCE;
+monthFlows.forEach(mf=>{run+=mf.net;mf.balance=run;});
+
+/* 入出金予定（当月〜先2ヶ月の個別明細） */
+let flows=[];
+(function seedFlows(){
+  for(let off=0;off<3;off++){
+    const mon=new Date(TODAY.getFullYear(),TODAY.getMonth()+off,1);
+    const nIn=4+Math.floor(rnd()*3), nOut=5+Math.floor(rnd()*3);
+    for(let i=0;i<nIn;i++){
+      const c=CATEGORIES.filter(x=>x.io==='in'&&x.base>0)[Math.floor(rnd()*4)];
+      const day=2+Math.floor(rnd()*26);
+      const date=new Date(mon.getFullYear(),mon.getMonth(),day);
+      const amt=Math.round(c.base/nIn*(0.7+rnd()*0.8)/10000)*10000;
+      flows.push({io:'in',name:c.n,amt,date,memo:PARTNERS_IN[Math.floor(rnd()*PARTNERS_IN.length)],
+        status: off===0&&date<TODAY?'confirmed':(off===0?'scheduled':'forecast')});
+    }
+    for(let i=0;i<nOut;i++){
+      const c=CATEGORIES.filter(x=>x.io==='out'&&x.base>0)[Math.floor(rnd()*6)];
+      const day=5+Math.floor(rnd()*23);
+      const date=new Date(mon.getFullYear(),mon.getMonth(),day);
+      const amt=Math.round(c.base/nOut*(0.7+rnd()*0.8)/10000)*10000;
+      flows.push({io:'out',name:c.n,amt,date,memo:PARTNERS_OUT[Math.floor(rnd()*PARTNERS_OUT.length)],
+        status: off===0&&date<TODAY?'confirmed':(off===0?'scheduled':'forecast')});
+    }
+  }
+  flows.sort((a,b)=>a.date-b.date);
+})();
+
+/* 借入 */
+const LOANS=[
+  {bank:'大分銀行',type:'運転資金',total:20000000,balance:9800000,rate:1.4,monthly:380000,end:'2029年3月'},
+  {bank:'日本政策金融公庫',type:'設備資金（コロナ特別）',total:10000000,balance:4200000,rate:0.5,monthly:160000,end:'2028年9月'},
+  {bank:'豊和銀行',type:'当座貸越枠',total:5000000,balance:0,rate:2.1,monthly:0,end:'随時'},
+];
+
+/* ============ SHARED CHART (SVG line) ============ */
+function lineChart(target,labels,seriesActual,seriesForecast,opt){
+  opt=opt||{};
+  const W=720,H=240,pl=58,pr=14,pt=16,pb=28;
+  const all=[...seriesActual,...seriesForecast].filter(v=>v!=null);
+  let max=Math.max(...all,0),min=Math.min(...all,0);
+  const pad=(max-min)*0.12||1;max+=pad;min-=pad;
+  const x=i=>pl+(W-pl-pr)*(i/(labels.length-1));
+  const y=v=>pt+(H-pt-pb)*(1-(v-min)/(max-min));
+  // grid lines (4)
+  let g='';
+  for(let i=0;i<=4;i++){const yy=pt+(H-pt-pb)*i/4;const val=max-(max-min)*i/4;
+    g+=`<line class="grid" x1="${pl}" y1="${yy}" x2="${W-pr}" y2="${yy}"/>`;
+    g+=`<text class="axlbl" x="${pl-8}" y="${yy+3}" text-anchor="end">${man(val)}</text>`;}
+  // zero line
+  if(min<0&&max>0){const zy=y(0);g+=`<line class="zero" x1="${pl}" y1="${zy}" x2="${W-pr}" y2="${zy}"/>`;}
+  // x labels
+  labels.forEach((l,i)=>{g+=`<text class="axlbl" x="${x(i)}" y="${H-8}" text-anchor="middle">${l}</text>`;});
+  // actual path
+  const aPts=seriesActual.map((v,i)=>v==null?null:[x(i),y(v)]).filter(Boolean);
+  const aPath=aPts.map((p,i)=>(i?'L':'M')+p[0]+' '+p[1]).join(' ');
+  // forecast path (continuous from last actual)
+  let fPath='';const fPts=[];
+  const lastActualIdx=seriesActual.reduce((acc,v,i)=>v!=null?i:acc,-1);
+  if(lastActualIdx>=0){fPts.push([x(lastActualIdx),y(seriesActual[lastActualIdx])]);}
+  seriesForecast.forEach((v,i)=>{if(v!=null)fPts.push([x(i),y(v)]);});
+  fPath=fPts.map((p,i)=>(i?'L':'M')+p[0]+' '+p[1]).join(' ');
+  // dots
+  let dots='';
+  seriesActual.forEach((v,i)=>{if(v!=null)dots+=`<circle class="dot" cx="${x(i)}" cy="${y(v)}" r="4" stroke="var(--brand)"/>`;});
+  seriesForecast.forEach((v,i)=>{if(v!=null){const col=v<0?'var(--red)':'var(--purple)';dots+=`<circle class="dot" cx="${x(i)}" cy="${y(v)}" r="4" stroke="${col}"/>`;}});
+  target.innerHTML=`<svg class="linechart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    ${g}
+    <path d="${aPath}" fill="none" stroke="var(--brand)" stroke-width="2.8" stroke-linejoin="round"/>
+    <path d="${fPath}" fill="none" stroke="var(--purple)" stroke-width="2.8" stroke-dasharray="6 4" stroke-linejoin="round"/>
+    ${dots}
+  </svg>`;
+}
+
+/* ============ ROUTING ============ */
+const TITLES={
+  dash:['ダッシュボード','2026年5月の資金繰り状況'],
+  flow:['入出金予定','売掛・買掛・固定費の予定を登録します'],
+  table:['資金繰り表','月次の実績とAI予測を一覧で確認します'],
+  forecast:['予測','3ヶ月先までの残高シミュレーション'],
+  loan:['借入管理','金融機関ごとの借入・返済状況'],
+  ai:['AI資金予測','入出金予定から資金ショート日を自動予測します']
+};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI資金予測</button><button class="btn primary" onclick="go(\'flow\')">＋ 予定を追加</button>'
+    : v==='flow'?'<button class="btn primary" onclick="go(\'ai\')">⚡ 予測に反映</button>'
+    : v==='forecast'?'<button class="btn primary" onclick="go(\'ai\')">⚡ 再予測</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='flow')renderFlow();
+  if(v==='table')renderTable();
+  if(v==='forecast')renderForecast();
+  if(v==='loan')renderLoan();
+  if(v==='ai')renderAiPre();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+function currentBalance(){return monthFlows.find(mf=>thisMonth(mf.m)).balance;}
+function minForecast(){
+  const fc=monthFlows.filter(mf=>mf.forecast);
+  return fc.reduce((mn,mf)=>mf.balance<mn.balance?mf:mn,fc[0]);
+}
+function shortDays(){
+  // 最小予測残高が安全ライン(月商の0.5ヶ月=約250万)を割るまでの日数概算
+  const minMf=minForecast();
+  const SAFE=2500000;
+  if(minMf.balance<0){return {n:Math.max(1,Math.round((minMf.m-TODAY)/86400000)),neg:true};}
+  if(minMf.balance<SAFE)return {n:Math.round((minMf.m-TODAY)/86400000),neg:false,warn:true};
+  return {n:999,neg:false};
+}
+function renderDash(){
+  const bal=currentBalance();
+  const tm=monthFlows.find(mf=>thisMonth(mf.m));
+  const minMf=minForecast();
+  const sd=shortDays();
+  // alert
+  let al='';
+  if(minMf.balance<0)al=`<div class="alert danger"><span class="ico">🚨</span><div><b>${minMf.m.getMonth()+1}月に資金ショートの予測</b>。予測最小残高は <b>${yen(minMf.balance)}</b> です。借入枠の活用か入金前倒しの検討をおすすめします。</div></div>`;
+  else if(minMf.balance<2500000)al=`<div class="alert warn"><span class="ico">⚠️</span><div><b>${minMf.m.getMonth()+1}月の残高が手薄</b>になる見込みです（予測最小残高 <b>${yen(minMf.balance)}</b>）。早めの資金手当てを推奨します。</div></div>`;
+  else al=`<div class="alert ok"><span class="ico">✅</span><div>今後3ヶ月の資金繰りは <b>安全圏</b> です。予測最小残高は <b>${yen(minMf.balance)}</b>（${minMf.m.getMonth()+1}月）。</div></div>`;
+  $('dashAlert').innerHTML=al;
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','現預金残高',yen(bal),fmtMDL(TODAY)+'時点','up','前月比 '+(tm.net>=0?'+':'')+man(tm.net))}
+    ${kpi('#16b877','今月の収支',(tm.net>=0?'+':'')+yen(tm.net),'入'+man(tm.inSum)+' / 出'+man(tm.outSum),tm.net>=0?'up':'down',tm.net>=0?'黒字':'赤字')}
+    ${kpi(minMf.balance<2500000?'#e3941f':'#16b877','予測最小残高',yen(minMf.balance),(minMf.m.getMonth()+1)+'月',minMf.balance<0?'down':(minMf.balance<2500000?'warn':'up'),minMf.balance<0?'要対応':(minMf.balance<2500000?'注意':'安全圏'))}
+    ${kpi(sd.neg?'#e24a4a':(sd.warn?'#e3941f':'#16b877'),'資金ショートまで',sd.n>=999?'なし':sd.n+'<small>日</small>',' ',sd.neg?'down':(sd.warn?'warn':'up'),sd.n>=999?'当面なし':(sd.neg?'至急':'監視中'))}`;
+  // chart
+  const labels=monthFlows.map(mf=>(mf.m.getMonth()+1)+'月');
+  const act=monthFlows.map(mf=>mf.forecast?null:mf.balance);
+  const fc=monthFlows.map(mf=>mf.forecast?mf.balance:null);
+  lineChart($('dashChart'),labels,act,fc);
+  // io bars
+  const items=tm.items.slice().sort((a,b)=>b.amt-a.amt);
+  const mx=Math.max(...items.map(i=>i.amt),1);
+  $('ioBars').innerHTML=items.map(it=>`<div class="bar-row">
+    <span class="mlabel">${it.io==='in'?'入金':'出金'}</span>
+    <div class="bar-track"><div class="bar-fill ${it.io}" data-w="${Math.round(it.amt/mx*100)}" style="width:0" title="${esc(it.n)}"></div></div>
+    <span class="mval">${man(it.amt)}</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#ioBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // activity
+  const acts=[
+    {i:'⚡',c:'#efeaff',t:'AIが3ヶ月先まで資金繰りを再予測（7月に注意フラグ）',m:'5分前'},
+    {i:'💴',c:'#e6f8f0',t:'大分中央クリニック より入金（¥1,240,000）',m:'1時間前'},
+    {i:'🏦',c:'#eaf1ff',t:'大分銀行 返済 ¥380,000 を実行',m:'今日 9:00'},
+    {i:'⚠️',c:'#fdf3e2',t:'7月の消費税納付 ¥1,100,000 を予定に自動登録',m:'今日 8:30'},
+    {i:'📈',c:'#e6f8f0',t:'補助金 ¥1,500,000 の入金予定を反映',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${a.m}</div></div></div>`).join('');
+}
+
+/* ============ FLOW (入出金予定) ============ */
+let fIO='in';let filterIO='all';
+const STLABEL={confirmed:'確定',scheduled:'予定',forecast:'AI予測',risk:'要注意',pending:'未確定'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]}</span>`;}
+function ioBadge(io){return `<span class="io ${io}">${io==='in'?'▲ 入金':'▼ 出金'}</span>`;}
+function renderIoChips(){
+  const opts=[['all','すべて'],['in','入金'],['out','出金']];
+  $('ioChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterIO?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('ioChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterIO=c.dataset.s;renderIoChips();renderFlowRows();});
+}
+function renderFlow(){renderIoChips();renderFlowRows();}
+function renderFlowRows(){
+  const q=($('fq').value||'').toLowerCase();
+  let rows=flows.filter(f=>filterIO==='all'||f.io===filterIO)
+    .filter(f=>!q||(f.name+f.memo).toLowerCase().includes(q))
+    .sort((a,b)=>a.date-b.date);
+  $('flowRows').innerHTML=rows.length?rows.map(f=>`<tr>
+    <td style="color:var(--ink-2)">${fmtMDL(f.date)}</td>
+    <td>${ioBadge(f.io)}</td>
+    <td><b>${esc(f.name)}</b></td>
+    <td style="color:var(--ink-2)">${esc(f.memo)}</td>
+    <td class="r tnum ${f.io==='in'?'amt-in':'amt-out'}">${f.io==='in'?'+':'-'}${yen(f.amt).replace('¥','¥')}</td>
+    <td>${stBadge(f.status)}</td></tr>`).join('')
+    :'<tr><td colspan="6" class="empty-cell">該当する予定がありません</td></tr>';
+  $('navPending').textContent=flows.filter(f=>f.status==='scheduled'||f.status==='forecast').length;
+}
+$('fSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  fIO=b.dataset.io;
+  $('fSeg').querySelectorAll('button').forEach(x=>{x.classList.remove('on','in','out');});
+  b.classList.add('on',fIO);
+});
+$('fName').addEventListener('input',()=>{
+  const cat=CATEGORIES.find(c=>c.n===$('fName').value);
+  if(cat){
+    // 区分も自動補正
+    fIO=cat.io;
+    $('fSeg').querySelectorAll('button').forEach(x=>{x.classList.remove('on','in','out');if(x.dataset.io===fIO)x.classList.add('on',fIO);});
+    if(!$('fAmt').value&&cat.base>0){$('fAmt').value=Math.round(cat.base/4/10000)*10000;$('fAiHint').classList.add('show');setTimeout(()=>$('fAiHint').classList.remove('show'),2200);}
+  }
+});
+$('fAdd').addEventListener('click',()=>{
+  const name=$('fName').value.trim();const amt=+$('fAmt').value||0;const dv=$('fDate').value;
+  if(!name||amt<=0||!dv){showToast('項目・金額・予定日を入力してください');return;}
+  const date=new Date(dv+'T00:00:00');
+  flows.push({io:fIO,name,amt,date,memo:$('fMemo').value.trim()||'—',status:'scheduled'});
+  flows.sort((a,b)=>a.date-b.date);
+  $('fName').value='';$('fAmt').value='';$('fMemo').value='';
+  renderFlowRows();
+  showToast('入出金予定を追加しました（予測に反映できます）');
+});
+$('fq').addEventListener('input',renderFlowRows);
+
+/* ============ TABLE (資金繰り表) ============ */
+function renderTable(){
+  const labels=monthFlows.map(mf=>`${mf.m.getMonth()+1}月${mf.forecast?'<br><small style="color:var(--purple);font-weight:700">予測</small>':''}`);
+  $('cfHead').innerHTML='<th style="position:sticky;left:0;background:var(--soft)">項目</th>'+labels.map(l=>`<th class="r">${l}</th>`).join('');
+  const rows=[
+    {label:'前月繰越',fn:mf=>mf.balance-mf.net,cls:''},
+    {label:'入金 合計',fn:mf=>mf.inSum,cls:'amt-in'},
+    {label:'出金 合計',fn:mf=>mf.outSum,cls:'amt-out'},
+    {label:'当月収支',fn:mf=>mf.net,cls:'net'},
+    {label:'翌月繰越（残高）',fn:mf=>mf.balance,cls:'bal',total:true},
+  ];
+  $('cfBody').innerHTML=rows.map(r=>`<tr class="${r.total?'total':''}">
+    <td style="position:sticky;left:0;background:${r.total?'var(--soft)':'var(--card)'};font-weight:${r.total?800:600}">${r.label}</td>
+    ${monthFlows.map(mf=>{
+      const v=r.fn(mf);
+      let cls='tnum';
+      if(r.cls==='amt-in')cls+=' amt-in';
+      if(r.cls==='amt-out')cls+=' amt-out';
+      if((r.cls==='net'||r.cls==='bal')&&v<0)cls+=' cf-neg';
+      const txt=(r.cls==='net'&&v>=0?'+':'')+yen(v);
+      return `<td class="r ${cls}">${txt}</td>`;
+    }).join('')}
+  </tr>`).join('');
+}
+
+/* ============ FORECAST ============ */
+const SCENARIOS=[
+  {k:'std',label:'標準',f:1,note:'入出金予定どおりに推移した場合'},
+  {k:'bad',label:'悲観（売上-15%）',f:0.85,note:'売上が想定より15%下振れした場合'},
+  {k:'good',label:'楽観（売上+10%）',f:1.10,note:'売上が想定より10%上振れした場合'},
+];
+let scenario='std';
+function scenarioBalances(f){
+  // 実績はそのまま、予測月だけ入金にfを掛けて再計算
+  let run=monthFlows.find(mf=>thisMonth(mf.m)).balance;
+  const out=monthFlows.map(mf=>{
+    if(!mf.forecast)return mf.balance;
+    const adjIn=mf.inSum*f;const net=adjIn-mf.outSum;run+=net;return run;
+  });
+  return out;
+}
+function renderForecast(){
+  $('scenTabs').innerHTML=SCENARIOS.map(s=>`<button class="chip ${s.k===scenario?'on':''}" data-k="${s.k}">${s.label}</button>`).join('');
+  $('scenTabs').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{scenario=c.dataset.k;renderForecast();});
+  const sc=SCENARIOS.find(s=>s.k===scenario);
+  $('scenLabel').textContent=sc.label+'シナリオ';
+  const bals=scenarioBalances(sc.f);
+  monthFlows.forEach((mf,i)=>mf._scBal=bals[i]);
+  const fcMfs=monthFlows.filter(mf=>mf.forecast);
+  const minBal=Math.min(...fcMfs.map(mf=>mf._scBal));
+  const minMf=fcMfs.find(mf=>mf._scBal===minBal);
+  const endBal=bals[bals.length-1];
+  // alert
+  let al='';
+  if(minBal<0)al=`<div class="alert danger"><span class="ico">🚨</span><div><b>${sc.label}シナリオでは ${minMf.m.getMonth()+1}月に資金ショート</b>（最小残高 <b>${yen(minBal)}</b>）。当座貸越枠 ¥5,000,000 の活用で回避可能です。</div></div>`;
+  else if(minBal<2500000)al=`<div class="alert warn"><span class="ico">⚠️</span><div><b>${sc.label}シナリオ</b>：${minMf.m.getMonth()+1}月の残高が <b>${yen(minBal)}</b> まで低下。安全水準（250万）を下回ります。</div></div>`;
+  else al=`<div class="alert ok"><span class="ico">✅</span><div><b>${sc.label}シナリオ</b>でも3ヶ月先まで <b>安全圏</b>を維持（最小残高 <b>${yen(minBal)}</b>）。</div></div>`;
+  $('fcAlert').innerHTML=al;
+  $('fcKpis').innerHTML=`
+    ${kpi('#2f6df0','3ヶ月後の残高',yen(endBal),fcMfs[2].m.getMonth()+1+'月末','',sc.note)}
+    ${kpi(minBal<2500000?'#e3941f':'#16b877','予測最小残高',yen(minBal),(minMf.m.getMonth()+1)+'月',minBal<0?'down':(minBal<2500000?'warn':'up'),minBal<0?'ショート':(minBal<2500000?'注意':'安全'))}
+    ${kpi('#7c5cff','予測精度',92+'<small>%</small>','過去24ヶ月で検証','up','高精度')}
+    ${kpi('#0ea5b7','売上前提',(sc.f*100).toFixed(0)+'<small>%</small>','標準比','',sc.label)}`;
+  const labels=monthFlows.map(mf=>(mf.m.getMonth()+1)+'月');
+  const act=monthFlows.map(mf=>mf.forecast?null:mf._scBal);
+  const fc=monthFlows.map(mf=>mf.forecast?mf._scBal:null);
+  lineChart($('fcChart'),labels,act,fc);
+  // factors
+  const factors=[
+    {i:'📈',c:'#e6f8f0',t:'7月：補助金 ¥1,500,000 の入金で残高が一時回復',m:'入金要因'},
+    {i:'⚠️',c:'#fdf3e2',t:'7月：消費税納付 ¥1,100,000 が出金として発生',m:'出金要因'},
+    {i:'🌡️',c:'#efeaff',t:'夏季（8月）は飲食向け売上が季節的に約8%減と予測',m:'季節性'},
+    {i:'🏦',c:'#eaf1ff',t:'毎月の借入返済 計 ¥540,000 を固定費として反映',m:'固定費'},
+    {i:'🤖',c:'#e6f8f0',t:'過去24ヶ月の入金サイクル（月末締め翌月末払い）を学習済み',m:'AI学習'},
+  ];
+  $('fcFactors').innerHTML=factors.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${a.m}</div></div></div>`).join('');
+}
+
+/* ============ LOAN ============ */
+function renderLoan(){
+  const totalBal=LOANS.reduce((s,l)=>s+l.balance,0);
+  const totalMonthly=LOANS.reduce((s,l)=>s+l.monthly,0);
+  const avail=LOANS.filter(l=>l.type.includes('枠')).reduce((s,l)=>s+(l.total-l.balance),0);
+  const wAvg=LOANS.reduce((s,l)=>s+l.rate*l.balance,0)/(totalBal||1);
+  $('loanKpis').innerHTML=`
+    ${kpi('#2f6df0','借入残高 合計',yen(totalBal),LOANS.filter(l=>l.balance>0).length+'件','','返済中')}
+    ${kpi('#e3941f','毎月の返済額',yen(totalMonthly),'元利合計','','固定費')}
+    ${kpi('#16b877','利用可能な枠',yen(avail),'当座貸越','up','緊急時に活用可')}
+    ${kpi('#0ea5b7','加重平均金利',wAvg.toFixed(2)+'<small>%</small>','残高ベース','','低水準')}`;
+  $('loanCards').innerHTML=LOANS.map(l=>{
+    const used=l.total?Math.round((l.balance)/l.total*100):0;
+    return `<div class="loancard">
+      <div class="bk"><span class="lg">🏦</span>${esc(l.bank)}</div>
+      <div style="font-size:11.5px;color:var(--ink-3);margin-top:2px">${esc(l.type)}</div>
+      <div class="prog"><i style="width:${used}%"></i></div>
+      <div style="font-size:11px;color:var(--ink-3);text-align:right">${l.balance>0?'残 '+man(l.balance)+' / 枠 '+man(l.total):'未使用枠 '+man(l.total)}</div>
+      <div style="margin-top:10px;border-top:1px solid var(--line);padding-top:8px">
+        <div class="loanrow"><span>借入残高</span><b>${yen(l.balance)}</b></div>
+        <div class="loanrow"><span>毎月返済</span><b>${l.monthly?yen(l.monthly):'—'}</b></div>
+        <div class="loanrow"><span>金利</span><b>${l.rate}%</b></div>
+        <div class="loanrow"><span>完済予定</span><b>${esc(l.end)}</b></div>
+      </div></div>`;
+  }).join('');
+  // 12ヶ月返済予定
+  const monthly=LOANS.reduce((s,l)=>s+l.monthly,0);
+  const mx=monthly*1.3||1;
+  let html='';
+  for(let i=0;i<12;i++){
+    const d=new Date(TODAY.getFullYear(),TODAY.getMonth()+i,1);
+    const extra=(d.getMonth()===11||d.getMonth()===5)?200000:0; // 賞与月に追加返済想定なし→ボーナス無し例
+    const v=monthly;
+    html+=`<div class="bar-row"><span class="mlabel">${d.getFullYear()%100}/${d.getMonth()+1}</span>
+      <div class="bar-track"><div class="bar-fill out" data-w="${Math.round(v/mx*100)}" style="width:0"></div></div>
+      <span class="mval">${man(v)}</span></div>`;
+  }
+  $('repayBars').innerHTML=html;
+  setTimeout(()=>document.querySelectorAll('#repayBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+}
+
+/* ============ AI FORECAST ============ */
+function renderAiPre(){
+  $('aiCount').textContent=flows.length;
+  // リセット表示
+  $('genList').classList.remove('show');$('resBox').classList.remove('show');
+  $('baAfterT').textContent='— ';$('baAfterList').style.opacity='.4';
+  $('aiOrb').textContent='🤖';$('aiRun').textContent='⚡ AIで予測する';
+}
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 予測中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},110);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // 予測月をアニメ表示
+  const fcMfs=monthFlows.filter(mf=>mf.forecast);
+  $('genItems').innerHTML=fcMfs.map((mf,i)=>{
+    const warn=mf.balance<2500000;
+    return `<div class="gen-item" data-i="${i}">
+      <span class="ck ${warn?'warn':''}">${warn?'!':'✓'}</span>
+      <b style="flex:1">${mf.m.getFullYear()}年${mf.m.getMonth()+1}月</b>
+      <span style="color:var(--ink-3);font-size:12px">収支 ${(mf.net>=0?'+':'')}${man(mf.net)}</span>
+      <span class="tnum" style="font-weight:800;color:${mf.balance<0?'var(--red)':(warn?'var(--amber)':'var(--ink)')}">残 ${yen(mf.balance)}</span>
+    </div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,260));items[i].classList.add('in');}
+  // サマリー
+  await new Promise(r=>setTimeout(r,200));
+  const minMf=fcMfs.reduce((mn,mf)=>mf.balance<mn.balance?mf:mn,fcMfs[0]);
+  const endBal=fcMfs[fcMfs.length-1].balance;
+  $('resGrid').innerHTML=`
+    <div class="res-cell"><div class="l">予測最小残高</div><div class="v" style="color:${minMf.balance<2500000?'var(--amber)':'var(--green)'}">${yen(minMf.balance)}</div><div style="font-size:11px;color:var(--ink-3)">${minMf.m.getMonth()+1}月</div></div>
+    <div class="res-cell"><div class="l">3ヶ月後の残高</div><div class="v">${yen(endBal)}</div><div style="font-size:11px;color:var(--ink-3)">${fcMfs[2].m.getMonth()+1}月末</div></div>
+    <div class="res-cell"><div class="l">予測にかかった時間</div><div class="v" style="color:var(--green)">9秒</div><div style="font-size:11px;color:var(--ink-3)">手作業比 1/1300</div></div>`;
+  let al='';
+  if(minMf.balance<0)al=`<div class="alert danger"><span class="ico">🚨</span><div><b>${minMf.m.getMonth()+1}月に資金ショートの恐れ</b>。当座貸越枠の活用、または入金前倒し交渉を推奨します。</div></div>`;
+  else if(minMf.balance<2500000)al=`<div class="alert warn"><span class="ico">⚠️</span><div><b>${minMf.m.getMonth()+1}月の残高が手薄</b>（${yen(minMf.balance)}）。消費税納付月のため、早めの資金手当てを推奨します。</div></div>`;
+  else al=`<div class="alert ok"><span class="ico">✅</span><div>今後3ヶ月は <b>安全圏</b>。最小残高 ${yen(minMf.balance)} を確保できる見込みです。</div></div>`;
+  $('resAlert').innerHTML=al;
+  $('resBox').classList.add('show');
+  btn.disabled=false;btn.textContent='⚡ もう一度予測';
+  showToast('3ヶ月先までの資金繰りを予測しました');
+});
+
+/* ============ INIT ============ */
+// datalist for categories
+(()=>{const dl=document.createElement('datalist');dl.id='catList';dl.innerHTML=CATEGORIES.map(c=>`<option value="${esc(c.n)}">`).join('');document.body.appendChild(dl);})();
+// default date = today
+$('fDate').value=TODAY.toISOString().slice(0,10);
+$('navPending').textContent=flows.filter(f=>f.status==='scheduled'||f.status==='forecast').length;
+renderDash();
+</script>
+</body>
+</html>

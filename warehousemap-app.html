@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜倉庫管理マシン（倉庫レイアウト最適化システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cf0;--purple-soft:#efebff;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.nav a .badge.pp{background:var(--purple)}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn.purple{background:var(--purple);border-color:var(--purple);color:#fff}
+.btn.purple:hover{filter:brightness(1.06);color:#fff}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:64px 1fr 64px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-fill.g{background:linear-gradient(90deg,var(--green),#37e29a)}
+.bar-fill.a{background:linear-gradient(90deg,var(--amber),#f3c267)}
+.bar-fill.r{background:linear-gradient(90deg,var(--red),#f08a8a)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.ok{background:var(--green-soft);color:var(--green)}
+.st.full{background:var(--red-soft);color:var(--red)}
+.st.low{background:var(--brand-soft);color:var(--brand)}
+.st.empty{background:var(--soft);color:var(--ink-3)}
+.st.warn{background:var(--amber-soft);color:var(--amber)}
+
+.tag-sm{display:inline-block;font-size:11px;font-weight:800;padding:2px 9px;border-radius:6px;background:var(--soft);color:var(--ink-2)}
+.tag-sm.a{background:var(--red-soft);color:var(--red)}
+.tag-sm.b{background:var(--amber-soft);color:var(--amber)}
+.tag-sm.c{background:var(--brand-soft);color:var(--brand)}
+
+/* form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,400px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--brand)}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* warehouse grid */
+.wh-wrap{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:18px;overflow:auto}
+.wh-legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;font-size:12px;color:var(--ink-2);font-weight:600}
+.wh-legend .lg{display:flex;align-items:center;gap:6px}
+.wh-legend .sw{width:16px;height:16px;border-radius:4px;border:1px solid rgba(0,0,0,.06)}
+.wh-grid{display:grid;gap:7px;min-width:560px}
+.wh-aisle{font-size:10.5px;color:var(--ink-3);font-weight:800;text-align:center;letter-spacing:.05em;padding:2px 0}
+.cell{aspect-ratio:1;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-size:10px;font-weight:800;cursor:pointer;border:1.5px solid transparent;transition:all .15s;position:relative;min-height:48px}
+.cell:hover{transform:scale(1.06);box-shadow:0 4px 12px rgba(16,24,40,.15);z-index:2}
+.cell.on{outline:3px solid var(--brand);outline-offset:1px;z-index:3}
+.cell .cc{font-size:9px;opacity:.7;font-weight:700}
+.cell .cf{font-size:13px}
+.cell.e{background:#eef1f6;color:#9aa3b5;border-color:#e1e6ef}
+.cell.l{background:#dbe6ff;color:#2f5fc0}
+.cell.o{background:#cdeedd;color:#127a52}
+.cell.h{background:#fbe2c4;color:#9a6a17}
+.cell.f{background:#f6cccc;color:#b53636}
+.cell.x{background:repeating-linear-gradient(45deg,#e8ebf1,#e8ebf1 5px,#dde2eb 5px,#dde2eb 10px);color:#8a94a6}
+.cell.hot{box-shadow:0 0 0 2px #e24a4a inset}
+
+/* detail side */
+.maplayout{display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start}
+@media(max-width:980px){.maplayout{grid-template-columns:1fr}}
+.detail{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:18px;position:sticky;top:16px}
+.detail h4{font-size:14px;font-weight:900;margin-bottom:4px}
+.detail .dl{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);font-size:12.5px}
+.detail .dl span{color:var(--ink-3)}
+.detail .dl b{font-weight:800}
+.mini-bar{height:8px;border-radius:99px;background:var(--soft);overflow:hidden;margin-top:6px}
+.mini-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky))}
+
+/* AI generate / before-after */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900}
+.gen-item .mv{font-size:11px;color:var(--ink-3)}
+
+/* route before/after maps */
+.route-cmp{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}
+@media(max-width:760px){.route-cmp{grid-template-columns:1fr}}
+.route-box{border:1px solid var(--line);border-radius:12px;padding:14px}
+.route-box.before{background:#fafbfd}
+.route-box.after{background:#f1fdf8;border-color:#bdebd4}
+.route-box h5{font-size:12.5px;font-weight:800;margin-bottom:10px;display:flex;align-items:center;gap:7px}
+.route-box .rt{font-family:'Orbitron';font-size:20px;font-weight:700}
+.route-box.before .rt{color:#7a8499}.route-box.after .rt{color:var(--green)}
+.route-svg{width:100%;height:auto;display:block;margin-top:8px;background:#fff;border-radius:9px;border:1px solid var(--line)}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* picking */
+.pick-card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px 18px;margin-bottom:12px}
+.pick-card .ph2{display:flex;align-items:center;gap:11px;margin-bottom:10px}
+.pick-card .pn{font-weight:900;font-size:14px}
+.pick-step{display:flex;align-items:center;gap:11px;padding:9px 0;border-top:1px solid var(--line);font-size:13px}
+.pick-step .sq{width:24px;height:24px;border-radius:7px;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center;font-weight:800;font-size:12px;flex-shrink:0}
+.pick-step .loc{font-family:'Orbitron';font-size:12px;color:var(--ink-2);margin-left:auto;font-weight:700}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.note{font-size:11.5px;color:var(--ink-3);margin-top:6px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">倉庫管理マシン<small>技マシン｜倉庫レイアウト最適化</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="map"><span class="i">🗺️</span>ロケーションマップ</a>
+      <a data-v="stock"><span class="i">📦</span>在庫配置</a>
+      <a data-v="pick"><span class="i">🚶</span>ピッキング<span class="badge" id="navPick">0</span></a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="opt"><span class="i">⚡</span>最適化<span class="badge pp" id="navOpt">!</span></a>
+      <a data-v="route"><span class="i">🧭</span>AI動線</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 倉庫管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。倉庫・在庫・数値はすべてサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">大分中央物流センターの稼働状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>エリア別 充填率</h3><span class="more">全6エリア</span></div>
+            <div class="pb"><div class="bars" id="areaBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>出荷頻度トップ商品（ABC分析）</h3><span class="more">過去30日</span></div>
+            <div class="pb"><div class="bars" id="abcBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>今日のピッキング進捗</h3></div>
+            <div class="pb"><div class="bars" id="pickBars"></div>
+              <div class="note">未処理の出荷指示は「ピッキング」画面から処理できます。</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LOCATION MAP -->
+      <section class="view" id="v-map">
+        <div class="toolbar">
+          <div class="chips" id="mapChips"></div>
+          <button class="btn" style="margin-left:auto" id="mapShade">📈 ヒート表示</button>
+        </div>
+        <div class="maplayout">
+          <div class="wh-wrap">
+            <div class="wh-legend">
+              <div class="lg"><span class="sw" style="background:#eef1f6;border-color:#e1e6ef"></span>空き</div>
+              <div class="lg"><span class="sw" style="background:#dbe6ff"></span>低稼働</div>
+              <div class="lg"><span class="sw" style="background:#cdeedd"></span>適正</div>
+              <div class="lg"><span class="sw" style="background:#fbe2c4"></span>高稼働</div>
+              <div class="lg"><span class="sw" style="background:#f6cccc"></span>満杯</div>
+              <div class="lg"><span class="sw" style="background:repeating-linear-gradient(45deg,#e8ebf1,#e8ebf1 4px,#dde2eb 4px,#dde2eb 8px)"></span>デッドスペース</div>
+            </div>
+            <div class="wh-grid" id="whGrid"></div>
+          </div>
+          <div class="detail" id="cellDetail">
+            <h4>ロケーション詳細</h4>
+            <div class="note" id="detailEmpty">マップ上のロケーションをクリックすると詳細が表示されます。</div>
+            <div id="detailBody" style="display:none"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- STOCK -->
+      <section class="view" id="v-stock">
+        <div class="create-grid">
+          <div class="formcard">
+            <div style="font-size:14px;font-weight:900;margin-bottom:12px">📦 入庫・在庫配置の登録</div>
+            <div class="fg"><label>商品</label><select id="sItem"></select></div>
+            <div class="fg-row">
+              <div class="fg"><label>数量</label><input id="sQty" type="number" min="1" value="40"></div>
+              <div class="fg"><label>配置ロケーション</label><select id="sLoc"></select></div>
+            </div>
+            <div class="aihint" id="sAiHint">✨ AIが出荷頻度から最適ロケーションを提案しました</div>
+            <div class="fg"><label>入庫担当</label><select id="sStaff"></select></div>
+            <div class="linkrow" style="margin-top:8px">
+              <button class="btn primary" id="sSave" style="flex:1;justify-content:center">＋ 在庫を配置する</button>
+              <button class="btn purple" id="sSuggest">✨ AI最適配置</button>
+            </div>
+            <div class="note">AI最適配置：出荷頻度（ABCランク）から、ピッキング動線が最短になる空きロケーションを自動で割り当てます。</div>
+          </div>
+          <div>
+            <div class="toolbar">
+              <div class="search"><span class="ic">🔍</span><input id="sQ" placeholder="商品名・ロケーション・カテゴリで検索"></div>
+              <div class="chips" id="rankChips"></div>
+            </div>
+            <table class="tbl">
+              <thead><tr><th>ロケ</th><th>商品</th><th>カテゴリ</th><th class="r">数量</th><th class="r">充填率</th><th>ABC</th><th>状態</th></tr></thead>
+              <tbody id="stockRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- PICKING -->
+      <section class="view" id="v-pick">
+        <div class="kpis" id="pickKpis"></div>
+        <div class="panel" style="margin-bottom:16px">
+          <div class="ph"><h3>本日の出荷指示</h3>
+            <button class="btn green" id="optRoute" style="margin-left:auto">🧭 AIで最短ピッキング順を計算</button></div>
+          <div class="pb" id="pickList"></div>
+        </div>
+      </section>
+
+      <!-- OPTIMIZE (AI) -->
+      <section class="view" id="v-opt">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="optOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">出荷頻度から在庫配置を自動で最適化</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="optSub">過去30日の出荷データ <b>4,820件</b> をAIが分析し、よく出る商品を入口近くへ再配置します。</div></div>
+            <button class="btn purple" id="optRun" style="margin-left:auto">⚡ AIで最適配置を計算する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="optBeforeT">1日がかり</div>
+              <ul>
+                <li>📋 出荷履歴をExcelで集計</li>
+                <li>🤔 担当者の勘で置き場所を決める</li>
+                <li>🚶 結果、よく出る物が奥で歩行距離が長い</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="optAfterT">— </div>
+              <ul id="optAfterList" style="opacity:.4">
+                <li>🤖 出荷頻度を自動でABC分析</li>
+                <li>📦 Aランク品を入口近くへ自動再配置</li>
+                <li>🚶 歩行距離・ピッキング時間を最小化</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="optList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ 提案された再配置プラン</div>
+            <div id="optItems"></div>
+            <div class="linkrow" style="margin-top:12px;display:none" id="optApplyRow">
+              <button class="btn primary" id="optApply">この再配置プランを適用する</button>
+              <button class="btn" onclick="go('map')">マップで確認</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ROUTE (AI) -->
+      <section class="view" id="v-route">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="rtOrb">🧭</div>
+            <div><div style="font-size:16px;font-weight:900">ピッキング動線をAIが最短化</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="rtSub">出荷指示 <b id="rtCount">12</b>件 のピッキングを、歩く距離が最短になる順番にAIが並べ替えます。</div></div>
+            <button class="btn green" id="rtRun" style="margin-left:auto">⚡ AIで動線を最適化する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 指示書の並び順どおり</span>
+              <div class="big" id="rtBeforeD">なし</div>
+              <ul>
+                <li>🚶 棚を行ったり来たり</li>
+                <li>🕒 1出荷あたり 約12分</li>
+                <li>😵 新人は迷子になりやすい</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン（最短巡回）</span>
+              <div class="big" id="rtAfterD">— </div>
+              <ul id="rtAfterList" style="opacity:.4">
+                <li>🧭 最短巡回ルートを自動算出</li>
+                <li>🕒 1出荷あたり 約5分へ短縮</li>
+                <li>📱 棚番号つきの順路を表示</li>
+              </ul>
+            </div>
+          </div>
+          <div class="route-cmp">
+            <div class="route-box before">
+              <h5>🟥 Before（指示書順）<span class="rt" id="rtBeforeM" style="margin-left:auto">—</span></h5>
+              <svg class="route-svg" id="svgBefore" viewBox="0 0 280 200"></svg>
+            </div>
+            <div class="route-box after">
+              <h5>🟩 After（AI最適化）<span class="rt" id="rtAfterM" style="margin-left:auto">—</span></h5>
+              <svg class="route-svg" id="svgAfter" viewBox="0 0 280 200"></svg>
+            </div>
+          </div>
+          <div class="gen-list" id="rtList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ 最適化された巡回順</div>
+            <div id="rtItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pct=n=>Math.round(n)+'%';
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+let SEED=4071;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+/* ============ DATA ============ */
+const STAFF=['佐藤','田中','鈴木','高橋','渡辺'];
+const CATS=['青果','冷蔵食品','飲料','日用品','医療資材','梱包材'];
+const ITEMS=[
+  {n:'シャインマスカット 2kg箱',cat:'青果',rank:'A'},
+  {n:'大分産トマト 4kg',cat:'青果',rank:'A'},
+  {n:'カット野菜ミックス 1kg',cat:'冷蔵食品',rank:'A'},
+  {n:'業務用 牛乳 1L×12',cat:'冷蔵食品',rank:'A'},
+  {n:'ミネラルウォーター 2L×6',cat:'飲料',rank:'A'},
+  {n:'お茶 500ml×24',cat:'飲料',rank:'B'},
+  {n:'使い捨て手袋 100枚',cat:'医療資材',rank:'B'},
+  {n:'消毒用アルコール 5L',cat:'医療資材',rank:'B'},
+  {n:'トイレットペーパー 12R',cat:'日用品',rank:'B'},
+  {n:'キッチンペーパー 6P',cat:'日用品',rank:'C'},
+  {n:'段ボール箱 大 50枚',cat:'梱包材',rank:'C'},
+  {n:'緩衝材 ロール',cat:'梱包材',rank:'C'},
+  {n:'冷凍うどん 5食×8',cat:'冷蔵食品',rank:'C'},
+  {n:'紙コップ 1000個',cat:'日用品',rank:'C'},
+  {n:'お米 5kg×4',cat:'青果',rank:'B'},
+];
+const RANKDIST={A:185,B:64,C:18}; // 月間出荷件数の目安
+
+/* warehouse grid: 5 rows x 6 cols. 入口は左下 (entry). 入口に近いほど推奨度高 */
+const ROWS=5, COLS=6;
+const AISLES=['A','B','C','D','E','F'];
+// distance from entry (row=ROWS-1, col=0). 近いほど小
+function distOf(r,c){return Math.abs(r-(ROWS-1))+c;}
+let cells=[]; // {id,r,c,aisle,bay,item,qty,cap,dead}
+(function seedCells(){
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      const id=AISLES[c]+'-'+String(r+1).padStart(2,'0');
+      // 一部をデッドスペース化（柱・通路）
+      const dead=(r===2&&c===3)||(r===0&&c===5);
+      let item=null,qty=0,cap=100;
+      if(!dead){
+        const fillRoll=rnd();
+        if(fillRoll>0.18){ // 82%が使用中
+          const it=pick(ITEMS);
+          cap=80+Math.floor(rnd()*40);
+          // 近い場所ほど多めに埋まる傾向（現状は最適化前なので逆転も起こす）
+          qty=Math.floor((0.25+rnd()*0.7)*cap);
+          item={...it};
+        }
+      }
+      cells.push({id,r,c,aisle:AISLES[c],bay:r+1,item,qty,cap,dead,dist:distOf(r,c)});
+    }
+  }
+})();
+
+function fillRate(cell){if(cell.dead||!cell.item)return 0;return cell.qty/cell.cap*100;}
+function cellState(cell){
+  if(cell.dead)return 'x';
+  if(!cell.item)return 'e';
+  const f=fillRate(cell);
+  if(f>=95)return 'f';
+  if(f>=70)return 'h';
+  if(f>=35)return 'o';
+  return 'l';
+}
+const STATELABEL={e:'空き',l:'低稼働',o:'適正',h:'高稼働',f:'満杯',x:'デッドスペース'};
+
+/* 出荷指示（ピッキングタスク） */
+const CUSTOMERS=['大分中央クリニック','さくら総合病院','つくし介護センター','別府温泉ホテル','大分海鮮市場','都町スーパー'];
+let orders=[];
+(function seedOrders(){
+  for(let i=0;i<12;i++){
+    const nLines=2+Math.floor(rnd()*4);
+    const used=cells.filter(c=>c.item);
+    const lines=[];const seen=new Set();
+    for(let j=0;j<nLines;j++){
+      const cell=pick(used);
+      if(seen.has(cell.id))continue;seen.add(cell.id);
+      lines.push({loc:cell.id,item:cell.item.n,qty:1+Math.floor(rnd()*6),r:cell.r,c:cell.c});
+    }
+    orders.push({no:'SO-'+(5200+i),cust:pick(CUSTOMERS),lines,done:rnd()>0.6});
+  }
+})();
+
+/* ============ ROUTING ============ */
+const TITLES={
+  dash:['ダッシュボード','大分中央物流センターの稼働状況'],
+  map:['ロケーションマップ','倉庫全体の在庫配置と充填状況を可視化します'],
+  stock:['在庫配置','入庫・ロケーション割り当てを管理します'],
+  pick:['ピッキング','本日の出荷指示とピッキング進捗'],
+  opt:['最適化','出荷頻度から在庫配置をAIが自動最適化します'],
+  route:['AI動線','ピッキングの歩行ルートをAIが最短化します'],
+};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='dash'?'<button class="btn purple" onclick="go(\'opt\')">⚡ AI最適化</button><button class="btn primary" onclick="go(\'map\')">🗺️ マップを見る</button>'
+    : v==='map'?'<button class="btn primary" onclick="go(\'opt\')">⚡ 配置を最適化</button>'
+    : v==='stock'?'<button class="btn purple" onclick="go(\'opt\')">⚡ AI最適化</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='map')renderMap();
+  if(v==='stock')renderStock();
+  if(v==='pick')renderPick();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ AGGREGATES ============ */
+function whStats(){
+  const usable=cells.filter(c=>!c.dead);
+  const used=usable.filter(c=>c.item);
+  const totalCap=usable.reduce((s,c)=>s+c.cap,0);
+  const totalQty=usable.reduce((s,c)=>s+c.qty,0);
+  const fill=totalCap?totalQty/totalCap*100:0;
+  const dead=cells.filter(c=>c.dead).length;
+  return {usable:usable.length,used:used.length,empty:usable.length-used.length,fill,dead,total:cells.length};
+}
+
+/* ============ DASHBOARD ============ */
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+function renderDash(){
+  const s=whStats();
+  const pickEff=Math.round(60+rnd()*0); // baseline, set deterministic-ish below
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','倉庫 充填率',pct(s.fill),s.used+'/'+s.usable+'ロケ','up','適正範囲')}
+    ${kpi('#16b877','ピッキング効率','5.2<small>分/出荷</small>','AI最適化後','up','前月比 -54%')}
+    ${kpi('#e3941f','空きロケーション',s.empty+'<small>区画</small>','使用'+s.used+'区画','warn','受入余力あり')}
+    ${kpi('#e24a4a','デッドスペース',s.dead+'<small>区画</small>',' ','down','要レイアウト見直し')}`;
+  // area (aisle) fill
+  const aisleData=AISLES.map(a=>{
+    const cs=cells.filter(c=>c.aisle===a&&!c.dead);
+    const cap=cs.reduce((s,c)=>s+c.cap,0),qty=cs.reduce((s,c)=>s+c.qty,0);
+    return {a,f:cap?qty/cap*100:0};
+  });
+  $('areaBars').innerHTML=aisleData.map(d=>{
+    const cls=d.f>=85?'r':d.f>=65?'a':d.f>=35?'g':'';
+    return `<div class="bar-row"><span class="mlabel">${d.a}通路</span>
+      <div class="bar-track"><div class="bar-fill ${cls}" style="width:0" data-w="${Math.round(d.f)}"></div></div>
+      <span class="mval">${pct(d.f)}</span></div>`;}).join('');
+  // ABC top items by shipment freq
+  const abc=ITEMS.filter(i=>i.rank==='A').concat(ITEMS.filter(i=>i.rank==='B')).slice(0,6)
+    .map(i=>({n:i.n,v:RANKDIST[i.rank]+Math.floor(rnd()*30)})).sort((a,b)=>b.v-a.v);
+  const mxAbc=Math.max(...abc.map(x=>x.v),1);
+  $('abcBars').innerHTML=abc.map(d=>`<div class="bar-row"><span class="mlabel" style="font-size:11px;width:auto">${esc(d.n.slice(0,7))}</span>
+    <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(d.v/mxAbc*100)}"></div></div>
+    <span class="mval">${d.v}回</span></div>`).join('');
+  // picking progress
+  const done=orders.filter(o=>o.done).length;
+  $('pickBars').innerHTML=[
+    {l:'完了',v:done,t:orders.length,cls:'g'},
+    {l:'未処理',v:orders.length-done,t:orders.length,cls:'a'},
+  ].map(d=>`<div class="bar-row"><span class="mlabel">${d.l}</span>
+    <div class="bar-track"><div class="bar-fill ${d.cls}" style="width:0" data-w="${Math.round(d.v/d.t*100)}"></div></div>
+    <span class="mval">${d.v}/${d.t}件</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#v-dash .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // activity
+  const acts=[
+    {i:'⚡',c:'#efebff',t:'AI最適化で Aランク品 8区画を入口近くへ再配置',m:'10分前'},
+    {i:'📦',c:'#eaf1ff',t:'シャインマスカット 2kg箱 を A-01 に入庫（+30）',m:'42分前'},
+    {i:'🚶',c:'#e6f8f0',t:'SO-5203 のピッキング完了（4品・5分20秒）',m:'1時間前'},
+    {i:'⚠️',c:'#fdeaea',t:'F通路の充填率が95%超過。受入余力が逼迫しています',m:'今日 9:05'},
+    {i:'🧭',c:'#e6f8f0',t:'AI動線最適化で本日の歩行距離を 38% 削減',m:'今日 8:30'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+}
+
+/* ============ LOCATION MAP ============ */
+let mapFilter='all';let heat=false;let selCell=null;
+function renderMapChips(){
+  const opts=[['all','すべて'],['o','適正'],['l','低稼働'],['h','高稼働'],['f','満杯'],['e','空き'],['x','デッドスペース']];
+  $('mapChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===mapFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('mapChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{mapFilter=c.dataset.s;renderMapChips();renderMap();});
+}
+function renderMap(){
+  const g=$('whGrid');
+  g.style.gridTemplateColumns='repeat('+COLS+',1fr)';
+  // header row with aisle labels
+  let html='';
+  html+=AISLES.map(a=>`<div class="wh-aisle">${a}通路</div>`).join('');
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      const cell=cells.find(x=>x.r===r&&x.c===c);
+      const st=cellState(cell);
+      const dim=(mapFilter!=='all'&&mapFilter!==st)?'opacity:.18;':'';
+      let extra='';
+      if(heat&&cell.item){
+        const f=fillRate(cell);const hot=cell.item.rank==='A';
+        extra=hot?'class="cell hot"':'';
+      }
+      const isHot=heat&&cell.item&&cell.item.rank==='A';
+      const f=cell.item?Math.round(fillRate(cell)):0;
+      const label=cell.dead?'×':cell.item?(cell.item.cat.slice(0,2)):'';
+      html+=`<div class="cell ${st} ${isHot?'hot':''} ${selCell===cell.id?'on':''}" data-id="${esc(cell.id)}" style="${dim}">
+        <div class="cc">${esc(cell.id)}</div>
+        <div class="cf">${cell.dead?'🚧':cell.item?(f+'%'):''}</div>
+        <div class="cc">${esc(label)}</div></div>`;
+    }
+  }
+  g.innerHTML=html;
+  g.querySelectorAll('.cell').forEach(el=>el.onclick=()=>{selCell=el.dataset.id;renderMap();renderDetail(el.dataset.id);});
+}
+function renderDetail(id){
+  const cell=cells.find(c=>c.id===id);if(!cell)return;
+  $('detailEmpty').style.display='none';
+  const body=$('detailBody');body.style.display='block';
+  const st=cellState(cell);const f=cell.item?Math.round(fillRate(cell)):0;
+  let rankTag='';if(cell.item)rankTag=`<span class="tag-sm ${cell.item.rank==='A'?'a':cell.item.rank==='B'?'b':'c'}">${cell.item.rank}ランク</span>`;
+  body.innerHTML=`
+    <div style="font-family:'Orbitron';font-size:20px;font-weight:700;margin:4px 0 6px">${esc(cell.id)}</div>
+    <div style="margin-bottom:8px">${stBadge(st)}</div>
+    <div class="dl"><span>通路 / バイ</span><b>${esc(cell.aisle)}通路 / ${cell.bay}段</b></div>
+    <div class="dl"><span>入口からの距離</span><b>${cell.dist} 区画分</b></div>
+    ${cell.dead?'<div class="dl"><span>用途</span><b>柱・通路（保管不可）</b></div>'
+    : cell.item?`<div class="dl"><span>商品</span><b>${esc(cell.item.n)}</b></div>
+      <div class="dl"><span>カテゴリ</span><b>${esc(cell.item.cat)} ${rankTag}</b></div>
+      <div class="dl"><span>数量 / 容量</span><b>${cell.qty} / ${cell.cap}</b></div>
+      <div style="padding:10px 0 0"><span style="font-size:12px;color:var(--ink-3)">充填率 ${f}%</span>
+        <div class="mini-bar"><i style="width:${f}%"></i></div></div>`
+    : '<div class="dl"><span>状態</span><b>空き（入庫可能）</b></div>'}
+    ${cell.item&&cell.item.rank==='A'&&cell.dist>4?'<div class="note" style="color:var(--purple);font-weight:700;margin-top:10px">✨ AI提案：高頻度品です。入口近くへの移動を推奨します。</div>':''}
+  `;
+}
+function stBadge(s){const cls=s==='o'?'ok':s==='f'?'full':s==='l'?'low':s==='h'?'warn':s==='x'?'empty':'empty';return `<span class="st ${cls}">${STATELABEL[s]}</span>`;}
+$('mapShade').onclick=()=>{heat=!heat;$('mapShade').classList.toggle('on');$('mapShade').textContent=heat?'📈 ヒート表示 ON':'📈 ヒート表示';showToast(heat?'Aランク（高頻度）品を強調表示します':'通常表示に戻しました');renderMap();};
+
+/* ============ STOCK ============ */
+let rankFilter='all';
+function renderItemSelect(){$('sItem').innerHTML=ITEMS.map(i=>`<option>${i.n}</option>`).join('');}
+function renderLocSelect(){
+  const empties=cells.filter(c=>!c.dead&&!c.item).sort((a,b)=>a.dist-b.dist);
+  $('sLoc').innerHTML=empties.map(c=>`<option>${c.id}</option>`).join('')||'<option value="">空きなし</option>';
+}
+function renderStaffSelect(){$('sStaff').innerHTML=STAFF.map(s=>`<option>${s}</option>`).join('');}
+function renderRankChips(){
+  const opts=[['all','すべて'],['A','Aランク'],['B','Bランク'],['C','Cランク']];
+  $('rankChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===rankFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('rankChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{rankFilter=c.dataset.s;renderRankChips();renderStock();});
+}
+function renderStock(){
+  const q=($('sQ').value||'').toLowerCase();
+  let rows=cells.filter(c=>c.item)
+    .filter(c=>rankFilter==='all'||c.item.rank===rankFilter)
+    .filter(c=>!q||(c.item.n+c.item.cat+c.id).toLowerCase().includes(q))
+    .sort((a,b)=>a.dist-b.dist);
+  $('stockRows').innerHTML=rows.length?rows.map(c=>{
+    const f=Math.round(fillRate(c));const st=cellState(c);
+    return `<tr>
+      <td class="mono" style="font-size:12px">${esc(c.id)}</td>
+      <td><b>${esc(c.item.n)}</b></td>
+      <td style="color:var(--ink-2)">${esc(c.item.cat)}</td>
+      <td class="r tnum">${c.qty}</td>
+      <td class="r tnum">${f}%</td>
+      <td><span class="tag-sm ${c.item.rank==='A'?'a':c.item.rank==='B'?'b':'c'}">${c.item.rank}</span></td>
+      <td>${stBadge(st)}</td></tr>`;}).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する在庫がありません</td></tr>';
+}
+$('sQ').addEventListener('input',renderStock);
+$('sItem').addEventListener('change',()=>{
+  const it=ITEMS.find(i=>i.n===$('sItem').value);
+  if(it){suggestLoc(it,false);}
+});
+function suggestLoc(it,announce){
+  const empties=cells.filter(c=>!c.dead&&!c.item).sort((a,b)=>a.dist-b.dist);
+  if(!empties.length)return;
+  // Aランクは入口最寄り、Cランクは奥を提案
+  let target;
+  if(it.rank==='A')target=empties[0];
+  else if(it.rank==='C')target=empties[empties.length-1];
+  else target=empties[Math.floor(empties.length/2)];
+  $('sLoc').value=target.id;
+  if(announce){$('sAiHint').classList.add('show');setTimeout(()=>$('sAiHint').classList.remove('show'),2200);}
+}
+$('sSuggest').addEventListener('click',()=>{
+  const it=ITEMS.find(i=>i.n===$('sItem').value)||ITEMS[0];
+  suggestLoc(it,true);
+  showToast(it.rank+'ランク品「'+it.n+'」の最適ロケーションを提案しました');
+});
+$('sSave').addEventListener('click',()=>{
+  const it=ITEMS.find(i=>i.n===$('sItem').value);
+  const loc=$('sLoc').value;const qty=parseInt($('sQty').value,10)||0;
+  if(!it||!loc||qty<=0){showToast('商品・数量・ロケーションを入力してください');return;}
+  const cell=cells.find(c=>c.id===loc);
+  if(!cell||cell.dead){showToast('そのロケーションには配置できません');return;}
+  cell.item={...it};cell.qty=Math.min(qty,cell.cap);cell.cap=Math.max(cell.cap,qty);
+  renderLocSelect();renderStock();
+  showToast(esc(it.n)+' を '+loc+' に '+qty+'個 配置しました');
+});
+
+/* ============ PICKING ============ */
+function renderPick(){
+  const pending=orders.filter(o=>!o.done);
+  const done=orders.filter(o=>o.done);
+  const totalLines=orders.reduce((s,o)=>s+o.lines.length,0);
+  $('pickKpis').innerHTML=`
+    ${kpi('#2f6df0','本日の出荷指示',orders.length+'<small>件</small>',totalLines+'品目','up','受付済')}
+    ${kpi('#16b877','完了',done.length+'<small>件</small>','','up','順調')}
+    ${kpi('#e3941f','未処理',pending.length+'<small>件</small>','','warn','処理待ち')}
+    ${kpi('#7c5cf0','平均所要','5.2<small>分</small>','AI動線適用','up','-54%')}`;
+  $('pickList').innerHTML=orders.map(o=>{
+    const ordered=routeOrder(o.lines.slice());
+    return `<div class="pick-card">
+      <div class="ph2">
+        <div class="sq" style="background:${o.done?'var(--green-soft)':'var(--amber-soft)'};color:${o.done?'var(--green)':'var(--amber)'}">${o.done?'✓':'…'}</div>
+        <div><div class="pn">${esc(o.no)}</div><div style="font-size:11.5px;color:var(--ink-3)">${esc(o.cust)} ・ ${o.lines.length}品目</div></div>
+        <div style="margin-left:auto">${o.done?stBadge('o').replace('適正','完了'):'<button class="btn green" style="padding:6px 12px" onclick="completePick(\''+esc(o.no)+'\')">ピッキング完了</button>'}</div>
+      </div>
+      ${ordered.map((l,i)=>`<div class="pick-step"><div class="sq">${i+1}</div>
+        <div><b>${esc(l.item)}</b> <span style="color:var(--ink-3);font-size:12px">×${l.qty}</span></div>
+        <span class="loc">${esc(l.loc)}</span></div>`).join('')}
+    </div>`;
+  }).join('');
+  $('navPick').textContent=pending.length;
+}
+window.completePick=no=>{const o=orders.find(x=>x.no===no);if(o){o.done=true;renderPick();showToast(no+' のピッキングを完了しました');}};
+// 最短巡回（入口起点の貪欲法）
+function routeOrder(lines){
+  const res=[];let cr=ROWS-1,cc=0;const rem=lines.slice();
+  while(rem.length){
+    let bi=0,bd=1e9;
+    for(let i=0;i<rem.length;i++){const d=Math.abs(rem[i].r-cr)+Math.abs(rem[i].c-cc);if(d<bd){bd=d;bi=i;}}
+    const n=rem.splice(bi,1)[0];res.push(n);cr=n.r;cc=n.c;
+  }
+  return res;
+}
+function routeDist(lines){
+  let cr=ROWS-1,cc=0,d=0;
+  lines.forEach(l=>{d+=Math.abs(l.r-cr)+Math.abs(l.c-cc);cr=l.r;cc=l.c;});
+  d+=Math.abs((ROWS-1)-cr)+Math.abs(0-cc); // return to entry
+  return d;
+}
+$('optRoute').addEventListener('click',()=>{go('route');setTimeout(()=>$('rtRun').click(),350);});
+
+/* ============ OPTIMIZE (AI) ============ */
+let optPlan=[];
+$('optRun').addEventListener('click',async()=>{
+  const btn=$('optRun');btn.disabled=true;btn.textContent='⚡ 分析中…';
+  $('optOrb').classList.add('spin');$('optOrb').textContent='⚡';
+  $('optAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('optAfterT').textContent='0:0'+Math.min(s,9);},110);
+  await new Promise(r=>setTimeout(r,1200));
+  clearInterval(t);$('optAfterT').textContent='9秒';
+  $('optOrb').classList.remove('spin');$('optOrb').textContent='✅';
+  // 奥にあるAランク品 → 入口近くの空き/低稼働へ
+  const aFar=cells.filter(c=>c.item&&c.item.rank==='A'&&c.dist>4).sort((a,b)=>b.dist-a.dist);
+  const nearTargets=cells.filter(c=>!c.dead&&(!c.item||c.item.rank==='C')&&c.dist<=3).sort((a,b)=>a.dist-b.dist);
+  optPlan=[];
+  const used=new Set();
+  aFar.forEach(src=>{
+    const tgt=nearTargets.find(t=>!used.has(t.id)&&t.id!==src.id);
+    if(tgt){used.add(tgt.id);optPlan.push({item:src.item.n,from:src.id,to:tgt.id,srcId:src.id,tgtId:tgt.id,save:(src.dist-tgt.dist)});}
+  });
+  if(!optPlan.length){ // fallback so demo always shows result
+    cells.filter(c=>c.item&&c.item.rank==='A').slice(0,4).forEach((src,i)=>{
+      optPlan.push({item:src.item.n,from:src.id,to:AISLES[0]+'-0'+(i+1),srcId:src.id,tgtId:null,save:2+i});
+    });
+  }
+  $('optItems').innerHTML=optPlan.map((p,i)=>`<div class="gen-item" data-i="${i}">
+    <span class="ck">✓</span><b style="flex:1">${esc(p.item)}</b>
+    <span class="mv">${esc(p.from)} → <b style="color:var(--purple)">${esc(p.to)}</b></span>
+    <span class="tnum" style="font-weight:800;color:var(--green)">歩行 -${p.save}区画</span></div>`).join('');
+  $('optList').classList.add('show');
+  const items=[...$('optItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,160));items[i].classList.add('in');}
+  $('optApplyRow').style.display='flex';
+  $('navOpt').textContent=optPlan.length;
+  btn.disabled=false;btn.textContent='⚡ もう一度計算';
+  const totalSave=optPlan.reduce((s,p)=>s+p.save,0);
+  showToast(optPlan.length+'区画の再配置で歩行 '+totalSave+'区画分を削減できます');
+});
+$('optApply').addEventListener('click',()=>{
+  optPlan.forEach(p=>{
+    if(!p.tgtId)return;
+    const src=cells.find(c=>c.id===p.srcId);const tgt=cells.find(c=>c.id===p.tgtId);
+    if(src&&tgt&&!tgt.dead){
+      const movedItem=src.item,movedQty=src.qty,movedCap=src.cap;
+      src.item=tgt.item;src.qty=tgt.qty;src.cap=tgt.cap||src.cap;
+      tgt.item=movedItem;tgt.qty=movedQty;tgt.cap=Math.max(tgt.cap,movedCap);
+    }
+  });
+  $('navOpt').textContent='✓';
+  showToast('再配置プランを適用しました。マップに反映されています');
+  setTimeout(()=>go('map'),600);
+});
+
+/* ============ ROUTE (AI) ============ */
+function drawRoute(svg,lines,color){
+  const W=280,H=200,pad=24;
+  const cw=(W-pad*2)/(COLS-1||1),ch=(H-pad*2)/(ROWS-1||1);
+  const xy=(r,c)=>[pad+c*cw, pad+r*ch];
+  let s='';
+  // shelves backdrop
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const[x,y]=xy(r,c);s+=`<circle cx="${x}" cy="${y}" r="3" fill="#dfe4ee"/>`;}
+  // entry marker (left-bottom)
+  const[ex,ey]=xy(ROWS-1,0);
+  // path
+  let path=`M ${ex} ${ey}`;
+  lines.forEach(l=>{const[x,y]=xy(l.r,l.c);path+=` L ${x} ${y}`;});
+  path+=` L ${ex} ${ey}`;
+  s+=`<path d="${path}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity=".85"/>`;
+  // stop numbers
+  lines.forEach((l,i)=>{const[x,y]=xy(l.r,l.c);s+=`<circle cx="${x}" cy="${y}" r="9" fill="${color}"/><text x="${x}" y="${y+3.5}" font-size="9" fill="#fff" text-anchor="middle" font-weight="700">${i+1}</text>`;});
+  s+=`<circle cx="${ex}" cy="${ey}" r="7" fill="#1d2733"/><text x="${ex}" y="${ey-12}" font-size="9" fill="#1d2733" text-anchor="middle" font-weight="700">入口</text>`;
+  svg.innerHTML=s;
+}
+$('rtRun').addEventListener('click',async()=>{
+  const btn=$('rtRun');btn.disabled=true;btn.textContent='⚡ 計算中…';
+  $('rtOrb').classList.add('spin');$('rtOrb').textContent='⚡';
+  // pick a representative order with most lines
+  const order=orders.slice().sort((a,b)=>b.lines.length-a.lines.length)[0];
+  const before=order.lines.slice();
+  const after=routeOrder(order.lines.slice());
+  const dB=routeDist(before),dA=routeDist(after);
+  $('rtCount').textContent=orders.length;
+  drawRoute($('svgBefore'),before,'#e24a4a');
+  $('rtBeforeM').textContent=dB+'歩分';
+  $('rtBeforeD').textContent='12分';
+  $('rtAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('rtAfterD').textContent='0:0'+Math.min(s,5);},120);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);
+  $('rtAfterD').textContent='5分';
+  $('rtOrb').classList.remove('spin');$('rtOrb').textContent='✅';
+  drawRoute($('svgAfter'),after,'#16b877');
+  $('rtAfterM').textContent=dA+'歩分';
+  // list
+  $('rtItems').innerHTML=after.map((l,i)=>`<div class="gen-item" data-i="${i}">
+    <span class="ck">${i+1}</span><b style="flex:1">${esc(l.item)}</b>
+    <span class="mv">×${l.qty}</span><span class="loc tnum" style="font-weight:800;color:var(--purple)">${esc(l.loc)}</span></div>`).join('');
+  $('rtList').classList.add('show');
+  const items=[...$('rtItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,150));items[i].classList.add('in');}
+  btn.disabled=false;btn.textContent='⚡ もう一度計算';
+  const cut=dB?Math.round((1-dA/dB)*100):0;
+  showToast('巡回ルートを最適化し、歩行距離を '+cut+'% 削減しました');
+});
+
+/* ============ INIT ============ */
+renderItemSelect();renderLocSelect();renderStaffSelect();renderRankChips();
+renderMapChips();
+renderDash();
+$('navPick').textContent=orders.filter(o=>!o.done).length;
+$('navOpt').textContent='!';
+</script>
+</body>
+</html>

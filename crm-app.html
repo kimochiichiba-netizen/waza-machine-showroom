@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜顧客管理マシン（CRM）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#8b5cf6;--purple-soft:#f1ecfe;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.nav a .badge.amber{background:var(--amber)}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn.sm{padding:6px 12px;font-size:12px}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut rank distribution */
+.rankviz{display:flex;align-items:center;gap:22px}
+@media(max-width:520px){.rankviz{flex-direction:column;gap:14px}}
+.donut{width:128px;height:128px;border-radius:50%;flex-shrink:0;position:relative;background:var(--soft)}
+.donut .hole{position:absolute;inset:22px;background:var(--card);border-radius:50%;display:grid;place-items:center;text-align:center}
+.donut .hole b{font-size:22px;font-weight:900;line-height:1}
+.donut .hole span{font-size:10px;color:var(--ink-3);font-weight:700}
+.ranklegend{flex:1;display:flex;flex-direction:column;gap:9px}
+.ranklegend .rl{display:flex;align-items:center;gap:9px;font-size:12.5px}
+.ranklegend .rl .sw{width:11px;height:11px;border-radius:3px}
+.ranklegend .rl b{margin-left:auto;font-weight:800}
+.ranklegend .rl span{color:var(--ink-3)}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.active{background:var(--green-soft);color:var(--green)}
+.st.warm{background:var(--brand-soft);color:var(--brand)}
+.st.new{background:var(--purple-soft);color:var(--purple)}
+.st.dormant{background:var(--soft);color:var(--ink-3)}
+.st.risk{background:var(--red-soft);color:var(--red)}
+
+/* rank badge */
+.rk{display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;width:26px;height:26px;border-radius:7px}
+.rk.A{background:#fdf3e2;color:#c9881a}
+.rk.B{background:#eaf1ff;color:var(--brand)}
+.rk.C{background:var(--soft);color:var(--ink-2)}
+.rk.D{background:var(--red-soft);color:var(--red)}
+
+/* avatar */
+.av-c{display:inline-flex;align-items:center;gap:10px}
+.av-c .ic{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;font-weight:800;color:#fff;font-size:13px;flex-shrink:0}
+
+/* form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{min-height:80px;resize:vertical;line-height:1.6}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* timeline (history) */
+.tl{position:relative;padding-left:26px}
+.tl::before{content:"";position:absolute;left:9px;top:6px;bottom:6px;width:2px;background:var(--line)}
+.tl-item{position:relative;padding:0 0 18px}
+.tl-item:last-child{padding-bottom:0}
+.tl-item .dot{position:absolute;left:-22px;top:3px;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:10px;color:#fff;background:var(--brand);box-shadow:0 0 0 3px var(--card)}
+.tl-item .tt{font-size:13px;font-weight:700}
+.tl-item .tm{font-size:11.5px;color:var(--ink-3);margin:1px 0 5px}
+.tl-item .tb{font-size:12.5px;color:var(--ink-2);background:var(--soft);border-radius:9px;padding:9px 12px}
+.tl-item .who{font-size:11px;color:var(--ink-3);margin-top:4px}
+
+/* follow cards */
+.followgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.fcard{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:15px 16px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:10px}
+.fcard.urgent{border-color:#f4c0c0;background:linear-gradient(180deg,#fff,#fff7f7)}
+.fcard .fc-top{display:flex;align-items:center;gap:10px}
+.fcard .fc-name{font-weight:800;font-size:14px}
+.fcard .fc-reason{font-size:12.5px;color:var(--ink-2);background:var(--soft);border-radius:9px;padding:9px 11px;line-height:1.55}
+.fcard.urgent .fc-reason{background:var(--red-soft);color:#9a3838}
+.fcard .fc-foot{display:flex;align-items:center;gap:8px;margin-top:auto}
+.fcard .fc-days{font-size:11.5px;color:var(--ink-3);font-weight:700}
+
+/* detail drawer */
+.drawer-mask{position:fixed;inset:0;background:rgba(15,24,48,.42);opacity:0;pointer-events:none;transition:opacity .25s;z-index:150}
+.drawer-mask.show{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;height:100vh;width:440px;max-width:92vw;background:var(--card);box-shadow:var(--shadow-lg);
+  transform:translateX(105%);transition:transform .3s cubic-bezier(.2,.8,.3,1);z-index:160;display:flex;flex-direction:column}
+.drawer.show{transform:none}
+.drawer .dh{padding:20px 22px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:13px}
+.drawer .dh .x{margin-left:auto;border:1px solid var(--line-2);background:var(--card);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:15px;color:var(--ink-2)}
+.drawer .db{padding:18px 22px;overflow-y:auto;flex:1}
+.dstat{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.dstat .ds{background:var(--soft);border-radius:11px;padding:12px 13px}
+.dstat .ds .dl{font-size:11px;color:var(--ink-3);font-weight:700}
+.dstat .ds .dv{font-size:18px;font-weight:900;margin-top:3px}
+.sechd{font-size:12px;font-weight:800;color:var(--ink-2);margin:18px 0 10px;letter-spacing:.02em}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--line);border-radius:9px;margin-bottom:8px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+.gen-item .nx{font-size:12px;color:var(--ink-2);background:var(--green-soft);border-radius:7px;padding:3px 9px;font-weight:700}
+.gen-item .arr{color:var(--ink-3)}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#8b5cf6);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(139,92,246,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.muted{color:var(--ink-2)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">顧客管理マシン<small>技マシン｜CRM</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="cust"><span class="i">👥</span>顧客一覧</a>
+      <a data-v="hist"><span class="i">📝</span>対応履歴</a>
+      <a data-v="rank"><span class="i">🏆</span>ランク</a>
+      <a data-v="follow"><span class="i">🔔</span>フォロー<span class="badge amber" id="navFollow">0</span></a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI分析</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。顧客・履歴はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">顧客のいまをひと目で</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>月次の新規・接触件数</h3><span class="more">過去6ヶ月</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>顧客ランクの内訳</h3></div>
+            <div class="pb"><div class="rankviz">
+              <div class="donut" id="donut"><div class="hole"><b id="donutTotal">0</b><span>社</span></div></div>
+              <div class="ranklegend" id="ranklegend"></div>
+            </div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>今フォローすべき顧客</h3><span class="more" onclick="go('follow')">すべて見る</span></div>
+            <div class="pb"><div class="acts" id="dashFollow"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CUSTOMERS -->
+      <section class="view" id="v-cust">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="会社名・担当者・業種で検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>顧客</th><th>ランク</th><th>状態</th><th>業種</th><th class="r">累計取引(LTV)</th><th>最終接触</th><th>担当</th></tr></thead>
+          <tbody id="custRows"></tbody>
+        </table>
+      </section>
+
+      <!-- HISTORY -->
+      <section class="view" id="v-hist">
+        <div class="create-grid">
+          <div class="formcard">
+            <div style="font-size:14px;font-weight:800;margin-bottom:14px">対応履歴を記録</div>
+            <div class="fg"><label>顧客</label><select id="hCust"></select></div>
+            <div class="fg2">
+              <div class="fg"><label>対応種別</label>
+                <select id="hType"><option>電話</option><option>訪問</option><option>メール</option><option>来店</option><option>オンライン商談</option></select></div>
+              <div class="fg"><label>担当者</label>
+                <select id="hStaff"><option>佐藤</option><option>田中</option><option>鈴木</option><option>高橋</option></select></div>
+            </div>
+            <div class="fg"><label>内容メモ</label><textarea id="hMemo" placeholder="例：定期便の増量について相談を受けた。次回見積もりを提示する。"></textarea></div>
+            <div class="aihint" id="hAiHint">✨ AIが要約タグを付けました</div>
+            <div class="linkrow" style="margin-top:6px">
+              <button class="btn primary" id="hSave" style="flex:1;justify-content:center">📝 履歴を記録</button>
+              <button class="btn" id="hSample">サンプル</button>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>対応履歴タイムライン</h3><span class="more" id="histCustLabel">全顧客</span></div>
+            <div class="pb"><div class="tl" id="histTl"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RANK -->
+      <section class="view" id="v-rank">
+        <div class="kpis" id="rankKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>ランク別の顧客（AIが取引額・頻度・直近接触から自動採点）</h3></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>ランク</th><th>顧客</th><th class="r">スコア</th><th class="r">累計取引</th><th class="r">取引回数</th><th>最終接触</th></tr></thead>
+              <tbody id="rankRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- FOLLOW -->
+      <section class="view" id="v-follow">
+        <div class="toolbar">
+          <div class="muted" style="font-size:13px">AIが「そろそろ連絡すべき顧客」を抽出しました。優先度の高い順に並んでいます。</div>
+        </div>
+        <div class="followgrid" id="followGrid"></div>
+      </section>
+
+      <!-- AI ANALYSIS -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">対応履歴からAIが顧客ランクと次アクションを提案</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">蓄積された対応履歴 <b id="aiHistCount">0件</b> を解析し、全 <b id="aiCustCount">0社</b> のランク判定と「次にすべき一手」を自動で出します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで分析する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">3時間20分</div>
+              <ul>
+                <li>📒 担当者ごとにバラバラなメモを集約</li>
+                <li>🧮 取引額や頻度を手で集計してランク付け</li>
+                <li>🤔 誰に何をすべきか勘で判断</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 全履歴を横断して自動集計</li>
+                <li>🏆 取引額・頻度・鮮度でランクを自動採点</li>
+                <li>🎯 顧客ごとに次アクションを具体提案</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">🎯 AI提案：ランク判定と次の一手</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- detail drawer -->
+<div class="drawer-mask" id="drawerMask"></div>
+<aside class="drawer" id="drawer">
+  <div class="dh" id="drawerHead"></div>
+  <div class="db" id="drawerBody"></div>
+</aside>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const TODAY=new Date(2026,4,30); // 2026-05-30
+function daysAgo(n){const d=new Date(TODAY);d.setDate(d.getDate()-n);return d;}
+const fmtD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+function dayDiff(d){return Math.round((TODAY-d)/86400000);}
+function agoLabel(d){const n=dayDiff(d);if(n<=0)return '今日';if(n===1)return '昨日';if(n<7)return n+'日前';if(n<30)return Math.floor(n/7)+'週間前';return Math.floor(n/30)+'ヶ月前';}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+let SEED=7727;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+const AVCOL=['#2f6df0','#16b877','#e3941f','#8b5cf6','#0ea5b7','#e24a4a'];
+function avColor(s){let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))>>>0;return AVCOL[h%AVCOL.length];}
+function initial(s){return s.slice(0,1);}
+
+/* ============ DATA ============ */
+const STLABEL={active:'優良・継続',warm:'商談中',new:'新規',dormant:'休眠',risk:'離反リスク'};
+const RANKLABEL={A:'最重要',B:'重要',C:'通常',D:'要注意'};
+const RANKCOL={A:'#e3941f',B:'#2f6df0',C:'#8a94a6',D:'#e24a4a'};
+
+// customers: name, type, staff, status, ltv, deals(取引回数), lastDays(最終接触から日数)
+let customers=[
+  {name:'大分中央クリニック',type:'医療',staff:'佐藤',status:'active',ltv:3850000,deals:24,lastDays:3,contact:'院長 三浦 様'},
+  {name:'さくら総合病院',type:'医療',staff:'佐藤',status:'active',ltv:6120000,deals:31,lastDays:6,contact:'事務長 川野 様'},
+  {name:'つくし介護センター',type:'介護',staff:'田中',status:'warm',ltv:1480000,deals:11,lastDays:2,contact:'施設長 緒方 様'},
+  {name:'豊後おおいた青果',type:'青果卸',staff:'鈴木',status:'active',ltv:2960000,deals:42,lastDays:1,contact:'仕入 後藤 様'},
+  {name:'都町商店会',type:'小売',staff:'鈴木',status:'dormant',ltv:540000,deals:7,lastDays:96,contact:'会長 安部 様'},
+  {name:'別府温泉ホテル組合',type:'宿泊',staff:'高橋',status:'warm',ltv:2180000,deals:14,lastDays:9,contact:'総務 工藤 様'},
+  {name:'大分海鮮市場',type:'飲食',staff:'高橋',status:'risk',ltv:1230000,deals:18,lastDays:64,contact:'店長 衛藤 様'},
+  {name:'みらい歯科医院',type:'医療',staff:'田中',status:'new',ltv:120000,deals:2,lastDays:5,contact:'院長 河野 様'},
+  {name:'ひまわり訪問看護',type:'介護',staff:'田中',status:'active',ltv:2240000,deals:19,lastDays:11,contact:'管理者 宇佐美 様'},
+  {name:'大分駅前ベーカリー',type:'飲食',staff:'高橋',status:'warm',ltv:680000,deals:9,lastDays:21,contact:'オーナー 麻生 様'},
+  {name:'佐伯水産加工',type:'食品',staff:'鈴木',status:'dormant',ltv:910000,deals:13,lastDays:140,contact:'専務 渡辺 様'},
+  {name:'こもれび薬局',type:'医療',staff:'佐藤',status:'active',ltv:1760000,deals:16,lastDays:8,contact:'管理薬剤師 平田 様'},
+  {name:'臼杵運送',type:'運送',staff:'鈴木',status:'new',ltv:240000,deals:3,lastDays:14,contact:'代表 首藤 様'},
+  {name:'城下町カフェ',type:'飲食',staff:'高橋',status:'risk',ltv:430000,deals:8,lastDays:78,contact:'店主 阿南 様'},
+];
+// compute last contact date
+customers.forEach(c=>c.last=daysAgo(c.lastDays));
+
+// rank scoring: AI-like score from ltv, deals, freshness
+function scoreOf(c){
+  const ltvS=Math.min(c.ltv/6500000,1)*45;
+  const dealS=Math.min(c.deals/42,1)*30;
+  const freshS=Math.max(0,1-c.lastDays/120)*25;
+  return Math.round(ltvS+dealS+freshS);
+}
+function rankOf(c){const s=scoreOf(c);return s>=72?'A':s>=52?'B':s>=30?'C':'D';}
+
+// history records: cust, type, staff, days ago, memo, tag
+let history=[
+  {cust:'豊後おおいた青果',type:'電話',staff:'鈴木',days:1,memo:'来月から定期便を週2→週3に増やしたいとの相談。見積もりを準備する。',tag:'増量相談'},
+  {cust:'つくし介護センター',type:'訪問',staff:'田中',days:2,memo:'介護記録システムの操作研修を実施。現場スタッフから好評。追加端末の要望あり。',tag:'アップセル機会'},
+  {cust:'大分中央クリニック',type:'オンライン商談',staff:'佐藤',days:3,memo:'AI予約対応の導入デモを実施。院長が前向き。来週中に提案書提出予定。',tag:'商談前進'},
+  {cust:'みらい歯科医院',type:'来店',staff:'田中',days:5,memo:'初回ヒアリング。受付業務の負担が大きいとのこと。技マシン受付を案内。',tag:'新規ヒアリング'},
+  {cust:'さくら総合病院',type:'メール',staff:'佐藤',days:6,memo:'今月分の請求内容を確認いただき問題なし。次年度の保守契約も継続意向。',tag:'継続確定'},
+  {cust:'こもれび薬局',type:'電話',staff:'佐藤',days:8,memo:'在庫管理の相談。月末に改めて訪問することで合意。',tag:'フォロー予定'},
+  {cust:'別府温泉ホテル組合',type:'訪問',staff:'高橋',days:9,memo:'組合内の3施設へ横展開の可能性。代表者会議で紹介してもらえることに。',tag:'紹介見込み'},
+  {cust:'ひまわり訪問看護',type:'電話',staff:'田中',days:11,memo:'シフト管理の不具合報告→当日中に解消。サポート満足度高い。',tag:'サポート対応'},
+  {cust:'大分駅前ベーカリー',type:'メール',staff:'高橋',days:21,memo:'販促のSNS運用について問い合わせ。資料を送付済み、返信待ち。',tag:'返信待ち'},
+  {cust:'臼杵運送',type:'オンライン商談',staff:'鈴木',days:14,memo:'配車管理のデモを実施。価格面で社内検討中とのこと。',tag:'検討中'},
+  {cust:'大分海鮮市場',type:'電話',staff:'高橋',days:64,memo:'前回提案の返答待ち。その後接触できておらず。',tag:'要再接触'},
+  {cust:'都町商店会',type:'訪問',staff:'鈴木',days:96,memo:'イベント出店の相談を受けたが、その後動きなし。',tag:'休眠'},
+  {cust:'佐伯水産加工',type:'メール',staff:'鈴木',days:140,memo:'昨年の取引以降、接触なし。再アプローチの余地あり。',tag:'掘り起こし候補'},
+];
+
+/* ============ ROUTING ============ */
+const TITLES={
+  dash:['ダッシュボード','顧客のいまをひと目で'],
+  cust:['顧客一覧','登録された顧客を管理します'],
+  hist:['対応履歴','やりとりを記録して時系列で追えます'],
+  rank:['ランク','AIが取引データから顧客を自動採点'],
+  follow:['フォロー','そろそろ連絡すべき顧客をAIが抽出'],
+  ai:['AI分析','履歴から顧客ランクと次アクションを提案']
+};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='cust'?'<button class="btn primary" onclick="go(\'hist\')">📝 履歴を記録</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI分析</button><button class="btn primary" onclick="go(\'hist\')">📝 履歴を記録</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='cust')renderCust();
+  if(v==='hist')renderHist();
+  if(v==='rank')renderRank();
+  if(v==='follow')renderFollow();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+function renderDash(){
+  const total=customers.length;
+  const thisMonthContacts=history.filter(h=>h.days<=30).length;
+  const dormant=customers.filter(c=>c.status==='dormant'||c.status==='risk').length;
+  const ltvSum=customers.reduce((s,c)=>s+c.ltv,0);
+  const avgLtv=Math.round(ltvSum/total);
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','顧客数',total+'<small>社</small>','新規 '+customers.filter(c=>c.status==='new').length+'社','up','前月比 +2社')}
+    ${kpi('#16b877','今月の接触',thisMonthContacts+'<small>件</small>','','up','活動順調')}
+    ${kpi('#e3941f','休眠・離反リスク',dormant+'<small>社</small>',(dormant)+'社','warn','要フォロー')}
+    ${kpi('#8b5cf6','平均LTV',yen(avgLtv),'累計 '+yen(ltvSum),'up','+8%')}`;
+
+  // trend: new + contacts per month
+  const months=[];for(let k=5;k>=0;k--){const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1);months.push(d);}
+  const vals=[6,9,8,12,15,thisMonthContacts];
+  const mx=Math.max(...vals,1);
+  $('trendBars').innerHTML=months.map((m,i)=>`
+    <div class="bar-row"><span class="mlabel">${m.getMonth()+1}月</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(vals[i]/mx*100)}"></div></div>
+      <span class="mval">${vals[i]}件</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+
+  // donut rank distribution
+  renderDonut();
+
+  // activity
+  const acts=[
+    {i:'🟢',c:'#e6f8f0',t:'豊後おおいた青果 から増量の相談（鈴木が対応）',m:'1日前'},
+    {i:'🏆',c:'#fdf3e2',t:'さくら総合病院 がランクAに昇格しました',m:'今日 9:14'},
+    {i:'📝',c:'#eaf1ff',t:'大分中央クリニック にオンライン商談を記録',m:'3日前'},
+    {i:'⚠️',c:'#fdeaea',t:'大分海鮮市場 が離反リスクに（64日 未接触）',m:'今日 8:30'},
+    {i:'✨',c:'#f1ecfe',t:'AI分析で 14社のランクと次アクションを更新',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${a.m}</div></div></div>`).join('');
+
+  // dash follow (top3)
+  const fl=followList().slice(0,3);
+  $('dashFollow').innerHTML=fl.map(f=>`<div class="act"><div class="ai" style="background:${f.urgent?'#fdeaea':'#fdf3e2'}">${f.urgent?'🔴':'🟡'}</div>
+    <div><div class="at">${esc(f.name)}</div><div class="am">${esc(f.reason)}</div></div></div>`).join('');
+}
+function renderDonut(){
+  const ranks=['A','B','C','D'];
+  const counts={A:0,B:0,C:0,D:0};
+  customers.forEach(c=>counts[rankOf(c)]++);
+  const total=customers.length;
+  let acc=0;const segs=[];
+  ranks.forEach(r=>{const pct=counts[r]/total*100;segs.push(`${RANKCOL[r]} ${acc}% ${acc+pct}%`);acc+=pct;});
+  $('donut').style.background=`conic-gradient(${segs.join(',')})`;
+  $('donutTotal').textContent=total;
+  $('ranklegend').innerHTML=ranks.map(r=>`<div class="rl"><span class="sw" style="background:${RANKCOL[r]}"></span>
+    ランク${r} <span>（${RANKLABEL[r]}）</span><b>${counts[r]}社</b></div>`).join('');
+}
+
+/* ============ CUSTOMERS ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['active','優良・継続'],['warm','商談中'],['new','新規'],['dormant','休眠'],['risk','離反リスク']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderCust();});
+}
+function custRow(c){
+  const r=rankOf(c);
+  return `<tr onclick="openCust('${esc(c.name)}')">
+    <td><div class="av-c"><span class="ic" style="background:${avColor(c.name)}">${esc(initial(c.name))}</span>
+      <div><b>${esc(c.name)}</b><div class="am" style="font-size:11px;color:var(--ink-3)">${esc(c.contact)}</div></div></div></td>
+    <td><span class="rk ${r}">${r}</span></td>
+    <td><span class="st ${c.status}">${STLABEL[c.status]}</span></td>
+    <td class="muted">${esc(c.type)}</td>
+    <td class="r tnum"><b>${yen(c.ltv)}</b></td>
+    <td class="muted">${agoLabel(c.last)}</td>
+    <td class="muted">${esc(c.staff)}</td></tr>`;
+}
+function renderCust(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=customers.filter(c=>filterStatus==='all'||c.status===filterStatus)
+    .filter(c=>!q||(c.name+c.staff+c.type+c.contact).toLowerCase().includes(q))
+    .sort((a,b)=>b.ltv-a.ltv);
+  $('custRows').innerHTML=rows.length?rows.map(custRow).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する顧客がいません</td></tr>';
+}
+$('q').addEventListener('input',renderCust);
+
+/* ============ DETAIL DRAWER ============ */
+function nextActionFor(c){
+  const r=rankOf(c);
+  if(c.status==='risk')return '離反リスク。担当が早急に電話し、不満や懸念をヒアリング。';
+  if(c.status==='dormant')return '長期未接触。掘り起こしDMの送付＋新サービスの案内を。';
+  if(c.status==='new')return '新規。初回提案のフォローと、課題の深掘りヒアリングを実施。';
+  if(c.status==='warm')return '商談中。見積もり提示と意思決定者へのクロージングを進める。';
+  if(r==='A')return '最重要顧客。四半期レビューでアップセル・紹介を打診。';
+  return '良好。定期接触を維持しつつ、追加ニーズを確認。';
+}
+function openCust(name){
+  const c=customers.find(x=>x.name===name);if(!c)return;
+  const r=rankOf(c);const hs=history.filter(h=>h.cust===name).sort((a,b)=>a.days-b.days);
+  $('drawerHead').innerHTML=`
+    <span class="ic" style="width:40px;height:40px;border-radius:11px;background:${avColor(c.name)};display:grid;place-items:center;color:#fff;font-weight:800;font-size:16px">${esc(initial(c.name))}</span>
+    <div><div style="font-size:16px;font-weight:900">${esc(c.name)}</div>
+    <div style="font-size:12px;color:var(--ink-3)">${esc(c.type)} ・ ${esc(c.contact)} ・ 担当 ${esc(c.staff)}</div></div>
+    <button class="x" onclick="closeDrawer()">✕</button>`;
+  $('drawerBody').innerHTML=`
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <span class="rk ${r}" style="width:auto;padding:0 12px;height:28px">ランク${r}</span>
+      <span class="st ${c.status}">${STLABEL[c.status]}</span>
+    </div>
+    <div class="dstat">
+      <div class="ds"><div class="dl">累計取引（LTV）</div><div class="dv tnum">${yen(c.ltv)}</div></div>
+      <div class="ds"><div class="dl">取引回数</div><div class="dv tnum">${c.deals}回</div></div>
+      <div class="ds"><div class="dl">最終接触</div><div class="dv">${agoLabel(c.last)}</div></div>
+      <div class="ds"><div class="dl">AIスコア</div><div class="dv tnum">${scoreOf(c)}<small style="font-size:12px;color:var(--ink-3)">/100</small></div></div>
+    </div>
+    <div style="background:var(--purple-soft);border:1px solid #ddd0fb;border-radius:11px;padding:13px 14px;font-size:12.5px">
+      <div style="font-weight:800;color:var(--purple);margin-bottom:4px">🎯 AIの次アクション提案</div>
+      <div style="color:#5b4a8a">${esc(nextActionFor(c))}</div></div>
+    <div class="sechd">対応履歴（${hs.length}件）</div>
+    <div class="tl">${hs.length?hs.map(tlItem).join(''):'<div class="muted" style="font-size:12.5px">履歴がまだありません。</div>'}</div>`;
+  $('drawer').classList.add('show');$('drawerMask').classList.add('show');
+}
+window.openCust=openCust;
+function closeDrawer(){$('drawer').classList.remove('show');$('drawerMask').classList.remove('show');}
+window.closeDrawer=closeDrawer;
+$('drawerMask').addEventListener('click',closeDrawer);
+
+/* ============ HISTORY ============ */
+const TYPEICON={'電話':'📞','訪問':'🚶','メール':'✉️','来店':'🏠','オンライン商談':'💻'};
+function tlItem(h){
+  const c=customers.find(x=>x.name===h.cust);
+  return `<div class="tl-item"><div class="dot" style="background:${avColor(h.cust)}">${TYPEICON[h.type]||'•'}</div>
+    <div class="tt">${esc(h.cust)} <span style="font-weight:600;color:var(--ink-3);font-size:11.5px">／ ${esc(h.type)}</span>
+      <span class="st new" style="font-size:10px;padding:2px 7px;margin-left:4px">${esc(h.tag)}</span></div>
+    <div class="tm">${agoLabel(daysAgo(h.days))}（${fmtD(daysAgo(h.days))}）</div>
+    <div class="tb">${esc(h.memo)}</div>
+    <div class="who">記録：${esc(h.staff)}</div></div>`;
+}
+function renderHistSelect(){$('hCust').innerHTML='<option value="">全顧客のタイムライン</option>'+customers.map(c=>`<option>${esc(c.name)}</option>`).join('');}
+function renderHist(){
+  const sel=$('hCust').value;
+  $('histCustLabel').textContent=sel||'全顧客';
+  let list=history.slice().sort((a,b)=>a.days-b.days);
+  if(sel)list=list.filter(h=>h.cust===sel);
+  $('histTl').innerHTML=list.length?list.map(tlItem).join(''):'<div class="muted" style="font-size:12.5px;padding:8px">履歴がありません。</div>';
+}
+$('hCust').addEventListener('change',renderHist);
+$('hSample').addEventListener('click',()=>{
+  $('hCust').value='ひまわり訪問看護';$('hType').value='訪問';$('hStaff').value='田中';
+  $('hMemo').value='シフト自動作成の活用状況をヒアリング。利用が定着しており、別事業所への展開も検討したいとのこと。';
+  $('hAiHint').classList.add('show');setTimeout(()=>$('hAiHint').classList.remove('show'),2200);
+  renderHist();
+});
+$('hMemo').addEventListener('input',()=>{
+  if($('hMemo').value.length>8){$('hAiHint').classList.add('show');setTimeout(()=>$('hAiHint').classList.remove('show'),2000);}
+});
+$('hSave').addEventListener('click',async()=>{
+  const cust=$('hCust').value;const memo=$('hMemo').value.trim();
+  if(!cust){showToast('顧客を選択してください');return;}
+  if(!memo){showToast('内容メモを入力してください');return;}
+  const btn=$('hSave');btn.textContent='✨ AIが要約中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,700));
+  // simple AI-like tag
+  let tag='記録';
+  if(/相談|要望|増|追加/.test(memo))tag='アップセル機会';
+  else if(/不満|遅|不具合|クレーム/.test(memo))tag='要フォロー';
+  else if(/契約|継続|発注|受注/.test(memo))tag='商談前進';
+  else if(/紹介/.test(memo))tag='紹介見込み';
+  history.unshift({cust,type:$('hType').value,staff:$('hStaff').value,days:0,memo,tag});
+  // refresh contact freshness
+  const c=customers.find(x=>x.name===cust);if(c){c.lastDays=0;c.last=daysAgo(0);if(c.status==='dormant'||c.status==='risk')c.status='warm';}
+  btn.textContent='📝 履歴を記録';btn.disabled=false;
+  $('hMemo').value='';
+  renderHist();
+  showToast(cust+' の履歴を記録しました（AIタグ：'+tag+'）');
+});
+
+/* ============ RANK ============ */
+function renderRank(){
+  const ranked=customers.slice().map(c=>({c,r:rankOf(c),s:scoreOf(c)})).sort((a,b)=>b.s-a.s);
+  const counts={A:0,B:0,C:0,D:0};customers.forEach(c=>counts[rankOf(c)]++);
+  $('rankKpis').innerHTML=`
+    ${kpi('#e3941f','ランクA（最重要）',counts.A+'<small>社</small>','売上の柱','up','維持施策を')}
+    ${kpi('#2f6df0','ランクB（重要）',counts.B+'<small>社</small>','','up','育成中')}
+    ${kpi('#8a94a6','ランクC（通常）',counts.C+'<small>社</small>','','warn','底上げ余地')}
+    ${kpi('#e24a4a','ランクD（要注意）',counts.D+'<small>社</small>','休眠含む','down','要対応')}`;
+  $('rankRows').innerHTML=ranked.map(({c,r,s})=>`<tr onclick="openCust('${esc(c.name)}')">
+    <td><span class="rk ${r}">${r}</span></td>
+    <td><div class="av-c"><span class="ic" style="background:${avColor(c.name)}">${esc(initial(c.name))}</span><b>${esc(c.name)}</b></div></td>
+    <td class="r"><div style="display:inline-flex;align-items:center;gap:8px"><div class="bar-track" style="width:80px"><div class="bar-fill" style="width:${s}%"></div></div><b class="tnum">${s}</b></div></td>
+    <td class="r tnum">${yen(c.ltv)}</td>
+    <td class="r tnum muted">${c.deals}回</td>
+    <td class="muted">${agoLabel(c.last)}</td></tr>`).join('');
+}
+
+/* ============ FOLLOW ============ */
+function followList(){
+  //抽出: 休眠/リスク/返信待ち/長期未接触/新規未フォロー、優先度順
+  return customers.map(c=>{
+    let urgent=false,reason='',priority=0,days=c.lastDays;
+    if(c.status==='risk'){urgent=true;priority=100-days*0+50+days;reason=days+'日 未接触の離反リスク顧客。早急な電話フォローを。';}
+    else if(c.status==='dormant'){urgent=days>120;priority=40+days;reason=days+'日 接触なし。掘り起こしの再アプローチが必要です。';}
+    else if(c.status==='new'){priority=30;reason='新規顧客。初回提案のフォローアップで関係を深めましょう。';}
+    else if(c.status==='warm'&&days>=14){priority=35;reason='商談中だが'+days+'日 動きなし。次の一手を打ちましょう。';}
+    else if(days>=30){priority=20;reason='前回接触から'+days+'日。定期接触のタイミングです。';}
+    else return null;
+    return {name:c.name,type:c.type,staff:c.staff,urgent,reason,priority,days,status:c.status};
+  }).filter(Boolean).sort((a,b)=>b.priority-a.priority);
+}
+function renderFollow(){
+  const fl=followList();
+  $('followGrid').innerHTML=fl.length?fl.map(f=>`<div class="fcard ${f.urgent?'urgent':''}">
+    <div class="fc-top"><span class="ic" style="width:34px;height:34px;border-radius:9px;background:${avColor(f.name)};display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px">${esc(initial(f.name))}</span>
+      <div><div class="fc-name">${esc(f.name)}</div><div style="font-size:11px;color:var(--ink-3)">${esc(f.type)} ・ 担当 ${esc(f.staff)}</div></div>
+      ${f.urgent?'<span class="st risk" style="margin-left:auto">至急</span>':'<span class="st warm" style="margin-left:auto">要連絡</span>'}</div>
+    <div class="fc-reason">${esc(f.reason)}</div>
+    <div class="fc-foot"><span class="fc-days">最終接触 ${f.days}日前</span>
+      <button class="btn green sm" style="margin-left:auto" onclick="doFollow('${esc(f.name)}',this)">📞 対応する</button>
+      <button class="btn sm" onclick="openCust('${esc(f.name)}')">詳細</button></div>
+  </div>`).join('') : '<div class="empty-cell" style="grid-column:1/-1">フォローが必要な顧客はいません 🎉</div>';
+  updateFollowBadge();
+}
+function doFollow(name,btn){
+  const c=customers.find(x=>x.name===name);if(!c)return;
+  c.lastDays=0;c.last=daysAgo(0);if(c.status==='dormant'||c.status==='risk')c.status='warm';
+  history.unshift({cust:name,type:'電話',staff:c.staff,days:0,memo:'フォロー連絡を実施。状況を確認しフォローアップ完了。',tag:'フォロー対応'});
+  showToast(name+' に対応済み。履歴を記録しました');
+  renderFollow();
+}
+window.doFollow=doFollow;
+function updateFollowBadge(){const n=followList().length;$('navFollow').textContent=n;}
+
+/* ============ AI ANALYSIS ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 分析中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},110);
+  await new Promise(r=>setTimeout(r,1200));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // pick the most actionable customers
+  const targets=customers.slice()
+    .map(c=>({c,r:rankOf(c),s:scoreOf(c)}))
+    .sort((a,b)=>{
+      const pa=(a.c.status==='risk'?3:a.c.status==='dormant'?2:a.c.status==='warm'?1:0);
+      const pb=(b.c.status==='risk'?3:b.c.status==='dormant'?2:b.c.status==='warm'?1:0);
+      return pb-pa||b.s-a.s;
+    }).slice(0,7);
+  $('genItems').innerHTML=targets.map((o,i)=>{
+    const c=o.c;
+    return `<div class="gen-item" data-i="${i}"><span class="ck">✓</span>
+      <span class="rk ${o.r}" style="width:22px;height:22px;font-size:11px">${o.r}</span>
+      <b style="flex:1">${esc(c.name)}</b>
+      <span class="arr">→</span>
+      <span class="nx">${esc(shortAction(c))}</span></div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,170));items[i].classList.add('in');}
+  btn.disabled=false;btn.textContent='⚡ もう一度分析';
+  showToast(targets.length+'社のランク判定と次アクションを生成しました');
+});
+function shortAction(c){
+  if(c.status==='risk')return '至急 電話フォロー';
+  if(c.status==='dormant')return '掘り起こしDM';
+  if(c.status==='new')return '初回提案フォロー';
+  if(c.status==='warm')return 'クロージング提案';
+  if(rankOf(c)==='A')return 'アップセル打診';
+  return '定期接触を維持';
+}
+
+/* ============ INIT ============ */
+renderChips();
+renderHistSelect();
+renderDash();
+updateFollowBadge();
+$('aiHistCount').textContent=history.length+'件';
+$('aiCustCount').textContent=customers.length+'社';
+$('pgActions').innerHTML='<button class="btn" onclick="go(\'ai\')">⚡ AI分析</button><button class="btn primary" onclick="go(\'hist\')">📝 履歴を記録</button>';
+</script>
+</body>
+</html>

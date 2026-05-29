@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜ヒヤリハット報告マシン（インシデント管理システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cf0;--purple-soft:#efeafd;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut / severity */
+.sev-grid{display:flex;flex-direction:column;gap:11px}
+.sev-row{display:flex;align-items:center;gap:11px;font-size:12.5px}
+.sev-row .sd{width:12px;height:12px;border-radius:4px;flex-shrink:0}
+.sev-row .sl{font-weight:700;color:var(--ink-2);width:74px}
+.sev-row .strack{flex:1;height:9px;border-radius:99px;background:var(--soft);overflow:hidden}
+.sev-row .sfill{height:100%;border-radius:99px;width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.sev-row .sv{font-weight:800;width:48px;text-align:right;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px;vertical-align:top}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.done{background:var(--green-soft);color:var(--green)}
+.st.progress{background:var(--brand-soft);color:var(--brand)}
+.st.review{background:var(--amber-soft);color:var(--amber)}
+.st.open{background:var(--red-soft);color:var(--red)}
+/* severity badges (no leading dot) */
+.sev{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;padding:3px 9px;border-radius:7px}
+.sev.s5{background:#fde2e2;color:#c0392b}
+.sev.s4{background:var(--red-soft);color:var(--red)}
+.sev.s3{background:var(--amber-soft);color:var(--amber)}
+.sev.s2{background:var(--brand-soft);color:var(--brand)}
+.sev.s1{background:var(--green-soft);color:var(--green)}
+.cat{display:inline-flex;font-size:11px;font-weight:700;padding:3px 9px;border-radius:7px;background:var(--soft);color:var(--ink-2)}
+
+/* create form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:90px;line-height:1.6}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.fg .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* report paper preview */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:30px 32px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.pv-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
+.pv-title{font-size:21px;font-weight:900;letter-spacing:.14em;color:var(--brand-dk);border-bottom:3px solid var(--brand-dk);padding-bottom:5px}
+.pv-meta{text-align:right;font-size:11.5px;color:var(--ink-2)}
+.pv-meta .no{font-family:'Orbitron';color:var(--ink);font-weight:700}
+.pv-sect{margin:14px 0}
+.pv-sect .h{font-size:11px;font-weight:800;color:var(--brand-dk);letter-spacing:.04em;border-left:4px solid var(--brand-dk);padding-left:8px;margin-bottom:6px}
+.pv-sect .b{font-size:12.5px;color:#1a2233;white-space:pre-wrap;min-height:18px}
+.pv-kv{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.pv-kv .c{background:var(--soft);border-radius:8px;padding:9px 12px}
+.pv-kv .c .k{font-size:10px;color:var(--ink-3);font-weight:700}
+.pv-kv .c .v{font-size:13px;font-weight:800;margin-top:2px}
+.pv-ai{background:linear-gradient(180deg,var(--purple-soft),#f8f5ff);border:1px solid #ddd1fb;border-radius:10px;padding:14px;margin-top:14px}
+.pv-ai .ah{font-size:11px;font-weight:800;color:var(--purple);display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.pv-ai .row{display:flex;gap:8px;padding:5px 0;font-size:12px}
+.pv-ai .row b{color:var(--purple);flex-shrink:0;width:60px}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#a78bfa,#7c5cf0);display:grid;place-items:center;font-size:26px;margin:0 auto;flex-shrink:0}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(124,92,240,.4)}50%{box-shadow:0 0 40px rgba(167,139,250,.55)}}
+
+/* AI stage / before-after */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--purple-soft),#f8f5ff);border:1px solid #ddd1fb}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--purple)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#e3d8fc;color:var(--purple)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--purple)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+
+/* AI result */
+.ai-input{background:var(--soft);border:1px solid var(--line);border-radius:11px;padding:16px;margin-top:18px}
+.ai-input label{font-size:12px;font-weight:800;color:var(--ink-2);display:block;margin-bottom:8px}
+.ai-input textarea{width:100%;border:1px solid var(--line-2);border-radius:9px;padding:11px 13px;font-family:inherit;font-size:13.5px;resize:vertical;min-height:80px;line-height:1.7}
+.ai-input textarea:focus{outline:none;border-color:var(--purple)}
+.ai-input .samples{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+.ai-input .samples button{font-size:11.5px;padding:6px 11px;border-radius:99px;border:1px solid var(--line-2);background:var(--card);color:var(--ink-2);font-weight:700;cursor:pointer;transition:all .15s}
+.ai-input .samples button:hover{border-color:var(--purple);color:var(--purple)}
+
+.ai-result{margin-top:18px;border-top:1px solid var(--line);padding-top:18px;display:none}
+.ai-result.show{display:block;animation:fade .4s}
+.ai-steps{display:flex;flex-direction:column;gap:7px;margin-bottom:18px}
+.ai-step{display:flex;align-items:center;gap:11px;padding:10px 13px;border:1px solid var(--line);border-radius:9px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.ai-step.in{opacity:1;transform:none}
+.ai-step .ck{width:20px;height:20px;border-radius:50%;background:var(--purple);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+.ai-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+@media(max-width:760px){.ai-cards{grid-template-columns:1fr}}
+.ai-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;box-shadow:var(--shadow)}
+.ai-card.full{grid-column:1/-1}
+.ai-card .ach{font-size:12px;font-weight:800;color:var(--ink-2);display:flex;align-items:center;gap:7px;margin-bottom:11px}
+.ai-card .acb{font-size:13px;color:var(--ink);line-height:1.7}
+.factor{display:flex;gap:9px;padding:7px 0;align-items:flex-start;font-size:13px}
+.factor .fb{width:20px;height:20px;border-radius:6px;background:var(--purple-soft);color:var(--purple);display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0;margin-top:1px}
+.measure{display:flex;gap:9px;padding:8px 0;border-bottom:1px dashed var(--line);font-size:13px;align-items:flex-start}
+.measure:last-child{border-bottom:0}
+.measure .mc{width:20px;height:20px;border-radius:6px;background:var(--green-soft);color:var(--green);display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0;margin-top:1px}
+.ba-mini{display:grid;grid-template-columns:1fr 36px 1fr;gap:0;margin-top:10px;align-items:stretch}
+.ba-mini .mcol{padding:11px 13px;border-radius:9px;font-size:12.5px;line-height:1.6}
+.ba-mini .mbefore{background:#f4f5f8;border:1px solid var(--line)}
+.ba-mini .mafter{background:var(--green-soft);border:1px solid #bdebd4}
+.ba-mini .marr{display:grid;place-items:center;font-size:18px;color:var(--green)}
+.ba-mini .mt{font-size:10px;font-weight:800;margin-bottom:5px;letter-spacing:.04em}
+.ba-mini .mbefore .mt{color:#8a94a6}.ba-mini .mafter .mt{color:var(--green)}
+
+/* detail modal */
+.modal-bg{position:fixed;inset:0;background:rgba(15,24,48,.5);display:none;align-items:center;justify-content:center;z-index:150;padding:20px}
+.modal-bg.show{display:flex;animation:fade .25s}
+.modal{background:var(--card);border-radius:16px;max-width:680px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:var(--shadow-lg)}
+.modal .mh{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;position:sticky;top:0;background:var(--card);z-index:2}
+.modal .mh h3{font-size:16px;font-weight:900}
+.modal .mh .x{margin-left:auto;border:0;background:var(--soft);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px;color:var(--ink-2)}
+.modal .mb{padding:20px 22px}
+.dl-row{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px}
+.dl-row .dk{width:96px;flex-shrink:0;color:var(--ink-3);font-weight:700;font-size:12px}
+.dl-row .dv{font-weight:600}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-2);margin-top:14px}
+.legend span{display:flex;align-items:center;gap:5px}
+.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">ヒヤリハット報告マシン<small>技マシン｜インシデント管理</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">📋</span>報告一覧<span class="badge" id="navOpen">0</span></a>
+      <a data-v="cat"><span class="i">🗂️</span>分類</a>
+      <a data-v="factor"><span class="i">🔎</span>要因分析</a>
+      <a data-v="measure"><span class="i">🛡️</span>対策</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI分析</a>
+      <a data-v="create"><span class="i">✏️</span>報告を入力</a>
+    </nav>
+    <div class="org">
+      <div class="av">虹</div>
+      <div><b>虹色園 介護老人保健施設</b><span>デモ環境 / 安全管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。利用者名・職員名・数値はすべて架空のサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">今月のヒヤリハット・インシデント状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>月別の報告件数</h3><span class="more">過去6ヶ月</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>重大度別の内訳（今月）</h3></div>
+            <div class="pb"><div class="sev-grid" id="sevGrid"></div>
+              <div class="legend">
+                <span><i style="background:#c0392b"></i>レベル5 死亡・重篤</span>
+                <span><i style="background:#e24a4a"></i>レベル4 要処置</span>
+                <span><i style="background:#e3941f"></i>レベル3 観察強化</span>
+                <span><i style="background:#2f6df0"></i>レベル2 影響なし</span>
+                <span><i style="background:#16b877"></i>レベル1 未然防止</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>発生区分のランキング（今月）</h3></div>
+            <div class="pb"><div class="bars" id="catBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="利用者・内容・場所・職員で検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <div class="toolbar" style="margin-top:-4px">
+          <div class="chips" id="catChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>番号</th><th>発生日時</th><th>区分</th><th>内容</th><th>場所</th><th>重大度</th><th>対策状態</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- CATEGORY -->
+      <section class="view" id="v-cat">
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>分類別の集計</h3><span class="more">全期間</span></div>
+            <div class="pb"><div class="bars" id="catAllBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>時間帯別のヒヤリハット</h3></div>
+            <div class="pb"><div class="bars" id="timeBars"></div>
+              <div style="font-size:11.5px;color:var(--ink-3);margin-top:12px">💡 AIコメント：<b style="color:var(--ink)">夕方17〜19時</b>に集中。申し送り・食事介助が重なる時間帯の人員配置を見直すと効果的です。</div>
+            </div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:16px">
+          <div class="ph"><h3>分類マスタ（発生区分ごとの傾向）</h3></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>区分</th><th class="r">件数</th><th class="r">割合</th><th>主な場所</th><th>傾向</th></tr></thead>
+              <tbody id="catTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- FACTOR -->
+      <section class="view" id="v-factor">
+        <div class="panel">
+          <div class="ph"><h3>要因分析（4M：人・方法・設備・環境）</h3><span class="more">AI自動分類</span></div>
+          <div class="pb"><div class="bars" id="factorBars"></div>
+            <div class="legend"><span style="color:var(--ink-3)">※ 4M分析…ヒヤリハットの原因を「人(Man)・方法(Method)・設備(Machine)・環境(Media)」の4つに分けて見る考え方です</span></div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:16px">
+          <div class="ph"><h3>要因の深掘り（なぜなぜ分析の例）</h3></div>
+          <div class="pb"><div id="whyList"></div></div>
+        </div>
+      </section>
+
+      <!-- MEASURE -->
+      <section class="view" id="v-measure">
+        <div class="kpis" id="measureKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>対策の進捗状況</h3>
+            <button class="btn green" id="autoSuggest" style="margin-left:auto">⚡ 未対策にAIで対策を一括提案</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>番号</th><th>対象のヒヤリハット</th><th>対策内容</th><th>担当</th><th>期限</th><th>状態</th><th></th></tr></thead>
+              <tbody id="measureRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI ANALYSIS -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">現場のメモから報告書をAIが自動作成</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">職員がスマホに走り書きした一言を、<b>分類・要因分析・再発防止策（Before/After）</b>まで自動で仕上げます。</div></div>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">約25分</div>
+              <ul>
+                <li>📝 様式に沿って報告書を清書</li>
+                <li>🤔 区分・重大度を職員が判断</li>
+                <li>🧩 要因分析と対策を会議で検討</li>
+                <li>🖨️ 委員会用に印刷・回覧</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 メモから報告書を自動清書</li>
+                <li>🏷️ 区分・重大度をAIが自動判定</li>
+                <li>🔎 4M要因分析を自動抽出</li>
+                <li>🛡️ 再発防止策をBefore/Afterで提案</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="ai-input">
+            <label>📱 現場の一言メモ（ここを書き換えて試せます）</label>
+            <textarea id="aiMemo">10時ごろ、3階の佐藤さんがトイレに行こうとして車いすから立ち上がりかけた。職員が近くにいて支えたので転倒はなし。ナースコールは鳴っていなかった。</textarea>
+            <div class="samples" id="aiSamples"></div>
+            <div style="margin-top:12px;display:flex;justify-content:flex-end">
+              <button class="btn primary" id="aiRun" style="background:var(--purple);border-color:var(--purple)">⚡ AIで報告書を作成する</button>
+            </div>
+          </div>
+
+          <div class="ai-result" id="aiResult">
+            <div class="ai-steps" id="aiSteps"></div>
+            <div class="ai-cards" id="aiCards"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CREATE (manual report) -->
+      <section class="view" id="v-create">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>発生日時</label>
+              <div class="two"><input id="cDate" type="date"><input id="cTime" type="time" value="10:00"></div></div>
+            <div class="fg"><label>対象の利用者</label>
+              <select id="cUser"></select></div>
+            <div class="fg"><label>発生場所</label>
+              <select id="cPlace"></select></div>
+            <div class="fg"><label>発生区分</label>
+              <select id="cCat"></select></div>
+            <div class="fg"><label>発見・対応した職員</label>
+              <select id="cStaff"></select></div>
+            <div class="fg"><label>状況（何が起きたか）</label>
+              <textarea id="cBody" placeholder="例：トイレ移動時に車いすから立ち上がろうとした"></textarea>
+              <div class="aihint" id="cAiHint">✨ AIが重大度と区分を自動で判定しました</div>
+            </div>
+            <button class="btn primary" id="cSubmit" style="width:100%;justify-content:center">⚡ AIで仕上げて報告する</button>
+            <button class="btn" id="cSample" style="width:100%;justify-content:center;margin-top:8px">サンプルを入れる</button>
+          </div>
+          <div>
+            <div class="paper" id="cPaper">
+              <div class="pv-top">
+                <div class="pv-title">ヒヤリハット報告書</div>
+                <div class="pv-meta"><div>番号：<span class="no" id="pNo">—</span></div><div>報告日：<span id="pRepDate">—</span></div></div>
+              </div>
+              <div class="pv-kv">
+                <div class="c"><div class="k">発生日時</div><div class="v" id="pWhen">—</div></div>
+                <div class="c"><div class="k">場所</div><div class="v" id="pPlace">—</div></div>
+                <div class="c"><div class="k">対象利用者</div><div class="v" id="pUser">—</div></div>
+                <div class="c"><div class="k">発見職員</div><div class="v" id="pStaff">—</div></div>
+              </div>
+              <div class="pv-sect"><div class="h">発生状況</div><div class="b" id="pBody">（状況を入力してください）</div></div>
+              <div class="pv-ai" id="pAiBox" style="display:none">
+                <div class="ah">✨ AIによる自動判定・分析</div>
+                <div class="row"><b>区分</b><span id="pAiCat">—</span></div>
+                <div class="row"><b>重大度</b><span id="pAiSev">—</span></div>
+                <div class="row"><b>主要因</b><span id="pAiFactor">—</span></div>
+                <div class="row"><b>対策案</b><span id="pAiMeasure">—</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <div class="mh"><h3 id="mTitle">ヒヤリハット詳細</h3><button class="x" id="mClose">✕</button></div>
+    <div class="mb" id="mBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const USERS=[
+  {name:'佐藤 たけし',room:'301',care:'要介護3'},
+  {name:'鈴木 ふみ子',room:'302',care:'要介護4'},
+  {name:'高橋 まさる',room:'305',care:'要介護2'},
+  {name:'田中 きよ',room:'210',care:'要介護4'},
+  {name:'伊藤 はる',room:'215',care:'要介護3'},
+  {name:'渡辺 しげる',room:'108',care:'要介護2'},
+  {name:'山本 とし子',room:'112',care:'要介護5'},
+  {name:'中村 かおる',room:'203',care:'要介護3'},
+];
+const PLACES=['居室','トイレ','浴室','食堂','廊下','機能訓練室','エレベーター前','ナースステーション'];
+const STAFF=['介護 ゆい','介護 けんた','看護 みき','介護 さとる','介護 あや','看護 だいき','介護 のぞみ'];
+const CATS=[
+  {n:'転倒・転落',icon:'🚶',color:'#e24a4a'},
+  {n:'誤薬・服薬',icon:'💊',color:'#7c5cf0'},
+  {n:'誤嚥・食事',icon:'🍚',color:'#e3941f'},
+  {n:'移乗・移動',icon:'🦽',color:'#0ea5b7'},
+  {n:'皮膚・褥瘡',icon:'🩹',color:'#16b877'},
+  {n:'無断外出・離設',icon:'🚪',color:'#2f6df0'},
+  {n:'その他',icon:'⚠️',color:'#8a94a6'},
+];
+const SEVLABEL={5:'Lv5 死亡・重篤',4:'Lv4 要処置',3:'Lv3 観察強化',2:'Lv2 影響なし',1:'Lv1 未然防止'};
+const SEVCOLOR={5:'#c0392b',4:'#e24a4a',3:'#e3941f',2:'#2f6df0',1:'#16b877'};
+const STLABEL={done:'完了',progress:'対応中',review:'検討中',open:'未対策'};
+
+const BODIES=[
+  'トイレへ移動しようと車いすから立ち上がりかけたが、職員が支えて転倒は防げた。',
+  '配薬時に隣の利用者の薬と取り違えそうになったが、ダブルチェックで気づいた。',
+  '昼食のおかずを急いで口に運び、むせ込みが見られた。背中をさすって落ち着いた。',
+  'ベッドから車いすへの移乗の際、足が滑りそうになった。フットレストの戻し忘れ。',
+  '入浴後、かかとに発赤を発見。長時間の同一体位が原因と思われる。',
+  '玄関付近で外に出ようとしている利用者を発見。声かけで居室へ誘導した。',
+  '夜間、ベッド柵を乗り越えようとしている所を巡回で発見した。',
+  '歩行訓練中にふらつき、手すりにつかまって転倒は回避できた。',
+  '食事中に義歯が外れかけ、誤飲しそうになったが職員が気づいた。',
+  '廊下の水たまりで滑りそうになった。清掃直後で表示が無かった。',
+];
+
+const TODAY=new Date();
+let SEED=7777;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+let reports=[];
+(function seed(){
+  for(let i=0;i<26;i++){
+    const u=pick(USERS);
+    const cat=pick(CATS);
+    const place=pick(PLACES);
+    const staff=pick(STAFF);
+    // severity weighted toward low (near-miss culture)
+    const sr=rnd();let sev=sr<0.45?1:sr<0.75?2:sr<0.92?3:sr<0.99?4:5;
+    const monthBack=Math.floor(rnd()*6);
+    const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-monthBack,1+Math.floor(rnd()*27),
+      8+Math.floor(rnd()*13),Math.floor(rnd()*60));
+    const str=rnd();const status=str<0.42?'done':str<0.62?'progress':str<0.8?'review':'open';
+    reports.push({
+      no:'HH-'+(2026000+i+1),
+      user:u.name,room:u.room,cat:cat.n,catIcon:cat.icon,place,staff,
+      sev,body:BODIES[i%BODIES.length],when:d,status,
+      measure:status==='open'?'':MEASURE_BY_CAT(cat.n),
+      assignee:staff,due:new Date(d.getFullYear(),d.getMonth(),d.getDate()+14),
+    });
+  }
+})();
+function MEASURE_BY_CAT(c){
+  const m={
+    '転倒・転落':'離床センサーの設置と巡回時間の見直し',
+    '誤薬・服薬':'与薬時の指差し声出し＋ダブルチェックの徹底',
+    '誤嚥・食事':'食形態の再評価と食事姿勢の調整',
+    '移乗・移動':'移乗手順の統一とフットレスト確認の習慣化',
+    '皮膚・褥瘡':'体位変換スケジュールの掲示と除圧マット導入',
+    '無断外出・離設':'玄関センサーの感度調整と見守り体制の強化',
+    'その他':'ヒヤリハット内容の朝礼共有と注意喚起',
+  };
+  return m[c]||'朝礼での共有と注意喚起';
+}
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmtDT=d=>(d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+const fmtD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function sevBadge(s){return `<span class="sev s${s}">${esc(SEVLABEL[s])}</span>`;}
+function stBadge(s){return `<span class="st ${s}">${esc(STLABEL[s])}</span>`;}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+
+/* ============ ROUTING ============ */
+const M=TODAY.getMonth()+1;
+const TITLES={
+  dash:['ダッシュボード','今月のヒヤリハット・インシデント状況'],
+  list:['報告一覧','提出された報告を検索・絞り込みできます'],
+  cat:['分類','発生区分・時間帯ごとの傾向を見ます'],
+  factor:['要因分析','4M（人・方法・設備・環境）でAIが要因を整理します'],
+  measure:['対策','再発防止策の進捗を管理します'],
+  ai:['AI分析','現場メモから報告書を自動作成します'],
+  create:['報告を入力','入力するとリアルタイムで報告書が組み上がります'],
+};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = (v==='dash'||v==='list')
+    ? '<button class="btn" onclick="go(\'ai\')">⚡ AIで報告作成</button><button class="btn primary" onclick="go(\'create\')">＋ 新規報告</button>'
+    : (v==='measure'?'<button class="btn primary" onclick="go(\'ai\')">⚡ 対策をAI提案</button>':'');
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='cat')renderCat();
+  if(v==='factor')renderFactor();
+  if(v==='measure')renderMeasure();
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${esc(l)}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?esc(sub)+' ・ ':''}${esc(d)}</div></div>`;}
+
+function renderDash(){
+  const tm=reports.filter(r=>thisMonth(r.when));
+  const sev45=tm.filter(r=>r.sev>=4).length;
+  const doneRate=reports.length?Math.round(reports.filter(r=>r.status==='done').length/reports.length*100):0;
+  // 再発率：同じ利用者×区分が今月2件以上
+  const key=r=>r.user+'|'+r.cat;
+  const counts={};tm.forEach(r=>counts[key(r)]=(counts[key(r)]||0)+1);
+  const repeat=Object.values(counts).filter(c=>c>=2).length;
+  const repeatRate=tm.length?Math.round(repeat/Object.keys(counts).length*100):0;
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','今月の報告件数',tm.length+'<small>件</small>',tm.filter(r=>r.sev===1).length+'件 未然防止','up','前月比 +8%')}
+    ${kpi('#e24a4a','重大度4以上',sev45+'<small>件</small>','','warn',sev45?'要委員会報告':'なし')}
+    ${kpi('#16b877','対策完了率',doneRate+'<small>%</small>',reports.filter(r=>r.status==='done').length+'件','up','+6pt')}
+    ${kpi('#e3941f','再発率',repeatRate+'<small>%</small>',repeat+'パターン','warn','要重点対策')}`;
+
+  // trend
+  const months=[];for(let k=5;k>=0;k--){const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1);months.push(d);}
+  const sums=months.map(m=>reports.filter(r=>r.when.getMonth()===m.getMonth()&&r.when.getFullYear()===m.getFullYear()).length);
+  const mx=Math.max(...sums,1);
+  $('trendBars').innerHTML=months.map((m,i)=>`
+    <div class="bar-row"><span class="mlabel">${m.getMonth()+1}月</span>
+      <div class="bar-track"><div class="bar-fill" data-w="${Math.round(sums[i]/mx*100)}"></div></div>
+      <span class="mval">${sums[i]}件</span></div>`).join('');
+
+  // severity breakdown this month
+  const sevCounts={5:0,4:0,3:0,2:0,1:0};tm.forEach(r=>sevCounts[r.sev]++);
+  const sevMx=Math.max(...Object.values(sevCounts),1);
+  $('sevGrid').innerHTML=[5,4,3,2,1].map(s=>`
+    <div class="sev-row"><span class="sd" style="background:${SEVCOLOR[s]}"></span>
+      <span class="sl">${esc(SEVLABEL[s])}</span>
+      <div class="strack"><div class="sfill" style="background:${SEVCOLOR[s]}" data-w="${Math.round(sevCounts[s]/sevMx*100)}"></div></div>
+      <span class="sv">${sevCounts[s]}件</span></div>`).join('');
+
+  // category ranking this month
+  renderCatBars('catBars',tm);
+
+  // activity
+  const acts=[
+    {i:'⚡',c:'#efeafd',t:'AIが「転倒・転落」3件に再発防止策を提案しました',m:'12分前'},
+    {i:'✅',c:'#e6f8f0',t:'HH-2026008 の対策を「完了」にしました',m:'1時間前'},
+    {i:'🚶',c:'#fdeaea',t:'佐藤 たけし 様（301）で転倒ヒヤリを新規報告',m:'今日 10:12'},
+    {i:'💊',c:'#efeafd',t:'誤薬ヒヤリをAIが「重大度3・要観察」と判定',m:'今日 9:40'},
+    {i:'📋',c:'#eaf1ff',t:'安全委員会へ月次レポートを自動出力',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+
+  setTimeout(()=>{
+    document.querySelectorAll('#trendBars .bar-fill,#catBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%');
+    document.querySelectorAll('#sevGrid .sfill').forEach(b=>b.style.width=b.dataset.w+'%');
+  },60);
+}
+function renderCatBars(target,list){
+  const c={};CATS.forEach(x=>c[x.n]=0);list.forEach(r=>c[r.cat]=(c[r.cat]||0)+1);
+  const arr=CATS.map(x=>({n:x.n,icon:x.icon,color:x.color,v:c[x.n]})).sort((a,b)=>b.v-a.v);
+  const mx=Math.max(...arr.map(a=>a.v),1);
+  $(target).innerHTML=arr.map(a=>`
+    <div class="bar-row"><span class="mlabel">${a.icon}</span>
+      <div class="bar-track"><div class="bar-fill" style="background:linear-gradient(90deg,${a.color},${a.color}aa)" data-w="${Math.round(a.v/mx*100)}"></div></div>
+      <span class="mval">${a.v}件</span></div>`).join('');
+}
+
+/* ============ LIST ============ */
+let filterStatus='all',filterCat='all';
+function renderChips(){
+  const opts=[['all','すべて'],['open','未対策'],['review','検討中'],['progress','対応中'],['done','完了']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${esc(o[0])}">${esc(o[1])}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
+  const cats=[['all','区分すべて'],...CATS.map(c=>[c.n,c.icon+' '+c.n])];
+  $('catChips').innerHTML=cats.map(o=>`<button class="chip ${o[0]===filterCat?'on':''}" data-c="${esc(o[0])}">${esc(o[1])}</button>`).join('');
+  $('catChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterCat=c.dataset.c;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=reports
+    .filter(r=>filterStatus==='all'||r.status===filterStatus)
+    .filter(r=>filterCat==='all'||r.cat===filterCat)
+    .filter(r=>!q||(r.user+r.body+r.place+r.staff+r.no+r.cat).toLowerCase().includes(q))
+    .sort((a,b)=>b.when-a.when);
+  $('listRows').innerHTML=rows.length?rows.map(r=>`<tr onclick="openDetail('${esc(r.no)}')">
+    <td class="mono" style="font-size:12px">${esc(r.no)}</td>
+    <td style="color:var(--ink-2);white-space:nowrap">${fmtDT(r.when)}</td>
+    <td><span class="cat">${esc(r.catIcon)} ${esc(r.cat)}</span></td>
+    <td style="max-width:300px">${esc(r.body)}</td>
+    <td style="color:var(--ink-2)">${esc(r.place)}</td>
+    <td>${sevBadge(r.sev)}</td>
+    <td>${stBadge(r.status)}</td></tr>`).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する報告がありません</td></tr>';
+  $('navOpen').textContent=reports.filter(r=>r.status==='open').length;
+}
+$('q').addEventListener('input',renderList);
+
+/* detail modal */
+window.openDetail=no=>{
+  const r=reports.find(x=>x.no===no);if(!r)return;
+  $('mTitle').textContent=r.no+'｜'+r.cat;
+  $('mBody').innerHTML=`
+    <div class="dl-row"><div class="dk">発生日時</div><div class="dv">${fmtDL(r.when)} ${String(r.when.getHours()).padStart(2,'0')}:${String(r.when.getMinutes()).padStart(2,'0')}</div></div>
+    <div class="dl-row"><div class="dk">対象利用者</div><div class="dv">${esc(r.user)}（${esc(r.room)}号室）</div></div>
+    <div class="dl-row"><div class="dk">場所</div><div class="dv">${esc(r.place)}</div></div>
+    <div class="dl-row"><div class="dk">区分</div><div class="dv">${esc(r.catIcon)} ${esc(r.cat)}</div></div>
+    <div class="dl-row"><div class="dk">重大度</div><div class="dv">${sevBadge(r.sev)}</div></div>
+    <div class="dl-row"><div class="dk">発見職員</div><div class="dv">${esc(r.staff)}</div></div>
+    <div class="dl-row"><div class="dk">状況</div><div class="dv">${esc(r.body)}</div></div>
+    <div class="dl-row" style="border-bottom:0"><div class="dk">再発防止策</div><div class="dv">${r.measure?esc(r.measure):'<span style="color:var(--red)">未設定（AI提案が可能）</span>'} ${stBadge(r.status)}</div></div>
+    <div style="margin-top:16px;display:flex;gap:9px;justify-content:flex-end">
+      ${r.status==='open'?`<button class="btn" style="border-color:var(--purple);color:var(--purple)" onclick="aiMeasureOne('${esc(r.no)}')">⚡ この件にAIで対策提案</button>`:''}
+      ${r.status!=='done'?`<button class="btn green" onclick="closeReport('${esc(r.no)}')">✅ 対策を完了にする</button>`:''}
+    </div>`;
+  $('modalBg').classList.add('show');
+};
+$('mClose').onclick=()=>$('modalBg').classList.remove('show');
+$('modalBg').onclick=e=>{if(e.target===$('modalBg'))$('modalBg').classList.remove('show');};
+window.closeReport=no=>{const r=reports.find(x=>x.no===no);if(r){r.status='done';if(!r.measure)r.measure=MEASURE_BY_CAT(r.cat);}$('modalBg').classList.remove('show');renderList();showToast(no+' の対策を完了にしました');};
+window.aiMeasureOne=no=>{const r=reports.find(x=>x.no===no);if(r){r.measure=MEASURE_BY_CAT(r.cat);r.status='progress';}$('modalBg').classList.remove('show');renderList();showToast('AIが '+no+' に再発防止策を提案しました');};
+
+/* ============ CATEGORY ============ */
+function renderCat(){
+  renderCatBars('catAllBars',reports);
+  // time bands
+  const bands=[['深夜0-6',0,6],['朝6-9',6,9],['午前9-12',9,12],['昼12-15',12,15],['夕方15-18',15,18],['夜18-24',18,24]];
+  const tc=bands.map(()=>0);
+  reports.forEach(r=>{const h=r.when.getHours();bands.forEach((b,i)=>{if(h>=b[1]&&h<b[2])tc[i]++;});});
+  const tmx=Math.max(...tc,1);
+  $('timeBars').innerHTML=bands.map((b,i)=>`
+    <div class="bar-row" style="grid-template-columns:74px 1fr 50px"><span class="mlabel">${esc(b[0])}</span>
+      <div class="bar-track"><div class="bar-fill" data-w="${Math.round(tc[i]/tmx*100)}"></div></div>
+      <span class="mval">${tc[i]}件</span></div>`).join('');
+  // category master table
+  const c={};const places={};CATS.forEach(x=>{c[x.n]=0;places[x.n]={};});
+  reports.forEach(r=>{c[r.cat]=(c[r.cat]||0)+1;places[r.cat][r.place]=(places[r.cat][r.place]||0)+1;});
+  const total=reports.length;
+  const trend=['↑ 増加傾向','→ 横ばい','↓ 減少傾向'];
+  $('catTable').innerHTML=CATS.map((x,i)=>{
+    const cnt=c[x.n];
+    const topPlace=Object.entries(places[x.n]).sort((a,b)=>b[1]-a[1])[0];
+    return `<tr><td><span class="cat">${esc(x.icon)} ${esc(x.n)}</span></td>
+      <td class="r tnum"><b>${cnt}件</b></td>
+      <td class="r tnum" style="color:var(--ink-2)">${total?Math.round(cnt/total*100):0}%</td>
+      <td style="color:var(--ink-2)">${topPlace?esc(topPlace[0]):'—'}</td>
+      <td style="color:var(--ink-2)">${esc(trend[i%3])}</td></tr>`;
+  }).join('');
+  setTimeout(()=>document.querySelectorAll('#catAllBars .bar-fill,#timeBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+}
+
+/* ============ FACTOR (4M) ============ */
+const FACTOR_MAP={
+  '転倒・転落':'Man','移乗・移動':'Method','誤薬・服薬':'Method','誤嚥・食事':'Media','皮膚・褥瘡':'Media','無断外出・離設':'Machine','その他':'Man'
+};
+const FACTOR_LABEL={Man:'👤 人（職員・利用者）',Method:'📋 方法（手順・ルール）',Machine:'🛠️ 設備（機器・福祉用具）',Media:'🌡️ 環境（時間帯・状態）'};
+const FACTOR_COLOR={Man:'#e24a4a',Method:'#2f6df0',Machine:'#e3941f',Media:'#16b877'};
+function renderFactor(){
+  const f={Man:0,Method:0,Machine:0,Media:0};
+  reports.forEach(r=>{const k=FACTOR_MAP[r.cat]||'Man';f[k]++;});
+  const mx=Math.max(...Object.values(f),1);
+  $('factorBars').innerHTML=Object.keys(f).map(k=>`
+    <div class="bar-row" style="grid-template-columns:160px 1fr 50px"><span class="mlabel">${esc(FACTOR_LABEL[k])}</span>
+      <div class="bar-track"><div class="bar-fill" style="background:linear-gradient(90deg,${FACTOR_COLOR[k]},${FACTOR_COLOR[k]}aa)" data-w="${Math.round(f[k]/mx*100)}"></div></div>
+      <span class="mval">${f[k]}件</span></div>`).join('');
+  const whys=[
+    {t:'転倒・転落が夕方に集中している',steps:['なぜ？ 夕方に立ち上がろうとする利用者が多い','なぜ？ トイレ誘導のタイミングが遅れがち','なぜ？ 申し送りと食事準備が重なり人手が薄い','対策 → 16時台の定時トイレ誘導と人員配置の見直し']},
+    {t:'誤薬ヒヤリが繰り返し起きる',steps:['なぜ？ 配薬時に他利用者と取り違えそうになる','なぜ？ 名前と顔の確認が口頭のみ','なぜ？ 多忙時にダブルチェックが省略される','対策 → 与薬カートのバーコード照合と指差し声出し']},
+    {t:'移乗時の滑り・ふらつきが多い',steps:['なぜ？ 移乗の手順が職員でばらつく','なぜ？ 統一マニュアルが浸透していない','なぜ？ 新人教育で実技確認が不足','対策 → 移乗手順動画の共有と実技チェック表']},
+  ];
+  $('whyList').innerHTML=whys.map(w=>`
+    <div style="border:1px solid var(--line);border-radius:11px;padding:14px;margin-bottom:11px">
+      <div style="font-weight:800;font-size:13.5px;margin-bottom:9px">🔎 ${esc(w.t)}</div>
+      ${w.steps.map((s,i)=>`<div class="factor"><div class="fb">${i<w.steps.length-1?(i+1):'✓'}</div><div>${esc(s)}</div></div>`).join('')}
+    </div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#factorBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+}
+
+/* ============ MEASURE ============ */
+function renderMeasure(){
+  const done=reports.filter(r=>r.status==='done').length;
+  const open=reports.filter(r=>r.status==='open').length;
+  const prog=reports.filter(r=>r.status==='progress'||r.status==='review').length;
+  $('measureKpis').innerHTML=`
+    ${kpi('#16b877','対策 完了',done+'<small>件</small>','','up','閉鎖済')}
+    ${kpi('#2f6df0','対応中・検討中',prog+'<small>件</small>','','up','進行中')}
+    ${kpi('#e24a4a','未対策',open+'<small>件</small>','','warn',open?'要着手':'なし')}
+    ${kpi('#e3941f','対策完了率',reports.length?Math.round(done/reports.length*100):0+'<small>%</small>','','up','目標80%')}`;
+  const rows=[...reports].sort((a,b)=>{const o={open:0,review:1,progress:2,done:3};return o[a.status]-o[b.status]||a.due-b.due;});
+  $('measureRows').innerHTML=rows.map(r=>`<tr onclick="openDetail('${esc(r.no)}')">
+    <td class="mono" style="font-size:12px">${esc(r.no)}</td>
+    <td><span class="cat">${esc(r.catIcon)} ${esc(r.cat)}</span><div style="font-size:11.5px;color:var(--ink-3);margin-top:3px">${esc(r.user)}・${esc(r.place)}</div></td>
+    <td style="max-width:240px;color:var(--ink-2)">${r.measure?esc(r.measure):'<span style="color:var(--red)">未設定</span>'}</td>
+    <td style="color:var(--ink-2);white-space:nowrap">${esc(r.assignee)}</td>
+    <td style="color:var(--ink-2);white-space:nowrap">${fmtD(r.due)}</td>
+    <td>${stBadge(r.status)}</td>
+    <td class="r" onclick="event.stopPropagation()">${r.status!=='done'?`<button class="btn green" style="padding:6px 12px" onclick="closeReport('${esc(r.no)}')">完了</button>`:'<span style="color:var(--green);font-weight:800">✓</span>'}</td>
+  </tr>`).join('');
+}
+$('autoSuggest').addEventListener('click',async()=>{
+  const btn=$('autoSuggest');const open=reports.filter(r=>r.status==='open');
+  if(!open.length){showToast('未対策の項目はありません 🎉');return;}
+  btn.textContent='⚡ AIが対策を生成中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,950));
+  open.forEach(r=>{r.measure=MEASURE_BY_CAT(r.cat);r.status='progress';});
+  btn.textContent='⚡ 未対策にAIで対策を一括提案';btn.disabled=false;
+  renderMeasure();showToast(open.length+'件の未対策にAIが再発防止策を提案しました');
+});
+
+/* ============ AI ANALYSIS ============ */
+const AI_SAMPLES=[
+  '10時ごろ、3階の佐藤さんがトイレに行こうとして車いすから立ち上がりかけた。職員が近くにいて支えたので転倒はなし。ナースコールは鳴っていなかった。',
+  '昼食中に鈴木さんがおかずでむせ込んだ。背中をさすってしばらくで落ち着いたが、急いで食べていた様子。',
+  '夕方の配薬で、高橋さんの薬と隣の人の薬を取り違えそうになった。配る前に気づいて事なきを得た。',
+  '夜間の巡回中、田中さんがベッド柵を乗り越えようとしていた。声をかけて落ち着いてもらった。',
+];
+function analyzeMemo(memo){
+  const t=memo||'';
+  let cat='その他',sev=2,factor='Man';
+  if(/転倒|立ち上が|転落|ふらつ|滑/.test(t)){cat='転倒・転落';sev=/支え|防げ|なし|未然/.test(t)?2:3;factor='Man';}
+  else if(/薬|配薬|与薬|服薬/.test(t)){cat='誤薬・服薬';sev=/気づい|事なき|前に/.test(t)?2:4;factor='Method';}
+  else if(/むせ|誤嚥|食事|食べ|義歯/.test(t)){cat='誤嚥・食事';sev=/落ち着|気づい/.test(t)?3:4;factor='Media';}
+  else if(/移乗|移動|車いす|ベッドから/.test(t)){cat='移乗・移動';sev=2;factor='Method';}
+  else if(/外|玄関|離設|柵|乗り越え/.test(t)){cat='無断外出・離設';sev=3;factor='Machine';}
+  else if(/かかと|発赤|褥瘡|皮膚/.test(t)){cat='皮膚・褥瘡';sev=2;factor='Media';}
+  const catObj=CATS.find(c=>c.n===cat)||CATS[6];
+  // factors (4M)
+  const factors=[];
+  if(/ナースコール|気づ|近く|職員/.test(t))factors.push(['Man','その場に職員がいて未然に防げた一方、利用者の行動予測が十分でなかった可能性']);
+  if(/急い|タイミング|時間|夕方|夜間|10時/.test(t))factors.push(['Media','発生時間帯（多忙な時間帯）に介助の手が回りにくかった環境要因']);
+  if(/手順|ばらつ|取り違え|確認/.test(t))factors.push(['Method','確認手順・声かけのルールが徹底されていなかった方法要因']);
+  if(/柵|車いす|センサー|フットレスト|機器/.test(t))factors.push(['Machine','福祉用具・センサー等の設備面での予防策が不足']);
+  if(!factors.length)factors.push(['Man','利用者の状態変化に対する観察・予測が要因と推定']);
+  // measures before/after
+  const measures=BEFORE_AFTER(cat);
+  return {cat,catIcon:catObj.icon,sev,factor,factors,measures};
+}
+function BEFORE_AFTER(cat){
+  const map={
+    '転倒・転落':[['離床・トイレ誘導','利用者が動いてから職員が気づいて対応（後手）','離床センサーで起き上がりを検知し、定時トイレ誘導で先回り'],['見守り体制','夕方の多忙時間に巡回が手薄','16〜19時の見守り担当を1名増配置し巡回間隔を短縮']],
+    '誤薬・服薬':[['本人確認','名前を口頭確認のみ・多忙時は省略','与薬カートのバーコードで本人照合を必須化'],['ダブルチェック','一人で配薬しがち','「指差し・声出し」＋2名確認をルール化']],
+    '誤嚥・食事':[['食事姿勢','椅子の角度が利用者で不統一','個別の食事姿勢シートを作成し全職員で共有'],['食形態','むせの履歴が記録されず継続','むせ履歴をAIが集計し、ST評価へ自動アラート']],
+    '移乗・移動':[['移乗手順','職員ごとに手順がばらつく','移乗手順を動画＋チェック表で統一'],['用具確認','フットレストの戻し忘れ','移乗前チェックリストをベッド柵に掲示']],
+    '皮膚・褥瘡':[['体位変換','記憶頼りで時間が空く','体位変換スケジュールを掲示しタイマー通知'],['除圧','標準マットのまま','リスク者へ除圧マットを優先導入']],
+    '無断外出・離設':[['出入口管理','玄関の見守りが目視のみ','玄関センサー＋ナースステーション通知を設置'],['見守り','離設リスクの共有が不十分','離設リスク者を朝礼で共有し見守りマップ化']],
+    'その他':[['情報共有','口頭での申し送りのみ','ヒヤリハットを朝礼で自動レポート共有'],['注意喚起','個人の記憶頼り','類似事例をAIが抽出し注意喚起を掲示']],
+  };
+  return map[cat]||map['その他'];
+}
+function renderSamples(){
+  $('aiSamples').innerHTML=AI_SAMPLES.map((s,i)=>`<button data-i="${i}">例${i+1}：${esc(s.slice(0,16))}…</button>`).join('');
+  $('aiSamples').querySelectorAll('button').forEach(b=>b.onclick=()=>{$('aiMemo').value=AI_SAMPLES[+b.dataset.i];});
+}
+$('aiRun').addEventListener('click',async()=>{
+  const memo=$('aiMemo').value.trim();
+  if(!memo){showToast('現場メモを入力してください');return;}
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 分析中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,6);},120);
+  $('aiResult').classList.remove('show');
+  await new Promise(r=>setTimeout(r,1200));
+  clearInterval(t);$('baAfterT').textContent='6秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+
+  const a=analyzeMemo(memo);
+  // steps
+  const steps=['メモを解析し報告書様式に清書','発生区分を判定 → 「'+a.cat+'」','重大度を判定 → 「'+SEVLABEL[a.sev]+'」','4M要因分析を実行（'+a.factors.length+'件の要因を抽出）','再発防止策をBefore/Afterで生成'];
+  $('aiSteps').innerHTML=steps.map(()=>'').join('');
+  $('aiSteps').innerHTML=steps.map(s=>`<div class="ai-step"><span class="ck">✓</span><span>${esc(s)}</span></div>`).join('');
+
+  // cards
+  $('aiCards').innerHTML=`
+    <div class="ai-card">
+      <div class="ach">🏷️ 自動分類・判定</div>
+      <div class="acb">
+        <div style="margin-bottom:7px">区分：<span class="cat">${esc(a.catIcon)} ${esc(a.cat)}</span></div>
+        <div style="margin-bottom:7px">重大度：${sevBadge(a.sev)}</div>
+        <div style="color:var(--ink-2);font-size:12.5px">メモから自動でレベル判定。レベル4以上は安全委員会へ自動エスカレーションされます。</div>
+      </div>
+    </div>
+    <div class="ai-card">
+      <div class="ach">🔎 要因分析（4M）</div>
+      <div class="acb">
+        ${a.factors.map(f=>`<div class="factor"><div class="fb" style="background:${FACTOR_COLOR[f[0]]}22;color:${FACTOR_COLOR[f[0]]}">${f[0][0]}</div><div><b style="font-size:12px;color:${FACTOR_COLOR[f[0]]}">${esc(FACTOR_LABEL[f[0]])}</b><br>${esc(f[1])}</div></div>`).join('')}
+      </div>
+    </div>
+    <div class="ai-card full">
+      <div class="ach">🛡️ 再発防止策の提案（Before → After）</div>
+      <div class="acb">
+        ${a.measures.map(m=>`
+          <div class="measure" style="display:block;padding-bottom:12px">
+            <div style="font-weight:800;margin-bottom:4px"><span class="mc" style="display:inline-grid;vertical-align:middle">✓</span> ${esc(m[0])}</div>
+            <div class="ba-mini">
+              <div class="mcol mbefore"><div class="mt">😓 BEFORE（今まで）</div>${esc(m[1])}</div>
+              <div class="marr">→</div>
+              <div class="mcol mafter"><div class="mt">⚡ AFTER（技マシン）</div>${esc(m[2])}</div>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="ai-card full" style="background:var(--soft);border-style:dashed">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <div style="font-size:13px;font-weight:700">この内容で報告を登録すると、一覧・対策に自動で反映されます。</div>
+        <button class="btn primary" id="aiRegister" style="margin-left:auto;background:var(--purple);border-color:var(--purple)">＋ この報告を登録する</button>
+      </div>
+    </div>`;
+  $('aiResult').classList.add('show');
+  const stepEls=[...$('aiSteps').querySelectorAll('.ai-step')];
+  for(let i=0;i<stepEls.length;i++){await new Promise(r=>setTimeout(r,170));stepEls[i].classList.add('in');}
+
+  $('aiRegister').onclick=()=>{
+    const now=new Date();
+    reports.unshift({
+      no:'HH-'+(2026000+reports.length+1),
+      user:USERS[0].name,room:USERS[0].room,cat:a.cat,catIcon:a.catIcon,place:'居室',staff:STAFF[0],
+      sev:a.sev,body:memo,when:now,status:'progress',
+      measure:a.measures[0][2],assignee:STAFF[0],due:new Date(now.getFullYear(),now.getMonth(),now.getDate()+14),
+    });
+    showToast('AIが作成した報告書を登録しました（一覧・対策に反映）');
+    setTimeout(()=>go('list'),700);
+  };
+
+  btn.disabled=false;btn.textContent='⚡ もう一度分析する';
+  showToast('現場メモから報告書を自動作成しました');
+});
+
+/* ============ CREATE (manual) ============ */
+function fillSelects(){
+  $('cUser').innerHTML='<option value="">選択してください</option>'+USERS.map(u=>`<option>${esc(u.name)}（${esc(u.room)}）</option>`).join('');
+  $('cPlace').innerHTML='<option value="">選択してください</option>'+PLACES.map(p=>`<option>${esc(p)}</option>`).join('');
+  $('cCat').innerHTML='<option value="">AIに自動判定させる</option>'+CATS.map(c=>`<option>${esc(c.n)}</option>`).join('');
+  $('cStaff').innerHTML='<option value="">選択してください</option>'+STAFF.map(s=>`<option>${esc(s)}</option>`).join('');
+  $('cDate').value=new Date().toISOString().slice(0,10);
+}
+function renderPaper(){
+  $('pWhen').textContent=($('cDate').value?$('cDate').value.replace(/-/g,'/'):'—')+' '+($('cTime').value||'');
+  $('pPlace').textContent=$('cPlace').value||'—';
+  $('pUser').textContent=$('cUser').value||'—';
+  $('pStaff').textContent=$('cStaff').value||'—';
+  $('pBody').textContent=$('cBody').value||'（状況を入力してください）';
+}
+['cDate','cTime','cPlace','cUser','cStaff','cBody'].forEach(id=>$(id).addEventListener('input',renderPaper));
+$('cBody').addEventListener('input',()=>{
+  if($('cBody').value.length>10){$('cAiHint').classList.add('show');}else{$('cAiHint').classList.remove('show');}
+});
+$('cSample').addEventListener('click',()=>{
+  $('cUser').value='佐藤 たけし（301）';$('cPlace').value='トイレ';$('cCat').value='';$('cStaff').value='介護 ゆい';
+  $('cTime').value='10:10';
+  $('cBody').value='トイレへ移動しようと車いすから立ち上がりかけたが、近くにいた職員が支えて転倒は防げた。';
+  $('cAiHint').classList.add('show');renderPaper();
+});
+$('cSubmit').addEventListener('click',async()=>{
+  if(!$('cUser').value||!$('cBody').value){showToast('利用者と状況を入力してください');return;}
+  const btn=$('cSubmit');btn.textContent='⚡ AIが仕上げ中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,850));
+  const a=analyzeMemo($('cBody').value);
+  const cat=$('cCat').value||a.cat;
+  const catObj=CATS.find(c=>c.n===cat)||CATS[6];
+  // show AI box on paper
+  $('pAiBox').style.display='block';
+  $('pAiCat').textContent=catObj.icon+' '+cat;
+  $('pAiSev').textContent=SEVLABEL[a.sev];
+  $('pAiFactor').textContent=FACTOR_LABEL[a.factor];
+  $('pAiMeasure').textContent=a.measures[0][2];
+  const now=new Date();const no='HH-'+(2026000+reports.length+1);
+  $('pNo').textContent=no;$('pRepDate').textContent=fmtDL(now);
+  const dt=$('cDate').value?new Date($('cDate').value+'T'+($('cTime').value||'10:00')):now;
+  reports.unshift({
+    no,user:$('cUser').value,room:'—',cat,catIcon:catObj.icon,place:$('cPlace').value||'—',
+    staff:$('cStaff').value||STAFF[0],sev:a.sev,body:$('cBody').value,when:dt,status:'progress',
+    measure:a.measures[0][2],assignee:$('cStaff').value||STAFF[0],due:new Date(now.getFullYear(),now.getMonth(),now.getDate()+14),
+  });
+  btn.textContent='⚡ AIで仕上げて報告する';btn.disabled=false;
+  showToast('報告 '+no+' を登録しました（AIが分類・対策を自動付与）');
+  setTimeout(()=>go('list'),900);
+});
+
+/* ============ INIT ============ */
+fillSelects();renderPaper();renderChips();renderDash();renderSamples();
+$('navOpen').textContent=reports.filter(r=>r.status==='open').length;
+go('dash');
+</script>
+</body>
+</html>

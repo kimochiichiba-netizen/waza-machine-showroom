@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜廃棄ロス分析マシン（フードロス削減システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+.panel.mb{margin-bottom:16px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 90px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--amber),#f0b94e);width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-fill.g{background:linear-gradient(90deg,var(--green),#4fd19a)}
+.bar-fill.r{background:linear-gradient(90deg,var(--red),#ef7a7a)}
+.bar-fill.b{background:linear-gradient(90deg,var(--brand),var(--sky))}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* line/column trend chart */
+.chart{position:relative;height:200px;padding:6px 4px 0}
+.chart svg{width:100%;height:100%;overflow:visible}
+.chart .gl{stroke:var(--line);stroke-width:1}
+.chart .axlabel{font-size:10.5px;fill:var(--ink-3);font-weight:600}
+.colset{display:flex;align-items:flex-end;justify-content:space-around;height:170px;gap:10px;padding-top:6px}
+.colwrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.colbar{width:60%;max-width:34px;border-radius:6px 6px 0 0;background:linear-gradient(180deg,#f0b94e,var(--amber));height:0;transition:height .9s cubic-bezier(.2,.8,.3,1);position:relative}
+.colbar .cv{position:absolute;top:-19px;left:50%;transform:translateX(-50%);font-size:10.5px;font-weight:800;color:var(--ink-2);white-space:nowrap}
+.colwrap .cl{font-size:11px;color:var(--ink-3);font-weight:600}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.high{background:var(--red-soft);color:var(--red)}
+.st.mid{background:var(--amber-soft);color:var(--amber)}
+.st.low{background:var(--green-soft);color:var(--green)}
+.tag2{display:inline-flex;align-items:center;font-size:11px;font-weight:700;padding:3px 9px;border-radius:7px;background:var(--soft);color:var(--ink-2)}
+
+/* cause meter */
+.cause-row{display:grid;grid-template-columns:130px 1fr 64px;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.cause-row:last-child{border-bottom:0}
+.cause-row .cn{font-weight:700;display:flex;align-items:center;gap:8px}
+.cause-row .cn .em{font-size:16px}
+.cause-row .pct{text-align:right;font-weight:800;font-variant-numeric:tabular-nums}
+
+/* input form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,400px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--brand)}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--line);border-radius:9px;margin-bottom:8px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+.gen-item .ba-mini{margin-left:auto;display:flex;align-items:center;gap:9px;font-size:12px}
+.gen-item .ba-mini .ar{color:var(--brand);font-weight:800}
+.gen-item .ba-mini .bf{color:var(--ink-3);text-decoration:line-through}
+.gen-item .ba-mini .af{color:var(--green);font-weight:800}
+
+/* proposal cards */
+.prop{border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:12px;background:var(--card);box-shadow:var(--shadow)}
+.prop .ph2{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.prop .ph2 .pi{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-size:17px;background:var(--brand-soft)}
+.prop .ph2 b{font-size:14px;font-weight:800}
+.prop .ph2 .impact{margin-left:auto;font-size:11.5px;font-weight:800;color:var(--green);background:var(--green-soft);padding:4px 11px;border-radius:99px}
+.prop .pbody{font-size:12.5px;color:var(--ink-2);margin-bottom:12px}
+.ba2{display:grid;grid-template-columns:1fr 44px 1fr;gap:0;align-items:stretch}
+.ba2 .bx{padding:12px 14px;border-radius:10px}
+.ba2 .bx.bf{background:#f6f7fa;border:1px solid var(--line)}
+.ba2 .bx.af{background:var(--green-soft);border:1px solid #bdebd4}
+.ba2 .bx .lab{font-size:10.5px;font-weight:800;letter-spacing:.04em;margin-bottom:5px}
+.ba2 .bx.bf .lab{color:var(--ink-3)}.ba2 .bx.af .lab{color:var(--green)}
+.ba2 .bx .num{font-family:'Orbitron';font-size:18px;font-weight:700}
+.ba2 .bx.bf .num{color:#7a8499}.ba2 .bx.af .num{color:var(--green)}
+.ba2 .bx .nt{font-size:11px;color:var(--ink-2);margin-top:3px}
+.ba2 .arr{display:grid;place-items:center;font-size:18px;color:var(--brand)}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.sec-title{font-size:13px;font-weight:800;margin:4px 0 12px;color:var(--ink-2)}
+.legend{display:flex;gap:16px;font-size:11.5px;color:var(--ink-2);margin-top:12px;flex-wrap:wrap}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">廃棄ロス分析マシン<small>技マシン｜フードロス削減</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="records"><span class="i">🗑️</span>廃棄記録</a>
+      <a data-v="cause"><span class="i">🔎</span>原因別</a>
+      <a data-v="cost"><span class="i">💴</span>コスト</a>
+      <a data-v="trend"><span class="i">📈</span>推移</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI削減提案<span class="badge" id="navProp">0</span></a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。数値・店舗データはサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">2026年5月の廃棄ロス状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>日別の廃棄額推移（今月）</h3><span class="more">過去14日</span></div>
+            <div class="pb">
+              <div class="colset" id="dayCols"></div>
+              <div class="legend"><span><i style="background:linear-gradient(180deg,#f0b94e,#e3941f)"></i>廃棄額（円）</span><span style="color:var(--ink-3)">棒が高いほどロスが大きい日です</span></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>要改善の品目 TOP5</h3><span class="more" onclick="go('records')">記録を見る</span></div>
+            <div class="pb"><div class="bars" id="topItems"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>廃棄の主な原因</h3><span class="more" onclick="go('cause')">詳しく</span></div>
+            <div class="pb" id="dashCause"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RECORDS -->
+      <section class="view" id="v-records">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="品目・原因・担当で検索"></div>
+          <div class="chips" id="catChips"></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+          <button class="btn primary" onclick="go('input')">＋ 廃棄を記録する</button>
+          <button class="btn" id="recExport">⬇️ CSVで書き出し</button>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>日付</th><th>品目</th><th>区分</th><th class="r">数量</th><th class="r">廃棄額</th><th>主な原因</th><th>担当</th><th>深刻度</th></tr></thead>
+          <tbody id="recRows"></tbody>
+        </table>
+      </section>
+
+      <!-- INPUT (廃棄記録の追加) -->
+      <section class="view" id="v-input">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="sec-title">廃棄を記録する</div>
+            <div class="fg"><label>品目（選ぶとAIが標準原価を提案）</label>
+              <input id="iName" list="itemList" placeholder="例：トマト（Lサイズ）"></div>
+            <div class="fg2">
+              <div class="fg"><label>区分</label><select id="iCat"></select></div>
+              <div class="fg"><label>原因</label><select id="iCause"></select></div>
+            </div>
+            <div class="fg2">
+              <div class="fg"><label>数量</label><input id="iQty" type="number" min="0" value="3"></div>
+              <div class="fg"><label>単価（円）</label><input id="iPrice" type="number" min="0" placeholder="0"></div>
+            </div>
+            <div class="aihint" id="iHint">✨ AIが過去データから標準単価を自動入力しました</div>
+            <div class="fg"><label>担当</label><select id="iStaff"></select></div>
+            <div class="panel" style="margin:6px 0 14px;background:var(--soft);box-shadow:none">
+              <div class="pb" style="display:flex;align-items:center;justify-content:space-between;font-size:13px">
+                <span style="color:var(--ink-2);font-weight:700">この記録の廃棄額</span>
+                <span class="mono" id="iAmount" style="font-size:20px;color:var(--amber);font-weight:700">¥0</span>
+              </div>
+            </div>
+            <button class="btn primary" id="iSave" style="width:100%;justify-content:center">⚡ AIで分類して記録する</button>
+          </div>
+          <div>
+            <div class="panel">
+              <div class="ph"><h3>AIプレビュー（記録の自動分類）</h3></div>
+              <div class="pb" id="iPreview">
+                <p style="color:var(--ink-3);font-size:13px">品目を入力すると、AIが区分・原因・深刻度を自動で推定してこちらに表示します。</p>
+              </div>
+            </div>
+            <div class="panel" style="margin-top:16px">
+              <div class="ph"><h3>同じ品目の過去の傾向</h3></div>
+              <div class="pb" id="iTrend"><p style="color:var(--ink-3);font-size:13px">品目を選ぶと、その品目の過去の廃棄傾向を表示します。</p></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CAUSE -->
+      <section class="view" id="v-cause">
+        <div class="kpis" id="causeKpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>原因別の廃棄額（今月）</h3></div>
+            <div class="pb"><div class="bars" id="causeBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>区分別の内訳</h3></div>
+            <div class="pb"><div class="bars" id="catBars"></div></div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:16px">
+          <div class="ph"><h3>原因ごとの件数・金額・改善のヒント</h3></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>原因</th><th class="r">件数</th><th class="r">廃棄額</th><th>AIからの改善ヒント</th></tr></thead>
+              <tbody id="causeTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- COST -->
+      <section class="view" id="v-cost">
+        <div class="kpis" id="costKpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>品目別の廃棄コスト TOP8</h3></div>
+            <div class="pb"><div class="bars" id="costBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>担当者別の廃棄額</h3></div>
+            <div class="pb"><div class="bars" id="staffBars"></div></div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:16px">
+          <div class="ph"><h3>削減できれば見込める年間効果</h3><span class="more" onclick="go('ai')">AI提案を見る</span></div>
+          <div class="pb">
+            <div class="ba">
+              <div class="col before">
+                <span class="ct">😓 現状（このまま）</span>
+                <div class="big" id="costNow">—</div>
+                <ul>
+                  <li>📦 過剰発注が常態化</li>
+                  <li>🌡️ 保管温度のばらつき</li>
+                  <li>📅 賞味期限の見落とし</li>
+                </ul>
+              </div>
+              <div class="arrow">→</div>
+              <div class="col after">
+                <span class="ct">⚡ 技マシンで改善後</span>
+                <div class="big" id="costAfter">—</div>
+                <ul>
+                  <li>🤖 AIが発注量を最適化</li>
+                  <li>🔔 期限の自動アラート</li>
+                  <li>📊 原因の見える化で行動が変わる</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TREND -->
+      <section class="view" id="v-trend">
+        <div class="kpis" id="trendKpis"></div>
+        <div class="panel mb">
+          <div class="ph"><h3>月次の廃棄額・廃棄率の推移</h3><span class="more">過去6ヶ月</span></div>
+          <div class="pb">
+            <div class="colset" id="trendCols"></div>
+            <div class="legend"><span><i style="background:linear-gradient(180deg,#f0b94e,#e3941f)"></i>月間廃棄額</span><span style="color:var(--green);font-weight:700">↘ 技マシン導入後、3ヶ月で改善傾向</span></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="ph"><h3>曜日別の平均廃棄額</h3><span class="more">傾向分析</span></div>
+          <div class="pb"><div class="bars" id="dowBars"></div>
+            <div class="legend"><span style="color:var(--ink-3)">月曜・週末は仕入れ過多でロスが出やすい傾向です</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI PROPOSAL -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div style="min-width:200px;flex:1"><div style="font-size:16px;font-weight:900">廃棄データをAIが分析し、削減策を提案</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">今月の廃棄記録 <b id="aiCnt">0</b>件 を分析し、原因の特定と発注最適化（Before/After）をAIが自動で提案します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで分析・提案する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">3時間20分</div>
+              <ul>
+                <li>📒 廃棄伝票を手集計</li>
+                <li>🤔 原因を勘と経験で推測</li>
+                <li>📝 発注量を担当者ごとにバラバラ調整</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">—</div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 廃棄データを自動分析</li>
+                <li>🔎 原因を金額インパクト順に特定</li>
+                <li>📦 品目ごとに最適発注量を提案</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">🔎 AIが特定した削減ポイント（発注最適化 Before→After）</div>
+            <div id="genItems"></div>
+            <div id="propWrap" style="margin-top:18px;display:none">
+              <div style="font-size:13px;font-weight:800;margin-bottom:10px">💡 AIからの具体的な削減提案</div>
+              <div id="propItems"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const CATS=['野菜','果物','鮮魚','精肉','惣菜','乳製品','パン'];
+const CAUSES=[
+  {n:'過剰仕入れ',em:'📦',hint:'AI需要予測で発注量を10〜15%絞ると改善できます'},
+  {n:'売れ残り',em:'🕒',hint:'夕方の時間帯値引きを自動化すると回収率が上がります'},
+  {n:'賞味期限切れ',em:'📅',hint:'期限アラートで先入れ先出しを徹底できます'},
+  {n:'規格外・傷み',em:'🩹',hint:'入荷検品の基準を統一し、傷み品は早めに加工へ回します'},
+  {n:'保管温度不良',em:'🌡️',hint:'冷蔵庫の温度ログ連携で品質低下を防げます'},
+  {n:'発注ミス',em:'✍️',hint:'発注テンプレと二重チェックでミスを減らせます'},
+];
+const STAFF=['田中','佐藤','鈴木','高橋','山本'];
+const ITEMS=[
+  {n:'トマト（Lサイズ）',cat:'野菜',p:90},{n:'レタス',cat:'野菜',p:130},{n:'きゅうり',cat:'野菜',p:60},
+  {n:'キャベツ',cat:'野菜',p:150},{n:'ほうれん草',cat:'野菜',p:140},{n:'なす',cat:'野菜',p:70},
+  {n:'バナナ（房）',cat:'果物',p:180},{n:'いちご（パック）',cat:'果物',p:480},{n:'りんご',cat:'果物',p:160},
+  {n:'シャインマスカット',cat:'果物',p:1280},{n:'アジ（尾）',cat:'鮮魚',p:120},{n:'サーモン刺身',cat:'鮮魚',p:580},
+  {n:'まぐろ柵',cat:'鮮魚',p:980},{n:'豚こま切れ（100g）',cat:'精肉',p:148},{n:'鶏もも肉（100g）',cat:'精肉',p:98},
+  {n:'牛切り落とし（100g）',cat:'精肉',p:298},{n:'唐揚げ惣菜',cat:'惣菜',p:380},{n:'お刺身盛り合わせ',cat:'惣菜',p:680},
+  {n:'のり巻き弁当',cat:'惣菜',p:498},{n:'牛乳（1L）',cat:'乳製品',p:230},{n:'ヨーグルト',cat:'乳製品',p:158},
+  {n:'食パン（6枚）',cat:'パン',p:188},{n:'クロワッサン',cat:'パン',p:150},
+];
+const TODAY=new Date();
+
+/* seeded RNG for stable demo data */
+let SEED=4071;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+/* generate waste records over past ~3 months */
+let records=[];
+(function seed(){
+  let id=0;
+  for(let back=0;back<92;back++){
+    const d=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-back);
+    const dow=d.getDay();
+    // weekends + mondays produce more loss
+    let base=2+Math.floor(rnd()*3);
+    if(dow===1||dow===0||dow===6)base+=2;
+    // improvement: fewer losses in the most recent ~30 days
+    if(back<30)base=Math.max(1,base-1);
+    for(let k=0;k<base;k++){
+      const it=pick(ITEMS);
+      const qty=1+Math.floor(rnd()*6);
+      const cause=pick(CAUSES);
+      const amount=qty*it.p;
+      let sev='low';
+      if(amount>=2500)sev='high';else if(amount>=800)sev='mid';
+      records.push({id:++id,date:new Date(d),name:it.n,cat:it.cat,qty,price:it.p,amount,cause:cause.n,staff:pick(STAFF),sev});
+    }
+  }
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+const yenK=n=>{n=Math.round(n);return n>=10000?'¥'+(n/10000).toFixed(n>=100000?0:1)+'万':'¥'+n.toLocaleString();};
+const fmtD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const SEVLABEL={high:'要改善',mid:'注意',low:'軽微'};
+function sevBadge(s){return `<span class="st ${s}">${SEVLABEL[s]}</span>`;}
+function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function lastMonth(d){const lm=new Date(TODAY.getFullYear(),TODAY.getMonth()-1,1);return d.getMonth()===lm.getMonth()&&d.getFullYear()===lm.getFullYear();}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function sumBy(arr,keyFn){const m={};arr.forEach(r=>{const k=keyFn(r);m[k]=(m[k]||0)+r.amount;});return m;}
+
+/* ============ ROUTING ============ */
+const TITLES={
+  dash:['ダッシュボード','2026年'+(TODAY.getMonth()+1)+'月の廃棄ロス状況'],
+  records:['廃棄記録','日々の廃棄を記録・管理します'],
+  input:['廃棄を記録','入力するとAIが区分・原因を自動で分類します'],
+  cause:['原因別の分析','どの原因でいくら捨てているかを見える化します'],
+  cost:['コスト分析','廃棄が利益に与える影響を金額で把握します'],
+  trend:['推移','廃棄額・廃棄率の時系列トレンドを追います'],
+  ai:['AI削減提案','廃棄データから削減策をAIが自動で提案します']
+};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='records'?'<button class="btn primary" onclick="go(\'input\')">＋ 廃棄を記録</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI削減提案</button><button class="btn primary" onclick="go(\'input\')">＋ 廃棄を記録</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='records')renderRecords();
+  if(v==='cause')renderCause();
+  if(v==='cost')renderCost();
+  if(v==='trend')renderTrend();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+function barRow(label,val,max,cls,disp){return `<div class="bar-row"><span class="mlabel">${esc(label)}</span>
+  <div class="bar-track"><div class="bar-fill ${cls||''}" data-w="${Math.round(val/max*100)}" style="width:0"></div></div>
+  <span class="mval">${disp}</span></div>`;}
+function animBars(sel){setTimeout(()=>document.querySelectorAll(sel+' .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);}
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const tm=records.filter(r=>thisMonth(r.date));
+  const lm=records.filter(r=>lastMonth(r.date));
+  const tmSum=tm.reduce((s,r)=>s+r.amount,0);
+  const lmSum=lm.reduce((s,r)=>s+r.amount,0);
+  // sales assumption to derive waste rate (demo): monthly sales 8,400,000
+  const SALES=8400000;
+  const rate=(tmSum/SALES*100);
+  const lmRate=(lmSum/SALES*100);
+  const saved=Math.max(0,lmSum-tmSum);
+  const highCnt=tm.filter(r=>r.sev==='high').length;
+  const diffPct=lmSum?Math.round((tmSum-lmSum)/lmSum*100):0;
+  $('kpis').innerHTML=`
+    ${kpi('#e3941f','今月の廃棄額',yen(tmSum),tm.length+'件',diffPct<=0?'up':'down',(diffPct<=0?'前月比 '+diffPct:'前月比 +'+diffPct)+'%')}
+    ${kpi('#e24a4a','廃棄率',rate.toFixed(2)+'<small>%</small>','売上比',rate<=lmRate?'up':'down','前月 '+lmRate.toFixed(2)+'%')}
+    ${kpi('#16b877','削減効果',yen(saved),'前月から','up',saved>0?'改善中':'横ばい')}
+    ${kpi('#2f6df0','要改善品',highCnt+'<small>件</small>','高額ロス','warn','重点対応')}`;
+
+  // daily columns (past 14 days)
+  const days=[];for(let k=13;k>=0;k--){days.push(new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-k));}
+  const daySums=days.map(d=>records.filter(r=>r.date.toDateString()===d.toDateString()).reduce((s,r)=>s+r.amount,0));
+  const dmx=Math.max(...daySums,1);
+  $('dayCols').innerHTML=days.map((d,i)=>`<div class="colwrap" title="${fmtD(d)} ${yen(daySums[i])}">
+    <div class="colbar" data-h="${Math.round(daySums[i]/dmx*100)}"><span class="cv">${daySums[i]?yenK(daySums[i]):''}</span></div>
+    <span class="cl">${d.getDate()}</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#dayCols .colbar').forEach(b=>b.style.height=b.dataset.h+'%'),60);
+
+  // activity
+  const acts=[
+    {i:'⚡',c:'#e6f8f0',t:'AI削減提案で「いちご」の発注を15%絞り、月¥38,000の削減見込み',m:'10分前'},
+    {i:'🗑️',c:'#fdf3e2',t:'唐揚げ惣菜 6点を廃棄記録（売れ残り）',m:'1時間前'},
+    {i:'🔔',c:'#fdeaea',t:'牛乳の賞味期限が明日です（先入れ先出し推奨）',m:'今日 14:20'},
+    {i:'📈',c:'#eaf1ff',t:'今月の廃棄率が前月から 0.18pt 改善しました',m:'今日 9:00'},
+    {i:'📦',c:'#e6f8f0',t:'AIが来週のレタス発注量を自動で最適化しました',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${a.t}</div><div class="am">${a.m}</div></div></div>`).join('');
+
+  // top items
+  const byItem=sumBy(tm,r=>r.name);
+  const topI=Object.entries(byItem).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const imx=Math.max(...topI.map(x=>x[1]),1);
+  $('topItems').innerHTML=topI.map(x=>barRow(x[0],x[1],imx,'',yen(x[1]))).join('');
+  animBars('#topItems');
+
+  // cause meter
+  const byCause=sumBy(tm,r=>r.cause);
+  const totalC=Object.values(byCause).reduce((a,b)=>a+b,0)||1;
+  const sortedC=Object.entries(byCause).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  $('dashCause').innerHTML=sortedC.map(([cn,v])=>{
+    const meta=CAUSES.find(c=>c.n===cn)||{em:'🔸'};
+    const pct=Math.round(v/totalC*100);
+    return `<div class="cause-row"><div class="cn"><span class="em">${meta.em}</span>${esc(cn)}</div>
+      <div class="bar-track"><div class="bar-fill" data-w="${pct}" style="width:0"></div></div>
+      <div class="pct">${pct}%</div></div>`;
+  }).join('');
+  animBars('#dashCause');
+}
+
+/* ============ RECORDS ============ */
+let filterCat='all';
+function renderCatChips(){
+  const opts=[['all','すべて'],...CATS.map(c=>[c,c])];
+  $('catChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterCat?'on':''}" data-c="${esc(o[0])}">${esc(o[1])}</button>`).join('');
+  $('catChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterCat=c.dataset.c;renderCatChips();renderRecords();});
+}
+function renderRecords(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=records
+    .filter(r=>filterCat==='all'||r.cat===filterCat)
+    .filter(r=>!q||(r.name+r.cause+r.staff).toLowerCase().includes(q))
+    .sort((a,b)=>b.date-a.date).slice(0,80);
+  $('recRows').innerHTML=rows.length?rows.map(r=>{
+    const meta=CAUSES.find(c=>c.n===r.cause)||{em:'🔸'};
+    return `<tr>
+      <td style="color:var(--ink-2)" class="tnum">${fmtD(r.date)}</td>
+      <td><b>${esc(r.name)}</b></td>
+      <td><span class="tag2">${esc(r.cat)}</span></td>
+      <td class="r tnum">${r.qty}</td>
+      <td class="r tnum"><b>${yen(r.amount)}</b></td>
+      <td style="color:var(--ink-2)">${meta.em} ${esc(r.cause)}</td>
+      <td style="color:var(--ink-2)">${esc(r.staff)}</td>
+      <td>${sevBadge(r.sev)}</td></tr>`;
+  }).join('')
+  :'<tr><td colspan="8" class="empty-cell">該当する記録がありません</td></tr>';
+}
+$('q').addEventListener('input',renderRecords);
+$('recExport').addEventListener('click',()=>showToast('廃棄記録を waste_'+(TODAY.getMonth()+1)+'月.csv に書き出しました（デモ）'));
+
+/* ============ INPUT ============ */
+function fillInputSelects(){
+  $('iCat').innerHTML=CATS.map(c=>`<option>${esc(c)}</option>`).join('');
+  $('iCause').innerHTML=CAUSES.map(c=>`<option>${esc(c.n)}</option>`).join('');
+  $('iStaff').innerHTML=STAFF.map(s=>`<option>${esc(s)}</option>`).join('');
+}
+function calcAmount(){
+  const a=(+$('iQty').value||0)*(+$('iPrice').value||0);
+  $('iAmount').textContent=yen(a);
+  let sev='軽微',cls='low';if(a>=2500){sev='要改善';cls='high';}else if(a>=800){sev='注意';cls='mid';}
+  return {a,sev,cls};
+}
+function renderInputPreview(){
+  const name=$('iName').value.trim();const {a,sev,cls}=calcAmount();
+  if(!name&&!a){$('iPreview').innerHTML='<p style="color:var(--ink-3);font-size:13px">品目を入力すると、AIが区分・原因・深刻度を自動で推定してこちらに表示します。</p>';return;}
+  $('iPreview').innerHTML=`<div style="display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;align-items:center;gap:10px"><span class="tag2">区分</span><b>${esc($('iCat').value)}</b></div>
+    <div style="display:flex;align-items:center;gap:10px"><span class="tag2">推定原因</span><b>${esc($('iCause').value)}</b></div>
+    <div style="display:flex;align-items:center;gap:10px"><span class="tag2">廃棄額</span><b class="mono" style="color:var(--amber)">${yen(a)}</b></div>
+    <div style="display:flex;align-items:center;gap:10px"><span class="tag2">AI判定の深刻度</span><span class="st ${cls}">${sev}</span></div>
+    <div style="font-size:12px;color:var(--green);border-top:1px solid var(--line);padding-top:10px">✨ AIヒント：${esc((CAUSES.find(c=>c.n===$('iCause').value)||{}).hint||'記録を続けると精度が上がります')}</div>
+  </div>`;
+}
+function renderItemTrend(){
+  const name=$('iName').value.trim();
+  if(!name){$('iTrend').innerHTML='<p style="color:var(--ink-3);font-size:13px">品目を選ぶと、その品目の過去の廃棄傾向を表示します。</p>';return;}
+  const hist=records.filter(r=>r.name===name);
+  if(!hist.length){$('iTrend').innerHTML='<p style="color:var(--ink-3);font-size:13px">「'+esc(name)+'」の過去記録はまだありません。新しい品目として記録できます。</p>';return;}
+  const total=hist.reduce((s,r)=>s+r.amount,0);
+  const byCause=sumBy(hist,r=>r.cause);
+  const topCause=Object.entries(byCause).sort((a,b)=>b[1]-a[1])[0];
+  $('iTrend').innerHTML=`<div style="display:flex;flex-direction:column;gap:8px;font-size:13px">
+    <div>過去3ヶ月の廃棄：<b>${hist.length}件 / ${yen(total)}</b></div>
+    <div>最多の原因：<b>${esc(topCause[0])}</b>（${yen(topCause[1])}）</div>
+    <div style="font-size:12px;color:var(--green)">✨ この品目は<b>${esc(topCause[0])}</b>が多いため、発注量の見直しが効果的です。</div>
+  </div>`;
+}
+['iQty','iPrice','iCat','iCause'].forEach(id=>$(id).addEventListener('input',()=>{renderInputPreview();}));
+$('iName').addEventListener('input',()=>{
+  const h=ITEMS.find(x=>x.n===$('iName').value);
+  if(h){$('iCat').value=h.cat;if(!$('iPrice').value){$('iPrice').value=h.p;$('iHint').classList.add('show');setTimeout(()=>$('iHint').classList.remove('show'),2200);}}
+  renderInputPreview();renderItemTrend();
+});
+$('iSave').addEventListener('click',async()=>{
+  const name=$('iName').value.trim();const {a,cls}=calcAmount();
+  if(!name||!a){showToast('品目と数量・単価を入力してください');return;}
+  const btn=$('iSave');btn.textContent='⚡ AIで分類中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,700));
+  records.unshift({id:records.length+1,date:new Date(),name,cat:$('iCat').value,qty:+$('iQty').value||0,price:+$('iPrice').value||0,amount:a,cause:$('iCause').value,staff:$('iStaff').value,sev:cls});
+  btn.textContent='⚡ AIで分類して記録する';btn.disabled=false;
+  showToast('「'+name+'」の廃棄を記録しました（'+yen(a)+'）');
+  $('iName').value='';$('iPrice').value='';$('iQty').value='3';renderInputPreview();renderItemTrend();calcAmount();
+  setTimeout(()=>go('records'),700);
+});
+
+/* ============ CAUSE ============ */
+function renderCause(){
+  const tm=records.filter(r=>thisMonth(r.date));
+  const tmSum=tm.reduce((s,r)=>s+r.amount,0)||1;
+  const byCause=sumBy(tm,r=>r.cause);
+  const cntCause={};tm.forEach(r=>cntCause[r.cause]=(cntCause[r.cause]||0)+1);
+  const sortedC=Object.entries(byCause).sort((a,b)=>b[1]-a[1]);
+  const topC=sortedC[0];
+  $('causeKpis').innerHTML=`
+    ${kpi('#e24a4a','最大の原因',esc(topC[0]),'','warn','全体の '+Math.round(topC[1]/tmSum*100)+'%')}
+    ${kpi('#e3941f','原因1位の金額',yen(topC[1]),cntCause[topC[0]]+'件','warn','重点対応')}
+    ${kpi('#2f6df0','原因の種類',sortedC.length+'<small>種</small>','分類済','up','AI自動分類')}
+    ${kpi('#16b877','改善余地',yen(Math.round(tmSum*0.3)),'AI試算','up','約30%削減可')}`;
+  // cause bars
+  const cmx=Math.max(...sortedC.map(x=>x[1]),1);
+  $('causeBars').innerHTML=sortedC.map(([cn,v])=>{const meta=CAUSES.find(c=>c.n===cn)||{em:'🔸'};return barRow(meta.em+' '+cn,v,cmx,'r',yen(v));}).join('');
+  animBars('#causeBars');
+  // category bars
+  const byCat=sumBy(tm,r=>r.cat);
+  const sortedCat=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
+  const catmx=Math.max(...sortedCat.map(x=>x[1]),1);
+  $('catBars').innerHTML=sortedCat.map(([cn,v])=>barRow(cn,v,catmx,'b',yen(v))).join('');
+  animBars('#catBars');
+  // table
+  $('causeTable').innerHTML=sortedC.map(([cn,v])=>{
+    const meta=CAUSES.find(c=>c.n===cn)||{em:'🔸',hint:'-'};
+    return `<tr><td><b>${meta.em} ${esc(cn)}</b></td><td class="r tnum">${cntCause[cn]}件</td><td class="r tnum"><b>${yen(v)}</b></td>
+      <td style="color:var(--green);font-size:12.5px">✨ ${esc(meta.hint)}</td></tr>`;
+  }).join('');
+}
+
+/* ============ COST ============ */
+function renderCost(){
+  const tm=records.filter(r=>thisMonth(r.date));
+  const tmSum=tm.reduce((s,r)=>s+r.amount,0);
+  const annual=tmSum*12;
+  const afterAnnual=Math.round(annual*0.7);
+  const SALES=8400000;
+  $('costKpis').innerHTML=`
+    ${kpi('#e3941f','今月の廃棄額',yen(tmSum),'','warn','原価ベース')}
+    ${kpi('#e24a4a','年間換算ロス',yen(annual),'このまま続くと','down','利益を圧迫')}
+    ${kpi('#16b877','削減見込（年）',yen(annual-afterAnnual),'AI最適化後','up','約30%削減')}
+    ${kpi('#2f6df0','粗利への影響',(tmSum/SALES*100).toFixed(2)+'<small>%</small>','売上比','warn','利益直結')}`;
+  // item bars
+  const byItem=sumBy(tm,r=>r.name);
+  const topI=Object.entries(byItem).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const imx=Math.max(...topI.map(x=>x[1]),1);
+  $('costBars').innerHTML=topI.map(x=>barRow(x[0],x[1],imx,'',yen(x[1]))).join('');
+  animBars('#costBars');
+  // staff bars
+  const byStaff=sumBy(tm,r=>r.staff);
+  const sortedS=Object.entries(byStaff).sort((a,b)=>b[1]-a[1]);
+  const smx=Math.max(...sortedS.map(x=>x[1]),1);
+  $('staffBars').innerHTML=sortedS.map(x=>barRow(x[0]+' 担当',x[1],smx,'b',yen(x[1]))).join('');
+  animBars('#staffBars');
+  // before/after annual
+  $('costNow').textContent=yen(annual);
+  $('costAfter').textContent=yen(afterAnnual);
+}
+
+/* ============ TREND ============ */
+function renderTrend(){
+  const months=[];for(let k=5;k>=0;k--){months.push(new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1));}
+  const sums=months.map(m=>records.filter(r=>r.date.getMonth()===m.getMonth()&&r.date.getFullYear()===m.getFullYear()).reduce((s,r)=>s+r.amount,0));
+  // older months padded a bit higher to show improvement story
+  for(let i=0;i<sums.length;i++){if(i<3)sums[i]=Math.round(sums[i]*(1.25-i*0.05));}
+  const SALES=8400000;
+  const cur=sums[sums.length-1];const prev=sums[sums.length-2]||1;
+  const peak=Math.max(...sums);
+  const totalSaved=peak-cur;
+  $('trendKpis').innerHTML=`
+    ${kpi('#e3941f','今月の廃棄額',yen(cur),'','up','前月比 '+Math.round((cur-prev)/prev*100)+'%')}
+    ${kpi('#16b877','ピークからの改善',yen(totalSaved),'最大月比','up','削減進行中')}
+    ${kpi('#2f6df0','今月の廃棄率',(cur/SALES*100).toFixed(2)+'<small>%</small>','売上比','up','目標 1.0%')}
+    ${kpi('#0ea5b7','6ヶ月平均',yen(Math.round(sums.reduce((a,b)=>a+b,0)/sums.length)),'','warn','基準値')}`;
+  const mx=Math.max(...sums,1);
+  $('trendCols').innerHTML=months.map((m,i)=>`<div class="colwrap" title="${m.getMonth()+1}月 ${yen(sums[i])}">
+    <div class="colbar" data-h="${Math.round(sums[i]/mx*100)}"><span class="cv">${yenK(sums[i])}</span></div>
+    <span class="cl">${m.getMonth()+1}月</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendCols .colbar').forEach(b=>b.style.height=b.dataset.h+'%'),60);
+  // day-of-week bars
+  const dowNames=['日','月','火','水','木','金','土'];
+  const dowSum=[0,0,0,0,0,0,0],dowCnt=[0,0,0,0,0,0,0];
+  records.forEach(r=>{const dw=r.date.getDay();dowSum[dw]+=r.amount;dowCnt[dw]++;});
+  const dowAvg=dowSum.map((s,i)=>dowCnt[i]?Math.round(s/dowCnt[i]*(dowCnt[i]/dowCnt[i])):0);
+  // average per day-of-week (total / number of that weekday occurrences ~13)
+  const dowDaily=dowSum.map(s=>Math.round(s/13));
+  const dmx=Math.max(...dowDaily,1);
+  $('dowBars').innerHTML=dowNames.map((nm,i)=>barRow(nm+'曜',dowDaily[i],dmx,(i===0||i===1||i===6)?'r':'',yen(dowDaily[i]))).join('');
+  animBars('#dowBars');
+}
+
+/* ============ AI PROPOSAL ============ */
+function syncPropBadge(){const tm=records.filter(r=>thisMonth(r.date));$('aiCnt').textContent=tm.length;}
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 分析中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';$('baAfterT').textContent='';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},120);
+  await new Promise(r=>setTimeout(r,1200));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+
+  // identify top loss items this month, build before/after order optimization
+  const tm=records.filter(r=>thisMonth(r.date));
+  const byItem=sumBy(tm,r=>r.name);
+  const topI=Object.entries(byItem).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  $('genItems').innerHTML=topI.map(([nm],i)=>{
+    return `<div class="gen-item" data-i="${i}"><span class="ck">✓</span>
+      <b style="flex:1">${esc(nm)}</b>
+      <div class="ba-mini"><span class="bf" data-bf="${i}">発注 100</span><span class="ar">→</span><span class="af" data-af="${i}">—</span></div></div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){
+    await new Promise(r=>setTimeout(r,200));items[i].classList.add('in');
+    const cut=10+Math.floor(rnd()*12); // 10-22% cut
+    const af=items[i].querySelector('.af');af.textContent='発注 '+(100-cut)+'（-'+cut+'%）';
+  }
+  // build concrete proposals
+  await new Promise(r=>setTimeout(r,300));
+  const tmSum=tm.reduce((s,r)=>s+r.amount,0);
+  const props=[
+    {ic:'📦',bg:'#eaf1ff',t:'発注量の最適化（過剰仕入れ対策）',
+     body:'過去3ヶ月の販売実績から、いちご・サーモン刺身・唐揚げ惣菜は仕入れ過多と判定。AIが曜日・天候を加味して発注量を自動調整します。',
+     bfL:'廃棄額/月',bf:yen(Math.round(tmSum*0.4)),bfn:'勘で発注',afL:'削減後',af:yen(Math.round(tmSum*0.4*0.7)),afn:'AI最適発注',imp:'月 '+yenK(Math.round(tmSum*0.4*0.3))+' 削減'},
+    {ic:'🔔',bg:'#fdf3e2',t:'賞味期限アラート＋値引き自動化',
+     body:'期限が近い商品を毎朝自動でリスト化し、夕方の時間帯値引きをPOS連携で自動適用。売れ残りを廃棄前に回収します。',
+     bfL:'売れ残り廃棄',bf:yen(Math.round(tmSum*0.25)),bfn:'見落とし発生',afL:'回収後',af:yen(Math.round(tmSum*0.25*0.55)),afn:'値引きで回収',imp:'回収率 +28%'},
+    {ic:'🌡️',bg:'#e6f8f0',t:'保管温度ログ連携で鮮度維持',
+     body:'冷蔵設備の温度ログを取り込み、温度逸脱を検知したら通知。鮮魚・乳製品の品質低下による廃棄を未然に防ぎます。',
+     bfL:'品質劣化ロス',bf:yen(Math.round(tmSum*0.15)),bfn:'温度ばらつき',afL:'改善後',af:yen(Math.round(tmSum*0.15*0.6)),afn:'温度を可視化',imp:'鮮魚ロス -40%'},
+  ];
+  $('propItems').innerHTML=props.map(p=>`<div class="prop">
+    <div class="ph2"><div class="pi" style="background:${p.bg}">${p.ic}</div><b>${esc(p.t)}</b><span class="impact">${esc(p.imp)}</span></div>
+    <div class="pbody">${esc(p.body)}</div>
+    <div class="ba2">
+      <div class="bx bf"><div class="lab">😓 ${esc(p.bfL)}</div><div class="num">${p.bf}</div><div class="nt">${esc(p.bfn)}</div></div>
+      <div class="arr">→</div>
+      <div class="bx af"><div class="lab">⚡ ${esc(p.afL)}</div><div class="num">${p.af}</div><div class="nt">${esc(p.afn)}</div></div>
+    </div></div>`).join('');
+  $('propWrap').style.display='block';
+  $('navProp').textContent=props.length;
+  btn.disabled=false;btn.textContent='⚡ もう一度分析する';
+  showToast('廃棄データを分析し '+props.length+'件の削減提案を作成しました');
+});
+
+/* ============ INIT ============ */
+(function(){const dl=document.createElement('datalist');dl.id='itemList';dl.innerHTML=ITEMS.map(i=>`<option value="${esc(i.n)}">`).join('');document.body.appendChild(dl);})();
+fillInputSelects();
+renderCatChips();
+renderDash();
+calcAmount();
+syncPropBadge();
+$('navProp').textContent='';
+</script>
+</body>
+</html>

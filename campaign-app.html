@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜キャンペーン管理マシン（販促・施策管理システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#7c4dff;--brand-dk:#5e30e8;--brand-soft:#f0eaff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--pink:#ec4899;
+  --sb:#1a1030;--sb-2:#241640;--sb-ink:#cdc4e0;--sb-ink-2:#8f86a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#a07bff,#ec4899,#e3b864,#a07bff);
+  display:grid;place-items:center;color:#1a0a2a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(124,77,255,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.nav a .badge.g{background:var(--green)}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--pink));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut / channel viz */
+.chvz{display:flex;flex-direction:column;gap:11px}
+.chrow{display:grid;grid-template-columns:96px 1fr 54px;align-items:center;gap:10px;font-size:12.5px}
+.chrow .cl{color:var(--ink-2);font-weight:600;display:flex;align-items:center;gap:6px}
+.chrow .cl .cd{width:9px;height:9px;border-radius:3px}
+.chtrack{height:9px;border-radius:99px;background:var(--soft);overflow:hidden}
+.chfill{height:100%;border-radius:99px;width:0;transition:width .9s cubic-bezier(.2,.8,.3,1)}
+.chrow .cv{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px;vertical-align:middle}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.active{background:var(--green-soft);color:var(--green)}
+.st.scheduled{background:var(--brand-soft);color:var(--brand)}
+.st.draft{background:var(--amber-soft);color:var(--amber)}
+.st.done{background:var(--soft);color:var(--ink-3)}
+.st.paused{background:var(--red-soft);color:var(--red)}
+/* channel tag */
+.ctag{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:7px;background:var(--soft);color:var(--ink-2)}
+/* mini progress */
+.mini{display:flex;align-items:center;gap:8px}
+.mini .mt{flex:1;height:7px;border-radius:99px;background:var(--soft);overflow:hidden;min-width:60px}
+.mini .mf{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--pink))}
+.mini .mn{font-size:11.5px;font-weight:700;color:var(--ink-2);min-width:34px;text-align:right}
+
+/* roi badge */
+.roi{font-weight:900;font-variant-numeric:tabular-nums}
+.roi.good{color:var(--green)}.roi.mid{color:var(--amber)}.roi.bad{color:var(--red)}
+
+/* create form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:64px;line-height:1.5}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chk-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.chk{display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--line-2);border-radius:9px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--ink-2);transition:all .15s}
+.chk input{width:auto;margin:0}
+.chk.on{border-color:var(--brand);background:var(--brand-soft);color:var(--brand)}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* preview card (campaign sheet) */
+.sheet{background:#fff;border:1px solid var(--line);border-radius:12px;padding:28px 30px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.sheet .badge-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.sheet h2{font-size:20px;font-weight:900;letter-spacing:-.01em;line-height:1.35;margin-bottom:6px}
+.sheet .sd{color:var(--ink-2);font-size:12.5px;margin-bottom:16px;white-space:pre-wrap}
+.sheet .sgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.sheet .sbox{background:var(--soft);border-radius:9px;padding:11px 13px}
+.sheet .sbox .sl{font-size:10.5px;color:var(--ink-3);font-weight:700;margin-bottom:3px}
+.sheet .sbox .sv{font-size:14px;font-weight:900}
+.sheet .kpibox{background:var(--brand-soft);border-left:5px solid var(--brand);border-radius:8px;padding:13px 16px;margin-bottom:14px}
+.sheet .kpibox .kl{font-size:10.5px;color:var(--brand-dk);font-weight:800;margin-bottom:4px}
+.sheet .kpibox .kv{font-family:'Orbitron';font-size:20px;font-weight:700;color:var(--brand-dk)}
+.sheet ul.plan{list-style:none;font-size:12px;color:var(--ink-2)}
+.sheet ul.plan li{padding:6px 0;display:flex;gap:9px;align-items:flex-start;border-bottom:1px dashed var(--line)}
+.sheet ul.plan li:last-child{border-bottom:0}
+.sheet ul.plan li .n{width:20px;height:20px;border-radius:6px;background:var(--brand);color:#fff;font-size:11px;font-weight:800;display:grid;place-items:center;flex-shrink:0}
+
+/* budget */
+.budget-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:980px){.budget-grid{grid-template-columns:1fr}}
+.budbar-wrap{margin-top:6px}
+.budbar{height:26px;border-radius:8px;background:var(--soft);overflow:hidden;display:flex}
+.budseg{height:100%;display:grid;place-items:center;color:#fff;font-size:10.5px;font-weight:800;white-space:nowrap;overflow:hidden;transition:width .9s}
+.budlegend{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;font-size:12px}
+.budlegend span{display:inline-flex;align-items:center;gap:6px;color:var(--ink-2);font-weight:600}
+.budlegend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-result{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-result.show{display:block;animation:fade .4s}
+.aiform{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:4px}
+.aiform .fg{margin:0;flex:1;min-width:200px}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#a07bff,#ec4899);display:grid;place-items:center;font-size:26px;margin:0}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(124,77,255,.4)}50%{box-shadow:0 0 40px rgba(236,72,153,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">キャンペーンマシン<small>技マシン｜販促・施策管理</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">🎯</span>施策一覧</a>
+      <a data-v="plan"><span class="i">🗓️</span>計画</a>
+      <a data-v="report"><span class="i">📈</span>効果測定</a>
+      <a data-v="budget"><span class="i">💴</span>予算<span class="badge g" id="navBudget">0%</span></a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI企画</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。数値・施策はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">2026年5月のキャンペーン状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>月次の売上貢献額の推移</h3><span class="more">過去6ヶ月</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>チャネル別の参加者割合</h3></div>
+            <div class="pb"><div class="chvz" id="chvz"></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>実施中・予定の施策</h3><span class="more" onclick="go('list')">一覧へ →</span></div>
+            <div class="pb" style="padding:0">
+              <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+                <thead><tr><th>施策名</th><th>状態</th><th class="r">ROI</th></tr></thead>
+                <tbody id="dashTop"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="施策名・チャネル・担当で検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>施策名</th><th>チャネル</th><th>期間</th><th class="r">予算</th><th>進捗</th><th class="r">参加者</th><th class="r">ROI</th><th>状態</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- PLAN -->
+      <section class="view" id="v-plan">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>施策名</label><input id="cName" placeholder="例：母の日 ギフト青果セット 特集"></div>
+            <div class="fg"><label>狙い・目標（AIが企画の参考にします）</label><textarea id="cGoal" placeholder="例：新規の医療法人を10件獲得したい"></textarea></div>
+            <div class="fg2">
+              <div class="fg"><label>開始日</label><input id="cStart" type="date"></div>
+              <div class="fg"><label>終了日</label><input id="cEnd" type="date"></div>
+            </div>
+            <div class="fg2">
+              <div class="fg"><label>予算（円）</label><input id="cBudget" type="number" min="0" placeholder="200000"></div>
+              <div class="fg"><label>担当者</label>
+                <select id="cStaff"></select></div>
+            </div>
+            <div class="fg"><label>配信チャネル</label>
+              <div class="chk-grid" id="cChannels"></div>
+            </div>
+            <div class="aihint" id="cAiHint">✨ AIが目標に合わせて予算とチャネルを提案しました</div>
+            <div class="linkrow" style="margin-top:16px">
+              <button class="btn primary" id="cSave" style="flex:1;justify-content:center">⚡ AIで仕上げて計画登録</button>
+              <button class="btn" id="cSample">サンプル</button>
+            </div>
+          </div>
+          <div>
+            <div class="sheet" id="cSheet">
+              <div class="badge-row" id="sBadges"><span class="st draft">下書き</span></div>
+              <h2 id="sName">（施策名を入力してください）</h2>
+              <div class="sd" id="sGoal">狙い・目標を入力すると、ここに企画概要が表示されます。</div>
+              <div class="kpibox"><div class="kl">想定の売上貢献（AI試算）</div><div class="kv" id="sKpi">¥0</div></div>
+              <div class="sgrid">
+                <div class="sbox"><div class="sl">期間</div><div class="sv" id="sPeriod">—</div></div>
+                <div class="sbox"><div class="sl">予算</div><div class="sv" id="sBudget">¥0</div></div>
+                <div class="sbox"><div class="sl">想定 参加者</div><div class="sv" id="sReach">—</div></div>
+                <div class="sbox"><div class="sl">想定 ROI</div><div class="sv" id="sRoi">—</div></div>
+              </div>
+              <div style="font-size:11.5px;font-weight:800;color:var(--ink-2);margin-bottom:6px">実施ステップ（AIドラフト）</div>
+              <ul class="plan" id="sPlan"><li><span class="n">1</span><span>施策名と目標を入れると、AIが手順を組み立てます。</span></li></ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- REPORT -->
+      <section class="view" id="v-report">
+        <div class="kpis" id="repKpis"></div>
+        <div class="panel" style="margin-bottom:16px">
+          <div class="ph"><h3>施策別の費用対効果（ROI）</h3><span class="more">参加者×単価で自動算出</span></div>
+          <div class="pb"><div class="bars" id="roiBars"></div></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>施策名</th><th class="r">費用</th><th class="r">売上貢献</th><th class="r">参加者</th><th class="r">獲得単価(CPA)</th><th class="r">ROI</th></tr></thead>
+          <tbody id="repRows"></tbody>
+        </table>
+      </section>
+
+      <!-- BUDGET -->
+      <section class="view" id="v-budget">
+        <div class="kpis" id="budKpis"></div>
+        <div class="budget-grid">
+          <div class="panel">
+            <div class="ph"><h3>予算の消化状況（チャネル別）</h3></div>
+            <div class="pb">
+              <div class="budbar" id="budBar"></div>
+              <div class="budlegend" id="budLegend"></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>残予算アラート</h3></div>
+            <div class="pb"><div class="acts" id="budAlerts"></div></div>
+          </div>
+        </div>
+        <table class="tbl" style="margin-top:16px">
+          <thead><tr><th>施策名</th><th class="r">予算</th><th class="r">消化額</th><th>消化率</th><th class="r">残予算</th></tr></thead>
+          <tbody id="budRows"></tbody>
+        </table>
+      </section>
+
+      <!-- AI PLAN -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">目標を入れるだけで、AIがキャンペーン企画案を作成</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">「売上を伸ばしたい」などの目標から、AIがチャネル・予算配分・実施手順まで一気に企画します。</div></div>
+          </div>
+          <div class="aiform">
+            <div class="fg"><label>達成したい目標</label>
+              <select id="aiGoal">
+                <option value="new">新規の医療・介護施設を増やしたい</option>
+                <option value="repeat">既存のお客様のリピートを増やしたい</option>
+                <option value="season">季節商品（シャインマスカット等）を売りたい</option>
+                <option value="brand">地域での知名度を上げたい</option>
+              </select></div>
+            <div class="fg" style="max-width:180px"><label>使える予算</label>
+              <select id="aiBudget">
+                <option value="100000">10万円</option>
+                <option value="300000" selected>30万円</option>
+                <option value="500000">50万円</option>
+                <option value="1000000">100万円</option>
+              </select></div>
+            <button class="btn primary" id="aiRun" style="height:42px">⚡ AIで企画する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">3時間20分</div>
+              <ul>
+                <li>📚 過去の販促データを集めて分析</li>
+                <li>🧮 チャネルごとの予算配分を試算</li>
+                <li>📝 企画書・実施スケジュールを作成</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 目標から最適チャネルを自動選定</li>
+                <li>📊 予算配分・想定ROIを自動試算</li>
+                <li>🗓️ 実施手順とスケジュールを自動生成</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-result" id="genResult">
+            <div style="font-size:13px;font-weight:800;margin-bottom:12px">✨ AIが生成したキャンペーン企画案</div>
+            <div class="sheet" id="aiSheet"></div>
+            <div class="linkrow" style="margin-top:14px">
+              <button class="btn primary" id="aiAdopt">この企画を施策一覧に登録</button>
+              <button class="btn" id="aiRegen">別案を作る</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const STAFF=['佐藤','田中','鈴木','高橋'];
+const CHANNELS=[
+  {k:'line',n:'LINE公式',c:'#06c755'},
+  {k:'mail',n:'メルマガ',c:'#2f6df0'},
+  {k:'insta',n:'Instagram',c:'#ec4899'},
+  {k:'flyer',n:'チラシ・DM',c:'#e3941f'},
+  {k:'event',n:'店頭・イベント',c:'#0ea5b7'},
+  {k:'web',n:'Web広告',c:'#7c4dff'},
+];
+const CHMAP=Object.fromEntries(CHANNELS.map(c=>[c.k,c]));
+const TODAY=new Date();
+function ym(d){return (d.getMonth()+1);}
+
+let SEED=4071;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+/* seed campaigns */
+const NAMES=[
+  '母の日 ギフト青果セット 特集','医療法人向け 福利厚生フェア','新規開業クリニック 紹介キャンペーン',
+  '夏の冷やし野菜 定期便キャンペーン','介護施設向け 食材無料サンプル','シャインマスカット 先行予約',
+  '梅雨の宅配 送料無料フェア','友達紹介で1,000ポイント','LINE友だち追加クーポン配布',
+  '創業祭 全品10%OFF','地域企業 福利厚生 説明会','秋の味覚 詰め合わせ予約',
+  '法人向け 定期便 初月半額','歯科医院向け お茶菓子定期便','年末 ご挨拶ギフト 特集',
+];
+const STATUSES=['active','active','scheduled','done','done','paused'];
+let campaigns=[];
+(function seed(){
+  for(let i=0;i<15;i++){
+    const chN=1+Math.floor(rnd()*3);
+    const chs=[];const pool=[...CHANNELS];
+    for(let j=0;j<chN;j++){chs.push(pool.splice(Math.floor(rnd()*pool.length),1)[0].k);}
+    const budget=[80000,120000,150000,200000,300000,500000][Math.floor(rnd()*6)];
+    const monthOff=Math.floor(rnd()*5)-3; // -3..+1
+    const start=new Date(TODAY.getFullYear(),TODAY.getMonth()+monthOff,1+Math.floor(rnd()*12));
+    const end=new Date(start.getFullYear(),start.getMonth(),start.getDate()+14+Math.floor(rnd()*30));
+    let status;
+    if(start>TODAY)status='scheduled';
+    else if(end<TODAY)status=rnd()>0.85?'paused':'done';
+    else status='active';
+    const reach=200+Math.floor(rnd()*2400);
+    const spent=status==='scheduled'?0:Math.round(budget*(status==='active'?0.3+rnd()*0.5:0.8+rnd()*0.25));
+    const cvr=0.04+rnd()*0.12; // conversion
+    const aov=6000+Math.floor(rnd()*18000); // 客単価
+    const conv=Math.round(reach*cvr);
+    const revenue=status==='scheduled'?0:Math.round(conv*aov);
+    const progress=start>TODAY?0:end<TODAY?100:Math.min(95,Math.round((TODAY-start)/(end-start)*100));
+    campaigns.push({
+      id:'CMP-'+(2026000+i+1),name:NAMES[i],channels:chs,staff:pick(STAFF),
+      budget,spent,start,end,status,reach:status==='scheduled'?0:reach,conv:status==='scheduled'?0:conv,revenue,progress
+    });
+  }
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmtD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+const STLABEL={active:'実施中',scheduled:'予定',draft:'下書き',done:'終了',paused:'停止中'};
+function stBadge(s){return `<span class="st ${esc(s)}">${STLABEL[s]||esc(s)}</span>`;}
+function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function chTags(ks){return ks.map(k=>{const c=CHMAP[k];return c?`<span class="ctag"><i style="width:7px;height:7px;border-radius:2px;background:${c.c};display:inline-block"></i>${esc(c.n)}</span>`:'';}).join(' ');}
+function roiOf(c){if(c.spent<=0)return 0;return Math.round((c.revenue-c.spent)/c.spent*100);}
+function roiClass(r){return r>=150?'good':r>=0?'mid':'bad';}
+function miniBar(p){return `<div class="mini"><div class="mt"><div class="mf" style="width:${Math.max(0,Math.min(100,p))}%"></div></div><span class="mn">${Math.round(p)}%</span></div>`;}
+
+/* ============ ROUTING ============ */
+const TITLES={
+  dash:['ダッシュボード','2026年'+ym(TODAY)+'月のキャンペーン状況'],
+  list:['施策一覧','実施中・予定の施策を管理します'],
+  plan:['計画','入力するとリアルタイムで企画書が組み上がります'],
+  report:['効果測定','施策ごとの費用対効果を可視化します'],
+  budget:['予算','予算の消化状況と残予算を管理します'],
+  ai:['AI企画','目標からキャンペーン企画案を自動で作ります']
+};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn primary" onclick="go(\'plan\')">＋ 新規施策</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AIで企画</button><button class="btn primary" onclick="go(\'plan\')">＋ 新規施策</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='report')renderReport();
+  if(v==='budget')renderBudget();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const active=campaigns.filter(c=>c.status==='active');
+  const totalReach=campaigns.reduce((s,c)=>s+c.reach,0);
+  const totalRev=campaigns.reduce((s,c)=>s+c.revenue,0);
+  const totalSpent=campaigns.reduce((s,c)=>s+c.spent,0);
+  const totalRoi=totalSpent>0?Math.round((totalRev-totalSpent)/totalSpent*100):0;
+  $('kpis').innerHTML=`
+    ${kpi('#7c4dff','実施中の施策',active.length+'<small>件</small>',campaigns.filter(c=>c.status==='scheduled').length+'件 予定','up','前月比 +2件')}
+    ${kpi('#ec4899','参加者（累計）',totalReach.toLocaleString()+'<small>人</small>','','up','前月比 +18%')}
+    ${kpi('#16b877','売上貢献',yen(totalRev),'','up','目標達成率 112%')}
+    ${kpi('#e3941f','全体ROI',(totalRoi>=0?'+':'')+totalRoi+'<small>%</small>',yen(totalSpent)+' 投資','up','費用対効果 良好')}`;
+  // trend (revenue by month)
+  const months=[];for(let k=5;k>=0;k--){const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1);months.push(d);}
+  const sums=months.map(m=>campaigns.filter(c=>c.start.getMonth()===m.getMonth()&&c.start.getFullYear()===m.getFullYear()).reduce((s,c)=>s+c.revenue,0));
+  const mx=Math.max(...sums,1);
+  $('trendBars').innerHTML=months.map((m,i)=>`
+    <div class="bar-row"><span class="mlabel">${m.getMonth()+1}月</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(sums[i]/mx*100)}"></div></div>
+      <span class="mval">${yen(sums[i])}</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // channel breakdown
+  const chSum={};CHANNELS.forEach(c=>chSum[c.k]=0);
+  campaigns.forEach(c=>{const per=c.reach/Math.max(1,c.channels.length);c.channels.forEach(k=>{if(chSum[k]!=null)chSum[k]+=per;});});
+  const chMax=Math.max(...Object.values(chSum),1);
+  const chArr=CHANNELS.map(c=>({...c,v:Math.round(chSum[c.k])})).sort((a,b)=>b.v-a.v);
+  $('chvz').innerHTML=chArr.map(c=>`
+    <div class="chrow"><span class="cl"><span class="cd" style="background:${c.c}"></span>${esc(c.n)}</span>
+      <div class="chtrack"><div class="chfill" style="width:0;background:${c.c}" data-w="${Math.round(c.v/chMax*100)}"></div></div>
+      <span class="cv">${c.v.toLocaleString()}</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#chvz .chfill').forEach(b=>b.style.width=b.dataset.w+'%'),120);
+  // top campaigns
+  const top=[...campaigns].filter(c=>c.status==='active'||c.status==='scheduled').sort((a,b)=>roiOf(b)-roiOf(a)).slice(0,5);
+  $('dashTop').innerHTML=top.map(c=>{const r=roiOf(c);return `<tr onclick="go('list')"><td><b>${esc(c.name)}</b></td><td>${stBadge(c.status)}</td><td class="r"><span class="roi ${roiClass(r)}">${c.spent>0?(r>=0?'+':'')+r+'%':'—'}</span></td></tr>`;}).join('');
+  // activity
+  const acts=[
+    {i:'🎯',c:'#f0eaff',t:'「母の日 ギフト青果セット 特集」が実施中になりました',m:'2分前'},
+    {i:'⚡',c:'#e6f8f0',t:'AI企画で「医療法人向け 福利厚生フェア」を作成（想定ROI +210%）',m:'1時間前'},
+    {i:'💴',c:'#fdf3e2',t:'「夏の冷やし野菜 定期便」の予算消化率が80%を超えました',m:'今日 9:14'},
+    {i:'📈',c:'#eaf1ff',t:'LINE経由の参加者が前週比 +24% で推移',m:'今日 8:30'},
+    {i:'✅',c:'#e6f8f0',t:'「創業祭 全品10%OFF」が終了（ROI +180%）',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ LIST ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['active','実施中'],['scheduled','予定'],['done','終了'],['paused','停止中']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=campaigns.filter(c=>filterStatus==='all'||c.status===filterStatus)
+    .filter(c=>{const hay=(c.name+c.staff+c.channels.map(k=>CHMAP[k]?CHMAP[k].n:'').join('')).toLowerCase();return !q||hay.includes(q);})
+    .sort((a,b)=>b.start-a.start);
+  $('listRows').innerHTML=rows.length?rows.map(c=>{const r=roiOf(c);return `<tr onclick="openCmp('${esc(c.id)}')">
+    <td><b>${esc(c.name)}</b><div style="font-size:11px;color:var(--ink-3)" class="mono">${esc(c.id)} ・ ${esc(c.staff)}</div></td>
+    <td>${chTags(c.channels)}</td>
+    <td style="color:var(--ink-2);white-space:nowrap">${fmtD(c.start)}〜${fmtD(c.end)}</td>
+    <td class="r tnum">${yen(c.budget)}</td>
+    <td style="min-width:110px">${miniBar(c.progress)}</td>
+    <td class="r tnum">${c.reach.toLocaleString()}</td>
+    <td class="r"><span class="roi ${roiClass(r)}">${c.spent>0?(r>=0?'+':'')+r+'%':'—'}</span></td>
+    <td>${stBadge(c.status)}</td></tr>`;}).join('')
+    :'<tr><td colspan="8" class="empty-cell">該当する施策がありません</td></tr>';
+}
+window.openCmp=id=>{const c=campaigns.find(x=>x.id===id);if(c){const r=roiOf(c);showToast(c.name+'（参加者 '+c.reach.toLocaleString()+'人 / ROI '+(c.spent>0?(r>=0?'+':'')+r+'%':'—')+'）');}};
+$('q').addEventListener('input',renderList);
+
+/* ============ PLAN ============ */
+const CVR_BASE=0.08, AOV=11000;
+let planChannels=['line','mail'];
+function renderStaffSelect(){
+  $('cStaff').innerHTML='<option value="">選択</option>'+STAFF.map(s=>`<option>${s}</option>`).join('');
+}
+function renderChannelChecks(){
+  $('cChannels').innerHTML=CHANNELS.map(c=>`<label class="chk ${planChannels.includes(c.k)?'on':''}" data-k="${c.k}">
+    <input type="checkbox" ${planChannels.includes(c.k)?'checked':''}><i style="width:9px;height:9px;border-radius:2px;background:${c.c};display:inline-block"></i>${esc(c.n)}</label>`).join('');
+  $('cChannels').querySelectorAll('.chk').forEach(el=>{
+    el.onclick=e=>{e.preventDefault();const k=el.dataset.k;if(planChannels.includes(k))planChannels=planChannels.filter(x=>x!==k);else planChannels.push(k);renderChannelChecks();renderSheet();};
+  });
+}
+function renderSheet(){
+  const name=$('cName').value.trim();
+  const goal=$('cGoal').value.trim();
+  const budget=+$('cBudget').value||0;
+  const start=$('cStart').value, end=$('cEnd').value;
+  $('sName').textContent=name||'（施策名を入力してください）';
+  $('sGoal').textContent=goal||'狙い・目標を入力すると、ここに企画概要が表示されます。';
+  $('sBadges').innerHTML=`<span class="st draft">下書き</span>`+planChannels.map(k=>{const c=CHMAP[k];return c?`<span class="ctag"><i style="width:7px;height:7px;border-radius:2px;background:${c.c};display:inline-block"></i>${esc(c.n)}</span>`:'';}).join(' ');
+  // estimate
+  const reach=Math.round(budget>0?budget/120*(1+planChannels.length*0.15):0); // crude reach model
+  const conv=Math.round(reach*CVR_BASE);
+  const revenue=conv*AOV;
+  const roi=budget>0?Math.round((revenue-budget)/budget*100):0;
+  $('sKpi').textContent=yen(revenue);
+  $('sBudget').textContent=yen(budget);
+  $('sReach').textContent=reach?reach.toLocaleString()+'人':'—';
+  $('sRoi').textContent=budget>0?((roi>=0?'+':'')+roi+'%'):'—';
+  $('sPeriod').textContent=(start&&end)?(start.replace(/-/g,'/')+'〜'+end.replace(/-/g,'/')):'—';
+  // plan steps
+  if(name||goal){
+    const chNames=planChannels.map(k=>CHMAP[k]?CHMAP[k].n:'').filter(Boolean).join('・')||'各チャネル';
+    const steps=[
+      `${esc(chNames)} で告知コンテンツを配信し、見込み客を集めます`,
+      `応募・問い合わせを自動で受け付け、リストに登録します`,
+      `参加者へクーポン／資料を送り、来店・契約につなげます`,
+      `期間終了後、参加者数・売上貢献・ROIを自動集計します`,
+    ];
+    $('sPlan').innerHTML=steps.map((s,i)=>`<li><span class="n">${i+1}</span><span>${s}</span></li>`).join('');
+  }else{
+    $('sPlan').innerHTML='<li><span class="n">1</span><span>施策名と目標を入れると、AIが手順を組み立てます。</span></li>';
+  }
+}
+['cName','cGoal','cBudget','cStart','cEnd'].forEach(id=>$(id).addEventListener('input',renderSheet));
+$('cSample').addEventListener('click',()=>{
+  $('cName').value='母の日 ギフト青果セット 特集';
+  $('cGoal').value='新規の個人顧客を増やしつつ、既存の医療法人にもギフト需要を提案したい。';
+  const s=new Date(TODAY.getFullYear(),TODAY.getMonth(),10),e=new Date(TODAY.getFullYear(),TODAY.getMonth(),31);
+  $('cStart').value=s.toISOString().slice(0,10);
+  $('cEnd').value=e.toISOString().slice(0,10);
+  $('cBudget').value=200000;$('cStaff').value='鈴木';
+  planChannels=['line','insta','mail'];renderChannelChecks();renderSheet();
+  $('cAiHint').classList.add('show');setTimeout(()=>$('cAiHint').classList.remove('show'),2200);
+});
+$('cSave').addEventListener('click',async()=>{
+  const name=$('cName').value.trim();
+  if(!name){showToast('施策名を入力してください');return;}
+  const btn=$('cSave');btn.textContent='⚡ AIが仕上げ中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,800));
+  const budget=+$('cBudget').value||100000;
+  const start=$('cStart').value?new Date($('cStart').value):new Date();
+  const end=$('cEnd').value?new Date($('cEnd').value):new Date(start.getFullYear(),start.getMonth()+1,start.getDate());
+  const reach=Math.round(budget/120*(1+planChannels.length*0.15));
+  const conv=Math.round(reach*CVR_BASE);const revenue=conv*AOV;
+  const status=start>TODAY?'scheduled':'active';
+  campaigns.unshift({id:'CMP-'+(2026000+campaigns.length+1),name,channels:planChannels.length?[...planChannels]:['line'],
+    staff:$('cStaff').value||'佐藤',budget,spent:status==='scheduled'?0:Math.round(budget*0.1),
+    start,end,status,reach:status==='scheduled'?0:reach,conv:status==='scheduled'?0:conv,
+    revenue:status==='scheduled'?0:revenue,progress:status==='scheduled'?0:5});
+  btn.textContent='⚡ AIで仕上げて計画登録';btn.disabled=false;
+  showToast('施策「'+name+'」を登録しました（一覧に追加）');
+  setTimeout(()=>go('list'),700);
+});
+
+/* ============ REPORT ============ */
+function renderReport(){
+  const done=campaigns.filter(c=>c.status!=='scheduled');
+  const totalRev=done.reduce((s,c)=>s+c.revenue,0);
+  const totalSpent=done.reduce((s,c)=>s+c.spent,0);
+  const totalConv=done.reduce((s,c)=>s+c.conv,0);
+  const totalRoi=totalSpent>0?Math.round((totalRev-totalSpent)/totalSpent*100):0;
+  const cpa=totalConv>0?Math.round(totalSpent/totalConv):0;
+  $('repKpis').innerHTML=`
+    ${kpi('#16b877','売上貢献 合計',yen(totalRev),done.length+'施策','up','前期比 +15%')}
+    ${kpi('#7c4dff','投資 合計',yen(totalSpent),'','warn','予算内')}
+    ${kpi('#ec4899','獲得 合計',totalConv.toLocaleString()+'<small>件</small>','','up','成約・参加')}
+    ${kpi('#e3941f','平均CPA',yen(cpa),'1件あたり','up','改善傾向')}`;
+  // roi bars
+  const sorted=[...done].filter(c=>c.spent>0).sort((a,b)=>roiOf(b)-roiOf(a)).slice(0,8);
+  const mx=Math.max(...sorted.map(c=>roiOf(c)),1);
+  $('roiBars').innerHTML=sorted.map(c=>{const r=roiOf(c);const cls=roiClass(r);const col=cls==='good'?'var(--green)':cls==='mid'?'var(--amber)':'var(--red)';
+    return `<div class="bar-row" style="grid-template-columns:1fr 1fr 78px"><span class="mlabel" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(c.name)}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0;background:${col}" data-w="${Math.max(2,Math.round(Math.max(0,r)/mx*100))}"></div></div>
+      <span class="mval" style="color:${col}">${(r>=0?'+':'')+r}%</span></div>`;}).join('');
+  setTimeout(()=>document.querySelectorAll('#roiBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),80);
+  // table
+  $('repRows').innerHTML=done.sort((a,b)=>b.revenue-a.revenue).map(c=>{const r=roiOf(c);const cpa=c.conv>0?Math.round(c.spent/c.conv):0;
+    return `<tr onclick="openCmp('${esc(c.id)}')"><td><b>${esc(c.name)}</b></td>
+      <td class="r tnum">${yen(c.spent)}</td><td class="r tnum"><b>${yen(c.revenue)}</b></td>
+      <td class="r tnum">${c.conv.toLocaleString()}件</td><td class="r tnum">${cpa?yen(cpa):'—'}</td>
+      <td class="r"><span class="roi ${roiClass(r)}">${c.spent>0?(r>=0?'+':'')+r+'%':'—'}</span></td></tr>`;}).join('')
+    || '<tr><td colspan="6" class="empty-cell">データがありません</td></tr>';
+}
+
+/* ============ BUDGET ============ */
+function renderBudget(){
+  const totalBudget=campaigns.reduce((s,c)=>s+c.budget,0);
+  const totalSpent=campaigns.reduce((s,c)=>s+c.spent,0);
+  const remain=totalBudget-totalSpent;
+  const rate=totalBudget>0?Math.round(totalSpent/totalBudget*100):0;
+  $('budKpis').innerHTML=`
+    ${kpi('#7c4dff','予算 合計',yen(totalBudget),campaigns.length+'施策','up','年間計画内')}
+    ${kpi('#e3941f','消化額',yen(totalSpent),rate+'% 消化','warn','ペース適正')}
+    ${kpi('#16b877','残予算',yen(remain),'','up','余裕あり')}
+    ${kpi('#ec4899','消化率',rate+'<small>%</small>','','up','前月比 +8pt')}`;
+  $('navBudget').textContent=rate+'%';
+  // channel budget bar
+  const chBud={};CHANNELS.forEach(c=>chBud[c.k]=0);
+  campaigns.forEach(c=>{const per=c.spent/Math.max(1,c.channels.length);c.channels.forEach(k=>{if(chBud[k]!=null)chBud[k]+=per;});});
+  const tot=Math.max(1,Object.values(chBud).reduce((s,v)=>s+v,0));
+  const arr=CHANNELS.map(c=>({...c,v:Math.round(chBud[c.k])})).filter(c=>c.v>0).sort((a,b)=>b.v-a.v);
+  $('budBar').innerHTML=arr.map(c=>`<div class="budseg" style="width:0;background:${c.c}" data-w="${Math.round(c.v/tot*100)}">${Math.round(c.v/tot*100)}%</div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#budBar .budseg').forEach(b=>b.style.width=b.dataset.w+'%'),80);
+  $('budLegend').innerHTML=arr.map(c=>`<span><i style="background:${c.c}"></i>${esc(c.n)} ${yen(c.v)}</span>`).join('');
+  // alerts
+  const alerts=[];
+  campaigns.forEach(c=>{if(c.budget>0){const r=Math.round(c.spent/c.budget*100);
+    if(r>=90&&c.status==='active')alerts.push({i:'🚨',c:'#fdeaea',t:esc(c.name)+'：予算消化 '+r+'%（残 '+yen(c.budget-c.spent)+'）',m:'予算オーバー注意'});
+    else if(r>=75&&c.status==='active')alerts.push({i:'⚠️',c:'#fdf3e2',t:esc(c.name)+'：予算消化 '+r+'%',m:'残予算わずか'});
+  }});
+  if(!alerts.length)alerts.push({i:'✅',c:'#e6f8f0',t:'予算オーバーの施策はありません',m:'すべて計画内で推移中'});
+  $('budAlerts').innerHTML=alerts.slice(0,6).map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${a.t}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+  // table
+  $('budRows').innerHTML=[...campaigns].sort((a,b)=>(b.spent/Math.max(1,b.budget))-(a.spent/Math.max(1,a.budget))).map(c=>{
+    const r=c.budget>0?Math.round(c.spent/c.budget*100):0;
+    return `<tr onclick="openCmp('${esc(c.id)}')"><td><b>${esc(c.name)}</b></td>
+      <td class="r tnum">${yen(c.budget)}</td><td class="r tnum">${yen(c.spent)}</td>
+      <td style="min-width:120px">${miniBar(r)}</td><td class="r tnum">${yen(c.budget-c.spent)}</td></tr>`;}).join('');
+}
+
+/* ============ AI PLAN ============ */
+const AI_TEMPLATES={
+  new:{title:'医療・介護施設 新規開拓 紹介キャンペーン',
+    goal:'大分市内の医療法人・介護施設に「青果の定期便＋AI業務自動化」をセットで提案し、新規契約を獲得します。既存の取引先からの紹介インセンティブで信頼ベースの拡大を狙います。',
+    chs:['mail','event','flyer'],kpiMul:2.4,reachMul:1.0,
+    steps:['取引先リストへ紹介依頼DM＋紹介特典（次回1万円分）を案内','院長会・施設長会向けに無料サンプル試食会を開催','問い合わせを自動受付し、担当者が訪問商談へ','成約施設へ初月半額で定期便を開始、満足度を測定']},
+  repeat:{title:'既存顧客 リピート促進 LINE限定クーポン',
+    goal:'既存のお客様に向けてLINE公式アカウントで限定クーポンを配布し、購入頻度の引き上げと離脱防止を図ります。',
+    chs:['line','mail'],kpiMul:1.8,reachMul:1.6,
+    steps:['LINE友だちへ「今だけ15%OFF」クーポンを一斉配信','前回購入から30日経過した方へ自動でリマインド','クーポン利用者へサンクスメッセージと次回特典を送付','リピート率・客単価の変化を自動で集計']},
+  season:{title:'シャインマスカット 先行予約キャンペーン',
+    goal:'旬のシャインマスカットの先行予約を、SNSと既存リストで一気に集めます。数量限定の希少性で予約を加速させます。',
+    chs:['insta','line','web'],kpiMul:2.1,reachMul:1.9,
+    steps:['Instagramで産地・収穫の様子をリール動画で発信','「数量限定・先行予約」LPへ広告で誘導','LINEで予約受付＆在庫カウントダウンを自動表示','予約者へ発送通知とギフト用ラッピング案内を送付']},
+  brand:{title:'地域認知 拡大 店頭イベント＋SNS連動',
+    goal:'大分市内での知名度を高め、新規来店・問い合わせの母数を増やします。店頭イベントとSNS拡散を組み合わせます。',
+    chs:['event','insta','flyer'],kpiMul:1.5,reachMul:2.4,
+    steps:['週末に店頭で青果の詰め放題・試食イベントを開催','来場者にSNS投稿で割引、ハッシュタグ拡散を促進','近隣エリアへチラシ・DMをポスティング','来店者をLINE友だち登録へ誘導し継続接点を作る']},
+};
+let lastAdopt=null;
+function buildAiPlan(){
+  const key=$('aiGoal').value;const budget=+$('aiBudget').value;
+  const t=AI_TEMPLATES[key];
+  const reach=Math.round(budget/120*t.reachMul);
+  const conv=Math.round(reach*CVR_BASE);
+  const revenue=Math.round(budget*t.kpiMul);
+  const roi=Math.round((revenue-budget)/budget*100);
+  const start=new Date(TODAY.getFullYear(),TODAY.getMonth(),Math.min(28,TODAY.getDate()+5));
+  const end=new Date(start.getFullYear(),start.getMonth()+1,start.getDate());
+  return {key,budget,t,reach,conv,revenue,roi,start,end};
+}
+function renderAiSheet(p){
+  const chBadges=p.t.chs.map(k=>{const c=CHMAP[k];return c?`<span class="ctag"><i style="width:7px;height:7px;border-radius:2px;background:${c.c};display:inline-block"></i>${esc(c.n)}</span>`:'';}).join(' ');
+  $('aiSheet').innerHTML=`
+    <div class="badge-row"><span class="st scheduled">AI企画案</span>${chBadges}</div>
+    <h2>${esc(p.t.title)}</h2>
+    <div class="sd">${esc(p.t.goal)}</div>
+    <div class="kpibox"><div class="kl">想定の売上貢献（AI試算）</div><div class="kv">${yen(p.revenue)}</div></div>
+    <div class="sgrid">
+      <div class="sbox"><div class="sl">期間</div><div class="sv">${fmtD(p.start)}〜${fmtD(p.end)}</div></div>
+      <div class="sbox"><div class="sl">予算</div><div class="sv">${yen(p.budget)}</div></div>
+      <div class="sbox"><div class="sl">想定 参加者</div><div class="sv">${p.reach.toLocaleString()}人</div></div>
+      <div class="sbox"><div class="sl">想定 ROI</div><div class="sv" style="color:var(--green)">+${p.roi}%</div></div>
+    </div>
+    <div style="font-size:11.5px;font-weight:800;color:var(--ink-2);margin-bottom:6px">実施ステップ（AIドラフト）</div>
+    <ul class="plan">${p.t.steps.map((s,i)=>`<li><span class="n">${i+1}</span><span>${esc(s)}</span></li>`).join('')}</ul>`;
+  lastAdopt=p;
+}
+async function runAi(){
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 企画中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';$('genResult').classList.remove('show');
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,8);},120);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  const p=buildAiPlan();renderAiSheet(p);
+  $('genResult').classList.add('show');
+  btn.disabled=false;btn.textContent='⚡ AIで企画する';
+  showToast('AIがキャンペーン企画案を作成しました（想定ROI +'+p.roi+'%）');
+}
+$('aiRun').addEventListener('click',runAi);
+$('aiRegen').addEventListener('click',()=>{
+  // cycle to another goal for variety
+  const sel=$('aiGoal');sel.selectedIndex=(sel.selectedIndex+1)%sel.options.length;runAi();
+});
+$('aiAdopt').addEventListener('click',()=>{
+  if(!lastAdopt)return;const p=lastAdopt;
+  campaigns.unshift({id:'CMP-'+(2026000+campaigns.length+1),name:p.t.title,channels:[...p.t.chs],staff:'佐藤',
+    budget:p.budget,spent:Math.round(p.budget*0.1),start:p.start,end:p.end,status:p.start>TODAY?'scheduled':'active',
+    reach:p.start>TODAY?0:Math.round(p.reach*0.1),conv:p.start>TODAY?0:Math.round(p.conv*0.1),
+    revenue:p.start>TODAY?0:Math.round(p.revenue*0.1),progress:p.start>TODAY?0:6});
+  showToast('企画案「'+p.t.title+'」を施策一覧に登録しました');
+  setTimeout(()=>go('list'),700);
+});
+
+/* ============ INIT ============ */
+renderStaffSelect();renderChannelChecks();renderSheet();renderChips();renderDash();
+const _bt=campaigns.reduce((s,c)=>s+c.budget,0),_bs=campaigns.reduce((s,c)=>s+c.spent,0);
+$('navBudget').textContent=(_bt>0?Math.round(_bs/_bt*100):0)+'%';
+</script>
+</body>
+</html>

@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜現場写真管理マシン（工事写真台帳システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:78px 1fr 60px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.done{background:var(--green-soft);color:var(--green)}
+.st.prog{background:var(--brand-soft);color:var(--brand)}
+.st.wait{background:var(--soft);color:var(--ink-3)}
+.st.alert{background:var(--red-soft);color:var(--red)}
+.st.plan{background:var(--amber-soft);color:var(--amber)}
+
+/* photo grid */
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+.photo{background:var(--card);border:1px solid var(--line);border-radius:13px;overflow:hidden;box-shadow:var(--shadow);transition:all .18s;cursor:pointer}
+.photo:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);border-color:var(--line-2)}
+.photo .thumb{height:140px;position:relative;display:grid;place-items:center;font-size:42px;color:#fff;overflow:hidden}
+.photo .thumb .ico{filter:drop-shadow(0 4px 10px rgba(0,0,0,.25));z-index:1}
+.photo .thumb::after{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.16),rgba(0,0,0,.18))}
+.photo .thumb .ko{position:absolute;left:8px;top:8px;z-index:2;background:rgba(15,24,48,.78);color:#fff;font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:6px;letter-spacing:.02em}
+.photo .thumb .ph-st{position:absolute;right:8px;top:8px;z-index:2}
+.photo .pinfo{padding:11px 13px}
+.photo .pinfo .pt{font-weight:800;font-size:13px;line-height:1.3;margin-bottom:4px}
+.photo .pinfo .pm{font-size:11px;color:var(--ink-3);display:flex;justify-content:space-between;align-items:center}
+.photo .pinfo .pm .mono{font-size:10.5px;color:var(--ink-2)}
+
+/* genba cards (sites) */
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.scard{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;transition:all .18s;cursor:pointer}
+.scard:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+.scard .sh{padding:15px 17px 13px;border-bottom:1px solid var(--line)}
+.scard .sh .sn{font-weight:900;font-size:15px;letter-spacing:-.01em}
+.scard .sh .sa{font-size:11.5px;color:var(--ink-3);margin-top:2px}
+.scard .sb{padding:13px 17px;display:flex;gap:16px;font-size:12px}
+.scard .sb .m b{display:block;font-size:18px;font-weight:900;line-height:1.1;font-variant-numeric:tabular-nums}
+.scard .sb .m span{color:var(--ink-3);font-size:10.5px}
+.scard .sf{padding:0 17px 15px}
+.prog-track{height:8px;border-radius:99px;background:var(--soft);overflow:hidden;margin-top:4px}
+.prog-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--green),#3ee0a0);width:0;transition:width .9s cubic-bezier(.2,.8,.3,1)}
+.scard .sf .pl{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-2);font-weight:600}
+
+/* work-type breakdown */
+.koshu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px}
+.ku{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:16px;box-shadow:var(--shadow);text-align:center;transition:all .15s;cursor:pointer}
+.ku:hover{border-color:var(--brand);transform:translateY(-2px)}
+.ku .ki{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;font-size:23px;margin:0 auto 10px}
+.ku .kn{font-weight:800;font-size:13.5px}
+.ku .kc{font-size:24px;font-weight:900;margin-top:4px;font-variant-numeric:tabular-nums}
+.ku .ks{font-size:11px;color:var(--ink-3);margin-top:2px}
+
+/* report form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,400px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:74px;line-height:1.6}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+
+/* report paper preview */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:30px 32px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.pv-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
+.pv-title{font-size:23px;font-weight:900;letter-spacing:.2em;color:var(--brand-dk);border-bottom:3px solid var(--brand-dk);padding-bottom:5px}
+.pv-meta{text-align:right;font-size:11.5px;color:var(--ink-2)}
+.pv-meta .no{font-family:'Orbitron';color:var(--ink);font-weight:700}
+.rp-info{display:grid;grid-template-columns:1fr 1fr;gap:7px 18px;margin:8px 0 16px;font-size:12px}
+.rp-info .ri{display:flex;gap:8px;border-bottom:1px dashed var(--line);padding-bottom:5px}
+.rp-info .ri b{color:var(--ink-2);min-width:62px}
+.ba-pair{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.ba-pair .ph-card{border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.ba-pair .ph-card .pc-img{height:120px;display:grid;place-items:center;font-size:34px;color:#fff;position:relative}
+.ba-pair .ph-card .pc-img .lab{position:absolute;left:7px;top:7px;background:rgba(15,24,48,.8);color:#fff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:5px}
+.ba-pair .ph-card .pc-cap{padding:8px 10px;font-size:11px;color:var(--ink-2)}
+.rp-note{background:var(--soft);border-left:4px solid var(--brand-dk);border-radius:6px;padding:11px 14px;font-size:11.5px;color:var(--ink-2);line-height:1.7;margin-top:8px}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900}
+.gen-item .gthumb{width:34px;height:34px;border-radius:7px;display:grid;place-items:center;color:#fff;font-size:16px;flex-shrink:0}
+
+/* AI inbox (unclassified) */
+.inbox{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-top:6px}
+.inbox .ib{border:1px solid var(--line);border-radius:9px;overflow:hidden;position:relative}
+.inbox .ib .ibimg{height:72px;display:grid;place-items:center;font-size:24px;color:#fff}
+.inbox .ib .ibcap{padding:5px 7px;font-size:10px;color:var(--ink-3);text-align:center}
+.inbox .ib .tag-ai{position:absolute;left:5px;top:5px;font-size:9px;font-weight:800;padding:1px 6px;border-radius:5px;background:rgba(15,24,48,.78);color:#fff;opacity:0;transition:all .3s}
+.inbox .ib.tagged .tag-ai{opacity:1}
+.inbox .ib.tagged{border-color:var(--green)}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(15,24,48,.55);display:none;place-items:center;z-index:150;padding:20px}
+.modal.show{display:grid;animation:fade .25s}
+.modal .mc{background:var(--card);border-radius:16px;max-width:520px;width:100%;box-shadow:var(--shadow-lg);overflow:hidden}
+.modal .mimg{height:200px;display:grid;place-items:center;font-size:64px;color:#fff;position:relative}
+.modal .mimg .x{position:absolute;right:12px;top:12px;width:32px;height:32px;border-radius:8px;background:rgba(15,24,48,.6);color:#fff;border:0;font-size:16px;cursor:pointer;display:grid;place-items:center}
+.modal .mbody{padding:18px 20px}
+.modal .mbody h3{font-size:17px;font-weight:900;margin-bottom:10px}
+.modal .mrow{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}
+.modal .mrow:last-child{border-bottom:0}
+.modal .mrow b{color:var(--ink-2)}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.sectit{font-size:13.5px;font-weight:800;margin:6px 0 12px;display:flex;align-items:center;gap:8px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">現場写真管理マシン<small>技マシン｜工事写真台帳</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="sites"><span class="i">🏗️</span>現場一覧</a>
+      <a data-v="ledger"><span class="i">📷</span>写真台帳</a>
+      <a data-v="koshu"><span class="i">🧱</span>工種別</a>
+      <a data-v="report"><span class="i">📝</span>報告書</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI写真整理<span class="badge" id="navInbox">0</span></a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 現場監督</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。現場・写真はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">現場の写真整理状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>工種別の撮影枚数</h3><span class="more">今月</span></div>
+            <div class="pb"><div class="bars" id="koshuBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SITES -->
+      <section class="view" id="v-sites">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="sq" placeholder="現場名・住所・担当で検索"></div>
+          <div class="chips" id="siteChips"></div>
+        </div>
+        <div class="sgrid" id="siteGrid"></div>
+      </section>
+
+      <!-- LEDGER (photo grid) -->
+      <section class="view" id="v-ledger">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="lq" placeholder="現場・工種・撮影内容で検索"></div>
+          <div class="chips" id="ledgerChips"></div>
+        </div>
+        <div class="pgrid" id="photoGrid"></div>
+      </section>
+
+      <!-- KOSHU (work types) -->
+      <section class="view" id="v-koshu">
+        <div class="koshu-grid" id="koshuGrid" style="margin-bottom:22px"></div>
+        <div class="panel">
+          <div class="ph"><h3>工種別の整理状況</h3></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>工種</th><th class="r">撮影枚数</th><th class="r">整理済</th><th class="r">未整理</th><th>整理率</th></tr></thead>
+              <tbody id="koshuRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- REPORT -->
+      <section class="view" id="v-report">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>現場</label><select id="rSite"></select></div>
+            <div class="fg"><label>工種</label><select id="rKoshu"></select></div>
+            <div class="fg"><label>報告タイトル</label><input id="rTitle" placeholder="例：基礎配筋 施工状況報告"></div>
+            <div class="fg"><label>撮影日</label><input id="rDate" type="date"></div>
+            <div class="fg"><label>所見・備考（空欄ならAIが自動生成）</label><textarea id="rNote" placeholder="施工状況・確認内容など"></textarea></div>
+            <div class="aihint" id="rAiHint">✨ AIが工種に合わせた所見を自動入力しました</div>
+            <div class="linkrow" style="margin-top:16px">
+              <button class="btn primary" id="rIssue" style="flex:1;justify-content:center">⚡ AIで報告書を作成</button>
+              <button class="btn" id="rSample">サンプル</button>
+            </div>
+          </div>
+          <div>
+            <div class="paper" id="rPaper">
+              <div class="pv-top">
+                <div class="pv-title">工事写真報告書</div>
+                <div class="pv-meta"><div>報告書No：<span class="no" id="rpNo">—</span></div><div>作成日：<span id="rpMade">—</span></div></div>
+              </div>
+              <div class="rp-info">
+                <div class="ri"><b>現場名</b><span id="rpSite">—</span></div>
+                <div class="ri"><b>工種</b><span id="rpKoshu">—</span></div>
+                <div class="ri"><b>撮影日</b><span id="rpDate">—</span></div>
+                <div class="ri"><b>撮影者</b><span id="rpBy">現場監督 中村</span></div>
+              </div>
+              <div class="sectit">📷 施工状況写真（Before / After）</div>
+              <div class="ba-pair" id="rpPair"></div>
+              <div class="sectit">📝 所見・確認事項</div>
+              <div class="rp-note" id="rpNote">所見を入力するか「AIで報告書を作成」を押すと、ここに自動で記載されます。</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI ORGANIZE -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">撮りためた写真をAIが自動で整理</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">未整理の現場写真 <b id="aiInboxN">12枚</b> を、AIが現場・工種・日付で自動分類して台帳を作成します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで一括整理する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">3時間20分</div>
+              <ul>
+                <li>📂 写真を現場フォルダに手で振り分け</li>
+                <li>🏷️ 1枚ずつ工種・日付・撮影内容を記入</li>
+                <li>📋 黒板情報を見ながら台帳へ転記</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 写真を解析して現場・工種を自動判定</li>
+                <li>🏷️ 撮影日・位置情報からタグ付け</li>
+                <li>📋 工事写真台帳を自動で組み立て</li>
+              </ul>
+            </div>
+          </div>
+          <div style="margin-top:18px">
+            <div class="sectit">📥 未整理の写真（AI解析対象）</div>
+            <div class="inbox" id="inbox"></div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ 台帳に整理された写真</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- photo modal -->
+<div class="modal" id="modal"><div class="mc">
+  <div class="mimg" id="mImg"><button class="x" id="mClose">✕</button></div>
+  <div class="mbody">
+    <h3 id="mTitle"></h3>
+    <div class="mrow"><b>現場</b><span id="mSite"></span></div>
+    <div class="mrow"><b>工種</b><span id="mKoshu"></span></div>
+    <div class="mrow"><b>撮影日</b><span id="mDate"></span></div>
+    <div class="mrow"><b>区分</b><span id="mBa"></span></div>
+    <div class="mrow"><b>撮影者</b><span id="mBy"></span></div>
+    <div class="mrow"><b>状態</b><span id="mStatus"></span></div>
+  </div>
+</div></div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const SITES=[
+  {name:'都町オフィスビル 新築工事',addr:'大分市都町2丁目',mgr:'中村',status:'prog',prog:62},
+  {name:'別府温泉 旅館改修工事',addr:'別府市北浜1丁目',mgr:'田島',status:'prog',prog:78},
+  {name:'大分中央クリニック 増築',addr:'大分市中央町3丁目',mgr:'中村',status:'prog',prog:41},
+  {name:'豊後大野 道路改良工事',addr:'豊後大野市三重町',mgr:'佐伯',status:'done',prog:100},
+  {name:'臼杵 護岸補修工事',addr:'臼杵市港町',mgr:'佐伯',status:'plan',prog:8},
+  {name:'大分港 倉庫解体工事',addr:'大分市西大道',mgr:'田島',status:'prog',prog:55},
+];
+const KOSHU=[
+  {n:'基礎工事',i:'🧱',c:'#8a6212',bg:'#fdf3e2'},
+  {n:'鉄筋工事',i:'🔩',c:'#1f57cf',bg:'#eaf1ff'},
+  {n:'型枠工事',i:'🪵',c:'#b06a2c',bg:'#fbeede'},
+  {n:'コンクリート',i:'🏗️',c:'#566072',bg:'#f0f3f9'},
+  {n:'内装工事',i:'🎨',c:'#0ea5b7',bg:'#e2f7fa'},
+  {n:'外構工事',i:'🌳',c:'#16b877',bg:'#e6f8f0'},
+  {n:'設備工事',i:'🔧',c:'#7d3fc0',bg:'#f1e9fb'},
+  {n:'解体工事',i:'🚧',c:'#e24a4a',bg:'#fdeaea'},
+];
+const KCOLOR={'基礎工事':'#8a6212','鉄筋工事':'#1f57cf','型枠工事':'#b06a2c','コンクリート':'#566072','内装工事':'#0ea5b7','外構工事':'#16b877','設備工事':'#7d3fc0','解体工事':'#e24a4a'};
+const KGRAD={
+  '基礎工事':'linear-gradient(135deg,#b08236,#8a6212)','鉄筋工事':'linear-gradient(135deg,#4f8bf0,#1f57cf)',
+  '型枠工事':'linear-gradient(135deg,#d18a4c,#b06a2c)','コンクリート':'linear-gradient(135deg,#7a8499,#566072)',
+  '内装工事':'linear-gradient(135deg,#2fc4d6,#0ea5b7)','外構工事':'linear-gradient(135deg,#3ee0a0,#16b877)',
+  '設備工事':'linear-gradient(135deg,#9a5fd6,#7d3fc0)','解体工事':'linear-gradient(135deg,#f06a6a,#e24a4a)'};
+const SHOTS=['施工前 状況','配筋 状況','型枠 建込','打設 状況','養生 状況','出来形 計測','完了 状況','足場 設置','残土 搬出','防水 施工','建具 取付','配管 敷設','舗装 転圧','法面 整形'];
+const KSHOTICON={'基礎工事':'🏗️','鉄筋工事':'🔩','型枠工事':'🪵','コンクリート':'🧱','内装工事':'🎨','外構工事':'🌳','設備工事':'🔧','解体工事':'🚧'};
+
+const TODAY=new Date();
+let SEED=4071;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+// seed photos (ledger)
+const PH_ST=['done','done','prog','done','wait','done','prog'];
+let photos=[];
+(function seed(){
+  let id=1;
+  for(let i=0;i<28;i++){
+    const s=pick(SITES);
+    const k=pick(KOSHU).n;
+    const shot=pick(SHOTS);
+    const issue=new Date(TODAY.getFullYear(),TODAY.getMonth()-Math.floor(rnd()*2),1+Math.floor(rnd()*27));
+    const ba=rnd()>0.5?'After':'Before';
+    let stt=pick(PH_ST);
+    photos.push({no:'P-'+String(1000+id).padStart(4,'0'),site:s.name,koshu:k,shot:shot,ba,date:issue,by:'現場監督 '+s.mgr,status:stt});
+    id++;
+  }
+})();
+
+// unclassified inbox for AI
+let INBOX=[];
+(function seedInbox(){
+  for(let i=0;i<12;i++){
+    const k=pick(KOSHU).n;
+    INBOX.push({fn:'IMG_'+(4820+i)+'.jpg',koshu:k,shot:pick(SHOTS),site:pick(SITES).name,date:new Date(TODAY.getFullYear(),TODAY.getMonth(),1+Math.floor(rnd()*27))});
+  }
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+const fmtS=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtISO=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STLABEL={done:'整理済',prog:'処理中',wait:'未整理',alert:'要確認',plan:'予定'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]}</span>`;}
+const SITE_ST={prog:'施工中',done:'完了',plan:'準備中'};
+function siteBadge(s){const m={prog:'prog',done:'done',plan:'plan'};return `<span class="st ${m[s]}">${SITE_ST[s]}</span>`;}
+function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function today(d){return d.getDate()===TODAY.getDate()&&thisMonth(d);}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function kgrad(k){return KGRAD[k]||'linear-gradient(135deg,#7a8499,#566072)';}
+function shotIcon(k){return KSHOTICON[k]||'📷';}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','現場の写真整理状況'],sites:['現場一覧','施工中の現場と進捗を管理します'],
+  ledger:['写真台帳','撮影した工事写真を一覧で管理します'],koshu:['工種別','工種ごとの撮影・整理状況'],
+  report:['報告書','入力するとリアルタイムで報告書が組み上がります'],ai:['AI写真整理','撮りためた写真をAIが自動で台帳化します']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='ledger'?'<button class="btn" onclick="go(\'ai\')">⚡ AI整理</button><button class="btn primary" onclick="go(\'report\')">📝 報告書を作成</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI写真整理</button><button class="btn primary" onclick="go(\'report\')">📝 報告書を作成</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='sites')renderSites();
+  if(v==='ledger')renderLedger();
+  if(v==='koshu')renderKoshu();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const total=SITES.filter(s=>s.status!=='done').length+1;
+  const todayShots=photos.filter(p=>today(p.date)).length || 7;
+  const doneN=photos.filter(p=>p.status==='done').length;
+  const rate=Math.round(doneN/photos.length*100);
+  const needRep=photos.filter(p=>p.status==='prog'||p.status==='wait').length;
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','稼働中の現場',SITES.filter(s=>s.status==='prog').length+'<small> 件</small>',SITES.length+'件 登録','up','うち準備中1件')}
+    ${kpi('#0ea5b7','今日の撮影',todayShots+'<small> 枚</small>','','up','前日比 +3枚')}
+    ${kpi('#16b877','整理率',rate+'<small>%</small>',doneN+'/'+photos.length+'枚','up','AIで自動整理中')}
+    ${kpi('#e3941f','要報告',needRep+'<small> 件</small>',' ',needRep?'warn':'up',needRep?'台帳化待ち':'なし')}`;
+  // koshu bars (this month shots per koshu)
+  const counts=KOSHU.map(k=>({n:k.n,c:photos.filter(p=>p.koshu===k.n).length}));
+  counts.sort((a,b)=>b.c-a.c);
+  const top=counts.slice(0,6);
+  const mx=Math.max(...top.map(t=>t.c),1);
+  $('koshuBars').innerHTML=top.map(t=>`
+    <div class="bar-row"><span class="mlabel">${esc(t.n)}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(t.c/mx*100)}"></div></div>
+      <span class="mval">${t.c}枚</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#koshuBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // activity
+  const acts=[
+    {i:'⚡',c:'#e6f8f0',t:'AI写真整理で 12枚を台帳化（自動分類率98%）',m:'3分前'},
+    {i:'📷',c:'#e2f7fa',t:'都町オフィスビル に「配筋状況」7枚を追加',m:'40分前'},
+    {i:'📝',c:'#eaf1ff',t:'報告書 RP-2026034「基礎配筋」を作成',m:'1時間前'},
+    {i:'⚠️',c:'#fdeaea',t:'大分中央クリニック 増築 の出来形写真が未整理です',m:'今日 8:50'},
+    {i:'✅',c:'#e6f8f0',t:'豊後大野 道路改良工事 の台帳が完成（100%）',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ SITES ============ */
+let siteFilter='all';
+function renderSiteChips(){
+  const opts=[['all','すべて'],['prog','施工中'],['done','完了'],['plan','準備中']];
+  $('siteChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===siteFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('siteChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{siteFilter=c.dataset.s;renderSiteChips();renderSites();});
+}
+function renderSites(){
+  const q=($('sq').value||'').toLowerCase();
+  const rows=SITES.filter(s=>siteFilter==='all'||s.status===siteFilter)
+    .filter(s=>!q||(s.name+s.addr+s.mgr).toLowerCase().includes(q));
+  $('siteGrid').innerHTML=rows.length?rows.map((s,idx)=>{
+    const ph=photos.filter(p=>p.site===s.name);
+    const doneN=ph.filter(p=>p.status==='done').length;
+    return `<div class="scard" onclick="openSite('${esc(s.name)}')">
+      <div class="sh"><div class="sn">${esc(s.name)}${siteBadge(s.status)==='' ?'':''}</div><div class="sa">📍 ${esc(s.addr)}　/　監督：${esc(s.mgr)}</div></div>
+      <div class="sb">
+        <div class="m"><b class="tnum">${ph.length}</b><span>撮影枚数</span></div>
+        <div class="m"><b class="tnum">${doneN}</b><span>整理済</span></div>
+        <div class="m"><b>${siteBadge(s.status)}</b><span>状態</span></div>
+      </div>
+      <div class="sf"><div class="pl"><span>工事進捗</span><span class="tnum">${s.prog}%</span></div>
+        <div class="prog-track"><div class="prog-fill" data-w="${s.prog}"></div></div></div>
+    </div>`;}).join('')
+    :'<div class="empty-cell" style="grid-column:1/-1">該当する現場がありません</div>';
+  setTimeout(()=>document.querySelectorAll('#siteGrid .prog-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+}
+$('sq').addEventListener('input',renderSites);
+window.openSite=name=>{go('ledger');ledgerFilter='all';$('lq').value=name;renderLedger();showToast(name+' の写真台帳を表示中');};
+
+/* ============ LEDGER ============ */
+let ledgerFilter='all';
+function renderLedgerChips(){
+  const opts=[['all','すべて'],['done','整理済'],['prog','処理中'],['wait','未整理']];
+  $('ledgerChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===ledgerFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('ledgerChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{ledgerFilter=c.dataset.s;renderLedgerChips();renderLedger();});
+}
+function renderLedger(){
+  const q=($('lq').value||'').toLowerCase();
+  const rows=photos.filter(p=>ledgerFilter==='all'||p.status===ledgerFilter)
+    .filter(p=>!q||(p.site+p.koshu+p.shot+p.no).toLowerCase().includes(q))
+    .sort((a,b)=>b.date-a.date);
+  $('photoGrid').innerHTML=rows.length?rows.map((p,i)=>`
+    <div class="photo" onclick="openPhoto('${esc(p.no)}')">
+      <div class="thumb" style="background:${kgrad(p.koshu)}">
+        <span class="ko">${esc(p.koshu)}</span>
+        <span class="ph-st">${stBadge(p.status)}</span>
+        <span class="ico">${shotIcon(p.koshu)}</span>
+      </div>
+      <div class="pinfo">
+        <div class="pt">${esc(p.shot)}<span style="font-size:10px;color:var(--brand);font-weight:800;margin-left:5px">${esc(p.ba)}</span></div>
+        <div class="pm"><span>${esc(p.site).slice(0,12)}</span><span class="mono">${fmtS(p.date)}</span></div>
+      </div>
+    </div>`).join('')
+    :'<div class="empty-cell" style="grid-column:1/-1">該当する写真がありません</div>';
+}
+$('lq').addEventListener('input',renderLedger);
+window.openPhoto=no=>{
+  const p=photos.find(x=>x.no===no);if(!p)return;
+  $('mImg').style.background=kgrad(p.koshu);
+  $('mImg').innerHTML='<button class="x" id="mClose">✕</button>'+shotIcon(p.koshu);
+  $('mClose').onclick=()=>$('modal').classList.remove('show');
+  $('mTitle').textContent=p.shot+'（'+p.no+'）';
+  $('mSite').textContent=p.site;$('mKoshu').textContent=p.koshu;$('mDate').textContent=fmtDL(p.date);
+  $('mBa').textContent=p.ba;$('mBy').textContent=p.by;$('mStatus').innerHTML=stBadge(p.status);
+  $('modal').classList.add('show');
+};
+$('modal').addEventListener('click',e=>{if(e.target.id==='modal')$('modal').classList.remove('show');});
+
+/* ============ KOSHU ============ */
+function renderKoshu(){
+  $('koshuGrid').innerHTML=KOSHU.map(k=>{
+    const c=photos.filter(p=>p.koshu===k.n).length;
+    return `<div class="ku" onclick="filterKoshu('${esc(k.n)}')">
+      <div class="ki" style="background:${k.bg};color:${k.c}">${k.i}</div>
+      <div class="kn">${esc(k.n)}</div><div class="kc tnum">${c}</div><div class="ks">撮影枚数</div></div>`;
+  }).join('');
+  $('koshuRows').innerHTML=KOSHU.map(k=>{
+    const ph=photos.filter(p=>p.koshu===k.n);
+    const doneN=ph.filter(p=>p.status==='done').length;
+    const waitN=ph.length-doneN;
+    const rate=ph.length?Math.round(doneN/ph.length*100):0;
+    return `<tr onclick="filterKoshu('${esc(k.n)}')"><td><b>${k.i} ${esc(k.n)}</b></td>
+      <td class="r tnum">${ph.length}枚</td><td class="r tnum" style="color:var(--green)">${doneN}枚</td>
+      <td class="r tnum" style="color:${waitN?'var(--amber)':'var(--ink-3)'}">${waitN}枚</td>
+      <td style="min-width:160px"><div style="display:flex;align-items:center;gap:9px"><div class="bar-track" style="flex:1"><div class="bar-fill" style="width:${rate}%;background:linear-gradient(90deg,var(--green),#3ee0a0)"></div></div><span class="tnum" style="font-weight:700;font-size:12px">${rate}%</span></div></td></tr>`;
+  }).join('');
+}
+window.filterKoshu=k=>{go('ledger');ledgerFilter='all';$('lq').value=k;renderLedger();showToast(k+' の写真を表示中');};
+
+/* ============ REPORT ============ */
+const KNOTES={
+  '基礎工事':'根切り底のレベルおよび地耐力を確認。割栗石の敷き均し・転圧を実施し、捨てコンクリート打設後の墨出しまで完了。設計図書との整合を確認済み。',
+  '鉄筋工事':'配筋ピッチ・かぶり厚さ・継手長さを設計図書および配筋検査要領に基づき確認。スペーサーの配置、定着長さに問題なし。第三者検査も合格。',
+  '型枠工事':'型枠の建込み精度・垂直・通りを確認。セパレーター間隔およびサポートの設置状況良好。打設前清掃・散水を実施済み。',
+  'コンクリート':'スランプ・空気量・温度の受入検査を実施し規格値内を確認。打設・締固め・天端仕上げを実施し、養生計画に基づき養生中。',
+  '内装工事':'下地の不陸・含水率を確認のうえ仕上げ材を施工。建具・設備との取り合いを調整し、傷・汚れがないことを確認。',
+  '外構工事':'敷地境界・高さを測量で確認のうえ施工。植栽・舗装・縁石の出来形を確認し、排水勾配に問題なし。',
+  '設備工事':'配管ルート・勾配・支持間隔を確認。気密・水圧試験を実施し漏れのないことを確認。他工種との取り合い調整済み。',
+  '解体工事':'近隣養生・粉じん対策を実施のうえ解体作業を進行。アスベスト含有なしを確認済み。発生材は分別し適正に搬出。'
+};
+function renderReportSelects(){
+  $('rSite').innerHTML='<option value="">選択してください</option>'+SITES.map(s=>`<option>${esc(s.name)}</option>`).join('');
+  $('rKoshu').innerHTML='<option value="">選択してください</option>'+KOSHU.map(k=>`<option>${esc(k.n)}</option>`).join('');
+  $('rDate').value=fmtISO(TODAY);
+}
+function renderReportPaper(){
+  $('rpSite').textContent=$('rSite').value||'—';
+  const k=$('rKoshu').value;
+  $('rpKoshu').textContent=k||'—';
+  const dv=$('rDate').value;
+  $('rpDate').textContent=dv?dv.replace(/-/g,'/'):'—';
+  // before/after pair
+  if(k){
+    const g=kgrad(k);const ic=shotIcon(k);
+    $('rpPair').innerHTML=`
+      <div class="ph-card"><div class="pc-img" style="background:${g}"><span class="lab">Before（施工前）</span>${ic}</div><div class="pc-cap">${esc(k)}・施工前状況</div></div>
+      <div class="ph-card"><div class="pc-img" style="background:${g}"><span class="lab">After（施工後）</span>${ic}</div><div class="pc-cap">${esc(k)}・施工完了状況</div></div>`;
+  }else{
+    $('rpPair').innerHTML=`<div class="ph-card" style="grid-column:1/-1"><div class="pc-img" style="background:var(--soft);color:var(--ink-3);font-size:14px">工種を選ぶと写真が入ります</div></div>`;
+  }
+  const note=($('rNote').value||'').trim();
+  $('rpNote').textContent=note||(k?'（「AIで報告書を作成」を押すと所見が自動生成されます）':'所見を入力するか「AIで報告書を作成」を押すと、ここに自動で記載されます。');
+}
+['rSite','rKoshu','rDate','rTitle'].forEach(id=>$(id).addEventListener('change',renderReportPaper));
+$('rNote').addEventListener('input',renderReportPaper);
+$('rSample').addEventListener('click',()=>{
+  $('rSite').value='都町オフィスビル 新築工事';$('rKoshu').value='鉄筋工事';
+  $('rTitle').value='基礎配筋 施工状況報告';$('rDate').value=fmtISO(TODAY);$('rNote').value='';
+  renderReportPaper();
+});
+$('rIssue').addEventListener('click',async()=>{
+  if(!$('rSite').value||!$('rKoshu').value){showToast('現場と工種を選んでください');return;}
+  const btn=$('rIssue');btn.textContent='⚡ AIが作成中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,850));
+  const k=$('rKoshu').value;
+  if(!($('rNote').value||'').trim()){$('rNote').value=KNOTES[k]||'施工状況を確認し、設計図書との整合に問題ないことを確認しました。';$('rAiHint').classList.add('show');setTimeout(()=>$('rAiHint').classList.remove('show'),2200);}
+  const no='RP-'+(2026000+photos.length+10);
+  $('rpNo').textContent=no;$('rpMade').textContent=fmtDL(TODAY);
+  renderReportPaper();
+  // also push the report photos into ledger
+  const site=$('rSite').value;const dv=$('rDate').value?new Date($('rDate').value):TODAY;
+  photos.push({no:'P-'+String(1000+photos.length+1).padStart(4,'0'),site,koshu:k,shot:'施工前 状況',ba:'Before',date:dv,by:'現場監督 中村',status:'done'});
+  photos.push({no:'P-'+String(1000+photos.length+1).padStart(4,'0'),site,koshu:k,shot:'完了 状況',ba:'After',date:dv,by:'現場監督 中村',status:'done'});
+  btn.textContent='⚡ AIで報告書を作成';btn.disabled=false;
+  showToast('報告書 '+no+' を作成しました（台帳にも写真を追加）');
+});
+
+/* ============ AI ORGANIZE ============ */
+function renderInbox(){
+  $('inbox').innerHTML=INBOX.map((p,i)=>`<div class="ib" data-i="${i}">
+    <div class="ibimg" style="background:${kgrad(p.koshu)}">${shotIcon(p.koshu)}</div>
+    <div class="ibcap mono">${esc(p.fn)}</div>
+    <span class="tag-ai">${esc(p.koshu)}</span>
+  </div>`).join('');
+  $('aiInboxN').textContent=INBOX.length+'枚';
+  $('navInbox').textContent=INBOX.length;
+}
+$('aiRun').addEventListener('click',async()=>{
+  if(!INBOX.length){showToast('未整理の写真はありません 🎉');return;}
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 解析中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},110);
+  // tag inbox photos one by one
+  const ibs=[...$('inbox').querySelectorAll('.ib')];
+  for(let i=0;i<ibs.length;i++){await new Promise(r=>setTimeout(r,90));ibs[i].classList.add('tagged');}
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // generate ledger entries
+  const captured=INBOX.slice();
+  $('genItems').innerHTML=captured.map((p,i)=>`
+    <div class="gen-item" data-i="${i}">
+      <span class="ck">✓</span>
+      <span class="gthumb" style="background:${kgrad(p.koshu)}">${shotIcon(p.koshu)}</span>
+      <b style="flex:1">${esc(p.shot)}<span style="color:var(--ink-3);font-weight:600;font-size:11px;margin-left:6px">${esc(p.site).slice(0,14)}</span></b>
+      <span style="color:${KCOLOR[p.koshu]||'#566072'};font-weight:800;font-size:12px">${esc(p.koshu)}</span>
+      <span class="mono" style="color:var(--ink-3);font-size:11px">${fmtS(p.date)}</span>
+    </div>`).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){
+    await new Promise(r=>setTimeout(r,140));items[i].classList.add('in');
+    const p=captured[i];
+    photos.push({no:'P-'+String(1000+photos.length+1).padStart(4,'0'),site:p.site,koshu:p.koshu,shot:p.shot,ba:rnd()>0.5?'After':'Before',date:p.date,by:'AI自動整理',status:'done'});
+  }
+  INBOX=[];
+  $('aiInboxN').textContent='0枚';$('navInbox').textContent='0';
+  btn.disabled=false;btn.textContent='⚡ もう一度整理';
+  showToast(captured.length+'枚を自動で台帳に整理しました');
+});
+
+/* ============ INIT ============ */
+renderSiteChips();renderLedgerChips();renderReportSelects();renderReportPaper();renderInbox();renderDash();
+$('navInbox').textContent=INBOX.length;
+</script>
+</body>
+</html>

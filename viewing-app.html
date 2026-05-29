@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜内見予約マシン（不動産仲介支援システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cff;--purple-soft:#efeaff;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.nav a .badge.b2{background:var(--amber)}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn.sm{padding:6px 12px;font-size:12px}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 60px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* funnel */
+.funnel{display:flex;flex-direction:column;gap:10px}
+.fn-row{display:flex;align-items:center;gap:12px}
+.fn-bar{height:34px;border-radius:9px;display:flex;align-items:center;padding:0 13px;color:#fff;font-weight:800;font-size:13px;
+  box-shadow:var(--shadow);transition:width 1s cubic-bezier(.2,.8,.3,1);white-space:nowrap;overflow:hidden}
+.fn-row .fn-meta{font-size:11.5px;color:var(--ink-3);font-weight:700;white-space:nowrap}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px;white-space:nowrap}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.done{background:var(--green-soft);color:var(--green)}
+.st.fixed{background:var(--brand-soft);color:var(--brand)}
+.st.adjust{background:var(--amber-soft);color:var(--amber)}
+.st.cancel{background:var(--red-soft);color:var(--red)}
+.st.lead{background:var(--purple-soft);color:var(--purple)}
+.st.contract{background:var(--green-soft);color:var(--green)}
+.tag-pill{display:inline-flex;align-items:center;font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--soft);color:var(--ink-2)}
+.hot{background:var(--red-soft);color:var(--red)}
+.warm{background:var(--amber-soft);color:var(--amber)}
+.cold{background:var(--brand-soft);color:var(--brand)}
+
+/* property cards */
+.props{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:1080px){.props{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:620px){.props{grid-template-columns:1fr}}
+.pcard{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);transition:all .15s;cursor:pointer}
+.pcard:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px)}
+.pcard .img{height:120px;background:linear-gradient(135deg,#cdd7ee,#eaf1ff);position:relative;display:grid;place-items:center;font-size:38px}
+.pcard .img .rib{position:absolute;top:10px;left:10px;font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:6px;background:rgba(255,255,255,.92);color:var(--ink)}
+.pcard .img .rib.new{background:var(--red);color:#fff}
+.pcard .pcb{padding:14px}
+.pcard .ptype{font-size:11px;color:var(--ink-3);font-weight:700}
+.pcard .pname{font-size:14.5px;font-weight:900;margin:2px 0 6px}
+.pcard .prent{font-family:'Orbitron';font-size:19px;font-weight:700;color:var(--brand-dk)}
+.pcard .prent small{font-size:11px;color:var(--ink-3);font-family:'Zen Kaku Gothic New'}
+.pcard .pspec{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+
+/* forms */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:64px}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* AI generate / before-after */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--line);border-radius:9px;margin-bottom:8px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+.gen-item .mt{font-size:11px;color:var(--ink-3);margin-top:1px}
+
+/* AI proposal cards */
+.prop-result{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-top:16px}
+@media(max-width:860px){.prop-result{grid-template-columns:1fr}}
+.match{background:#fff;border:1px solid var(--line);border-radius:12px;padding:15px;box-shadow:var(--shadow);opacity:0;transform:translateY(10px);transition:all .45s}
+.match.in{opacity:1;transform:none}
+.match .score{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.match .ring{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-family:'Orbitron';font-weight:700;font-size:14px;color:#fff;flex-shrink:0}
+.match .pname{font-size:14px;font-weight:900}
+.match .preason{font-size:11.5px;color:var(--ink-2);margin-top:8px;background:var(--green-soft);border-radius:8px;padding:8px 10px;line-height:1.5}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px}
+.orb.purple{background:radial-gradient(circle at 35% 30%,#a896ff,#7c5cff)}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* schedule before/after for 内見調整 */
+.sched{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+@media(max-width:760px){.sched{grid-template-columns:1fr}}
+.slot{border:1px solid var(--line);border-radius:9px;padding:11px 13px;font-size:12.5px;display:flex;align-items:center;gap:10px;margin-bottom:8px;background:#fff;opacity:0;transform:translateX(-8px);transition:all .4s}
+.slot.in{opacity:1;transform:none}
+.slot .tm{font-family:'Orbitron';font-weight:700;color:var(--brand-dk);font-size:13px}
+.slot .ok{margin-left:auto;font-size:11px;font-weight:800;color:var(--green)}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.minicards{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:13px}
+.minicard{border:1px solid var(--line);border-radius:10px;padding:12px 13px}
+.minicard .ml{font-size:11px;color:var(--ink-3);font-weight:700}
+.minicard .mv{font-size:18px;font-weight:900;margin-top:3px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">内見予約マシン<small>技マシン｜不動産仲介支援</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="book"><span class="i">📅</span>内見予約<span class="badge b2" id="navBook">0</span></a>
+      <a data-v="prop"><span class="i">🏠</span>物件案内</a>
+      <a data-v="lead"><span class="i">📣</span>反響管理<span class="badge" id="navLead">0</span></a>
+      <a data-v="follow"><span class="i">🔁</span>追客</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI物件提案</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>気持ち市場 不動産</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。物件・お客様・数値はすべてサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">今週の営業状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>曜日別の内見件数（今週）</h3><span class="more">直近7日</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>反響→成約ファネル</h3><span class="more">今月</span></div>
+            <div class="pb"><div class="funnel" id="funnel"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>反響チャネル別</h3></div>
+            <div class="pb"><div class="bars" id="chBars"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- BOOKING -->
+      <section class="view" id="v-book">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="お客様名・物件・担当で検索"></div>
+          <div class="chips" id="bookChips"></div>
+          <button class="btn primary" onclick="go('ai')">⚡ AIで内見調整</button>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>予約日時</th><th>お客様</th><th>物件</th><th>担当</th><th>経路</th><th>状態</th><th></th></tr></thead>
+          <tbody id="bookRows"></tbody>
+        </table>
+      </section>
+
+      <!-- PROPERTIES -->
+      <section class="view" id="v-prop">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="pq" placeholder="物件名・エリア・間取りで検索"></div>
+          <div class="chips" id="propChips"></div>
+        </div>
+        <div class="props" id="propCards"></div>
+      </section>
+
+      <!-- LEADS -->
+      <section class="view" id="v-lead">
+        <div class="kpis" id="leadKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>反響（お問い合わせ）一覧</h3>
+            <button class="btn green sm" id="autoAssign" style="margin-left:auto">⚡ AIで担当を自動割当</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>受付日時</th><th>お客様</th><th>希望条件</th><th>チャネル</th><th>温度</th><th>担当</th><th></th></tr></thead>
+              <tbody id="leadRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- FOLLOW -->
+      <section class="view" id="v-follow">
+        <div class="kpis" id="followKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>追客が必要なお客様</h3>
+            <button class="btn green sm" id="autoFollow" style="margin-left:auto">✉️ AIで追客メッセージを一括作成</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>お客様</th><th>最終接触</th><th>経過</th><th>希望条件</th><th>温度</th><th>次アクション</th><th></th></tr></thead>
+              <tbody id="followRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI PROPOSAL -->
+      <section class="view" id="v-ai">
+        <div class="create-grid">
+          <div class="formcard">
+            <div style="display:flex;align-items:center;gap:11px;margin-bottom:14px">
+              <div class="orb purple" id="aiOrb" style="width:46px;height:46px;font-size:20px">🏠</div>
+              <div><div style="font-size:15px;font-weight:900">AI物件提案＆内見調整</div>
+              <div style="font-size:11.5px;color:var(--ink-3)">希望条件を入れると最適な物件をAIが提案します</div></div>
+            </div>
+            <div class="fg"><label>お客様</label><select id="aCust"></select></div>
+            <div class="fg"><label>希望エリア</label>
+              <select id="aArea"><option>大分市中心部</option><option>大分市郊外</option><option>別府市</option><option>大学周辺</option><option>こだわらない</option></select></div>
+            <div class="fg2">
+              <div class="fg"><label>家賃上限（万円）</label><input id="aRent" type="number" min="0" value="7"></div>
+              <div class="fg"><label>間取り</label>
+                <select id="aMadori"><option>1K / 1DK</option><option>1LDK</option><option>2LDK</option><option>3LDK 以上</option><option>こだわらない</option></select></div>
+            </div>
+            <div class="fg"><label>こだわり条件（自由入力）</label>
+              <textarea id="aWish" placeholder="例：駅徒歩10分以内、ペット可、駐車場あり、2階以上…">駅徒歩10分以内・ペット可・独立洗面台</textarea></div>
+            <button class="btn primary" id="aRun" style="width:100%;justify-content:center;margin-top:4px">⚡ AIで最適物件を提案する</button>
+            <button class="btn" id="aSample" style="width:100%;justify-content:center;margin-top:8px">サンプル条件を入れる</button>
+            <div class="aihint" id="aHint">✨ 希望条件を解析しました</div>
+          </div>
+          <div>
+            <div class="ai-stage">
+              <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+                <div class="orb" id="aiOrb2">🤖</div>
+                <div><div style="font-size:16px;font-weight:900">条件マッチング＆内見の日程調整を自動化</div>
+                <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">在庫 <b>180件</b> から希望に合う物件をAIが抽出し、内見候補日まで自動提案します。</div></div>
+              </div>
+              <div class="ba">
+                <div class="col before">
+                  <span class="ct">😓 今までの手作業</span>
+                  <div class="big" id="baBeforeT">1時間20分</div>
+                  <ul>
+                    <li>🗂️ 在庫リストから条件で目視チェック</li>
+                    <li>📞 お客様と電話で日程を往復調整</li>
+                    <li>🏢 物件オーナーへ内見可否を個別確認</li>
+                  </ul>
+                </div>
+                <div class="arrow">→</div>
+                <div class="col after">
+                  <span class="ct">⚡ 技マシン</span>
+                  <div class="big" id="baAfterT">— </div>
+                  <ul id="baAfterList" style="opacity:.4">
+                    <li>🤖 条件に合う物件を瞬時に抽出・採点</li>
+                    <li>📅 空き枠から内見候補日を自動提案</li>
+                    <li>✉️ 案内文・地図付きメッセージまで生成</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="gen-list" id="genList">
+                <div style="font-size:13px;font-weight:800;margin-bottom:10px">🏠 マッチした物件 TOP3</div>
+                <div class="prop-result" id="propResult"></div>
+                <div style="font-size:13px;font-weight:800;margin:18px 0 4px">📅 自動提案された内見候補日</div>
+                <div class="sched" id="schedBlock"></div>
+                <div style="margin-top:16px;text-align:right">
+                  <button class="btn green" id="aBook">✅ この内容で内見予約を登録</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const STAFF=['佐藤','田中','鈴木','高橋'];
+const CUSTOMERS=[
+  {name:'山田 太郎',pref:'1LDK / 中心部 / 7万まで',temp:'hot'},
+  {name:'佐々木 美咲',pref:'1K / 大学周辺 / 5万まで',temp:'warm'},
+  {name:'中村 健一',pref:'2LDK / 郊外 / 9万まで',temp:'hot'},
+  {name:'小林 由紀',pref:'1DK / 別府市 / 6万まで',temp:'warm'},
+  {name:'井上 翔',pref:'3LDK / ファミリー / 12万まで',temp:'cold'},
+  {name:'松本 さやか',pref:'1LDK / ペット可 / 8万まで',temp:'hot'},
+  {name:'渡辺 大輔',pref:'1K / 駅近 / 5.5万まで',temp:'warm'},
+  {name:'加藤 千尋',pref:'2LDK / 駐車場2台 / 10万まで',temp:'cold'},
+];
+const CHANNELS=['SUUMO','ホームズ','自社HP','LINE','電話','店頭'];
+const AREAS=['都町','府内町','大道町','明野','賀来','滝尾','別府北浜','王子'];
+const TYPES=['アパート','マンション','戸建','新築マンション'];
+const MADORIS=['1K','1DK','1LDK','2LDK','3LDK'];
+
+const PROPERTIES=[
+  {name:'コンフォート都町',area:'都町',type:'マンション',madori:'1LDK',rent:6.8,sqm:42,walk:5,floor:'3/8階',tags:['ペット可','独立洗面台','宅配BOX'],new:true},
+  {name:'グランドール府内',area:'府内町',type:'マンション',madori:'2LDK',rent:8.9,sqm:58,walk:8,floor:'5/10階',tags:['オートロック','駐車場','南向き'],new:false},
+  {name:'メゾン大道',area:'大道町',type:'アパート',madori:'1K',rent:4.6,sqm:24,walk:7,floor:'2/2階',tags:['大学近','インターネット無料'],new:false},
+  {name:'パークサイド明野',area:'明野',type:'戸建',madori:'3LDK',rent:11.5,sqm:96,walk:12,floor:'2階建',tags:['駐車場2台','庭付き','ファミリー'],new:false},
+  {name:'リバーレジデンス賀来',area:'賀来',type:'新築マンション',madori:'1LDK',rent:7.4,sqm:45,walk:6,floor:'4/12階',tags:['新築','ペット可','宅配BOX','独立洗面台'],new:true},
+  {name:'サンハイツ滝尾',area:'滝尾',type:'アパート',madori:'1DK',rent:5.2,sqm:30,walk:9,floor:'1/3階',tags:['駐車場','室内洗濯機置場'],new:false},
+  {name:'シーサイド別府北浜',area:'別府北浜',type:'マンション',madori:'1LDK',rent:6.2,sqm:40,walk:4,floor:'6/9階',tags:['オーシャンビュー','温泉付き'],new:true},
+  {name:'王子タワーレジデンス',area:'王子',type:'新築マンション',madori:'2LDK',rent:10.8,sqm:62,walk:3,floor:'14/20階',tags:['新築','タワー','駅近','コンシェルジュ'],new:true},
+  {name:'コーポ大道',area:'大道町',type:'アパート',madori:'1K',rent:4.2,sqm:22,walk:11,floor:'1/2階',tags:['敷金礼金0','大学近'],new:false},
+];
+
+const TODAY=new Date();
+let SEED=4071;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+/* seed bookings */
+const BOOK_ST=['fixed','done','fixed','adjust','fixed','done','cancel'];
+let bookings=[];
+(function seedBook(){
+  for(let i=0;i<16;i++){
+    const c=pick(CUSTOMERS);
+    const p=pick(PROPERTIES);
+    const dayOff=Math.floor(rnd()*9)-3; // -3..+5
+    const d=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+dayOff,10+Math.floor(rnd()*8),pick([0,30]));
+    let st=pick(BOOK_ST);
+    if(d<TODAY&&st==='fixed')st=pick(['done','done','cancel']);
+    if(d>TODAY&&st==='done')st='fixed';
+    bookings.push({id:'BK-'+(2600+i+1),cust:c.name,prop:p.name,area:p.area,staff:pick(STAFF),ch:pick(CHANNELS),when:d,status:st});
+  }
+})();
+
+/* seed leads */
+const LEAD_AREAS=['1LDK 都町','1K 大学周辺','2LDK 郊外','1DK 別府','3LDK ファミリー','1LDK ペット可','1K 駅近'];
+let leads=[];
+(function seedLead(){
+  const names=['前田 拓也','岡田 麻衣','藤本 涼','石川 七海','原 健太','森下 あおい','上田 直人','西村 彩'];
+  for(let i=0;i<8;i++){
+    const dayOff=Math.floor(rnd()*6);
+    const d=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-dayOff,9+Math.floor(rnd()*9),pick([0,15,30,45]));
+    leads.push({id:'LD-'+(900+i+1),name:names[i],pref:pick(LEAD_AREAS),ch:pick(CHANNELS),temp:pick(['hot','warm','warm','cold','hot']),staff:i<3?'未割当':pick(STAFF),when:d});
+  }
+})();
+
+/* seed follow-ups */
+let follows=[];
+(function seedFollow(){
+  CUSTOMERS.forEach((c,i)=>{
+    const days=2+Math.floor(rnd()*16);
+    follows.push({name:c.name,pref:c.pref,temp:c.temp,days,
+      last:new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-days),
+      next:c.temp==='hot'?'本日中に電話':c.temp==='warm'?'新着物件を案内':'定期フォロー'});
+  });
+  follows.sort((a,b)=>b.days-a.days);
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const fmtDT=d=>(d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+const fmtD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const WD=['日','月','火','水','木','金','土'];
+const fmtWD=d=>(d.getMonth()+1)+'/'+d.getDate()+'('+WD[d.getDay()]+')';
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ST_BOOK={fixed:'予約確定',done:'内見完了',adjust:'日程調整中',cancel:'キャンセル'};
+const ST_TEMP={hot:'🔥 高',warm:'☀️ 中',cold:'❄️ 低'};
+function stBadge(s){return `<span class="st ${s}">${ST_BOOK[s]}</span>`;}
+function tempPill(t){const cl={hot:'hot',warm:'warm',cold:'cold'}[t];return `<span class="tag-pill ${cl}">${ST_TEMP[t]}</span>`;}
+function isThisWeek(d){const diff=Math.floor((d-TODAY)/(864e5));return diff>=-(TODAY.getDay())&&diff<7-TODAY.getDay();}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','今週の営業状況'],book:['内見予約','内見の予約・日程を管理します'],
+  prop:['物件案内','取り扱い物件のご案内'],lead:['反響管理','お問い合わせ（反響）を管理します'],
+  follow:['追客','フォローが必要なお客様を管理します'],ai:['AI物件提案','希望条件から最適物件と内見日程を自動提案']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='book'?'<button class="btn primary" onclick="go(\'ai\')">⚡ AIで内見調整</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI物件提案</button><button class="btn primary" onclick="go(\'prop\')">🏠 物件を見る</button>'
+    : v==='prop'?'<button class="btn primary" onclick="go(\'ai\')">⚡ お客様に提案</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='book')renderBook();
+  if(v==='prop')renderProp();
+  if(v==='lead')renderLead();
+  if(v==='follow')renderFollow();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+function renderDash(){
+  const wk=bookings.filter(b=>isThisWeek(b.when)&&b.status!=='cancel');
+  const done=bookings.filter(b=>b.status==='done').length;
+  const fixed=bookings.filter(b=>b.status==='fixed').length;
+  const rate=Math.round(done/Math.max(done+fixed,1)*100);
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','今週の内見',wk.length+'<small>件</small>','内見完了 '+done+'件','up','前週比 +18%')}
+    ${kpi('#16b877','成約率',rate+'<small>%</small>','内見→申込','up','+6pt')}
+    ${kpi('#7c5cff','反響数',leads.length+'<small>件</small>',leads.filter(l=>l.staff==='未割当').length+'件 未割当','warn','要対応')}
+    ${kpi('#e3941f','追客',follows.length+'<small>件</small>',follows.filter(f=>f.days>=7).length+'件 要連絡','warn','フォロー待ち')}`;
+  // weekday bars (this week 内見件数)
+  const days=[];for(let k=0;k<7;k++){const d=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-TODAY.getDay()+k);days.push(d);}
+  const cnts=days.map(d=>bookings.filter(b=>b.status!=='cancel'&&b.when.getMonth()===d.getMonth()&&b.when.getDate()===d.getDate()).length);
+  const mx=Math.max(...cnts,1);
+  $('trendBars').innerHTML=days.map((d,i)=>`
+    <div class="bar-row"><span class="mlabel">${WD[d.getDay()]}曜</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(cnts[i]/mx*100)}"></div></div>
+      <span class="mval">${cnts[i]}件</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // funnel
+  const fn=[['反響',leads.length+24,'#7c5cff'],['内見予約',bookings.filter(b=>b.status!=='cancel').length,'#2f6df0'],['内見完了',done,'#0ea5b7'],['申込',Math.max(2,Math.round(done*0.5)),'#16b877'],['成約',Math.max(1,Math.round(done*0.35)),'#0f9d63']];
+  const fmx=Math.max(...fn.map(f=>f[1]),1);
+  $('funnel').innerHTML=fn.map(f=>`<div class="fn-row">
+    <div class="fn-bar" style="width:0;background:linear-gradient(90deg,${f[2]},${f[2]}cc)" data-w="${Math.max(18,Math.round(f[1]/fmx*100))}">${f[0]} ${f[1]}件</div>
+    <span class="fn-meta">${Math.round(f[1]/fn[0][1]*100)}%</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#funnel .fn-bar').forEach(b=>b.style.width=b.dataset.w+'%'),80);
+  // channel bars
+  const chCnt={};CHANNELS.forEach(c=>chCnt[c]=0);
+  leads.forEach(l=>chCnt[l.ch]++);bookings.forEach(b=>chCnt[b.ch]=(chCnt[b.ch]||0)+1);
+  const chArr=Object.entries(chCnt).sort((a,b)=>b[1]-a[1]);const cmx=Math.max(...chArr.map(c=>c[1]),1);
+  $('chBars').innerHTML=chArr.map(c=>`<div class="bar-row"><span class="mlabel">${c[0]}</span>
+    <div class="bar-track"><div class="bar-fill" style="width:0;background:linear-gradient(90deg,#7c5cff,#2f6df0)" data-w="${Math.round(c[1]/cmx*100)}"></div></div>
+    <span class="mval">${c[1]}件</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#chBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),100);
+  // activity
+  const acts=[
+    {i:'📅',c:'#eaf1ff',t:'山田 太郎 様の内見予約（コンフォート都町）が確定',m:'5分前'},
+    {i:'⚡',c:'#efeaff',t:'AI物件提案で 3件をマッチング（充足率92%）',m:'32分前'},
+    {i:'🔥',c:'#fdeaea',t:'松本 さやか 様が SUUMO から再反響（温度：高）',m:'1時間前'},
+    {i:'✅',c:'#e6f8f0',t:'中村 健一 様 内見完了 → 申込へ',m:'今日 11:20'},
+    {i:'✉️',c:'#eaf1ff',t:'追客メッセージを 4件 自動送付しました',m:'今日 9:05'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${a.t}</div><div class="am">${a.m}</div></div></div>`).join('');
+}
+
+/* ============ BOOKING ============ */
+let bookFilter='all';
+function renderBookChips(){
+  const opts=[['all','すべて'],['fixed','予約確定'],['done','内見完了'],['adjust','日程調整中'],['cancel','キャンセル']];
+  $('bookChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===bookFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('bookChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{bookFilter=c.dataset.s;renderBookChips();renderBook();});
+}
+function renderBook(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=bookings.filter(b=>bookFilter==='all'||b.status===bookFilter)
+    .filter(b=>!q||(b.cust+b.prop+b.staff).toLowerCase().includes(q))
+    .sort((a,b)=>a.when-b.when);
+  $('bookRows').innerHTML=rows.length?rows.map(b=>`<tr>
+    <td class="tnum"><b>${fmtWD(b.when)}</b> ${String(b.when.getHours()).padStart(2,'0')}:${String(b.when.getMinutes()).padStart(2,'0')}</td>
+    <td><b>${esc(b.cust)}</b> 様</td><td>${esc(b.prop)}<div style="font-size:11px;color:var(--ink-3)">${esc(b.area)}</div></td>
+    <td style="color:var(--ink-2)">${esc(b.staff)}</td><td><span class="tag-pill">${esc(b.ch)}</span></td><td>${stBadge(b.status)}</td>
+    <td class="r">${b.status==='fixed'?`<button class="btn green sm" onclick="markDone('${esc(b.id)}')">完了</button>`:b.status==='adjust'?`<button class="btn sm" onclick="fixBooking('${esc(b.id)}')">確定</button>`:'<span style="color:var(--ink-3);font-size:12px">—</span>'}</td></tr>`).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する予約がありません</td></tr>';
+  $('navBook').textContent=bookings.filter(b=>b.status==='fixed'&&b.when>=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate())).length;
+}
+window.markDone=id=>{const b=bookings.find(x=>x.id===id);if(b){b.status='done';renderBook();showToast(b.cust+' 様の内見を完了にしました');}};
+window.fixBooking=id=>{const b=bookings.find(x=>x.id===id);if(b){b.status='fixed';renderBook();showToast(b.cust+' 様の予約を確定しました');}};
+$('q').addEventListener('input',renderBook);
+
+/* ============ PROPERTIES ============ */
+let propFilter='all';
+function renderPropChips(){
+  const opts=[['all','すべて'],['1LDK','1LDK'],['1K','1K/1DK'],['2LDK','2LDK'],['3LDK','3LDK'],['new','新着']];
+  $('propChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===propFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('propChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{propFilter=c.dataset.s;renderPropChips();renderProp();});
+}
+function propMatchFilter(p){
+  if(propFilter==='all')return true;
+  if(propFilter==='new')return p.new;
+  if(propFilter==='1K')return p.madori==='1K'||p.madori==='1DK';
+  return p.madori===propFilter;
+}
+const TYPE_ICON={'アパート':'🏘️','マンション':'🏢','戸建':'🏡','新築マンション':'🏙️'};
+function renderProp(){
+  const q=($('pq').value||'').toLowerCase();
+  const rows=PROPERTIES.filter(propMatchFilter).filter(p=>!q||(p.name+p.area+p.madori+p.type).toLowerCase().includes(q));
+  $('propCards').innerHTML=rows.length?rows.map(p=>`<div class="pcard" onclick="proposeFor('${esc(p.name)}')">
+    <div class="img">${TYPE_ICON[p.type]||'🏠'}<span class="rib ${p.new?'new':''}">${p.new?'★ 新着':esc(p.type)}</span></div>
+    <div class="pcb">
+      <div class="ptype">${esc(p.area)}・${esc(p.type)}・徒歩${p.walk}分</div>
+      <div class="pname">${esc(p.name)}</div>
+      <div class="prent">${p.rent}<small>万円/月</small> <span style="font-size:12px;color:var(--ink-3);font-family:'Zen Kaku Gothic New'">・${esc(p.madori)}・${p.sqm}㎡</span></div>
+      <div class="pspec">${p.tags.map(t=>`<span class="tag-pill">${esc(t)}</span>`).join('')}</div>
+    </div></div>`).join('')
+    :'<div class="empty-cell" style="grid-column:1/-1">該当する物件がありません</div>';
+}
+$('pq').addEventListener('input',renderProp);
+window.proposeFor=name=>{showToast(name+' をAI提案に取り込みます');go('ai');};
+
+/* ============ LEADS ============ */
+function renderLead(){
+  const un=leads.filter(l=>l.staff==='未割当').length;
+  const hot=leads.filter(l=>l.temp==='hot').length;
+  $('leadKpis').innerHTML=`
+    ${kpi('#7c5cff','今月の反響',leads.length+'<small>件</small>',un+'件 未割当','warn',un?'割当待ち':'割当済')}
+    ${kpi('#e24a4a','ホットリード',hot+'<small>件</small>','温度：高','down','即対応')}
+    ${kpi('#2f6df0','反響→内見化率',Math.round(bookings.filter(b=>b.status!=='cancel').length/(leads.length+24)*100)+'<small>%</small>','','up','+4pt')}
+    ${kpi('#16b877','平均初回対応',' 18<small>分</small>','目標30分以内','up','良好')}`;
+  $('leadRows').innerHTML=leads.sort((a,b)=>b.when-a.when).map(l=>`<tr>
+    <td class="tnum" style="color:var(--ink-2)">${fmtDT(l.when)}</td><td><b>${esc(l.name)}</b> 様</td>
+    <td style="color:var(--ink-2)">${esc(l.pref)}</td><td><span class="tag-pill">${esc(l.ch)}</span></td>
+    <td>${tempPill(l.temp)}</td><td style="color:var(--ink-2)">${l.staff==='未割当'?'<span class="st lead">未割当</span>':esc(l.staff)}</td>
+    <td class="r"><button class="btn sm" onclick="leadToAi('${esc(l.name)}')">物件提案</button></td></tr>`).join('');
+  $('navLead').textContent=leads.filter(l=>l.staff==='未割当').length;
+}
+window.leadToAi=name=>{showToast(name+' 様の希望条件を読み込みました');go('ai');};
+$('autoAssign').addEventListener('click',async()=>{
+  const btn=$('autoAssign');btn.textContent='⚡ 割当中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,900));
+  let n=0;leads.forEach(l=>{if(l.staff==='未割当'){l.staff=pick(STAFF);n++;}});
+  btn.textContent='⚡ AIで担当を自動割当';btn.disabled=false;
+  renderLead();showToast('反響 '+n+'件 に最適な担当をAIが自動割当しました');
+});
+
+/* ============ FOLLOW ============ */
+function renderFollow(){
+  const need=follows.filter(f=>f.days>=7).length;
+  $('followKpis').innerHTML=`
+    ${kpi('#e3941f','追客対象',follows.length+'<small>件</small>',need+'件 要連絡','warn','フォロー')}
+    ${kpi('#e24a4a','7日以上 未接触',need+'<small>件</small>','離脱リスク','down','至急')}
+    ${kpi('#16b877','今月の掘り起こし',' 5<small>件</small>','再来店誘導','up','+2件')}
+    ${kpi('#7c5cff','LINE開封率',' 68<small>%</small>','配信効果','up','良好')}`;
+  $('followRows').innerHTML=follows.map(f=>`<tr>
+    <td><b>${esc(f.name)}</b> 様</td><td class="tnum" style="color:var(--ink-2)">${fmtD(f.last)}</td>
+    <td><b style="color:${f.days>=7?'var(--red)':f.days>=4?'var(--amber)':'var(--ink-2)'}">${f.days}日</b></td>
+    <td style="color:var(--ink-2)">${esc(f.pref)}</td><td>${tempPill(f.temp)}</td>
+    <td style="color:var(--ink-2)">${esc(f.next)}</td>
+    <td class="r"><button class="btn green sm" onclick="sendFollow('${esc(f.name)}')">✉️ 送信</button></td></tr>`).join('');
+}
+window.sendFollow=name=>{const f=follows.find(x=>x.name===name);if(f){f.days=0;f.last=new Date();renderFollow();showToast(name+' 様へ追客メッセージを送信しました');}};
+$('autoFollow').addEventListener('click',async()=>{
+  const btn=$('autoFollow');btn.textContent='✉️ 作成中…';btn.disabled=true;
+  $('aiOrb');await new Promise(r=>setTimeout(r,1000));
+  const n=follows.filter(f=>f.days>=4).length;
+  follows.forEach(f=>{if(f.days>=4){f.days=0;f.last=new Date();}});
+  btn.textContent='✉️ AIで追客メッセージを一括作成';btn.disabled=false;
+  renderFollow();showToast(n+'件の追客メッセージをAIが作成・一斉配信しました');
+});
+
+/* ============ AI PROPOSAL ============ */
+function renderCustSelect(){$('aCust').innerHTML=CUSTOMERS.map(c=>`<option>${c.name}（${c.pref}）</option>`).join('');}
+$('aSample').addEventListener('click',()=>{
+  $('aCust').selectedIndex=5;$('aArea').value='大分市中心部';$('aRent').value=8;$('aMadori').value='1LDK';
+  $('aWish').value='ペット可・独立洗面台・宅配BOX・駅徒歩10分以内';
+  $('aHint').classList.add('show');setTimeout(()=>$('aHint').classList.remove('show'),2000);
+  showToast('サンプル条件を入力しました');
+});
+// scoring: rank properties by simple match against form
+function scoreProps(){
+  const rentMax=+$('aRent').value||99;
+  const wish=($('aWish').value||'').toLowerCase();
+  const madori=$('aMadori').value;
+  return PROPERTIES.map(p=>{
+    let s=55;
+    if(p.rent<=rentMax)s+=18;else s-=12;
+    if(madori.includes(p.madori)||madori==='こだわらない')s+=14;
+    if(p.walk<=10)s+=6;
+    p.tags.forEach(t=>{if(wish.includes(t.toLowerCase()))s+=7;});
+    if(wish.includes('ペット')&&p.tags.includes('ペット可'))s+=4;
+    if(wish.includes('駅')&&p.walk<=6)s+=4;
+    if(p.new)s+=3;
+    s=Math.max(40,Math.min(98,s+Math.round(rnd()*6)));
+    return {p,s};
+  }).sort((a,b)=>b.s-a.s).slice(0,3);
+}
+function scoreColor(s){return s>=85?'#16b877':s>=72?'#2f6df0':'#e3941f';}
+let lastMatches=[];
+$('aRun').addEventListener('click',async()=>{
+  const btn=$('aRun');btn.disabled=true;btn.textContent='⚡ 解析中…';
+  $('aiOrb2').classList.add('spin');$('aiOrb2').textContent='⚡';
+  $('aHint').classList.add('show');
+  $('baAfterList').style.opacity='1';$('genList').classList.remove('show');
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,7);},120);
+  await new Promise(r=>setTimeout(r,1150));
+  clearInterval(t);$('baAfterT').textContent='7秒';
+  $('aiOrb2').classList.remove('spin');$('aiOrb2').textContent='✅';$('aHint').classList.remove('show');
+  // matches
+  lastMatches=scoreProps();
+  const reasons=['希望エリア・家賃内で条件一致度が最も高い物件です','こだわり条件（ペット可・設備）を満たします','駅近・新着で内見即決の可能性が高いです'];
+  $('propResult').innerHTML=lastMatches.map((m,i)=>`<div class="match" data-i="${i}">
+    <div class="score"><div class="ring" style="background:${scoreColor(m.s)}">${m.s}</div>
+      <div><div class="pname">${esc(m.p.name)}</div><div style="font-size:11px;color:var(--ink-3)">${esc(m.p.area)}・${esc(m.p.madori)}・${m.p.rent}万円</div></div></div>
+    <div class="pspec">${m.p.tags.slice(0,3).map(t=>`<span class="tag-pill">${esc(t)}</span>`).join('')}</div>
+    <div class="preason">💡 ${reasons[i]}</div></div>`).join('');
+  // schedule slots (next 3 available)
+  const slots=[];let d=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+1);let added=0;
+  while(added<3){if(d.getDay()!==0){slots.push(new Date(d.getFullYear(),d.getMonth(),d.getDate(),[10,13,15][added],0));added++;}d=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1);}
+  $('schedBlock').innerHTML=slots.map((sd,i)=>`<div class="slot" data-i="${i}">
+    <span style="font-size:18px">📅</span><div><div class="tm">${fmtWD(sd)} ${String(sd.getHours()).padStart(2,'0')}:00〜</div>
+    <div style="font-size:11px;color:var(--ink-3)">${esc(lastMatches[i]?lastMatches[i].p.name:lastMatches[0].p.name)}・所要60分</div></div>
+    <span class="ok">空き ✓</span></div>`).join('');
+  $('genList').classList.add('show');
+  const ms=[...$('propResult').querySelectorAll('.match')];
+  for(let i=0;i<ms.length;i++){await new Promise(r=>setTimeout(r,200));ms[i].classList.add('in');}
+  const sl=[...$('schedBlock').querySelectorAll('.slot')];
+  for(let i=0;i<sl.length;i++){await new Promise(r=>setTimeout(r,160));sl[i].classList.add('in');}
+  btn.disabled=false;btn.textContent='⚡ もう一度提案する';
+  showToast('条件に合う物件3件と内見候補日をAIが提案しました');
+});
+$('aBook').addEventListener('click',()=>{
+  if(!lastMatches.length){showToast('先にAI提案を実行してください');return;}
+  const custFull=$('aCust').value||CUSTOMERS[0].name;
+  const cust=custFull.split('（')[0];
+  const top=lastMatches[0].p;
+  const when=(function(){let d=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+1);while(d.getDay()===0)d=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1);return new Date(d.getFullYear(),d.getMonth(),d.getDate(),10,0);})();
+  bookings.push({id:'BK-'+(2600+bookings.length+1),cust,prop:top.name,area:top.area,staff:pick(STAFF),ch:'AI提案',when,status:'fixed'});
+  showToast(cust+' 様の内見予約（'+top.name+'）を登録しました');
+  setTimeout(()=>go('book'),700);
+});
+
+/* ============ INIT ============ */
+renderCustSelect();$('aCust').selectedIndex=5;
+renderBookChips();renderPropChips();renderDash();
+$('navBook').textContent=bookings.filter(b=>b.status==='fixed'&&b.when>=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate())).length;
+$('navLead').textContent=leads.filter(l=>l.staff==='未割当').length;
+</script>
+</body>
+</html>

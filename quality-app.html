@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜品質検査マシン（品質検査管理システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cf0;--purple-soft:#efeafe;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--green),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut / defect breakdown */
+.donut-wrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.donut{width:128px;height:128px;border-radius:50%;flex-shrink:0;position:relative;display:grid;place-items:center}
+.donut::after{content:"";position:absolute;width:78px;height:78px;border-radius:50%;background:var(--card)}
+.donut .dz{position:relative;z-index:1;text-align:center}
+.donut .dz b{font-size:21px;font-weight:900;display:block;line-height:1}
+.donut .dz span{font-size:10px;color:var(--ink-3);font-weight:700}
+.legend{flex:1;min-width:160px;display:flex;flex-direction:column;gap:9px}
+.legend .lg{display:flex;align-items:center;gap:9px;font-size:12.5px}
+.legend .lg .sw{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.legend .lg .nm{color:var(--ink-2);font-weight:600}
+.legend .lg .vl{margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.pass{background:var(--green-soft);color:var(--green)}
+.st.fail{background:var(--red-soft);color:var(--red)}
+.st.hold{background:var(--amber-soft);color:var(--amber)}
+.st.review{background:var(--brand-soft);color:var(--brand)}
+.st.pending{background:var(--soft);color:var(--ink-3)}
+/* defect severity */
+.sev{display:inline-flex;align-items:center;font-size:11px;font-weight:800;padding:3px 9px;border-radius:6px}
+.sev.high{background:var(--red-soft);color:var(--red)}
+.sev.mid{background:var(--amber-soft);color:var(--amber)}
+.sev.low{background:var(--soft);color:var(--ink-2)}
+
+/* spec / grade cards */
+.grid-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.spec-card{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:16px 17px;box-shadow:var(--shadow)}
+.spec-card .sh{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+.spec-card .sh .ic{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-size:16px;background:var(--brand-soft)}
+.spec-card .sh b{font-size:14px;font-weight:800}
+.spec-card .sh span{font-size:11px;color:var(--ink-3);display:block}
+.spec-row{display:flex;justify-content:space-between;font-size:12.5px;padding:6px 0;border-top:1px solid var(--line)}
+.spec-row:first-of-type{border-top:0}
+.spec-row .k{color:var(--ink-3);font-weight:600}
+.spec-row .v{font-weight:700;font-variant-numeric:tabular-nums}
+
+/* create / input form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,400px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--brand)}
+.fg-2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.meas-head{display:grid;grid-template-columns:1fr 80px 80px 80px;gap:7px;font-size:11px;color:var(--ink-3);font-weight:700;padding:0 2px 6px}
+.meas-row{display:grid;grid-template-columns:1fr 80px 80px 80px;gap:7px;margin-bottom:7px;align-items:center}
+.meas-row .lbl{font-size:12px;color:var(--ink-2);font-weight:600;padding-left:2px}
+.meas-row input{padding:8px 9px;font-size:12.5px;border:1px solid var(--line-2);border-radius:8px;font-family:inherit;width:100%}
+.meas-row .jd{font-size:11px;font-weight:800;text-align:center;border-radius:6px;padding:6px 0}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* inspection result preview (paper) */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:30px 34px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.pv-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
+.pv-title{font-size:22px;font-weight:900;letter-spacing:.18em;color:var(--brand-dk);border-bottom:3px solid var(--brand-dk);padding-bottom:5px}
+.pv-meta{text-align:right;font-size:11.5px;color:var(--ink-2)}
+.pv-meta .no{font-family:'Orbitron';color:var(--ink);font-weight:700}
+.pv-verdict{border-radius:8px;padding:14px 18px;margin:16px 0;display:flex;justify-content:space-between;align-items:center}
+.pv-verdict.pass{background:var(--green-soft);border-left:5px solid var(--green)}
+.pv-verdict.fail{background:var(--red-soft);border-left:5px solid var(--red)}
+.pv-verdict.hold{background:var(--amber-soft);border-left:5px solid var(--amber)}
+.pv-verdict .vt{font-family:'Orbitron';font-size:24px;font-weight:700}
+.pv-verdict.pass .vt{color:var(--green)}.pv-verdict.fail .vt{color:var(--red)}.pv-verdict.hold .vt{color:var(--amber)}
+table.pv{width:100%;border-collapse:collapse;margin-bottom:8px}
+table.pv th{background:var(--brand-dk);color:#fff;font-size:11px;padding:8px 11px;text-align:left}
+table.pv th.r,table.pv td.r{text-align:right}
+table.pv td{padding:7px 11px;border-bottom:1px solid var(--line);font-size:12px}
+table.pv td .ok{color:var(--green);font-weight:800}
+table.pv td .ng{color:var(--red);font-weight:800}
+
+/* AI generate stage */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900}
+.gen-item .ck.ok{background:var(--green)}.gen-item .ck.ng{background:var(--red)}.gen-item .ck.hd{background:var(--amber)}
+
+/* AI insight summary box */
+.insight{margin-top:16px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.insight.show{display:block;animation:fade .4s}
+.insight .ib{background:var(--purple-soft);border:1px solid #ddd2fb;border-radius:11px;padding:14px 16px;font-size:13px;color:#3b2e6b;line-height:1.7}
+.insight .ib b{color:#5132c4}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* trend mini chart (line via bars) */
+.linechart{display:flex;align-items:flex-end;gap:6px;height:160px;padding:10px 4px 0}
+.linechart .lc{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px;height:100%}
+.linechart .lc .bp{width:100%;max-width:34px;border-radius:6px 6px 0 0;background:linear-gradient(180deg,var(--green),#9fe6c8);transition:height .9s cubic-bezier(.2,.8,.3,1);height:0}
+.linechart .lc .lx{font-size:10.5px;color:var(--ink-3);font-weight:600}
+.linechart .lc .lv{font-size:10.5px;color:var(--ink-2);font-weight:800;font-variant-numeric:tabular-nums}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">品質検査マシン<small>技マシン｜品質検査管理</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">🔬</span>検査記録</a>
+      <a data-v="create"><span class="i">✏️</span>検査入力</a>
+      <a data-v="defect"><span class="i">⚠️</span>不良管理<span class="badge" id="navDefect">0</span></a>
+      <a data-v="spec"><span class="i">📐</span>規格</a>
+      <a data-v="trend"><span class="i">📈</span>トレンド</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI判定</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 品質管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。製品・検査データはサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">本日の検査状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>製品別 合格率</h3><span class="more">直近30日</span></div>
+            <div class="pb"><div class="bars" id="passBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>不良の内訳</h3></div>
+            <div class="pb"><div class="donut-wrap"><div class="donut" id="donut"><div class="dz"><b id="donutTotal">0</b><span>不良件数</span></div></div><div class="legend" id="donutLegend"></div></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>合格率の推移</h3><span class="more">過去7日</span></div>
+            <div class="pb"><div class="linechart" id="passLine"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST (検査記録) -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="製品名・ロット・検査番号・検査員で検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>検査番号</th><th>製品名</th><th>ロット</th><th class="r">サンプル数</th><th class="r">不良数</th><th>検査員</th><th>検査日</th><th>判定</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- CREATE (検査入力) -->
+      <section class="view" id="v-create">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>製品（規格を選ぶとAIが基準値を自動入力）</label>
+              <select id="cProduct"></select></div>
+            <div class="fg-2">
+              <div class="fg"><label>ロット番号</label><input id="cLot" placeholder="例：LOT-2605A"></div>
+              <div class="fg"><label>サンプル数</label><input id="cQty" type="number" min="1" value="20"></div>
+            </div>
+            <div class="fg"><label>検査員</label>
+              <select id="cStaff"></select></div>
+            <label style="font-size:12px;font-weight:700;color:var(--ink-2)">測定値（基準内なら自動で合格判定）</label>
+            <div class="meas-head" style="margin-top:7px"><div>検査項目</div><div>規格</div><div>測定値</div><div>判定</div></div>
+            <div id="cMeas"></div>
+            <div class="aihint" id="cAiHint">✨ AIが規格の基準値を自動入力しました</div>
+            <div class="linkrow" style="margin-top:16px">
+              <button class="btn primary" id="cJudge" style="flex:1;justify-content:center">⚡ AIで判定して登録</button>
+              <button class="btn" id="cSample">サンプル</button>
+            </div>
+          </div>
+          <div>
+            <div class="paper" id="cPaper">
+              <div class="pv-top">
+                <div class="pv-title">検 査 成 績 書</div>
+                <div class="pv-meta"><div>番号：<span class="no" id="pNo">—</span></div><div>検査日：<span id="pDate">—</span></div><div>検査員：<span id="pStaff">—</span></div></div>
+              </div>
+              <div style="font-size:14px;font-weight:900" id="pProduct">製品を選択してください</div>
+              <div style="font-size:11.5px;color:var(--ink-2)" id="pLotLine">ロット — ／ サンプル — 個</div>
+              <div class="pv-verdict hold" id="pVerdict"><span style="font-weight:700">総合判定</span><span class="vt" id="pVerdictT">—</span></div>
+              <table class="pv"><thead><tr><th>検査項目</th><th class="r">下限</th><th class="r">上限</th><th class="r">測定値</th><th class="r">判定</th></tr></thead><tbody id="pRows"></tbody></table>
+              <div style="margin-top:14px;font-size:11px;color:var(--ink-2);border-top:1px solid var(--line);padding-top:10px">
+                判定基準：JIS Z 9015 抜取検査方式に準拠 ／ 全項目が規格内のとき「合格」と判定します。
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- DEFECT (不良管理) -->
+      <section class="view" id="v-defect">
+        <div class="kpis" id="defectKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>未対応・対応中の不良</h3>
+            <button class="btn green" id="aiCause" style="margin-left:auto">🔗 AIで原因をまとめて推定</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>検査番号</th><th>製品名</th><th>不良内容</th><th>重大度</th><th class="r">発生数</th><th>状態</th><th></th></tr></thead>
+              <tbody id="defectRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SPEC (規格) -->
+      <section class="view" id="v-spec">
+        <div class="grid-cards" id="specCards"></div>
+      </section>
+
+      <!-- TREND (トレンド) -->
+      <section class="view" id="v-trend">
+        <div class="kpis" id="trendKpis"></div>
+        <div class="panel" style="margin-bottom:16px">
+          <div class="ph"><h3>合格率の推移（過去12週）</h3><span class="more" id="trendProdLabel">全製品</span></div>
+          <div class="pb"><div class="linechart" id="trendLine" style="height:200px"></div></div>
+        </div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>不良率の高い製品</h3></div>
+            <div class="pb"><div class="bars" id="trendDefectBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>検査員別 検査件数</h3></div>
+            <div class="pb"><div class="bars" id="trendStaffBars"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI JUDGE -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">測定データからAIが合否を一括判定・傾向を分析</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">本日の未判定の検査データ <b>24件</b> を、AIが規格と照合して合否判定し、傾向まで分析します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで一括判定する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">3時間20分</div>
+              <ul>
+                <li>📋 測定値を規格表と1件ずつ目視照合</li>
+                <li>🖊 合否を手書き＆Excelに転記</li>
+                <li>📊 不良の傾向を月末にまとめて集計</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 規格と自動照合して合否を判定</li>
+                <li>📄 成績書を製品別に自動発行</li>
+                <li>📈 不良傾向・要対応をその場で分析</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ AI判定結果</div>
+            <div id="genItems"></div>
+          </div>
+          <div class="insight" id="insight">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">🔮 AIによる傾向分析</div>
+            <div class="ib" id="insightBody"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const STAFF=['佐藤 健','田中 美咲','鈴木 大輔','高橋 由紀'];
+// products with measurement spec items (min/max/unit)
+const PRODUCTS=[
+  {n:'精密シャフト A-100',cat:'金属加工',specs:[{k:'外径',min:9.95,max:10.05,u:'mm'},{k:'全長',min:49.8,max:50.2,u:'mm'},{k:'表面粗さ',min:0,max:1.6,u:'Ra'}]},
+  {n:'樹脂カバー B-220',cat:'成形品',specs:[{k:'肉厚',min:2.8,max:3.2,u:'mm'},{k:'反り量',min:0,max:0.5,u:'mm'},{k:'重量',min:118,max:122,u:'g'}]},
+  {n:'基板ユニット C-7',cat:'電子部品',specs:[{k:'抵抗値',min:9.8,max:10.2,u:'kΩ'},{k:'はんだ高さ',min:0.2,max:0.4,u:'mm'},{k:'絶縁抵抗',min:100,max:9999,u:'MΩ'}]},
+  {n:'青果パック M（トマト）',cat:'食品包装',specs:[{k:'内容量',min:480,max:520,u:'g'},{k:'糖度',min:5.5,max:9.0,u:'Bx'},{k:'外観傷',min:0,max:2,u:'個'}]},
+  {n:'ゴムパッキン D-50',cat:'ゴム部品',specs:[{k:'内径',min:49.7,max:50.3,u:'mm'},{k:'硬度',min:68,max:72,u:'Hs'},{k:'圧縮永久歪',min:0,max:15,u:'%'}]},
+  {n:'アルミ筐体 E-900',cat:'金属加工',specs:[{k:'板厚',min:1.45,max:1.55,u:'mm'},{k:'平面度',min:0,max:0.1,u:'mm'},{k:'塗膜厚',min:18,max:28,u:'µm'}]},
+];
+const DEFECT_TYPES=[
+  {t:'寸法外れ',sev:'high'},{t:'キズ・打痕',sev:'mid'},{t:'バリ残り',sev:'low'},
+  {t:'はんだ不良',sev:'high'},{t:'色ムラ',sev:'low'},{t:'反り過大',sev:'mid'},{t:'異物混入',sev:'high'},
+];
+const TODAY=new Date();
+
+/* deterministic RNG so demo data is stable */
+let SEED=4071;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+function rint(a,b){return a+Math.floor(rnd()*(b-a+1));}
+
+const STATUSES=['pass','pass','pass','pass','fail','hold','review','pass'];
+let inspections=[];
+(function seed(){
+  let id=1;
+  for(let i=0;i<26;i++){
+    const p=pick(PRODUCTS);
+    const qty=pick([10,20,20,30,50]);
+    let stt=pick(STATUSES);
+    // measurements: simulate one value per spec
+    const meas=p.specs.map(s=>{
+      const mid=(s.min+s.max)/2;const range=(s.max-s.min)||1;
+      let v=mid+(rnd()-0.5)*range*1.1; // mostly in-range
+      v=Math.round(v*100)/100;
+      return {k:s.k,min:s.min,max:s.max,u:s.u,v};
+    });
+    const anyNg=meas.some(m=>m.v<m.min||m.v>m.max);
+    if(anyNg)stt=(rnd()>0.5?'fail':'hold');
+    else if(stt==='fail'||stt==='hold')stt='pass';
+    const defects=stt==='fail'?rint(1,Math.max(1,Math.round(qty*0.2))):(stt==='hold'?rint(1,3):0);
+    const dt=stt!=='pass'?pick(DEFECT_TYPES):null;
+    const issue=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-rint(0,20),9+rint(0,8),rint(0,59));
+    inspections.push({
+      no:'QC-'+(2605000+id++),product:p.n,cat:p.cat,lot:'LOT-'+(2605)+String.fromCharCode(65+i%6)+(i+1),
+      qty,defects,staff:pick(STAFF),date:issue,status:stt,meas,
+      defectType:dt?dt.t:null,defectSev:dt?dt.sev:null,
+      defectState:stt==='pass'?null:pick(['open','open','progress','open'])
+    });
+  }
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const pct=n=>n.toFixed(1);
+const fmtD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtDT=d=>(d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STLABEL={pass:'合格',fail:'不合格',hold:'保留',review:'再検査',pending:'未判定'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]||esc(s)}</span>`;}
+const SEVLABEL={high:'重大',mid:'中',low:'軽微'};
+function sevBadge(s){return `<span class="sev ${s}">${SEVLABEL[s]||esc(s)}</span>`;}
+function isToday(d){return d.getDate()===TODAY.getDate()&&d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function passRate(arr){const judged=arr.filter(i=>i.status==='pass'||i.status==='fail');if(!judged.length)return 0;return judged.filter(i=>i.status==='pass').length/judged.length*100;}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','本日の検査状況'],list:['検査記録','実施した検査の記録を管理します'],
+  create:['検査入力','測定値を入れるとAIがリアルタイムで合否判定します'],defect:['不良管理','発生した不良の対応状況を管理します'],
+  spec:['規格','製品ごとの検査規格・基準値'],trend:['トレンド','合格率・不良の傾向を分析します'],ai:['AI判定','測定データからAIが合否を一括判定します']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn primary" onclick="go(\'create\')">＋ 検査を入力</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI判定</button><button class="btn primary" onclick="go(\'create\')">＋ 検査を入力</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='defect')renderDefect();
+  if(v==='spec')renderSpec();
+  if(v==='trend')renderTrend();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+function renderDash(){
+  const total=inspections.length;
+  const pr=passRate(inspections);
+  const totalDefects=inspections.reduce((s,i)=>s+i.defects,0);
+  const totalSamples=inspections.reduce((s,i)=>s+i.qty,0);
+  const defectRate=totalSamples?totalDefects/totalSamples*100:0;
+  const needAction=inspections.filter(i=>i.status==='fail'||i.status==='hold'||i.status==='review').length;
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','検査数（今期）',total+'<small>件</small>',totalSamples.toLocaleString()+'個 検査','up','前週比 +8%')}
+    ${kpi('#16b877','合格率',pct(pr)+'<small>%</small>','','up','+1.2pt')}
+    ${kpi('#e3941f','不良率',pct(defectRate)+'<small>%</small>',totalDefects+'個','warn','要監視')}
+    ${kpi('#e24a4a','要対応',needAction+'<small>件</small>',' ',needAction?'down':'up',needAction?'未処理あり':'なし')}`;
+  // product pass rate bars
+  const byProd=PRODUCTS.map(p=>{const arr=inspections.filter(i=>i.product===p.n);return {n:p.n,r:passRate(arr),c:arr.length};}).filter(x=>x.c).sort((a,b)=>b.r-a.r);
+  $('passBars').innerHTML=byProd.map(p=>`
+    <div class="bar-row"><span class="mlabel" title="${esc(p.n)}">${esc(p.n.length>9?p.n.slice(0,8)+'…':p.n)}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(p.r)}"></div></div>
+      <span class="mval">${pct(p.r)}%</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#passBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // defect donut
+  const defByType={};
+  inspections.filter(i=>i.defectType).forEach(i=>{defByType[i.defectType]=(defByType[i.defectType]||0)+i.defects;});
+  const entries=Object.entries(defByType).sort((a,b)=>b[1]-a[1]);
+  const dtotal=entries.reduce((s,e)=>s+e[1],0)||1;
+  const colors=['#e24a4a','#e3941f','#2f6df0','#7c5cf0','#0ea5b7','#16b877','#8a94a6'];
+  let acc=0;const stops=entries.map((e,idx)=>{const from=acc/dtotal*360;acc+=e[1];const to=acc/dtotal*360;return `${colors[idx%colors.length]} ${from}deg ${to}deg`;}).join(',');
+  $('donut').style.background=`conic-gradient(${stops||'#e6eaf1 0deg 360deg'})`;
+  $('donutTotal').textContent=Object.values(defByType).reduce((s,v)=>s+v,0);
+  $('donutLegend').innerHTML=entries.map((e,idx)=>`<div class="lg"><span class="sw" style="background:${colors[idx%colors.length]}"></span><span class="nm">${esc(e[0])}</span><span class="vl">${e[1]}個</span></div>`).join('')||'<div style="color:var(--ink-3);font-size:12px">不良はありません</div>';
+  // 7day pass line
+  const days=[];for(let k=6;k>=0;k--){const d=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-k);days.push(d);}
+  const dayRates=days.map(d=>{const arr=inspections.filter(i=>i.date.getDate()===d.getDate()&&i.date.getMonth()===d.getMonth());return arr.length?passRate(arr):92+rnd()*6;});
+  $('passLine').innerHTML=days.map((d,i)=>`<div class="lc"><span class="lv">${pct(dayRates[i])}</span><div class="bp" data-h="${Math.round((dayRates[i]-80)/20*100)}"></div><span class="lx">${d.getMonth()+1}/${d.getDate()}</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#passLine .bp').forEach(b=>b.style.height=Math.max(8,+b.dataset.h)+'%'),60);
+  // activity
+  const acts=[
+    {i:'✅',c:'#e6f8f0',t:'精密シャフト A-100（LOT-2605A）が合格しました',m:'5分前'},
+    {i:'⚡',c:'#efeafe',t:'AI判定で 24件 の検査を自動判定（合格率 91.7%）',m:'32分前'},
+    {i:'⚠️',c:'#fdeaea',t:'基板ユニット C-7 で「はんだ不良」を検知（重大）',m:'1時間前'},
+    {i:'📐',c:'#eaf1ff',t:'樹脂カバー B-220 の規格を更新（肉厚 公差 ±0.2）',m:'今日 9:40'},
+    {i:'🔬',c:'#e6f8f0',t:'高橋 由紀 が 5件 の検査を登録',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+}
+
+/* ============ LIST (検査記録) ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['pass','合格'],['fail','不合格'],['hold','保留'],['review','再検査']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=inspections.filter(i=>filterStatus==='all'||i.status===filterStatus)
+    .filter(i=>!q||(i.product+i.lot+i.no+i.staff).toLowerCase().includes(q))
+    .sort((a,b)=>b.date-a.date);
+  $('listRows').innerHTML=rows.length?rows.map(i=>`<tr>
+    <td class="mono" style="font-size:12px">${esc(i.no)}</td><td><b>${esc(i.product)}</b><div style="font-size:11px;color:var(--ink-3)">${esc(i.cat)}</div></td>
+    <td style="color:var(--ink-2)">${esc(i.lot)}</td><td class="r tnum">${i.qty}</td>
+    <td class="r tnum" style="${i.defects?'color:var(--red);font-weight:800':'color:var(--ink-3)'}">${i.defects}</td>
+    <td style="color:var(--ink-2)">${esc(i.staff)}</td><td style="color:var(--ink-2)">${fmtD(i.date)}</td><td>${stBadge(i.status)}</td></tr>`).join('')
+    :'<tr><td colspan="8" class="empty-cell">該当する検査記録がありません</td></tr>';
+}
+$('q').addEventListener('input',renderList);
+
+/* ============ DEFECT (不良管理) ============ */
+function renderDefect(){
+  const defs=inspections.filter(i=>i.defectType&&i.defectState);
+  const open=defs.filter(i=>i.defectState==='open');
+  const high=defs.filter(i=>i.defectSev==='high');
+  const totalDef=defs.reduce((s,i)=>s+i.defects,0);
+  $('defectKpis').innerHTML=`
+    ${kpi('#e24a4a','未対応の不良',open.length+'<small>件</small>',high.length+'件 重大','down','至急')}
+    ${kpi('#e3941f','不良 発生数',totalDef+'<small>個</small>',defs.length+'ロット','warn','監視中')}
+    ${kpi('#7c5cf0','重大度 高',high.length+'<small>件</small>','','warn','優先対応')}
+    ${kpi('#16b877','今週 解決',rint(3,7)+'<small>件</small>','','up','改善傾向')}`;
+  $('defectRows').innerHTML=defs.sort((a,b)=>({high:0,mid:1,low:2}[a.defectSev]-{high:0,mid:1,low:2}[b.defectSev])).map(i=>`<tr>
+    <td class="mono" style="font-size:12px">${esc(i.no)}</td><td><b>${esc(i.product)}</b></td>
+    <td>${esc(i.defectType)}</td><td>${sevBadge(i.defectSev)}</td>
+    <td class="r tnum"><b>${i.defects}</b></td>
+    <td>${i.defectState==='open'?'<span class="st fail">未対応</span>':'<span class="st review">対応中</span>'}</td>
+    <td class="r"><button class="btn green" style="padding:6px 12px" onclick="resolveDefect('${esc(i.no)}')">対応完了</button></td></tr>`).join('')
+    || '<tr><td colspan="7" class="empty-cell">未対応の不良はありません 🎉</td></tr>';
+  $('navDefect').textContent=open.length;
+}
+window.resolveDefect=no=>{const i=inspections.find(x=>x.no===no);if(i){i.defectState=null;i.status='pass';renderDefect();showToast(no+' の不良を対応完了にしました');}};
+$('aiCause').addEventListener('click',async()=>{
+  const btn=$('aiCause');btn.textContent='🔗 推定中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,950));
+  btn.textContent='🔗 AIで原因をまとめて推定';btn.disabled=false;
+  showToast('AIが不良の共通要因を「成形温度のばらつき」と推定しました');
+});
+
+/* ============ SPEC (規格) ============ */
+function renderSpec(){
+  $('specCards').innerHTML=PRODUCTS.map(p=>{
+    const arr=inspections.filter(i=>i.product===p.n);
+    const pr=arr.length?passRate(arr):0;
+    return `<div class="spec-card">
+      <div class="sh"><div class="ic">📐</div><div><b>${esc(p.n)}</b><span>${esc(p.cat)} ・ ${arr.length}件 検査</span></div></div>
+      ${p.specs.map(s=>`<div class="spec-row"><span class="k">${esc(s.k)}</span><span class="v">${s.min} 〜 ${s.max} ${esc(s.u)}</span></div>`).join('')}
+      <div class="spec-row" style="margin-top:6px;border-top:1px solid var(--line)"><span class="k">合格率</span><span class="v" style="color:${pr>=95?'var(--green)':pr>=85?'var(--amber)':'var(--red)'}">${pct(pr)}%</span></div>
+    </div>`;
+  }).join('');
+}
+
+/* ============ TREND (トレンド) ============ */
+function renderTrend(){
+  const pr=passRate(inspections);
+  const totalDef=inspections.reduce((s,i)=>s+i.defects,0);
+  const totalSamples=inspections.reduce((s,i)=>s+i.qty,0);
+  $('trendKpis').innerHTML=`
+    ${kpi('#16b877','平均 合格率',pct(pr)+'<small>%</small>','直近30日','up','+1.2pt')}
+    ${kpi('#e3941f','平均 不良率',pct(totalSamples?totalDef/totalSamples*100:0)+'<small>%</small>','','down','-0.3pt')}
+    ${kpi('#2f6df0','検査総数',inspections.length+'<small>件</small>','','up','+8%')}
+    ${kpi('#7c5cf0','工程能力 Cpk',(1.0+rnd()*0.6).toFixed(2),'目安 1.33以上','warn','監視')}`;
+  // 12 week line (synthesized stable from rng)
+  let base=88;const weeks=[];for(let k=11;k>=0;k--){base+=(rnd()-0.45)*3;base=Math.max(82,Math.min(99,base));weeks.push({w:k,r:base});}
+  $('trendLine').innerHTML=weeks.map((wk,i)=>`<div class="lc"><span class="lv">${pct(wk.r)}</span><div class="bp" data-h="${Math.round((wk.r-78)/22*100)}"></div><span class="lx">${i+1}w</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendLine .bp').forEach(b=>b.style.height=Math.max(8,+b.dataset.h)+'%'),60);
+  // defect rate by product
+  const byProd=PRODUCTS.map(p=>{const arr=inspections.filter(i=>i.product===p.n);const d=arr.reduce((s,i)=>s+i.defects,0);const q=arr.reduce((s,i)=>s+i.qty,0);return {n:p.n,r:q?d/q*100:0};}).filter(x=>x.r>0).sort((a,b)=>b.r-a.r);
+  const mxD=Math.max(...byProd.map(x=>x.r),1);
+  $('trendDefectBars').innerHTML=byProd.map(p=>`
+    <div class="bar-row"><span class="mlabel" title="${esc(p.n)}">${esc(p.n.length>9?p.n.slice(0,8)+'…':p.n)}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0;background:linear-gradient(90deg,var(--red),var(--amber))" data-w="${Math.round(p.r/mxD*100)}"></div></div>
+      <span class="mval">${pct(p.r)}%</span></div>`).join('')||'<div style="color:var(--ink-3);font-size:12px">不良はありません</div>';
+  setTimeout(()=>document.querySelectorAll('#trendDefectBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // by staff
+  const byStaff=STAFF.map(s=>({n:s,c:inspections.filter(i=>i.staff===s).length})).sort((a,b)=>b.c-a.c);
+  const mxS=Math.max(...byStaff.map(x=>x.c),1);
+  $('trendStaffBars').innerHTML=byStaff.map(s=>`
+    <div class="bar-row"><span class="mlabel">${esc(s.n)}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(s.c/mxS*100)}"></div></div>
+      <span class="mval">${s.c}件</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendStaffBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+}
+
+/* ============ CREATE (検査入力) ============ */
+let cMeas=[]; // {k,min,max,u,v}
+function renderProductSelect(){$('cProduct').innerHTML='<option value="">選択してください</option>'+PRODUCTS.map(p=>`<option>${esc(p.n)}</option>`).join('');}
+function renderStaffSelect(){$('cStaff').innerHTML='<option value="">選択してください</option>'+STAFF.map(s=>`<option>${esc(s)}</option>`).join('');}
+function loadSpecForProduct(name,fillAuto){
+  const p=PRODUCTS.find(x=>x.n===name);
+  cMeas=p?p.specs.map(s=>({k:s.k,min:s.min,max:s.max,u:s.u,v:''})):[];
+  if(p&&fillAuto){
+    cMeas.forEach(m=>{const mid=(m.min+m.max)/2;const range=(m.max-m.min)||1;m.v=Math.round((mid+(rnd()-0.5)*range*0.7)*100)/100;});
+    $('cAiHint').classList.add('show');setTimeout(()=>$('cAiHint').classList.remove('show'),2000);
+  }
+  renderMeas();renderPaper();
+}
+function judge(m){if(m.v===''||m.v==null)return null;const v=+m.v;return (v>=m.min&&v<=m.max)?'ok':'ng';}
+function renderMeas(){
+  if(!cMeas.length){$('cMeas').innerHTML='<div style="font-size:12px;color:var(--ink-3);padding:8px 2px">製品を選ぶと検査項目が表示されます</div>';return;}
+  $('cMeas').innerHTML=cMeas.map((m,i)=>{
+    const jd=judge(m);
+    const jdHtml=jd==='ok'?'<div class="jd" style="background:var(--green-soft);color:var(--green)">OK</div>'
+      :jd==='ng'?'<div class="jd" style="background:var(--red-soft);color:var(--red)">NG</div>'
+      :'<div class="jd" style="background:var(--soft);color:var(--ink-3)">—</div>';
+    return `<div class="meas-row" data-i="${i}">
+      <span class="lbl">${esc(m.k)}<span style="color:var(--ink-3);font-weight:500"> (${esc(m.u)})</span></span>
+      <input class="mn" disabled value="${m.min}〜${m.max}" style="background:var(--soft);color:var(--ink-2);text-align:center">
+      <input class="mv" type="number" step="0.01" placeholder="測定値" value="${m.v===''?'':m.v}">
+      ${jdHtml}</div>`;
+  }).join('');
+  $('cMeas').querySelectorAll('.meas-row').forEach(row=>{
+    const i=+row.dataset.i;const mv=row.querySelector('.mv');
+    mv.oninput=()=>{cMeas[i].v=mv.value===''?'':+mv.value;renderMeas();renderPaper();};
+  });
+}
+function overallVerdict(){
+  const filled=cMeas.filter(m=>m.v!==''&&m.v!=null);
+  if(!filled.length)return 'pending';
+  const anyNg=cMeas.some(m=>m.v!==''&&m.v!=null&&judge(m)==='ng');
+  const allFilled=cMeas.every(m=>m.v!==''&&m.v!=null);
+  if(anyNg)return 'fail';
+  if(!allFilled)return 'hold';
+  return 'pass';
+}
+function renderPaper(){
+  const name=$('cProduct').value;
+  $('pProduct').textContent=name||'製品を選択してください';
+  $('pStaff').textContent=$('cStaff').value||'—';
+  const lot=$('cLot').value||'—';const qty=$('cQty').value||'—';
+  $('pLotLine').textContent='ロット '+lot+' ／ サンプル '+qty+' 個';
+  $('pRows').innerHTML=cMeas.length?cMeas.map(m=>{
+    const jd=judge(m);
+    return `<tr><td>${esc(m.k)} <span style="color:var(--ink-3)">(${esc(m.u)})</span></td><td class="r">${m.min}</td><td class="r">${m.max}</td>
+      <td class="r">${m.v===''?'<span style="color:#aab2c4">—</span>':esc(String(m.v))}</td>
+      <td class="r">${jd==='ok'?'<span class="ok">合格</span>':jd==='ng'?'<span class="ng">NG</span>':'<span style="color:#aab2c4">—</span>'}</td></tr>`;
+  }).join('')
+    :'<tr><td colspan="5" style="text-align:center;color:#aab2c4;padding:14px">← 製品を選んで測定値を入力してください</td></tr>';
+  const v=overallVerdict();
+  const verEl=$('pVerdict');verEl.className='pv-verdict '+(v==='pass'?'pass':v==='fail'?'fail':'hold');
+  $('pVerdictT').textContent=v==='pass'?'合格':v==='fail'?'不合格':v==='hold'?'要確認':'—';
+}
+$('cProduct').addEventListener('change',()=>loadSpecForProduct($('cProduct').value,false));
+$('cStaff').addEventListener('change',renderPaper);
+$('cLot').addEventListener('input',renderPaper);
+$('cQty').addEventListener('input',renderPaper);
+$('cSample').addEventListener('click',()=>{
+  $('cProduct').value='樹脂カバー B-220';$('cLot').value='LOT-2605B';$('cQty').value='20';$('cStaff').value='田中 美咲';
+  loadSpecForProduct('樹脂カバー B-220',true);
+});
+$('cJudge').addEventListener('click',async()=>{
+  if(!$('cProduct').value){showToast('製品を選択してください');return;}
+  const filled=cMeas.filter(m=>m.v!==''&&m.v!=null);
+  if(!filled.length){showToast('測定値を入力してください');return;}
+  const btn=$('cJudge');btn.textContent='⚡ AIが判定中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,800));
+  const now=new Date();const no='QC-'+(2605000+inspections.length+1);
+  $('pNo').textContent=no;$('pDate').textContent=fmtDL(now);
+  const v=overallVerdict();
+  const p=PRODUCTS.find(x=>x.n===$('cProduct').value);
+  const ngCount=cMeas.filter(m=>judge(m)==='ng').length;
+  const dt=v!=='pass'?pick(DEFECT_TYPES):null;
+  inspections.push({
+    no,product:$('cProduct').value,cat:p?p.cat:'',lot:$('cLot').value||'LOT-未設定',
+    qty:+$('cQty').value||1,defects:v==='fail'?Math.max(1,ngCount):(v==='hold'?1:0),
+    staff:$('cStaff').value||'未設定',date:now,status:v==='pending'?'hold':v,
+    meas:cMeas.map(m=>({...m})),defectType:dt?dt.t:null,defectSev:dt?dt.sev:null,
+    defectState:v==='pass'?null:'open'
+  });
+  btn.textContent='⚡ AIで判定して登録';btn.disabled=false;
+  const label=v==='pass'?'合格':v==='fail'?'不合格':'保留';
+  showToast('検査 '+no+' を登録しました（判定：'+label+'）');
+  setTimeout(()=>go('list'),700);
+});
+
+/* ============ AI JUDGE (一括判定＋傾向分析) ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 判定中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  $('genList').classList.remove('show');$('insight').classList.remove('show');
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},110);
+  await new Promise(r=>setTimeout(r,1150));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // generate 8 judged results
+  const results=[];
+  for(let i=0;i<8;i++){
+    const p=pick(PRODUCTS);const lot='LOT-2605'+String.fromCharCode(70+i);
+    const r=rnd();const verdict=r<0.74?'pass':r<0.9?'fail':'hold';
+    const defects=verdict==='fail'?rint(2,9):(verdict==='hold'?rint(1,2):0);
+    results.push({p,lot,verdict,defects});
+  }
+  $('genItems').innerHTML=results.map((r,i)=>{
+    const ck=r.verdict==='pass'?'ok':r.verdict==='fail'?'ng':'hd';
+    const mark=r.verdict==='pass'?'✓':r.verdict==='fail'?'✕':'!';
+    const lab=r.verdict==='pass'?'合格':r.verdict==='fail'?'不合格':'保留';
+    return `<div class="gen-item" data-i="${i}"><span class="ck ${ck}">${mark}</span><b style="flex:1">${esc(r.p.n)}</b>
+      <span style="color:var(--ink-3);font-size:12px">${esc(r.lot)}</span>
+      <span style="font-size:12px;color:var(--ink-3)">${r.defects?r.defects+'個 不良':'良品'}</span>
+      ${stBadge(r.verdict)}</div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){
+    await new Promise(r=>setTimeout(r,170));items[i].classList.add('in');
+    const r=results[i];const p=r.p;const now=new Date();
+    const dt=r.verdict!=='pass'?pick(DEFECT_TYPES):null;
+    const meas=p.specs.map(sp=>({k:sp.k,min:sp.min,max:sp.max,u:sp.u,v:Math.round(((sp.min+sp.max)/2)*100)/100}));
+    inspections.push({no:'QC-'+(2605000+inspections.length+1),product:p.n,cat:p.cat,lot:r.lot,qty:20,
+      defects:r.defects,staff:'AI自動判定',date:now,status:r.verdict,meas,
+      defectType:dt?dt.t:null,defectSev:dt?dt.sev:null,defectState:r.verdict==='pass'?null:'open'});
+  }
+  // insight (before/after analysis)
+  const passN=results.filter(r=>r.verdict==='pass').length;
+  const failN=results.filter(r=>r.verdict==='fail').length;
+  const rate=(passN/results.length*100).toFixed(1);
+  const worst=results.filter(r=>r.verdict!=='pass').sort((a,b)=>b.defects-a.defects)[0];
+  $('insightBody').innerHTML=`今回の <b>${results.length}件</b> を自動判定した結果、合格 <b>${passN}件</b>・不合格 <b>${failN}件</b>・合格率 <b>${rate}%</b> でした。`
+    +(worst?` 不良が最も多かったのは <b>${esc(worst.p.n)}</b>（${worst.defects}個）で、主因は <b>${esc(pick(['寸法ばらつき','成形温度の不安定','工具摩耗']))}</b> と推定されます。`:'')
+    +` 過去30日との比較では合格率が <b>+1.2pt</b> 改善傾向にあり、<b>${esc(pick(PRODUCTS).cat)}</b> 工程の安定度が向上しています。要対応の不合格は「不良管理」に自動で登録しました。`;
+  $('insight').classList.add('show');
+  $('navDefect').textContent=inspections.filter(i=>i.defectState==='open').length;
+  btn.disabled=false;btn.textContent='⚡ もう一度判定';
+  showToast(items.length+'件をAIが自動判定しました（合格率 '+rate+'%）');
+});
+
+/* ============ INIT ============ */
+renderProductSelect();renderStaffSelect();renderMeas();renderPaper();renderChips();renderDash();
+$('navDefect').textContent=inspections.filter(i=>i.defectType&&i.defectState==='open').length;
+</script>
+</body>
+</html>

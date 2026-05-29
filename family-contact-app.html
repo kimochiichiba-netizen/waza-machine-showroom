@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜家族連絡マシン（家族向け連絡・様子報告システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--pink:#e2649a;--pink-soft:#fdeaf3;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut */
+.donut-wrap{display:flex;align-items:center;gap:22px}
+.donut{width:128px;height:128px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;position:relative}
+.donut::after{content:"";position:absolute;width:84px;height:84px;border-radius:50%;background:var(--card)}
+.donut .dc{position:relative;z-index:1;text-align:center}
+.donut .dc b{font-size:24px;font-weight:900;display:block;line-height:1}
+.donut .dc span{font-size:10.5px;color:var(--ink-3);font-weight:700}
+.legend{display:flex;flex-direction:column;gap:9px;font-size:12.5px}
+.legend .lg{display:flex;align-items:center;gap:8px}
+.legend .lg .sw{width:11px;height:11px;border-radius:3px}
+.legend .lg b{font-weight:800}
+.legend .lg span{color:var(--ink-3);margin-left:auto;padding-left:14px}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.read{background:var(--green-soft);color:var(--green)}
+.st.sent{background:var(--brand-soft);color:var(--brand)}
+.st.draft{background:var(--amber-soft);color:var(--amber)}
+.st.unread{background:var(--red-soft);color:var(--red)}
+.st.replied{background:var(--pink-soft);color:var(--pink)}
+.cat{display:inline-flex;font-size:11px;font-weight:700;padding:3px 9px;border-radius:7px;background:var(--soft);color:var(--ink-2)}
+.cat.daily{background:#eaf1ff;color:var(--brand)}
+.cat.health{background:#fdeaea;color:var(--red)}
+.cat.event{background:#fdf3e2;color:var(--amber)}
+.cat.meal{background:#e6f8f0;color:var(--green)}
+
+/* resident avatar */
+.res{display:flex;align-items:center;gap:10px}
+.res .av{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;font-weight:800;font-size:13px;color:#fff}
+.res .nm{font-weight:700}
+.res .rm{font-size:11px;color:var(--ink-3)}
+
+/* create / report form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card);resize:vertical}
+.fg textarea{min-height:96px;line-height:1.6}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.tags{display:flex;gap:7px;flex-wrap:wrap}
+.tagbtn{padding:7px 12px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.tagbtn:hover{border-color:var(--brand)}
+.tagbtn.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+.aihint{font-size:11px;color:var(--green);margin-top:6px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* family message preview (LINE-like card) */
+.paper{background:#fff;border:1px solid var(--line);border-radius:14px;padding:0;box-shadow:var(--shadow);overflow:hidden}
+.paper .ph2{background:linear-gradient(135deg,var(--brand),var(--sky));color:#fff;padding:16px 20px;display:flex;align-items:center;gap:12px}
+.paper .ph2 .av{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.22);display:grid;place-items:center;font-size:18px}
+.paper .ph2 .t{font-weight:900;font-size:14px}
+.paper .ph2 .s{font-size:11px;opacity:.85}
+.paper .body{padding:20px}
+.msg-bubble{background:var(--green-soft);border:1px solid #bdebd4;border-radius:4px 16px 16px 16px;padding:16px 18px;font-size:13.5px;line-height:1.85;color:#1a2233;white-space:pre-wrap;min-height:80px}
+.msg-meta{display:flex;align-items:center;gap:8px;margin-top:14px;font-size:11.5px;color:var(--ink-3)}
+.msg-photos{display:flex;gap:8px;margin-top:14px}
+.msg-photos .ph-thumb{flex:1;height:74px;border-radius:10px;display:grid;place-items:center;font-size:24px;color:#fff}
+
+/* report detail / read panel */
+.detail-grid{display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:start}
+@media(max-width:980px){.detail-grid{grid-template-columns:1fr}}
+.readline{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}
+.readline:last-child{border-bottom:0}
+.readline .av{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:11px;color:#fff;flex-shrink:0}
+.readline .who{font-weight:700}
+.readline .rel{font-size:11px;color:var(--ink-3)}
+.readline .when{margin-left:auto;font-size:11.5px;font-weight:700}
+
+/* photo gallery */
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px}
+.photo{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);cursor:pointer;transition:transform .15s}
+.photo:hover{transform:translateY(-3px)}
+.photo .img{height:130px;display:grid;place-items:center;font-size:42px;color:#fff}
+.photo .cap{padding:11px 13px}
+.photo .cap b{font-size:13px;font-weight:700;display:block}
+.photo .cap .meta{font-size:11px;color:var(--ink-3);margin-top:2px;display:flex;align-items:center;gap:8px}
+.photo .cap .meta .lk{color:var(--pink);font-weight:700}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+
+/* AI before/after text transform */
+.transform{display:grid;grid-template-columns:1fr 56px 1fr;gap:0;margin-top:20px;align-items:stretch}
+@media(max-width:760px){.transform{grid-template-columns:1fr;gap:14px}}
+.tcard{border-radius:12px;padding:16px 18px}
+.tcard.in{background:#f7f8fb;border:1px solid var(--line)}
+.tcard.out{background:linear-gradient(180deg,var(--green-soft),#f3fdf8);border:1px solid #bdebd4}
+.tcard .tl{font-size:11.5px;font-weight:800;margin-bottom:9px;display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:7px}
+.tcard.in .tl{background:#e7e9ef;color:#6b7280}
+.tcard.out .tl{background:#cdeedd;color:var(--green)}
+.tcard .tx{font-size:12.5px;line-height:1.8;color:#2a3340;white-space:pre-wrap;min-height:120px}
+.tcard.in .tx{font-family:'Noto Sans JP';color:#5a6477}
+.transform .tarrow{display:grid;place-items:center;font-size:24px;color:var(--brand)}
+@media(max-width:760px){.transform .tarrow{transform:rotate(90deg)}}
+.typing::after{content:"▋";animation:blink .8s steps(1) infinite;color:var(--green)}
+@keyframes blink{50%{opacity:0}}
+
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.progress{height:7px;border-radius:99px;background:var(--soft);overflow:hidden;width:120px}
+.progress > i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--green),#5fd6a3)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">家族連絡マシン<small>技マシン｜家族向け連絡</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">✉️</span>連絡一覧</a>
+      <a data-v="report"><span class="i">📝</span>様子報告</a>
+      <a data-v="photo"><span class="i">📷</span>写真共有</a>
+      <a data-v="read"><span class="i">👀</span>既読管理<span class="badge" id="navUnread">0</span></a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI文面作成</a>
+    </nav>
+    <div class="org">
+      <div class="av">陽</div>
+      <div><b>特養 ひだまり荘</b><span>デモ環境 / 介護職員</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。利用者・ご家族・連絡内容はすべてサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">2026年5月の家族連絡の状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>月別 ご家族への連絡件数</h3><span class="more">過去6ヶ月</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>連絡カテゴリの内訳</h3></div>
+            <div class="pb"><div class="donut-wrap"><div class="donut" id="donut"><div class="dc"><b id="donutTotal">0</b><span>今月の連絡</span></div></div><div class="legend" id="donutLegend"></div></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>既読・返信の状況</h3></div>
+            <div class="pb"><div class="bars" id="readBars"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="利用者名・件名・内容で検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>利用者（ご家族）</th><th>件名</th><th>区分</th><th>送信日時</th><th class="r">既読</th><th>状態</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- REPORT (様子報告 作成) -->
+      <section class="view" id="v-report">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>利用者を選ぶ</label>
+              <select id="rResident"></select></div>
+            <div class="fg"><label>連絡の区分</label>
+              <div class="tags" id="rCatTags"></div></div>
+            <div class="fg"><label>ケア記録メモ（職員のいつものメモでOK）</label>
+              <textarea id="rMemo" placeholder="例）昼食8割摂取。午後レク参加、塗り絵。バイタル安定。便通あり。"></textarea>
+              <div class="aihint" id="rAiHint">✨ AIがご家族向けのやさしい文面に整えます</div></div>
+            <div class="linkrow" style="margin-top:6px">
+              <button class="btn primary" id="rGen" style="flex:1;justify-content:center">⚡ AIでやさしい文面にして送信</button>
+              <button class="btn" id="rSample">サンプル</button>
+            </div>
+            <div style="font-size:11px;color:var(--ink-3);margin-top:10px;line-height:1.6">※ 職員のメモを、ご家族が読んで安心できる温かい言葉にAIが自動で書き換えます。誤った医療判断はせず、事実だけをやさしく伝えます。</div>
+          </div>
+          <div>
+            <div class="paper" id="rPaper">
+              <div class="ph2">
+                <div class="av">🏡</div>
+                <div><div class="t">特養 ひだまり荘 より</div><div class="s" id="rPaperTo">ご家族さま宛</div></div>
+              </div>
+              <div class="body">
+                <div class="msg-bubble" id="rBubble">左のメモを入力し「AIでやさしい文面にして送信」を押すと、ここにご家族向けの様子報告が表示されます。</div>
+                <div class="msg-meta"><span id="rCatBadge"></span><span id="rTime">送信前</span></div>
+                <div class="msg-photos" id="rPhotos" style="display:none">
+                  <div class="ph-thumb" style="background:linear-gradient(135deg,#f6a96b,#e2649a)">🍽️</div>
+                  <div class="ph-thumb" style="background:linear-gradient(135deg,#5fb8e6,#37e29a)">🎨</div>
+                  <div class="ph-thumb" style="background:linear-gradient(135deg,#7c6fe0,#4fd1e6)">😊</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PHOTO -->
+      <section class="view" id="v-photo">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="pq" placeholder="利用者名・シーンで検索"></div>
+          <button class="btn primary" style="margin-left:auto" onclick="go('report')">＋ 様子報告に写真を添えて送る</button>
+        </div>
+        <div class="gallery" id="gallery"></div>
+      </section>
+
+      <!-- READ (既読管理) -->
+      <section class="view" id="v-read">
+        <div class="kpis" id="readKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>既読がついていない連絡（フォロー対象）</h3>
+            <button class="btn green" id="remindAll" style="margin-left:auto">🔔 未読のご家族へ一括リマインド</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>利用者（ご家族）</th><th>件名</th><th>送信日時</th><th>状態</th><th></th></tr></thead>
+              <tbody id="readRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">ケア記録から、ご家族向けの様子報告を自動作成</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">本日のケア記録 <b>24件</b> から、利用者ごとの「やさしい様子報告」をAIが自動で作成します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで一括作成する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">1時間50分</div>
+              <ul>
+                <li>📋 ケア記録を1件ずつ読み返す</li>
+                <li>✍️ ご家族向けに言葉を選んで書き直す</li>
+                <li>📱 利用者ごとにLINE・メールで個別送信</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 ケア記録を自動で読み取り</li>
+                <li>💬 やさしい文面に自動で書き換え</li>
+                <li>✉️ ご家族へ一括送信・既読も自動集計</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- before/after text transform -->
+          <div class="transform">
+            <div class="tcard in">
+              <span class="tl">📋 職員のケア記録（そのまま）</span>
+              <div class="tx" id="txIn">朝食7割、昼食全量。AM入浴。PM塗り絵レク参加、笑顔あり。バイタル36.6/血圧128-78/SpO2 98。排便1回普通便。夜間良眠。</div>
+            </div>
+            <div class="tarrow">→</div>
+            <div class="tcard out">
+              <span class="tl">💬 ご家族向け 様子報告（AI生成）</span>
+              <div class="tx" id="txOut"><span style="color:var(--ink-3)">「AIで一括作成する」を押すと、ここにやさしい文面が表示されます。</span></div>
+            </div>
+          </div>
+
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ ご家族へ送信した様子報告</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const RESIDENTS=[
+  {name:'田中 ハナ',room:'101',family:'田中 美咲',rel:'長女',color:'#e2649a'},
+  {name:'佐藤 きよ',room:'102',family:'佐藤 健一',rel:'長男',color:'#2f6df0'},
+  {name:'鈴木 とめ',room:'103',family:'鈴木 由美',rel:'次女',color:'#16b877'},
+  {name:'高橋 三郎',room:'105',family:'高橋 大輔',rel:'長男',color:'#e3941f'},
+  {name:'渡辺 ふみ',room:'106',family:'渡辺 かおり',rel:'孫',color:'#0ea5b7'},
+  {name:'伊藤 まさ',room:'108',family:'伊藤 茂',rel:'長男',color:'#7c6fe0'},
+  {name:'山本 すゑ',room:'110',family:'山本 直子',rel:'長女',color:'#e24a4a'},
+  {name:'中村 とし',room:'112',family:'中村 翔太',rel:'孫',color:'#5fb8e6'},
+];
+const CATS=[
+  {k:'daily',label:'日々の様子',icon:'🌤️'},
+  {k:'meal',label:'お食事',icon:'🍽️'},
+  {k:'health',label:'体調・通院',icon:'🩺'},
+  {k:'event',label:'行事・レク',icon:'🎉'},
+];
+const CATMAP={daily:'日々の様子',meal:'お食事',health:'体調・通院',event:'行事・レク'};
+const TODAY=new Date();
+function ym(d){return (d.getMonth()+1)}
+
+let SEED=4242;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+/* sample family-facing message bodies per category */
+const BODIES={
+  daily:['今日も穏やかにお過ごしでした。午前中は職員と一緒に窓辺で日向ぼっこをされ、お庭の花を眺めて「きれいねぇ」と笑顔を見せてくださいました。',
+    'お変わりなくお元気にされています。午後はホールで他の利用者さまとお茶を楽しまれ、昔のお話を聞かせてくださいました。'],
+  meal:['お食事をしっかり召し上がりました。今日の昼食は筍ご飯で「美味しい」と完食され、おやつのお団子も喜んでいらっしゃいました。',
+    '本日もよく召し上がっています。水分もこまめに摂れており、食後はゆっくり休まれました。'],
+  health:['体調は落ち着いておられます。本日のバイタルも安定しており、夜間もよくお休みになりました。ご安心ください。',
+    '定期受診に同行いたしました。お変わりなしとのことで、お薬も処方どおり継続となります。'],
+  event:['今日は施設のレクリエーションに参加されました。塗り絵をとても楽しまれ、出来上がった作品を嬉しそうに見せてくださいました。',
+    '季節の行事に元気にご参加いただきました。歌の時間では手拍子をされ、終始笑顔でお過ごしでした。'],
+};
+const SUBJECTS={daily:['本日の様子のご報告','今日も穏やかにお過ごしです'],meal:['お食事の様子','本日も完食されました'],
+  health:['体調のご報告','定期受診のご報告'],event:['レクリエーション参加のご報告','行事の様子をお届けします']};
+
+let messages=[];
+(function seed(){
+  const statuses=['read','read','read','replied','sent','unread','read'];
+  for(let i=0;i<26;i++){
+    const r=pick(RESIDENTS);
+    const cat=pick(CATS).k;
+    const dayBack=Math.floor(rnd()*22);
+    const sentAt=new Date(TODAY.getFullYear(),TODAY.getMonth()-(rnd()>0.7?1:0),TODAY.getDate()-dayBack,8+Math.floor(rnd()*10),Math.floor(rnd()*60));
+    let st=pick(statuses);
+    const readMin=st==='read'||st==='replied'?5+Math.floor(rnd()*180):null;
+    messages.push({
+      id:'MSG-'+(20260000+i+1),resident:r.name,room:r.room,family:r.family,rel:r.rel,color:r.color,
+      cat,subject:pick(SUBJECTS[cat]),body:pick(BODIES[cat]),sentAt,status:st,readMin
+    });
+  }
+})();
+
+/* photos */
+const PHOTO_SCENES=[
+  {ic:'🎨',cap:'塗り絵レクの作品',scene:'event',bg:'linear-gradient(135deg,#f6a96b,#e2649a)'},
+  {ic:'🍽️',cap:'お昼ごはんの時間',scene:'meal',bg:'linear-gradient(135deg,#16b877,#5fd6a3)'},
+  {ic:'🌸',cap:'お庭でお花見',scene:'daily',bg:'linear-gradient(135deg,#e2649a,#f6a96b)'},
+  {ic:'🎂',cap:'お誕生日のお祝い',scene:'event',bg:'linear-gradient(135deg,#e3941f,#f6c95f)'},
+  {ic:'😊',cap:'レク中の笑顔',scene:'event',bg:'linear-gradient(135deg,#7c6fe0,#4fd1e6)'},
+  {ic:'🍵',cap:'おやつタイム',scene:'meal',bg:'linear-gradient(135deg,#0ea5b7,#5fb8e6)'},
+  {ic:'🌻',cap:'夏の飾りつけ',scene:'event',bg:'linear-gradient(135deg,#e3941f,#37e29a)'},
+  {ic:'🎶',cap:'みんなで合唱',scene:'event',bg:'linear-gradient(135deg,#2f6df0,#7c6fe0)'},
+];
+let photos=PHOTO_SCENES.map((p,i)=>{const r=pick(RESIDENTS);return {...p,resident:r.name,room:r.room,color:r.color,likes:Math.floor(rnd()*9),d:new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-Math.floor(rnd()*14))};});
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const fmtDT=d=>(d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+const fmtD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STLABEL={read:'既読',sent:'送信済',draft:'下書き',unread:'未読',replied:'返信あり'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]}</span>`;}
+function catBadge(c){return `<span class="cat ${c}">${CATMAP[c]}</span>`;}
+function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function avatar(name,color){return `<span class="av" style="background:${color}">${esc(name.slice(0,1))}</span>`;}
+function readMinLabel(m){if(m==null)return '—';if(m<60)return m+'分後';return Math.floor(m/60)+'時間'+(m%60)+'分後';}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','2026年'+ym(TODAY)+'月の家族連絡の状況'],list:['連絡一覧','ご家族へ送った連絡を管理します'],
+  report:['様子報告','ケア記録から、やさしい様子報告を作って送ります'],photo:['写真共有','ご家族と共有した写真の一覧'],
+  read:['既読管理','ご家族の既読・返信を管理します'],ai:['AI文面作成','ケア記録を、ご家族向けの文面に自動で書き換えます']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn primary" onclick="go(\'report\')">＋ 様子報告を作る</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI文面作成</button><button class="btn primary" onclick="go(\'report\')">＋ 様子報告を作る</button>'
+    : v==='photo'?'':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='photo')renderPhotos();
+  if(v==='read')renderRead();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const tm=messages.filter(i=>thisMonth(i.sentAt));
+  const readCnt=messages.filter(i=>i.status==='read'||i.status==='replied').length;
+  const readRate=Math.round(readCnt/messages.length*100);
+  const replyCnt=messages.filter(i=>i.status==='replied').length;
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','今月の連絡',tm.length+'<small>件</small>','ご家族へ送信','up','前月比 +9件')}
+    ${kpi('#16b877','既読率',readRate+'<small>%</small>','','up','+6pt 安心度UP')}
+    ${kpi('#e2649a','ご家族からの返信',replyCnt+'<small>件</small>','','up','双方向で安心')}
+    ${kpi('#e3941f','ご家族満足度',(4.7)+'<small>/5.0</small>','アンケート','up','「安心できる」多数')}`;
+  // trend (count per month)
+  const months=[];for(let k=5;k>=0;k--){const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1);months.push(d);}
+  const counts=months.map(m=>messages.filter(i=>i.sentAt.getMonth()===m.getMonth()&&i.sentAt.getFullYear()===m.getFullYear()).length);
+  // give earlier months some baseline so chart looks full
+  const seedCounts=[14,18,21,17,counts[4]||0,counts[5]||0];
+  const disp=counts.map((c,i)=>i<4?seedCounts[i]:c);
+  const mx=Math.max(...disp,1);
+  $('trendBars').innerHTML=months.map((m,i)=>`
+    <div class="bar-row"><span class="mlabel">${m.getMonth()+1}月</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(disp[i]/mx*100)}"></div></div>
+      <span class="mval">${disp[i]}件</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // donut by category (this month, fallback all)
+  const base=tm.length?tm:messages;
+  const catColors={daily:'#2f6df0',meal:'#16b877',health:'#e24a4a',event:'#e3941f'};
+  const catCnt=CATS.map(c=>({...c,n:base.filter(m=>m.cat===c.k).length,color:catColors[c.k]}));
+  const total=catCnt.reduce((s,c)=>s+c.n,0)||1;
+  $('donutTotal').textContent=base.length;
+  let acc=0;const segs=catCnt.map(c=>{const from=acc/total*360;acc+=c.n;const to=acc/total*360;return `${c.color} ${from}deg ${to}deg`;}).join(',');
+  $('donut').style.background=`conic-gradient(${segs})`;
+  $('donutLegend').innerHTML=catCnt.map(c=>`<div class="lg"><span class="sw" style="background:${c.color}"></span><b>${c.label}</b><span>${c.n}件 / ${Math.round(c.n/total*100)}%</span></div>`).join('');
+  // activity
+  const acts=[
+    {i:'👀',c:'#e6f8f0',t:'田中 美咲さま（長女）が「本日の様子」を既読しました',m:'3分前'},
+    {i:'💬',c:'#fdeaf3',t:'佐藤 健一さま（長男）から返信：「ありがとうございます。安心しました」',m:'25分前'},
+    {i:'⚡',c:'#e6f8f0',t:'AI文面作成で 8名分の様子報告を自動作成・送信',m:'今日 14:10'},
+    {i:'📷',c:'#eaf1ff',t:'「塗り絵レクの作品」の写真を3名のご家族へ共有',m:'今日 11:32'},
+    {i:'🔔',c:'#fdf3e2',t:'未読のご家族 2件へ自動リマインドを送信',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${a.m}</div></div></div>`).join('');
+  // read bars
+  const total2=messages.length;
+  const grp=[['既読',messages.filter(m=>m.status==='read').length,'#16b877'],['返信あり',messages.filter(m=>m.status==='replied').length,'#e2649a'],
+    ['送信済(未読)',messages.filter(m=>m.status==='sent').length,'#2f6df0'],['未読(要フォロー)',messages.filter(m=>m.status==='unread').length,'#e24a4a']];
+  $('readBars').innerHTML=grp.map(g=>`<div class="bar-row"><span class="mlabel" style="width:auto">${g[0]}</span>
+    <div class="bar-track"><div class="bar-fill" style="width:0;background:${g[2]}" data-w="${Math.round(g[1]/total2*100)}"></div></div>
+    <span class="mval">${g[1]}件</span></div>`).join('').replace('grid-template-columns','');
+  // fix grid for read bars (label may be longer)
+  document.querySelectorAll('#readBars .bar-row').forEach(r=>r.style.gridTemplateColumns='108px 1fr 50px');
+  setTimeout(()=>document.querySelectorAll('#readBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ LIST ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['read','既読'],['replied','返信あり'],['sent','送信済'],['unread','未読']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=messages.filter(i=>filterStatus==='all'||i.status===filterStatus)
+    .filter(i=>!q||(i.resident+i.family+i.subject+i.body).toLowerCase().includes(q))
+    .sort((a,b)=>b.sentAt-a.sentAt);
+  $('listRows').innerHTML=rows.length?rows.map(i=>`<tr onclick="openMsg('${esc(i.id)}')">
+    <td><div class="res">${avatar(i.resident,i.color)}<div><div class="nm">${esc(i.resident)}</div><div class="rm">${esc(i.family)}さま（${esc(i.rel)}）・${esc(i.room)}号</div></div></div></td>
+    <td style="color:var(--ink-2)">${esc(i.subject)}</td>
+    <td>${catBadge(i.cat)}</td>
+    <td style="color:var(--ink-2)" class="tnum">${fmtDT(i.sentAt)}</td>
+    <td class="r" style="color:var(--ink-3);font-size:11.5px">${i.readMin!=null?'<span style="color:var(--green);font-weight:700">'+readMinLabel(i.readMin)+'</span>':'—'}</td>
+    <td>${stBadge(i.status)}</td></tr>`).join('')
+    :'<tr><td colspan="6" class="empty-cell">該当する連絡がありません</td></tr>';
+}
+window.openMsg=id=>{const m=messages.find(x=>x.id===id);if(!m)return;showToast(esc(m.resident)+' の連絡を開きました');};
+$('q').addEventListener('input',renderList);
+
+/* ============ PHOTO ============ */
+function renderPhotos(){
+  const q=($('pq').value||'').toLowerCase();
+  const list=photos.filter(p=>!q||(p.resident+p.cap).toLowerCase().includes(q));
+  $('gallery').innerHTML=list.length?list.map((p,idx)=>`<div class="photo" onclick="likePhoto(${photos.indexOf(p)})">
+    <div class="img" style="background:${p.bg}">${p.ic}</div>
+    <div class="cap"><b>${esc(p.cap)}</b>
+      <div class="meta"><span>${avatar(p.resident,p.color)}</span><span>${esc(p.resident)}</span><span style="margin-left:auto" class="lk">❤️ ${p.likes}</span></div>
+      <div class="meta" style="margin-top:6px;color:var(--ink-3)">${fmtD(p.d)} ・ ${esc(p.room)}号</div>
+    </div></div>`).join('')
+    :'<div class="empty-cell" style="grid-column:1/-1">該当する写真がありません</div>';
+}
+window.likePhoto=idx=>{photos[idx].likes++;renderPhotos();showToast(esc(photos[idx].resident)+' の写真にご家族が「いいね」しました');};
+$('pq').addEventListener('input',renderPhotos);
+
+/* ============ READ (既読管理) ============ */
+function renderRead(){
+  const unread=messages.filter(i=>i.status==='sent'||i.status==='unread');
+  const readCnt=messages.filter(i=>i.status==='read'||i.status==='replied').length;
+  const readRate=Math.round(readCnt/messages.length*100);
+  const avgMin=Math.round(messages.filter(m=>m.readMin!=null).reduce((s,m)=>s+m.readMin,0)/Math.max(1,messages.filter(m=>m.readMin!=null).length));
+  $('readKpis').innerHTML=`
+    ${kpi('#16b877','既読率',readRate+'<small>%</small>',readCnt+'件 既読','up','安心の指標')}
+    ${kpi('#e24a4a','未読(要フォロー)',unread.length+'<small>件</small>','','warn','リマインド推奨')}
+    ${kpi('#2f6df0','平均 既読までの時間',readMinLabel(avgMin),'','up','スマホですぐ確認')}
+    ${kpi('#e2649a','返信あり',messages.filter(m=>m.status==='replied').length+'<small>件</small>','','up','双方向')}`;
+  $('readRows').innerHTML=unread.length?unread.sort((a,b)=>b.sentAt-a.sentAt).map(i=>`<tr>
+    <td><div class="res">${avatar(i.resident,i.color)}<div><div class="nm">${esc(i.resident)}</div><div class="rm">${esc(i.family)}さま（${esc(i.rel)}）</div></div></div></td>
+    <td style="color:var(--ink-2)">${esc(i.subject)}</td>
+    <td style="color:var(--ink-2)" class="tnum">${fmtDT(i.sentAt)}</td>
+    <td>${stBadge(i.status)}</td>
+    <td class="r"><button class="btn green" style="padding:6px 12px" onclick="remindOne('${esc(i.id)}')">🔔 リマインド</button></td></tr>`).join('')
+    :'<tr><td colspan="5" class="empty-cell">未読の連絡はありません 🎉 ご家族みなさまに届いています</td></tr>';
+  $('navUnread').textContent=unread.length;
+}
+window.remindOne=id=>{const m=messages.find(x=>x.id===id);if(m){m.status='read';m.readMin=8;renderRead();showToast(esc(m.family)+'さまへリマインドを送信しました');}};
+$('remindAll').addEventListener('click',async()=>{
+  const btn=$('remindAll');btn.textContent='🔔 送信中…';btn.disabled=true;
+  const unread=messages.filter(i=>i.status==='sent'||i.status==='unread');
+  await new Promise(r=>setTimeout(r,800));
+  let n=0;unread.forEach(i=>{if(rnd()>0.35){i.status='read';i.readMin=6+Math.floor(rnd()*40);n++;}});
+  btn.textContent='🔔 未読のご家族へ一括リマインド';btn.disabled=false;
+  renderRead();showToast('未読のご家族 '+unread.length+'件へリマインド送信、'+n+'件が既読になりました');
+});
+
+/* ============ REPORT (様子報告 作成) ============ */
+let reportCat='daily';
+function renderResidentSelect(){$('rResident').innerHTML='<option value="">選択してください</option>'+RESIDENTS.map(r=>`<option>${r.name}（${r.room}号）</option>`).join('');}
+function renderCatTags(){
+  $('rCatTags').innerHTML=CATS.map(c=>`<button class="tagbtn ${c.k===reportCat?'on':''}" data-k="${c.k}">${c.icon} ${c.label}</button>`).join('');
+  $('rCatTags').querySelectorAll('.tagbtn').forEach(b=>b.onclick=()=>{reportCat=b.dataset.k;renderCatTags();$('rAiHint').classList.add('show');setTimeout(()=>$('rAiHint').classList.remove('show'),2000);});
+}
+function residentByLabel(label){const nm=(label||'').split('（')[0];return RESIDENTS.find(r=>r.name===nm);}
+$('rResident').addEventListener('change',()=>{
+  const r=residentByLabel($('rResident').value);
+  $('rPaperTo').textContent=r?`${esc(r.family)}さま（${esc(r.rel)}）宛`:'ご家族さま宛';
+});
+$('rMemo').addEventListener('input',()=>{if($('rMemo').value.length>3)$('rAiHint').classList.add('show');});
+$('rSample').addEventListener('click',()=>{
+  $('rResident').value='田中 ハナ（101号）';
+  reportCat='event';renderCatTags();
+  $('rMemo').value='昼食全量。PM塗り絵レク参加、笑顔あり。バイタル36.6/血圧124-76。便通あり。夜間良眠。';
+  $('rPaperTo').textContent='田中 美咲さま（長女）宛';
+  $('rAiHint').classList.add('show');
+});
+$('rGen').addEventListener('click',async()=>{
+  const r=residentByLabel($('rResident').value);
+  const memo=$('rMemo').value.trim();
+  if(!r||!memo){showToast('利用者とケア記録メモを入力してください');return;}
+  const btn=$('rGen');btn.textContent='⚡ AIが文面を作成中…';btn.disabled=true;
+  $('rBubble').textContent='…';
+  await new Promise(rs=>setTimeout(rs,700));
+  // build a warm family-facing message from the memo (deterministic, no eval)
+  const intro=`${esc(r.family)}さま\n\nいつもお世話になっております。特養ひだまり荘です。\n本日の${esc(r.name)}さまのご様子をお伝えいたします。\n\n`;
+  const body=pick(BODIES[reportCat]);
+  const closing='\n\nお食事・水分もしっかりとれており、体調も落ち着いておられます。引き続きあたたかく見守ってまいります。何かございましたらお気軽にご連絡ください。';
+  const full=intro+body+closing;
+  $('rBubble').textContent=full;
+  $('rCatBadge').innerHTML=catBadge(reportCat);
+  const now=new Date();$('rTime').textContent=fmtDT(now)+' に送信';
+  $('rPhotos').style.display=reportCat==='event'||reportCat==='meal'?'flex':'none';
+  // add to messages
+  messages.unshift({id:'MSG-'+(20260000+messages.length+1),resident:r.name,room:r.room,family:r.family,rel:r.rel,color:r.color,
+    cat:reportCat,subject:pick(SUBJECTS[reportCat]),body:body,sentAt:now,status:'sent',readMin:null});
+  btn.textContent='⚡ AIでやさしい文面にして送信';btn.disabled=false;
+  showToast(esc(r.family)+'さまへ様子報告を送信しました（連絡一覧に追加）');
+  $('navUnread').textContent=messages.filter(i=>i.status==='sent'||i.status==='unread').length;
+});
+
+/* ============ AI BULK ============ */
+const AI_OUT='田中 美咲さま\n\nいつもお世話になっております。本日の田中ハナさまのご様子をお伝えいたします。\n\n朝食・昼食ともにしっかり召し上がり、お変わりなくお元気にお過ごしでした。午前中は気持ちよく入浴され、午後は塗り絵のレクリエーションに参加されて、終始やさしい笑顔を見せてくださいました。\n\n体調も落ち着いており、夜もぐっすりお休みになっています。引き続きあたたかく見守ってまいります。';
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 作成中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  $('txOut').innerHTML='';$('txOut').classList.add('typing');
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},120);
+  // typewriter the family-facing text
+  await new Promise(r=>setTimeout(r,300));
+  for(let i=0;i<AI_OUT.length;i++){
+    $('txOut').textContent=AI_OUT.slice(0,i+1);
+    if(i%2===0)await new Promise(r=>setTimeout(r,11));
+  }
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('txOut').classList.remove('typing');
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // generate per-resident reports
+  const targets=RESIDENTS.slice(0,8);
+  $('genItems').innerHTML=targets.map((r,i)=>{
+    const cat=pick(CATS);
+    return `<div class="gen-item" data-i="${i}"><span class="ck">✓</span>
+      <span class="res" style="flex:1">${avatar(r.name,r.color)}<div><div class="nm" style="font-size:13px">${esc(r.name)}</div><div class="rm">${esc(r.family)}さま（${esc(r.rel)}）</div></div></span>
+      <span style="margin-right:6px">${catBadge(cat.k)}</span>
+      <span class="st sent" style="font-size:10.5px">送信済</span></div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){
+    await new Promise(r=>setTimeout(r,160));items[i].classList.add('in');
+    const r=targets[i];const cat=pick(CATS).k;const now=new Date();
+    messages.unshift({id:'MSG-'+(20260000+messages.length+1),resident:r.name,room:r.room,family:r.family,rel:r.rel,color:r.color,
+      cat,subject:pick(SUBJECTS[cat]),body:pick(BODIES[cat]),sentAt:now,status:'sent',readMin:null});
+  }
+  btn.disabled=false;btn.textContent='⚡ もう一度作成';
+  $('navUnread').textContent=messages.filter(i=>i.status==='sent'||i.status==='unread').length;
+  showToast(items.length+'名分の様子報告を作成し、ご家族へ送信しました');
+});
+
+/* ============ INIT ============ */
+renderResidentSelect();renderCatTags();renderChips();renderDash();
+$('navUnread').textContent=messages.filter(i=>i.status==='sent'||i.status==='unread').length;
+</script>
+</body>
+</html>

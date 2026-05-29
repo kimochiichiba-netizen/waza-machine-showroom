@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜トレーサビリティマシン（生産履歴追跡システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#1f9d6b;--brand-dk:#16835a;--brand-soft:#e6f8f0;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cf0;--purple-soft:#efeaff;
+  --sb:#0c1a16;--sb-2:#11241d;--sb-ink:#bcd6cb;--sb-ink-2:#739787;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#37e29a,#4fd1e6,#e3b864,#37e29a);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(31,157,107,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn.red{background:var(--red);border-color:var(--red);color:#fff}
+.btn.red:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:64px 1fr 60px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut */
+.donut-wrap{display:flex;align-items:center;gap:18px}
+.donut{width:128px;height:128px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;position:relative}
+.donut::after{content:"";position:absolute;width:84px;height:84px;border-radius:50%;background:var(--card)}
+.donut .dc{position:relative;z-index:1;text-align:center}
+.donut .dc b{font-size:24px;font-weight:900;line-height:1}
+.donut .dc span{font-size:10.5px;color:var(--ink-3);font-weight:700}
+.legend{display:flex;flex-direction:column;gap:9px;font-size:12.5px;flex:1}
+.legend .lg{display:flex;align-items:center;gap:8px}
+.legend .lg .sw{width:11px;height:11px;border-radius:3px}
+.legend .lg .nm{color:var(--ink-2);font-weight:600}
+.legend .lg .vl{margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.shipped{background:var(--brand-soft);color:var(--brand)}
+.st.stock{background:var(--soft);color:var(--ink-3)}
+.st.process{background:var(--purple-soft);color:var(--purple)}
+.st.hold{background:var(--amber-soft);color:var(--amber)}
+.st.recall{background:var(--red-soft);color:var(--red)}
+.tag2{display:inline-flex;align-items:center;font-size:11px;font-weight:800;padding:3px 9px;border-radius:7px;background:var(--soft);color:var(--ink-2)}
+
+/* form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,400px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--brand)}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* timeline (chain) */
+.chain{position:relative;padding-left:6px}
+.chain .step{position:relative;padding:0 0 4px 38px;margin-bottom:2px}
+.chain .step::before{content:"";position:absolute;left:14px;top:26px;bottom:-6px;width:2px;background:var(--line-2)}
+.chain .step:last-child::before{display:none}
+.chain .dotc{position:absolute;left:0;top:2px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:14px;background:var(--brand-soft);color:var(--brand);border:2px solid var(--card);box-shadow:0 0 0 1px var(--line-2)}
+.chain .step .sttl{font-size:13.5px;font-weight:800;display:flex;align-items:center;gap:8px}
+.chain .step .smeta{font-size:11.5px;color:var(--ink-3);margin:2px 0 8px}
+.chain .step .scard{background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:11px 13px;font-size:12.5px;margin-bottom:8px}
+.chain .step .scard .kv{display:flex;justify-content:space-between;padding:2px 0}
+.chain .step .scard .kv span:first-child{color:var(--ink-3)}
+.chain .step .scard .kv span:last-child{font-weight:700}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* trace result */
+.trace-result{margin-top:18px;border-top:1px solid var(--line);padding-top:18px;display:none}
+.trace-result.show{display:block;animation:fade .4s}
+.trace-flow{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding:6px 2px 12px}
+.tf-node{min-width:150px;flex:1;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px;position:relative}
+.tf-node .tn-icon{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-size:16px;margin-bottom:8px}
+.tf-node .tn-stage{font-size:10.5px;font-weight:800;color:var(--ink-3);letter-spacing:.06em}
+.tf-node .tn-name{font-size:13px;font-weight:800;margin:2px 0 5px}
+.tf-node .tn-meta{font-size:11px;color:var(--ink-2);line-height:1.5}
+.tf-arrow{display:grid;place-items:center;min-width:30px;color:var(--brand);font-size:18px}
+@media(max-width:760px){.trace-flow{flex-direction:column}.tf-arrow{transform:rotate(90deg);min-height:24px}}
+
+/* recall box */
+.recall-box{background:var(--red-soft);border:1px solid #f6c4c4;border-radius:12px;padding:16px 18px;margin-top:16px;display:none}
+.recall-box.show{display:block;animation:fade .4s}
+.recall-box h4{color:var(--red);font-size:14px;font-weight:900;display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.recall-box .rlist{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.recall-box .ritem{background:var(--card);border:1px solid #f0cccc;border-radius:8px;padding:8px 12px;font-size:12.5px;display:flex;align-items:center;gap:10px}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.lotno{font-family:'Orbitron';font-size:12px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">トレーサビリティマシン<small>技マシン｜生産履歴追跡</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="lots"><span class="i">📦</span>ロット一覧</a>
+      <a data-v="proc"><span class="i">🛠️</span>工程履歴</a>
+      <a data-v="mat"><span class="i">🌱</span>原料追跡</a>
+      <a data-v="ship"><span class="i">🚚</span>出荷先</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI追跡<span class="badge" id="navAlert">0</span></a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。ロット・原料・出荷先はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">生産ロットの追跡状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>工程別の処理ロット数</h3><span class="more">今月</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>ロットの状態内訳</h3></div>
+            <div class="pb"><div class="donut-wrap"><div class="donut" id="donut"><div class="dc" id="donutC"></div></div><div class="legend" id="donutLeg"></div></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>要確認のロット</h3><span class="more" onclick="go('lots')">一覧へ</span></div>
+            <div class="pb" style="padding:0"><div class="acts" id="alertList" style="padding:6px 18px"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LOTS -->
+      <section class="view" id="v-lots">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="ロット番号・品名・産地で検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>ロット番号</th><th>品名</th><th>産地・原料</th><th class="r">数量</th><th>製造日</th><th>状態</th></tr></thead>
+          <tbody id="lotRows"></tbody>
+        </table>
+      </section>
+
+      <!-- PROCESS -->
+      <section class="view" id="v-proc">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>対象ロット</label><select id="pLot"></select></div>
+            <div class="fg"><label>工程</label>
+              <select id="pStage">
+                <option>入荷検品</option><option>洗浄・選別</option><option>カット加工</option>
+                <option>計量・包装</option><option>品質検査</option><option>冷蔵保管</option><option>出荷</option>
+              </select></div>
+            <div class="fg-row">
+              <div class="fg"><label>担当者</label><input id="pWorker" placeholder="例：田中"></div>
+              <div class="fg"><label>設備・ライン</label><input id="pLine" placeholder="例：第2加工ライン"></div>
+            </div>
+            <div class="fg-row">
+              <div class="fg"><label>庫内温度(℃)</label><input id="pTemp" type="number" placeholder="例：4"></div>
+              <div class="fg"><label>所要時間(分)</label><input id="pMin" type="number" placeholder="例：35"></div>
+            </div>
+            <div class="fg"><label>備考</label><input id="pNote" placeholder="例：異物なし・規格内"></div>
+            <button class="btn primary" id="pAdd" style="width:100%;justify-content:center">✚ 工程記録を追加</button>
+            <div class="aihint" id="pHint">✨ AIが標準の温度・所要時間を提案しました</div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3 id="procTitle">工程履歴</h3><span class="tag2" id="procLotTag">—</span></div>
+            <div class="pb"><div class="chain" id="procChain"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MATERIALS -->
+      <section class="view" id="v-mat">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="mq" placeholder="原料名・仕入先・産地で検索"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>原料ロット</th><th>原料名</th><th>仕入先</th><th>産地</th><th>入荷日</th><th class="r">使用ロット数</th><th>状態</th></tr></thead>
+          <tbody id="matRows"></tbody>
+        </table>
+      </section>
+
+      <!-- SHIPMENTS -->
+      <section class="view" id="v-ship">
+        <table class="tbl">
+          <thead><tr><th>出荷先</th><th>区分</th><th>地域</th><th class="r">納品ロット</th><th class="r">直近納品</th><th>追跡状態</th></tr></thead>
+          <tbody id="shipRows"></tbody>
+        </table>
+      </section>
+
+      <!-- AI TRACE -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div style="flex:1;min-width:200px"><div style="font-size:16px;font-weight:900">ロットを指定して原料〜出荷を瞬時に追跡</div>
+            <div style="font-size:12.5px;color:var(--ink-3)">ロット番号を選ぶと、AIが原料の仕入から各工程・出荷先まで全経路を一瞬で復元します。リコール時は影響先も自動抽出。</div></div>
+          </div>
+          <div class="fg-row" style="grid-template-columns:1fr auto;align-items:end;gap:11px;max-width:560px">
+            <div class="fg" style="margin-bottom:0"><label>追跡するロット</label><select id="aiLot"></select></div>
+            <button class="btn primary" id="aiRun" style="height:42px">⚡ AIで一括追跡</button>
+          </div>
+          <div class="ba" style="margin-top:18px">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">3時間20分</div>
+              <ul>
+                <li>📑 紙の入荷台帳を1枚ずつ確認</li>
+                <li>🔎 加工日報と出荷伝票を突合</li>
+                <li>📞 出荷先へ電話で在庫を照会</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 原料ロットを自動で逆引き</li>
+                <li>🧭 全工程の経路を即時復元</li>
+                <li>🚚 出荷先・影響範囲を自動抽出</li>
+              </ul>
+            </div>
+          </div>
+          <div class="trace-result" id="traceResult">
+            <div style="font-size:13px;font-weight:800;margin-bottom:12px">🧭 追跡経路（原料 → 出荷）</div>
+            <div class="trace-flow" id="traceFlow"></div>
+          </div>
+          <div class="recall-box" id="recallBox">
+            <h4>⚠️ リコール影響範囲（同一原料ロットを使用）</h4>
+            <div style="font-size:12.5px;color:#8a3a3a">この原料ロットを含む製品が以下の出荷先に納品されています。回収対象として自動抽出しました。</div>
+            <div class="rlist" id="recallList"></div>
+            <button class="btn red" id="recallBtn" style="margin-top:12px">📨 回収通知をまとめて作成</button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const PRODUCTS=[
+  {n:'カット野菜ミックス',cat:'加工品'},{n:'千切りキャベツ',cat:'加工品'},{n:'サラダほうれん草',cat:'生鮮'},
+  {n:'カットねぎ（小口）',cat:'加工品'},{n:'冷凍ブロッコリー',cat:'冷凍'},{n:'大分産しいたけ',cat:'生鮮'},
+  {n:'カットトマト',cat:'加工品'},{n:'ベビーリーフ',cat:'生鮮'},{n:'カットごぼう',cat:'加工品'},
+];
+const MATERIALS=[
+  {no:'RAW-7101',n:'キャベツ',sup:'川宿田農園',org:'大分県由布市',in:[4,22]},
+  {no:'RAW-7102',n:'ほうれん草',sup:'豊後グリーンファーム',org:'大分県竹田市',in:[4,23]},
+  {no:'RAW-7103',n:'長ねぎ',sup:'JAおおいた中央',org:'大分県大分市',in:[4,24]},
+  {no:'RAW-7104',n:'ブロッコリー',sup:'やまなみ青果',org:'熊本県阿蘇市',in:[4,24]},
+  {no:'RAW-7105',n:'生しいたけ',sup:'豊後きのこ園',org:'大分県豊後大野市',in:[4,25]},
+  {no:'RAW-7106',n:'トマト',sup:'別府ハウス農園',org:'大分県別府市',in:[4,25]},
+  {no:'RAW-7107',n:'ベビーリーフ',sup:'川宿田農園',org:'大分県由布市',in:[4,26]},
+  {no:'RAW-7108',n:'ごぼう',sup:'JAおおいた中央',org:'宮崎県都城市',in:[4,26]},
+];
+const CUSTOMERS=[
+  {name:'大分中央クリニック',type:'医療',area:'大分市'},
+  {name:'さくら総合病院',type:'医療',area:'大分市'},
+  {name:'つくし介護センター',type:'介護',area:'別府市'},
+  {name:'大分海鮮市場',type:'飲食',area:'大分市'},
+  {name:'別府温泉ホテル組合',type:'宿泊',area:'別府市'},
+  {name:'都町スーパー',type:'小売',area:'大分市'},
+  {name:'みらい給食センター',type:'給食',area:'由布市'},
+  {name:'豊後うまや食堂',type:'飲食',area:'大分市'},
+];
+const WORKERS=['田中','佐藤','鈴木','高橋','渡辺'];
+const LINES=['第1加工ライン','第2加工ライン','選別ライン','包装ライン'];
+const STAGES=['入荷検品','洗浄・選別','カット加工','計量・包装','品質検査','冷蔵保管','出荷'];
+const STAGE_TEMP={'入荷検品':8,'洗浄・選別':6,'カット加工':10,'計量・包装':10,'品質検査':4,'冷蔵保管':4,'出荷':5};
+const STAGE_MIN={'入荷検品':20,'洗浄・選別':40,'カット加工':35,'計量・包装':30,'品質検査':25,'冷蔵保管':60,'出荷':15};
+const TODAY=new Date(2026,4,30);
+
+/* seed RNG */
+let SEED=4040;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+const STATUSES=['shipped','shipped','stock','process','shipped','hold','shipped','stock'];
+let lots=[];
+(function seed(){
+  for(let i=0;i<24;i++){
+    const p=pick(PRODUCTS);
+    const mat=pick(MATERIALS);
+    const qty=20+Math.floor(rnd()*180);
+    const mk=new Date(2026,4,3+Math.floor(rnd()*26));
+    let stt=pick(STATUSES);
+    const cust=[pick(CUSTOMERS).name];
+    if(rnd()>0.6)cust.push(pick(CUSTOMERS).name);
+    // build process chain depending on status
+    const stageCount = stt==='process'?3 : stt==='stock'?5 : stt==='hold'?4 : 7;
+    const chain=[];
+    let day=new Date(mk);
+    for(let s=0;s<stageCount;s++){
+      const sg=STAGES[s];
+      chain.push({stage:sg,worker:pick(WORKERS),line:pick(LINES),temp:STAGE_TEMP[sg],min:STAGE_MIN[sg],
+        time:(8+s+Math.floor(rnd()*2))+':'+(rnd()>0.5?'15':'40'),note:'規格内・異物なし'});
+    }
+    lots.push({no:'LOT-2026-'+String(101+i),prod:p.n,cat:p.cat,mat:mat.no,matName:mat.n,sup:mat.sup,org:mat.org,
+      qty,unit:p.cat==='冷凍'?'袋':'kg',mk,status:stt,cust,chain});
+  }
+})();
+// attach lot count to materials & customers
+MATERIALS.forEach(m=>m.used=lots.filter(l=>l.mat===m.no).length);
+CUSTOMERS.forEach(c=>{const ls=lots.filter(l=>l.cust.includes(c.name)&&l.status==='shipped');c.lotCount=ls.length;
+  c.last=ls.length?ls.sort((a,b)=>b.mk-a.mk)[0].mk:null;});
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const fmtD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtDL=d=>d?d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日':'—';
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STLABEL={shipped:'出荷済',stock:'在庫',process:'加工中',hold:'保留',recall:'回収対象'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]}</span>`;}
+function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','生産ロットの追跡状況（'+(TODAY.getMonth()+1)+'月）'],
+  lots:['ロット一覧','製造ロットの追跡情報を管理します'],
+  proc:['工程履歴','ロットの加工・検査記録を確認/追加します'],
+  mat:['原料追跡','仕入れた原料の入荷・使用状況'],
+  ship:['出荷先','出荷先ごとの納品ロット'],
+  ai:['AI追跡','ロット指定で原料〜出荷を瞬時に追跡します']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='lots'?'<button class="btn primary" onclick="go(\'ai\')">⚡ AIで追跡</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'proc\')">🛠️ 工程を記録</button><button class="btn primary" onclick="go(\'ai\')">⚡ AIで追跡</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='lots')renderLots();
+  if(v==='proc')renderProc();
+  if(v==='mat')renderMat();
+  if(v==='ship')renderShip();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const total=lots.length;
+  const shipped=lots.filter(l=>l.status==='shipped').length;
+  const hold=lots.filter(l=>l.status==='hold').length;
+  // traceable rate = lots with full origin + chain
+  const traceable=lots.filter(l=>l.mat&&l.chain.length>=1).length;
+  const rate=Math.round(traceable/total*100);
+  $('kpis').innerHTML=`
+    ${kpi('#1f9d6b','管理ロット',total+'<small>件</small>',shipped+'件 出荷済','up','今月稼働中')}
+    ${kpi('#0ea5b7','追跡可能率',rate+'<small>%</small>','原料〜出荷まで紐付け','up',rate>=99?'完全追跡':'良好')}
+    ${kpi('#7c5cf0','リコール対応',' 8<small>秒</small>','影響先 自動抽出','up','手作業比 -99%')}
+    ${kpi('#e3941f','要確認',hold+'<small>件</small>','保留・加工中ロット','warn',hold?'要チェック':'なし')}`;
+  // bars: lots per stage processed this month
+  const stageCount=STAGES.map(sg=>lots.reduce((s,l)=>s+(l.chain.some(c=>c.stage===sg)?1:0),0));
+  const mx=Math.max(...stageCount,1);
+  $('trendBars').innerHTML=STAGES.map((sg,i)=>`
+    <div class="bar-row"><span class="mlabel">${sg}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(stageCount[i]/mx*100)}"></div></div>
+      <span class="mval">${stageCount[i]}件</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // donut
+  const segs=[['shipped','出荷済','#1f9d6b'],['stock','在庫','#0ea5b7'],['process','加工中','#7c5cf0'],['hold','保留','#e3941f']];
+  const counts=segs.map(s=>lots.filter(l=>l.status===s[0]).length);
+  let acc=0;const stops=[];
+  segs.forEach((s,i)=>{const frac=counts[i]/total*100;stops.push(`${s[2]} ${acc}% ${acc+frac}%`);acc+=frac;});
+  $('donut').style.background=`conic-gradient(${stops.join(',')})`;
+  $('donutC').innerHTML=`<b>${total}</b><span>総ロット</span>`;
+  $('donutLeg').innerHTML=segs.map((s,i)=>`<div class="lg"><span class="sw" style="background:${s[2]}"></span><span class="nm">${s[1]}</span><span class="vl">${counts[i]}件</span></div>`).join('');
+  // activity
+  const acts=[
+    {i:'⚡',c:'#efeaff',t:'LOT-2026-118 の追跡を実行（原料〜出荷 8秒）',m:'3分前'},
+    {i:'🛠️',c:'#e6f8f0',t:'LOT-2026-122 にカット加工の工程を記録',m:'27分前'},
+    {i:'🚚',c:'#e6f8f0',t:'さくら総合病院 へ 3ロットを出荷',m:'1時間前'},
+    {i:'⚠️',c:'#fdf3e2',t:'LOT-2026-109 を保留（品質検査の再確認）',m:'今日 9:40'},
+    {i:'🌱',c:'#e6f8f0',t:'RAW-7105（生しいたけ）を入荷登録',m:'今日 8:10'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${a.m}</div></div></div>`).join('');
+  // alert list
+  const alerts=lots.filter(l=>l.status==='hold'||l.status==='process').slice(0,5);
+  $('alertList').innerHTML=alerts.length?alerts.map(l=>`<div class="act"><div class="ai" style="background:${l.status==='hold'?'#fdf3e2':'#efeaff'}">${l.status==='hold'?'⚠️':'🛠️'}</div>
+    <div><div class="at"><span class="lotno">${esc(l.no)}</span>　${esc(l.prod)}</div><div class="am">${STLABEL[l.status]}・${esc(l.org)}産 ${esc(l.matName)}</div></div></div>`).join('')
+    :'<div class="empty-cell">要確認のロットはありません 🎉</div>';
+  $('navAlert').textContent=alerts.length;
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ LOTS ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['shipped','出荷済'],['stock','在庫'],['process','加工中'],['hold','保留']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderLots();});
+}
+function renderLots(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=lots.filter(l=>filterStatus==='all'||l.status===filterStatus)
+    .filter(l=>!q||(l.no+l.prod+l.matName+l.org+l.sup).toLowerCase().includes(q))
+    .sort((a,b)=>b.mk-a.mk);
+  $('lotRows').innerHTML=rows.length?rows.map(l=>`<tr onclick="openLot('${esc(l.no)}')">
+    <td class="lotno">${esc(l.no)}</td><td><b>${esc(l.prod)}</b><div style="font-size:11px;color:var(--ink-3)">${esc(l.cat)}</div></td>
+    <td style="color:var(--ink-2)">${esc(l.org)}<div style="font-size:11px;color:var(--ink-3)">${esc(l.matName)}・${esc(l.sup)}</div></td>
+    <td class="r tnum"><b>${l.qty}</b> ${esc(l.unit)}</td><td style="color:var(--ink-2)">${fmtD(l.mk)}</td><td>${stBadge(l.status)}</td></tr>`).join('')
+    :'<tr><td colspan="6" class="empty-cell">該当するロットがありません</td></tr>';
+}
+window.openLot=no=>{$('pLot').value=no;go('proc');};
+$('q').addEventListener('input',renderLots);
+
+/* ============ PROCESS ============ */
+function renderLotSelect(sel){sel.innerHTML=lots.slice().sort((a,b)=>b.mk-a.mk).map(l=>`<option value="${esc(l.no)}">${esc(l.no)}｜${esc(l.prod)}</option>`).join('');}
+function renderProc(){
+  const lot=lots.find(l=>l.no===$('pLot').value)||lots[0];
+  $('pLot').value=lot.no;
+  $('procTitle').textContent=lot.prod+' の工程履歴';
+  $('procLotTag').textContent=lot.no;
+  drawChain(lot);
+}
+function drawChain(lot){
+  const head=`<div class="step"><div class="dotc">🌱</div>
+    <div class="sttl">原料入荷　<span class="tag2">${esc(lot.mat)}</span></div>
+    <div class="smeta">${esc(lot.matName)}（${esc(lot.org)}産）／ 仕入先：${esc(lot.sup)}</div></div>`;
+  const steps=lot.chain.map((c,i)=>`<div class="step"><div class="dotc">${i+1}</div>
+    <div class="sttl">${esc(c.stage)}</div>
+    <div class="smeta">${esc(c.time)}　担当：${esc(c.worker)}</div>
+    <div class="scard">
+      <div class="kv"><span>設備・ライン</span><span>${esc(c.line)}</span></div>
+      <div class="kv"><span>庫内温度</span><span>${c.temp}℃</span></div>
+      <div class="kv"><span>所要時間</span><span>${c.min}分</span></div>
+      <div class="kv"><span>備考</span><span>${esc(c.note)}</span></div>
+    </div></div>`).join('');
+  const tail = lot.status==='shipped'?`<div class="step"><div class="dotc">🚚</div>
+    <div class="sttl">出荷完了</div><div class="smeta">出荷先：${lot.cust.map(esc).join('、')}</div></div>`:'';
+  $('procChain').innerHTML=head+steps+tail;
+}
+$('pLot').addEventListener('change',renderProc);
+$('pStage').addEventListener('change',()=>{
+  const sg=$('pStage').value;
+  if(!$('pTemp').value){$('pTemp').value=STAGE_TEMP[sg];}
+  if(!$('pMin').value){$('pMin').value=STAGE_MIN[sg];}
+  $('pHint').classList.add('show');setTimeout(()=>$('pHint').classList.remove('show'),2000);
+});
+$('pAdd').addEventListener('click',()=>{
+  const lot=lots.find(l=>l.no===$('pLot').value);
+  if(!lot){showToast('対象ロットを選んでください');return;}
+  const sg=$('pStage').value;
+  lot.chain.push({stage:sg,worker:$('pWorker').value||pick(WORKERS),line:$('pLine').value||pick(LINES),
+    temp:+$('pTemp').value||STAGE_TEMP[sg],min:+$('pMin').value||STAGE_MIN[sg],
+    time:(new Date().getHours())+':'+String(new Date().getMinutes()).padStart(2,'0'),
+    note:$('pNote').value||'規格内・異物なし'});
+  if(sg==='出荷')lot.status='shipped';else if(lot.status==='process')lot.status='stock';
+  $('pWorker').value='';$('pLine').value='';$('pTemp').value='';$('pMin').value='';$('pNote').value='';
+  drawChain(lot);showToast(lot.no+' に「'+sg+'」の工程を記録しました');
+});
+
+/* ============ MATERIALS ============ */
+function renderMat(){
+  const q=($('mq').value||'').toLowerCase();
+  const rows=MATERIALS.filter(m=>!q||(m.no+m.n+m.sup+m.org).toLowerCase().includes(q));
+  $('matRows').innerHTML=rows.length?rows.map(m=>{
+    const st=m.used===0?'stock':'shipped';
+    return `<tr><td class="lotno">${esc(m.no)}</td><td><b>${esc(m.n)}</b></td><td style="color:var(--ink-2)">${esc(m.sup)}</td>
+    <td style="color:var(--ink-2)">${esc(m.org)}</td><td style="color:var(--ink-2)">${m.in[0]}/${m.in[1]}</td>
+    <td class="r tnum"><b>${m.used}</b> ロット</td><td><span class="st ${st}">${m.used?'使用中':'入荷済'}</span></td></tr>`;
+  }).join('')
+  :'<tr><td colspan="7" class="empty-cell">該当する原料がありません</td></tr>';
+}
+$('mq').addEventListener('input',renderMat);
+
+/* ============ SHIPMENTS ============ */
+function renderShip(){
+  $('shipRows').innerHTML=CUSTOMERS.map(c=>`<tr>
+    <td><b>${esc(c.name)}</b></td><td><span class="tag2">${esc(c.type)}</span></td><td style="color:var(--ink-2)">${esc(c.area)}</td>
+    <td class="r tnum"><b>${c.lotCount}</b> ロット</td><td class="r" style="color:var(--ink-2)">${c.last?fmtD(c.last):'—'}</td>
+    <td><span class="st ${c.lotCount?'shipped':'stock'}">${c.lotCount?'追跡可':'実績なし'}</span></td></tr>`).join('');
+}
+
+/* ============ AI TRACE ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const lot=lots.find(l=>l.no===$('aiLot').value)||lots[0];
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 追跡中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  $('traceResult').classList.remove('show');$('recallBox').classList.remove('show');
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,8);},120);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);$('baAfterT').textContent='8秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // build trace flow
+  const nodes=[];
+  nodes.push({ic:'🌱',col:'#e6f8f0',cl:'#1f9d6b',stage:'原料入荷',name:lot.matName,meta:esc(lot.mat)+'<br>'+esc(lot.org)+'産<br>'+esc(lot.sup)});
+  lot.chain.forEach(c=>nodes.push({ic:'🛠️',col:'#efeaff',cl:'#7c5cf0',stage:'工程',name:c.stage,meta:'担当：'+esc(c.worker)+'<br>'+esc(c.line)+'<br>'+c.temp+'℃ / '+c.min+'分'}));
+  const shipNames=lot.status==='shipped'?lot.cust:['（未出荷）'];
+  nodes.push({ic:'🚚',col:'#e6f8f0',cl:'#0ea5b7',stage:'出荷先',name:lot.prod,meta:shipNames.map(esc).join('<br>')});
+  $('traceFlow').innerHTML=nodes.map((n,i)=>`
+    <div class="tf-node"><div class="tn-icon" style="background:${n.col};color:${n.cl}">${n.ic}</div>
+      <div class="tn-stage">${esc(n.stage)}</div><div class="tn-name">${esc(n.name)}</div><div class="tn-meta">${n.meta}</div></div>
+    ${i<nodes.length-1?'<div class="tf-arrow">→</div>':''}`).join('');
+  $('traceResult').classList.add('show');
+  // recall impact: other shipped lots sharing the same material lot
+  const impacted=lots.filter(l=>l.mat===lot.mat&&l.status==='shipped');
+  const dests=[...new Set(impacted.flatMap(l=>l.cust))];
+  $('recallList').innerHTML=dests.map(d=>{
+    const c=CUSTOMERS.find(x=>x.name===d)||{type:'',area:''};
+    const cnt=impacted.filter(l=>l.cust.includes(d)).length;
+    return `<div class="ritem"><span style="font-weight:800;flex:1">${esc(d)}</span><span class="tag2">${esc(c.type)}</span><span class="tnum" style="font-weight:800">${cnt}ロット</span></div>`;
+  }).join('');
+  $('recallBox').classList.add('show');
+  btn.disabled=false;btn.textContent='⚡ もう一度追跡';
+  showToast(lot.no+' の経路を 8秒で追跡しました（影響先 '+dests.length+'件）');
+});
+$('recallBtn').addEventListener('click',()=>{
+  const n=$('recallList').children.length;
+  showToast(n+'件の出荷先あてに回収通知の下書きを作成しました');
+});
+
+/* ============ INIT ============ */
+renderLotSelect($('pLot'));renderLotSelect($('aiLot'));
+renderChips();renderDash();
+$('navAlert').textContent=lots.filter(l=>l.status==='hold'||l.status==='process').length;
+</script>
+</body>
+</html>

@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜勤怠マシン（勤怠管理システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cf0;--purple-soft:#efeaff;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.nav a .badge.amber{background:var(--amber)}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn.sm{padding:6px 12px;font-size:12px}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-fill.warn{background:linear-gradient(90deg,var(--amber),#f0b34a)}
+.bar-fill.red{background:linear-gradient(90deg,var(--red),#f07a7a)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut */
+.donut-wrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.donut{width:128px;height:128px;flex-shrink:0}
+.donut .num{font-family:'Orbitron';font-size:23px;font-weight:700;fill:var(--ink)}
+.legend{display:flex;flex-direction:column;gap:9px;font-size:12.5px}
+.legend .li{display:flex;align-items:center;gap:9px}
+.legend .sw{width:11px;height:11px;border-radius:3px}
+.legend .lv{margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl th.c,table.tbl td.c{text-align:center}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.ok{background:var(--green-soft);color:var(--green)}
+.st.normal{background:var(--brand-soft);color:var(--brand)}
+.st.late{background:var(--amber-soft);color:var(--amber)}
+.st.absent{background:var(--soft);color:var(--ink-3)}
+.st.over{background:var(--red-soft);color:var(--red)}
+.st.holiday{background:var(--purple-soft);color:var(--purple)}
+.st.approved{background:var(--green-soft);color:var(--green)}
+.st.pending{background:var(--amber-soft);color:var(--amber)}
+.st.rejected{background:var(--red-soft);color:var(--red)}
+.av-emp{width:28px;height:28px;border-radius:50%;background:var(--brand-soft);color:var(--brand-dk);display:inline-grid;place-items:center;font-weight:800;font-size:12px;margin-right:8px;vertical-align:middle}
+
+/* form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,400px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:64px}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* clock card */
+.clock-card{background:linear-gradient(135deg,#0f1830,#1f3a6e);border-radius:14px;padding:22px;color:#fff;box-shadow:var(--shadow);margin-bottom:18px}
+.clock-card .ct{font-size:12px;color:#9fb2e0;font-weight:700}
+.clock-card .now{font-family:'Orbitron';font-size:40px;font-weight:700;letter-spacing:.04em;margin:4px 0;line-height:1}
+.clock-card .dt{font-size:13px;color:#c4cce0}
+.clock-btns{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.clock-btns button{flex:1;min-width:120px;padding:14px;border-radius:11px;border:0;font-weight:800;font-size:14px;cursor:pointer;transition:all .15s;color:#fff}
+.clock-btns .in{background:var(--green)}.clock-btns .in:hover{filter:brightness(1.1)}
+.clock-btns .out{background:var(--amber)}.clock-btns .out:hover{filter:brightness(1.1)}
+.clock-btns button:disabled{opacity:.4;cursor:not-allowed}
+.clock-state{margin-top:12px;font-size:12.5px;color:#c4cce0;text-align:center}
+
+/* summary cells */
+.mini-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+.mini{background:var(--soft);border-radius:11px;padding:13px 15px}
+.mini .ml{font-size:11px;color:var(--ink-3);font-weight:700}
+.mini .mv{font-size:20px;font-weight:900;margin-top:4px}
+.mini .mv small{font-size:12px;color:var(--ink-3);font-weight:700}
+
+/* progress bar inline */
+.pbar{height:8px;border-radius:99px;background:var(--soft);overflow:hidden;margin-top:6px}
+.pbar i{display:block;height:100%;border-radius:99px;background:var(--green)}
+.pbar i.warn{background:var(--amber)}.pbar i.red{background:var(--red)}
+
+/* AI generate / before-after */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900}
+.gen-item.alert .ck{background:var(--red)}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* alert cards (anomaly) */
+.alert-card{border:1px solid var(--line);border-left:4px solid var(--amber);border-radius:11px;padding:14px 16px;margin-bottom:11px;background:var(--card);display:flex;gap:13px;align-items:flex-start;box-shadow:var(--shadow)}
+.alert-card.high{border-left-color:var(--red)}
+.alert-card.info{border-left-color:var(--brand)}
+.alert-card .ico{width:34px;height:34px;border-radius:9px;flex-shrink:0;display:grid;place-items:center;font-size:17px;background:var(--amber-soft)}
+.alert-card.high .ico{background:var(--red-soft)}
+.alert-card.info .ico{background:var(--brand-soft)}
+.alert-card .body{flex:1}
+.alert-card .at{font-weight:800;font-size:13.5px}
+.alert-card .ad{font-size:12px;color:var(--ink-2);margin-top:3px}
+.alert-card .tag{font-size:10px;font-weight:800;padding:2px 8px;border-radius:5px;background:var(--amber-soft);color:var(--amber)}
+.alert-card.high .tag{background:var(--red-soft);color:var(--red)}
+.alert-card.info .tag{background:var(--brand-soft);color:var(--brand)}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.sec-label{font-size:12px;font-weight:800;color:var(--ink-2);margin:18px 0 10px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">勤怠マシン<small>技マシン｜勤怠管理</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="punch"><span class="i">🕒</span>打刻一覧<span class="badge amber" id="navMiss">0</span></a>
+      <a data-v="over"><span class="i">⏱️</span>残業管理</a>
+      <a data-v="leave"><span class="i">🌴</span>休暇</a>
+      <a data-v="month"><span class="i">📅</span>月次集計</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">🤖</span>AI異常検知<span class="badge" id="navAlert">0</span></a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。従業員・勤怠データはサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">本日の勤怠状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>部署別 月間残業時間</h3><span class="more">2026年5月</span></div>
+            <div class="pb"><div class="bars" id="deptBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>本日の出勤状況</h3></div>
+            <div class="pb">
+              <div class="donut-wrap">
+                <svg class="donut" viewBox="0 0 36 36" id="donut"></svg>
+                <div class="legend" id="donutLegend" style="flex:1"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:16px">
+          <div class="ph"><h3>最近のアクティビティ</h3></div>
+          <div class="pb"><div class="acts" id="acts"></div></div>
+        </div>
+      </section>
+
+      <!-- PUNCH LIST -->
+      <section class="view" id="v-punch">
+        <div class="clock-card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
+            <div>
+              <div class="ct">かんたん打刻（デモ）</div>
+              <div class="now" id="clockNow">--:--:--</div>
+              <div class="dt" id="clockDate">—</div>
+            </div>
+            <div style="text-align:right">
+              <div class="ct">操作する従業員</div>
+              <select id="punchEmp" style="margin-top:6px;padding:9px 12px;border-radius:9px;border:0;font-family:inherit;font-size:13.5px;min-width:180px"></select>
+            </div>
+          </div>
+          <div class="clock-btns">
+            <button class="in" id="btnIn">🟢 出勤</button>
+            <button class="out" id="btnOut" disabled>🔴 退勤</button>
+          </div>
+          <div class="clock-state" id="clockState">出勤ボタンを押すと打刻されます</div>
+        </div>
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="氏名・部署で検索"></div>
+          <div class="chips" id="punchChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>氏名</th><th>部署</th><th class="c">出勤</th><th class="c">退勤</th><th class="r">実働</th><th class="r">残業</th><th>状態</th></tr></thead>
+          <tbody id="punchRows"></tbody>
+        </table>
+      </section>
+
+      <!-- OVERTIME -->
+      <section class="view" id="v-over">
+        <div class="kpis" id="overKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>36協定 残業時間の状況（月45時間が上限の目安）</h3>
+            <button class="btn sm" id="overSort" style="margin-left:auto">残業多い順</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>氏名</th><th>部署</th><th class="r">今月残業</th><th style="width:200px">上限まで</th><th>状態</th></tr></thead>
+              <tbody id="overRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- LEAVE -->
+      <section class="view" id="v-leave">
+        <div class="create-grid">
+          <div class="formcard">
+            <div style="font-weight:800;font-size:14px;margin-bottom:13px">休暇申請（デモ）</div>
+            <div class="fg"><label>申請者</label><select id="lvEmp"></select></div>
+            <div class="fg"><label>休暇区分</label>
+              <select id="lvType"><option>有給休暇</option><option>半休（午前）</option><option>半休（午後）</option><option>振替休日</option><option>慶弔休暇</option></select></div>
+            <div class="fg-row">
+              <div class="fg"><label>開始日</label><input id="lvFrom" type="date"></div>
+              <div class="fg"><label>終了日</label><input id="lvTo" type="date"></div>
+            </div>
+            <div class="fg"><label>理由（任意）</label><textarea id="lvReason" placeholder="例：私用のため"></textarea></div>
+            <div class="aihint" id="lvHint">✨ AIが残日数を確認し、申請内容を整えました</div>
+            <button class="btn primary" id="lvSubmit" style="width:100%;justify-content:center;margin-top:6px">✨ AIチェックして申請</button>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>休暇申請の一覧</h3><span class="more" id="lvPending">承認待ち 0件</span></div>
+            <div class="pb" style="padding:0">
+              <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+                <thead><tr><th>申請者</th><th>区分</th><th>期間</th><th class="c">日数</th><th>状態</th><th></th></tr></thead>
+                <tbody id="leaveRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MONTHLY -->
+      <section class="view" id="v-month">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="mq" placeholder="氏名・部署で検索"></div>
+          <span style="font-size:12.5px;color:var(--ink-3);font-weight:600">対象月：2026年5月</span>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>氏名</th><th>部署</th><th class="c">出勤日数</th><th class="r">総労働</th><th class="r">残業</th><th class="r">深夜</th><th class="c">有給取得</th><th class="c">打刻漏れ</th></tr></thead>
+          <tbody id="monthRows"></tbody>
+        </table>
+      </section>
+
+      <!-- AI ANOMALY -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">打刻データをAIが解析・36協定アラート</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">今月の打刻データ <b id="aiCnt">0件</b> から、集計・残業超過・打刻漏れの異常をAIが自動で見つけます。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">🤖 AIで解析する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">3時間20分</div>
+              <ul>
+                <li>📋 タイムカードを1枚ずつ集計</li>
+                <li>🧮 残業・深夜を電卓で計算</li>
+                <li>🔍 36協定オーバーを目視で確認</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 打刻データを自動集計</li>
+                <li>📊 残業・深夜・有給を自動計算</li>
+                <li>🚨 36協定超過・打刻漏れを自動検知</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">🚨 AIが検知した要対応アラート</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const DEPTS=['介護フロア','看護部','厨房','送迎','事務'];
+const NAMES=[
+  ['佐藤 美咲','介護フロア'],['田中 健太','介護フロア'],['鈴木 由香','看護部'],['高橋 翔','送迎'],
+  ['伊藤 彩','厨房'],['渡辺 大輔','事務'],['山本 さくら','介護フロア'],['中村 拓也','看護部'],
+  ['小林 麻衣','厨房'],['加藤 隆','送迎'],['吉田 香織','事務'],['山田 直樹','介護フロア'],
+  ['佐々木 愛','看護部'],['松本 涼','厨房'],['井上 結衣','介護フロア'],['木村 亮','送迎'],
+];
+const TODAY=new Date();
+let SEED=4123;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+// build employees with this-day punch + monthly aggregates
+const STATUSES=['ok','ok','ok','normal','late','over','ok','holiday','absent'];
+let employees=[];
+(function build(){
+  NAMES.forEach((nm,idx)=>{
+    let stt=pick(STATUSES);
+    // punch times
+    let inH=8+Math.floor(rnd()*2), inM=Math.floor(rnd()*60);
+    if(stt==='late')inH=9+Math.floor(rnd()*1),inM=10+Math.floor(rnd()*45);
+    const work=7+rnd()*4; // hours
+    let outH=inH+Math.floor(work), outM=(inM+Math.round((work%1)*60));
+    if(outM>=60){outH++;outM-=60;}
+    const overMin=Math.max(0,Math.round((work-8)*60));
+    let inStr=pad(inH)+':'+pad(inM), outStr=pad(outH)+':'+pad(outM), workStr=fmtHM(work*60), missing=false;
+    if(stt==='holiday'){inStr='—';outStr='—';workStr='—';}
+    else if(stt==='absent'){inStr='—';outStr='—';workStr='—';}
+    else if(stt==='over'){outH=Math.min(22,inH+10+Math.floor(rnd()*2));outStr=pad(outH)+':'+pad(outM);}
+    // some missing punch (forgot clock-out)
+    if(stt!=='holiday'&&stt!=='absent'&&rnd()>0.86){outStr='— 未打刻';missing=true;stt='late';}
+    // monthly aggregates
+    const days=18+Math.floor(rnd()*4);
+    const monthOver=Math.round((stt==='over'?40:10)+rnd()*40); // hours
+    const monthNight=Math.round(rnd()*22); // hours
+    const totalWork=Math.round(days*8+monthOver);
+    const paidUsed=Math.floor(rnd()*9), paidTotal=20;
+    const missCount=Math.floor(rnd()*3);
+    employees.push({
+      id:idx+1, name:nm[0], dept:nm[1], in:inStr, out:outStr, work:workStr,
+      over:stt==='over'?fmtHM(overMin):(overMin>0?fmtHM(overMin):'—'),
+      overMin:(stt==='holiday'||stt==='absent')?0:overMin, status:stt, missing,
+      mDays:days, mOver:monthOver, mNight:monthNight, mTotal:totalWork,
+      paidUsed, paidTotal, missCount
+    });
+  });
+})();
+function pad(n){n=Math.max(0,Math.min(99,n|0));return (n<10?'0':'')+n;}
+function fmtHM(min){min=Math.round(min);const h=Math.floor(min/60),m=min%60;return h+':'+pad(m);}
+
+// leave requests
+let leaves=[
+  {emp:'佐藤 美咲',type:'有給休暇',from:'5/12',to:'5/13',days:2,status:'approved'},
+  {emp:'田中 健太',type:'半休（午後）',from:'5/20',to:'5/20',days:0.5,status:'pending'},
+  {emp:'鈴木 由香',type:'有給休暇',from:'5/28',to:'5/28',days:1,status:'pending'},
+  {emp:'高橋 翔',type:'振替休日',from:'5/06',to:'5/06',days:1,status:'approved'},
+  {emp:'渡辺 大輔',type:'慶弔休暇',from:'5/15',to:'5/16',days:2,status:'rejected'},
+];
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STLABEL={ok:'正常',normal:'勤務中',late:'遅刻/要確認',absent:'欠勤',over:'残業超過',holiday:'休暇',
+  approved:'承認済',pending:'承認待ち',rejected:'却下'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]||esc(s)}</span>`;}
+function avatar(name){return `<span class="av-emp">${esc(name.slice(0,1))}</span>`;}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function toMin(hm){if(!hm||hm.indexOf(':')<0)return 0;const[a,b]=hm.split(':');return (+a)*60+(+b);}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','本日（5/30）の勤怠状況'],punch:['打刻一覧','本日の出退勤・打刻状況'],
+  over:['残業管理','36協定・残業時間の管理'],leave:['休暇','休暇申請の管理'],
+  month:['月次集計','2026年5月の勤怠集計'],ai:['AI異常検知','打刻データから異常をAIが自動検知']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='month'?'<button class="btn primary" onclick="exportCSV()">⬇ CSVで出力</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">🤖 AI異常検知</button><button class="btn primary" onclick="go(\'punch\')">🕒 打刻一覧</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='punch')renderPunch();
+  if(v==='over')renderOver();
+  if(v==='leave')renderLeave();
+  if(v==='month')renderMonth();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+window.exportCSV=()=>showToast('月次集計をCSVで出力しました（デモ）');
+
+/* ============ DASHBOARD ============ */
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+function renderDash(){
+  const working=employees.filter(e=>e.status!=='holiday'&&e.status!=='absent').length;
+  const totalOverMin=employees.reduce((s,e)=>s+e.mOver*60,0);
+  const paidUsed=employees.reduce((s,e)=>s+e.paidUsed,0), paidTotal=employees.reduce((s,e)=>s+e.paidTotal,0);
+  const paidRate=Math.round(paidUsed/paidTotal*100);
+  const miss=employees.filter(e=>e.missing).length;
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','本日出勤',working+'<small>/'+employees.length+'名</small>','出勤率'+Math.round(working/employees.length*100)+'%','up','平常運転')}
+    ${kpi('#e3941f','今月残業 合計',fmtHM(totalOverMin)+'<small>h</small>','全社','warn','前月比 -8%')}
+    ${kpi('#16b877','有給取得率',paidRate+'<small>%</small>',paidUsed+'/'+paidTotal+'日','up','目標70%')}
+    ${kpi('#e24a4a','打刻漏れ',miss+'<small>件</small>','本日',miss?'down':'up',miss?'要修正':'なし')}`;
+  // dept overtime bars
+  const deptSum=DEPTS.map(d=>({d,m:employees.filter(e=>e.dept===d).reduce((s,e)=>s+e.mOver,0)}));
+  const mx=Math.max(...deptSum.map(x=>x.m),1);
+  $('deptBars').innerHTML=deptSum.map(x=>{
+    const cls=x.m>=120?'red':x.m>=80?'warn':'';
+    return `<div class="bar-row"><span class="mlabel">${esc(x.d)}</span>
+      <div class="bar-track"><div class="bar-fill ${cls}" style="width:0" data-w="${Math.round(x.m/mx*100)}"></div></div>
+      <span class="mval">${x.m}h</span></div>`;}).join('');
+  setTimeout(()=>document.querySelectorAll('#deptBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // donut: present / late / leave / absent
+  const present=employees.filter(e=>e.status==='ok'||e.status==='normal'||e.status==='over').length;
+  const late=employees.filter(e=>e.status==='late').length;
+  const holi=employees.filter(e=>e.status==='holiday').length;
+  const absent=employees.filter(e=>e.status==='absent').length;
+  drawDonut([
+    {l:'正常出勤',v:present,c:'#16b877'},
+    {l:'遅刻/要確認',v:late,c:'#e3941f'},
+    {l:'休暇',v:holi,c:'#7c5cf0'},
+    {l:'欠勤',v:absent,c:'#8a94a6'},
+  ]);
+  // activity
+  const acts=[
+    {i:'🟢',c:'#e6f8f0',t:'佐藤 美咲 が出勤打刻（08:42）',m:'2分前'},
+    {i:'🤖',c:'#eaf1ff',t:'AI異常検知が 3件の要対応アラートを検出',m:'今日 9:05'},
+    {i:'🚨',c:'#fdeaea',t:'中村 拓也 の今月残業が42時間に到達（36協定 注意）',m:'今日 8:50'},
+    {i:'🌴',c:'#efeaff',t:'鈴木 由香 から有給休暇の申請（5/28）',m:'今日 8:30'},
+    {i:'⏱️',c:'#fdf3e2',t:'松本 涼 が退勤打刻を忘れています（要修正）',m:'昨日 22:10'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+}
+function drawDonut(data){
+  const total=data.reduce((s,d)=>s+d.v,0)||1;
+  let off=25,seg='';
+  data.forEach(d=>{
+    const pct=d.v/total*100;
+    seg+=`<circle cx="18" cy="18" r="15.915" fill="none" stroke="${d.c}" stroke-width="3.6" stroke-dasharray="${pct} ${100-pct}" stroke-dashoffset="${off}"></circle>`;
+    off=(off-pct+100)%100;
+  });
+  $('donut').innerHTML=`<circle cx="18" cy="18" r="15.915" fill="none" stroke="#eef1f7" stroke-width="3.6"></circle>${seg}
+    <text x="18" y="18.5" text-anchor="middle" dominant-baseline="middle" class="num">${total}</text>
+    <text x="18" y="23.5" text-anchor="middle" font-size="3" fill="#8a94a6">名</text>`;
+  $('donutLegend').innerHTML=data.map(d=>`<div class="li"><span class="sw" style="background:${d.c}"></span>${esc(d.l)}<span class="lv">${d.v}名</span></div>`).join('');
+}
+
+/* ============ PUNCH LIST ============ */
+let punchFilter='all';
+function renderPunchChips(){
+  const opts=[['all','すべて'],['ok','正常'],['late','要確認'],['over','残業超過'],['holiday','休暇'],['absent','欠勤']];
+  $('punchChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===punchFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('punchChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{punchFilter=c.dataset.s;renderPunchChips();renderPunch();});
+}
+function renderPunch(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=employees.filter(e=>punchFilter==='all'||e.status===punchFilter)
+    .filter(e=>!q||(e.name+e.dept).toLowerCase().includes(q));
+  $('punchRows').innerHTML=rows.length?rows.map(e=>`<tr>
+    <td>${avatar(e.name)}<b>${esc(e.name)}</b></td><td style="color:var(--ink-2)">${esc(e.dept)}</td>
+    <td class="c tnum">${esc(e.in)}</td><td class="c tnum" style="${e.missing?'color:var(--red);font-weight:700':''}">${esc(e.out)}</td>
+    <td class="r tnum">${esc(e.work)}</td><td class="r tnum" style="${e.overMin>=120?'color:var(--red);font-weight:800':e.overMin>0?'color:var(--amber);font-weight:700':'color:var(--ink-3)'}">${esc(e.over)}</td>
+    <td>${stBadge(e.status)}</td></tr>`).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する従業員がいません</td></tr>';
+  // missing badge
+  $('navMiss').textContent=employees.filter(e=>e.missing).length;
+}
+$('q').addEventListener('input',renderPunch);
+
+/* clock + punch */
+let punchedIn=false;
+function tickClock(){
+  const n=new Date();
+  $('clockNow').textContent=pad(n.getHours())+':'+pad(n.getMinutes())+':'+pad(n.getSeconds());
+  const w=['日','月','火','水','木','金','土'][n.getDay()];
+  $('clockDate').textContent=n.getFullYear()+'年'+(n.getMonth()+1)+'月'+n.getDate()+'日（'+w+'）';
+}
+setInterval(tickClock,1000);tickClock();
+function renderPunchEmpSel(){$('punchEmp').innerHTML=employees.map(e=>`<option>${esc(e.name)}</option>`).join('');}
+$('btnIn').addEventListener('click',()=>{
+  const n=new Date();const t=pad(n.getHours())+':'+pad(n.getMinutes());
+  const emp=employees.find(e=>e.name===$('punchEmp').value);
+  if(emp){emp.in=t;emp.out='— 勤務中';emp.status='normal';emp.missing=false;emp.work='—';emp.over='—';emp.overMin=0;}
+  punchedIn=true;$('btnIn').disabled=true;$('btnOut').disabled=false;
+  $('clockState').textContent='出勤を記録しました（'+t+'）。お疲れさまです！';
+  showToast($('punchEmp').value+' の出勤を打刻しました（'+t+'）');renderPunch();
+});
+$('btnOut').addEventListener('click',()=>{
+  const n=new Date();const t=pad(n.getHours())+':'+pad(n.getMinutes());
+  const emp=employees.find(e=>e.name===$('punchEmp').value);
+  if(emp){emp.out=t;const wm=toMin(t)-toMin(emp.in);emp.work=fmtHM(Math.max(0,wm));const om=Math.max(0,wm-480);emp.overMin=om;emp.over=om>0?fmtHM(om):'—';emp.status=om>=120?'over':'ok';}
+  punchedIn=false;$('btnIn').disabled=false;$('btnOut').disabled=true;
+  $('clockState').textContent='退勤を記録しました（'+t+'）。本日もお疲れさまでした。';
+  showToast($('punchEmp').value+' の退勤を打刻しました（'+t+'）');renderPunch();
+});
+
+/* ============ OVERTIME ============ */
+let overDesc=true;
+function renderOver(){
+  const list=[...employees].sort((a,b)=>overDesc?b.mOver-a.mOver:a.mOver-b.mOver);
+  const totalOver=employees.reduce((s,e)=>s+e.mOver,0);
+  const warnCnt=employees.filter(e=>e.mOver>=36&&e.mOver<45).length;
+  const overCnt=employees.filter(e=>e.mOver>=45).length;
+  $('overKpis').innerHTML=`
+    ${kpi('#e3941f','全社 今月残業',totalOver+'<small>h</small>','平均'+Math.round(totalOver/employees.length)+'h/人','warn','管理対象')}
+    ${kpi('#e24a4a','45時間 超過',overCnt+'<small>名</small>','36協定オーバー','down',overCnt?'要対応':'なし')}
+    ${kpi('#7c5cf0','36h 接近',warnCnt+'<small>名</small>','上限に注意','warn','早めの調整を')}
+    ${kpi('#16b877','深夜勤務 合計',employees.reduce((s,e)=>s+e.mNight,0)+'<small>h</small>','22時以降','up','管理済')}`;
+  const limit=45;
+  $('overRows').innerHTML=list.map(e=>{
+    const ratio=Math.min(100,Math.round(e.mOver/limit*100));
+    const cls=e.mOver>=45?'red':e.mOver>=36?'warn':'';
+    const st=e.mOver>=45?'over':e.mOver>=36?'late':'ok';
+    const stl=e.mOver>=45?'超過':e.mOver>=36?'注意':'適正';
+    const rem=Math.max(0,limit-e.mOver);
+    return `<tr>
+      <td>${avatar(e.name)}<b>${esc(e.name)}</b></td><td style="color:var(--ink-2)">${esc(e.dept)}</td>
+      <td class="r tnum" style="font-weight:800;${cls==='red'?'color:var(--red)':cls==='warn'?'color:var(--amber)':''}">${e.mOver}h</td>
+      <td><div style="font-size:11px;color:var(--ink-3)">残り ${rem}h</div><div class="pbar"><i class="${cls}" style="width:${ratio}%"></i></div></td>
+      <td><span class="st ${st}">${stl}</span></td></tr>`;
+  }).join('');
+}
+$('overSort').addEventListener('click',()=>{overDesc=!overDesc;$('overSort').textContent=overDesc?'残業多い順':'残業少ない順';renderOver();});
+
+/* ============ LEAVE ============ */
+function renderLeaveEmpSel(){$('lvEmp').innerHTML=employees.map(e=>`<option>${esc(e.name)}</option>`).join('');}
+function renderLeave(){
+  const pending=leaves.filter(l=>l.status==='pending').length;
+  $('lvPending').textContent='承認待ち '+pending+'件';
+  $('leaveRows').innerHTML=leaves.length?leaves.map((l,i)=>`<tr>
+    <td>${avatar(l.emp)}<b>${esc(l.emp)}</b></td><td style="color:var(--ink-2)">${esc(l.type)}</td>
+    <td class="tnum" style="color:var(--ink-2)">${esc(l.from)}${l.from!==l.to?' 〜 '+esc(l.to):''}</td>
+    <td class="c tnum">${l.days}日</td><td>${stBadge(l.status)}</td>
+    <td class="r">${l.status==='pending'?`<button class="btn green sm" onclick="approveLeave(${i})">承認</button>`:''}</td></tr>`).join('')
+    :'<tr><td colspan="6" class="empty-cell">申請はありません</td></tr>';
+}
+window.approveLeave=i=>{if(leaves[i]){leaves[i].status='approved';renderLeave();showToast(leaves[i].emp+' の休暇申請を承認しました');}};
+$('lvSubmit').addEventListener('click',async()=>{
+  const emp=$('lvEmp').value,type=$('lvType').value,from=$('lvFrom').value,to=$('lvTo').value;
+  if(!emp){showToast('申請者を選択してください');return;}
+  const btn=$('lvSubmit');btn.textContent='✨ AIチェック中…';btn.disabled=true;
+  $('lvHint').classList.add('show');
+  await new Promise(r=>setTimeout(r,800));
+  const fmt=d=>d?(d.slice(5,7)+'/'+d.slice(8,10)).replace(/^0/,''):'5/30';
+  let days=1;
+  if(type.indexOf('半休')>=0)days=0.5;
+  else if(from&&to&&from!==to){days=Math.max(1,(new Date(to)-new Date(from))/86400000+1);}
+  leaves.unshift({emp,type,from:fmt(from),to:fmt(to||from),days,status:'pending'});
+  btn.textContent='✨ AIチェックして申請';btn.disabled=false;
+  $('lvHint').classList.remove('show');
+  showToast(emp+' の'+type+'を申請しました（承認待ち）');
+  renderLeave();
+});
+
+/* ============ MONTHLY ============ */
+function renderMonth(){
+  const q=($('mq').value||'').toLowerCase();
+  let rows=employees.filter(e=>!q||(e.name+e.dept).toLowerCase().includes(q));
+  $('monthRows').innerHTML=rows.length?rows.map(e=>`<tr>
+    <td>${avatar(e.name)}<b>${esc(e.name)}</b></td><td style="color:var(--ink-2)">${esc(e.dept)}</td>
+    <td class="c tnum">${e.mDays}日</td><td class="r tnum">${e.mTotal}h</td>
+    <td class="r tnum" style="${e.mOver>=45?'color:var(--red);font-weight:800':e.mOver>=36?'color:var(--amber);font-weight:700':''}">${e.mOver}h</td>
+    <td class="r tnum" style="color:var(--ink-2)">${e.mNight}h</td>
+    <td class="c tnum">${e.paidUsed}/${e.paidTotal}日</td>
+    <td class="c">${e.missCount?`<span class="st over">${e.missCount}件</span>`:'<span style="color:var(--ink-3)">—</span>'}</td></tr>`).join('')
+    :'<tr><td colspan="8" class="empty-cell">該当する従業員がいません</td></tr>';
+}
+$('mq').addEventListener('input',renderMonth);
+
+/* ============ AI ANOMALY ============ */
+$('aiCnt').textContent=(employees.length*22)+'件';
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='🤖 解析中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},110);
+  await new Promise(r=>setTimeout(r,1200));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // build alerts from data
+  const overEmp=[...employees].filter(e=>e.mOver>=45).sort((a,b)=>b.mOver-a.mOver);
+  const nearEmp=[...employees].filter(e=>e.mOver>=36&&e.mOver<45).sort((a,b)=>b.mOver-a.mOver);
+  const missEmp=employees.filter(e=>e.missing||e.missCount>0);
+  const alerts=[];
+  overEmp.forEach(e=>alerts.push({lv:'high',ico:'🚨',tag:'36協定 超過',t:e.name+'（'+e.dept+'）の今月残業が '+e.mOver+'時間',d:'月45時間の上限を超えています。直ちに業務調整・面談が必要です。'}));
+  nearEmp.slice(0,2).forEach(e=>alerts.push({lv:'',ico:'⚠️',tag:'残業 注意',t:e.name+'（'+e.dept+'）の今月残業が '+e.mOver+'時間',d:'45時間の上限に接近。今月後半のシフト調整を推奨します。'}));
+  missEmp.slice(0,2).forEach(e=>alerts.push({lv:'',ico:'⏱️',tag:'打刻漏れ',t:e.name+'（'+e.dept+'）に打刻漏れ',d:'退勤打刻の抜けを検出。本人に確認のうえ修正してください。'}));
+  alerts.push({lv:'info',ico:'📊',tag:'自動集計 完了',t:'全'+employees.length+'名の月次集計を自動計算しました',d:'総労働・残業・深夜・有給を集計。月次集計タブからCSV出力できます。'});
+  $('genItems').innerHTML=alerts.map((a,i)=>`<div class="gen-item ${a.lv==='high'?'alert':''}" data-i="${i}">
+    <span class="ck">${a.lv==='high'?'!':'✓'}</span>
+    <div style="flex:1"><b style="font-size:13px">${esc(a.t)}</b><div style="font-size:11.5px;color:var(--ink-3);margin-top:2px">${esc(a.d)}</div></div>
+    <span class="st ${a.lv==='high'?'over':a.lv==='info'?'normal':'late'}" style="flex-shrink:0">${esc(a.tag)}</span></div>`).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,170));items[i].classList.add('in');}
+  const alertCnt=overEmp.length+nearEmp.slice(0,2).length+missEmp.slice(0,2).length;
+  $('navAlert').textContent=alertCnt;
+  btn.disabled=false;btn.textContent='🤖 もう一度解析';
+  showToast(alertCnt+'件の要対応アラートを検知しました');
+});
+
+/* ============ INIT ============ */
+renderPunchEmpSel();renderLeaveEmpSel();renderPunchChips();renderDash();
+$('navMiss').textContent=employees.filter(e=>e.missing).length;
+$('navAlert').textContent=employees.filter(e=>e.mOver>=45).length+employees.filter(e=>e.mOver>=36&&e.mOver<45).length;
+$('lvFrom').value='2026-05-30';$('lvTo').value='2026-05-30';
+</script>
+</body>
+</html>

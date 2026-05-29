@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜口コミ返信マシン（口コミ対応自動化システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#7b3ff0;--brand-dk:#5f27cf;--brand-soft:#f1eaff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--star:#f5a623;
+  --sb:#1a0f30;--sb-2:#241640;--sb-ink:#cfc4e0;--sb-ink-2:#8a7da6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#b18cff,#7b3ff0,#e364c8,#b18cff);
+  display:grid;place-items:center;color:#fff;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(123,63,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn:disabled{opacity:.7;cursor:default}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* rating distribution */
+.dist{display:flex;flex-direction:column;gap:9px}
+.dist-row{display:grid;grid-template-columns:42px 1fr 44px;align-items:center;gap:10px;font-size:12.5px}
+.dist-row .sl{color:var(--star);font-weight:700;white-space:nowrap}
+.dist-track{height:9px;border-radius:99px;background:var(--soft);overflow:hidden}
+.dist-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#f5a623,#f5c542);width:0;transition:width .9s cubic-bezier(.2,.8,.3,1)}
+.dist-row .dv{text-align:right;font-weight:700;color:var(--ink-2)}
+
+/* donut */
+.donut-wrap{display:flex;align-items:center;gap:18px}
+.donut{width:128px;height:128px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;position:relative}
+.donut .hole{width:84px;height:84px;border-radius:50%;background:var(--card);display:grid;place-items:center;text-align:center}
+.donut .hole b{font-size:22px;font-weight:900;line-height:1}
+.donut .hole span{font-size:10px;color:var(--ink-3);font-weight:700}
+.legend{display:flex;flex-direction:column;gap:8px;font-size:12.5px;flex:1}
+.legend .lg{display:flex;align-items:center;gap:8px}
+.legend .lg .sw{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.legend .lg b{margin-left:auto;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+.select-sm{padding:9px 12px;border:1px solid var(--line-2);border-radius:8px;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--ink-2);background:var(--card);cursor:pointer}
+.select-sm:focus{outline:none;border-color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px;vertical-align:top}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.stars{color:var(--star);font-size:13px;letter-spacing:1px;white-space:nowrap}
+.stars .off{color:#dfe3ec}
+.src{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:var(--ink-2);background:var(--soft);padding:3px 8px;border-radius:6px;white-space:nowrap}
+.rvtext{color:var(--ink-2);max-width:340px;line-height:1.5}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.replied{background:var(--green-soft);color:var(--green)}
+.st.pending{background:var(--amber-soft);color:var(--amber)}
+.st.draft{background:var(--brand-soft);color:var(--brand)}
+.st.ignored{background:var(--soft);color:var(--ink-3)}
+/* sentiment pill (no leading dot) */
+.sent{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.sent.pos{background:var(--green-soft);color:var(--green)}
+.sent.neu{background:var(--soft);color:var(--ink-2)}
+.sent.neg{background:var(--red-soft);color:var(--red)}
+
+/* reply workspace */
+.reply-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.reply-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.formcard h3{font-size:14px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.review-box{background:var(--soft);border:1px solid var(--line);border-radius:11px;padding:14px 16px;margin-bottom:14px}
+.review-box .rh{display:flex;align-items:center;gap:9px;margin-bottom:8px;flex-wrap:wrap}
+.review-box .rh b{font-size:13.5px}
+.review-box .rbody{font-size:13px;color:var(--ink-2);line-height:1.6}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card);resize:vertical}
+.fg textarea{min-height:120px;line-height:1.65}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.tone-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:13px}
+.tone{padding:7px 13px;border:1px solid var(--line-2);border-radius:99px;font-size:12px;font-weight:700;color:var(--ink-2);background:var(--card);cursor:pointer;transition:all .15s}
+.tone:hover{border-color:var(--brand)}
+.tone.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+.reply-preview{background:#fff;border:1px solid var(--line);border-radius:11px;padding:0;overflow:hidden}
+.rp-head{background:linear-gradient(90deg,var(--brand-soft),#faf7ff);padding:12px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px;font-size:13px;font-weight:800;color:var(--brand-dk)}
+.rp-body{padding:16px;font-size:13.5px;color:#1a2233;line-height:1.75;white-space:pre-wrap;min-height:150px}
+.rp-foot{border-top:1px solid var(--line);padding:11px 16px;display:flex;gap:8px;align-items:center;font-size:11.5px;color:var(--ink-3)}
+
+/* AI generate / before-after */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:flex-start;gap:11px;padding:11px 13px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0;margin-top:1px}
+.gen-item .gtxt{flex:1;min-width:0}
+.gen-item .gtxt .gn{font-weight:700}
+.gen-item .gtxt .gr{color:var(--ink-2);font-size:12px;margin-top:3px;line-height:1.55}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#b18cff,#7b3ff0);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(123,63,240,.4)}50%{box-shadow:0 0 40px rgba(177,140,255,.55)}}
+
+/* analysis cards */
+.an-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:980px){.an-grid{grid-template-columns:1fr}}
+.kw-cloud{display:flex;flex-wrap:wrap;gap:9px}
+.kw{padding:6px 13px;border-radius:99px;font-weight:700;background:var(--soft);color:var(--ink-2)}
+.kw.pos{background:var(--green-soft);color:var(--green)}
+.kw.neg{background:var(--red-soft);color:var(--red)}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">口コミ返信マシン<small>技マシン｜口コミ対応自動化</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">💬</span>口コミ一覧<span class="badge" id="navPending">0</span></a>
+      <a data-v="sentiment"><span class="i">🧠</span>感情分析</a>
+      <a data-v="trend"><span class="i">📈</span>評価推移</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="reply"><span class="i">✍️</span>返信（AI下書き）</a>
+      <a data-v="ai"><span class="i">⚡</span>AI一括返信</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。口コミ・評価はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">今月の口コミ対応状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>評価の分布</h3><span class="more">全期間</span></div>
+            <div class="pb"><div class="dist" id="distRows"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>感情のうちわけ</h3></div>
+            <div class="pb"><div class="donut-wrap"><div class="donut" id="donut"><div class="hole"><b id="donutPos">0%</b><span>好意度</span></div></div><div class="legend" id="donutLegend"></div></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>媒体別の口コミ件数</h3><span class="more">今月</span></div>
+            <div class="pb"><div class="bars" id="srcBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="店舗・投稿者・本文で検索"></div>
+          <select class="select-sm" id="srcFilter"><option value="all">すべての媒体</option></select>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>投稿者 / 店舗</th><th>媒体</th><th>評価</th><th>口コミ本文</th><th>感情</th><th>状態</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- SENTIMENT -->
+      <section class="view" id="v-sentiment">
+        <div class="kpis" id="sentKpis"></div>
+        <div class="an-grid">
+          <div class="panel">
+            <div class="ph"><h3>😊 ポジティブな声</h3></div>
+            <div class="pb"><div class="kw-cloud" id="kwPos"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>😟 改善要望の声</h3></div>
+            <div class="pb"><div class="kw-cloud" id="kwNeg"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>🧠 AIサマリー</h3></div>
+            <div class="pb" id="aiSummary" style="font-size:12.5px;color:var(--ink-2);line-height:1.7"></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="ph"><h3>感情スコアが低い口コミ（要対応）</h3></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>投稿者</th><th>評価</th><th>口コミ本文</th><th class="r">感情スコア</th><th></th></tr></thead>
+              <tbody id="sentRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TREND -->
+      <section class="view" id="v-trend">
+        <div class="kpis" id="trendKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>平均評価の推移（過去6ヶ月）</h3><span class="more">★5満点</span></div>
+          <div class="pb"><div class="bars" id="trendBars"></div></div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>月別の口コミ件数</h3></div>
+            <div class="pb"><div class="bars" id="trendCntBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>返信率の推移</h3></div>
+            <div class="pb"><div class="bars" id="trendReplyBars"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- REPLY -->
+      <section class="view" id="v-reply">
+        <div class="reply-grid">
+          <div class="formcard">
+            <h3>📝 返信する口コミ</h3>
+            <div class="fg"><label>口コミを選択</label><select id="rSelect"></select></div>
+            <div class="review-box" id="rReviewBox"></div>
+            <h3 style="margin-top:18px">🎚️ 返信トーン</h3>
+            <div class="tone-row" id="toneRow"></div>
+            <div class="linkrow" style="margin-top:4px">
+              <button class="btn primary" id="rGen" style="flex:1;justify-content:center">⚡ AIで返信文を生成</button>
+              <button class="btn" id="rSample">サンプル</button>
+            </div>
+            <div class="aihint" id="rAiHint">✨ 口コミ内容とトーンに合わせて返信文を生成しました</div>
+          </div>
+          <div>
+            <div class="reply-preview">
+              <div class="rp-head">✨ AIが作成した返信文（Before/After比較は下のAI一括返信へ）</div>
+              <div class="rp-body" id="rPreview">左で口コミとトーンを選び、「AIで返信文を生成」を押してください。</div>
+              <div class="rp-foot"><span id="rMeta">未生成</span></div>
+            </div>
+            <div class="formcard" style="margin-top:16px">
+              <div class="fg" style="margin-bottom:8px"><label>返信文を編集（公開前に確認できます）</label><textarea id="rEdit" placeholder="生成された返信文がここに入ります。手直しも可能です。"></textarea></div>
+              <div class="linkrow">
+                <button class="btn green" id="rPost" style="flex:1;justify-content:center">✅ この返信を投稿する</button>
+                <button class="btn" id="rCopy">📋 コピー</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI BULK -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">未返信の口コミにAIが一括で返信文を作成</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">未返信の口コミ <b id="aiCnt">0件</b> を、感情を読み取りながらAIが店舗ごとに最適な返信文を自動で下書きします。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで一括返信する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">1時間50分</div>
+              <ul>
+                <li>👀 各媒体に1件ずつログインして確認</li>
+                <li>⌨️ 評価・内容を読んで返信を考え手入力</li>
+                <li>😰 低評価への対応に気を使い後回しに</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🧠 口コミの感情をAIが自動で読み取り</li>
+                <li>📝 評価・内容に合わせた返信文を一括生成</li>
+                <li>✅ 担当者は確認して公開するだけ</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ 生成された返信文（下書き）</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const STORES=['大分中央クリニック','つくし整骨院','海鮮処 みなと','カフェ こもれび','別府温泉ホテル','大分ヘアサロン Lila'];
+const SOURCES=[
+  {n:'Google',i:'🟦'},{n:'食べログ',i:'🍴'},{n:'ホットペッパー',i:'🅷'},{n:'Instagram',i:'📷'},{n:'Yahoo!',i:'🟪'},
+];
+const NAMES=['田中','佐藤','鈴木','高橋','渡辺','山本','中村','小林','加藤','吉田','山田','松本','井上','木村','林'];
+const TODAY=new Date();
+function ym(d){return (d.getMonth()+1)}
+let SEED=4242;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+/* 口コミ本文テンプレ（評価帯ごと） */
+const TEXT={
+  5:['スタッフの方の対応がとても丁寧で、安心してお任せできました。また利用したいです。',
+     '予約から来店までスムーズで、待ち時間もほとんどなく快適でした。大満足です。',
+     '清潔感があり雰囲気も良かったです。家族にもおすすめしたいと思います。',
+     '初めてでしたが説明がわかりやすく、料金も明確で信頼できました。'],
+  4:['全体的に満足しています。少し混んでいましたが対応は丁寧でした。',
+     '対応は良かったです。駐車場がもう少し広いと嬉しいです。',
+     'リピートしています。安定した品質で安心して通えます。'],
+  3:['可もなく不可もなくといった感じです。普通でした。',
+     '対応は普通でしたが、待ち時間がやや長く感じました。',
+     '料金相応かなと思います。特別感はありませんでした。'],
+  2:['予約していたのに30分以上待たされました。改善してほしいです。',
+     'スタッフによって対応にばらつきがある印象でした。残念です。',
+     '期待していたほどではなく、少しがっかりしました。'],
+  1:['電話の対応がそっけなく感じ、不快な思いをしました。残念です。',
+     '予約時間を過ぎても案内がなく、説明もありませんでした。改善を強く望みます。',
+     '料金の説明が事前になく、会計時に驚きました。とても不満です。'],
+};
+function sentimentOf(r){return r>=4?'pos':r===3?'neu':'neg';}
+function scoreOf(r){return r===5?92:r===4?78:r===3?55:r===2?32:14;}
+
+let reviews=[];
+(function seed(){
+  const ratingDist=[5,5,5,5,4,4,4,3,5,4,5,2,5,4,1,5,3,4,5,2,5,4,5,3,5,4,2,5,5,1,4,5,3,4,5];
+  for(let i=0;i<ratingDist.length;i++){
+    const r=ratingDist[i];
+    const store=pick(STORES);const src=pick(SOURCES);
+    const name=pick(NAMES)+(rnd()>0.5?'様':'さん');
+    const text=pick(TEXT[r]);
+    const daysAgo=Math.floor(rnd()*150);
+    const date=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-daysAgo);
+    // 状態: 古いものほど返信済が多い、新しい低評価は未返信に
+    let status;const rr=rnd();
+    if(daysAgo>20)status=rr>0.18?'replied':(rr>0.07?'ignored':'pending');
+    else status=rr>0.55?'pending':(rr>0.3?'draft':'replied');
+    reviews.push({id:'RV-'+(7000+i+1),store,src:src.n,srcIcon:src.i,name,rating:r,text,date,
+      sentiment:sentimentOf(r),score:scoreOf(r),status,reply:''});
+  }
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const fmtD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtDL=d=>d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate();
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STLABEL={replied:'返信済',pending:'未返信',draft:'下書き',ignored:'対応不要'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]}</span>`;}
+const SENTLABEL={pos:'😊 ポジティブ',neu:'😐 中立',neg:'😟 ネガティブ'};
+function sentBadge(s){return `<span class="sent ${s}">${SENTLABEL[s]}</span>`;}
+function starsHTML(r){let h='';for(let k=1;k<=5;k++)h+=k<=r?'★':'<span class="off">★</span>';return `<span class="stars">${h}</span>`;}
+function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function srcIcon(n){const s=SOURCES.find(x=>x.n===n);return s?s.i:'🔗';}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function avg(arr){return arr.length?arr.reduce((s,x)=>s+x,0)/arr.length:0;}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','今月の口コミ対応状況'],list:['口コミ一覧','全媒体の口コミを一元管理します'],
+  sentiment:['感情分析','AIが口コミの感情とキーワードを分析します'],trend:['評価推移','平均評価・件数・返信率の推移'],
+  reply:['返信（AI下書き）','口コミに合わせてAIが返信文を作成します'],ai:['AI一括返信','未返信の口コミにAIがまとめて返信文を下書きします']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn primary" onclick="go(\'reply\')">✍️ 返信を作成</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI一括返信</button><button class="btn primary" onclick="go(\'reply\')">✍️ 返信を作成</button>'
+    : v==='reply'?'<button class="btn" onclick="go(\'ai\')">⚡ AI一括返信</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='sentiment')renderSentiment();
+  if(v==='trend')renderTrend();
+  if(v==='reply')renderReplyView();
+  if(v==='ai')renderAiView();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const tm=reviews.filter(r=>thisMonth(r.date));
+  const avgAll=avg(reviews.map(r=>r.rating));
+  const repliable=reviews.filter(r=>r.status!=='ignored');
+  const replied=repliable.filter(r=>r.status==='replied').length;
+  const replyRate=repliable.length?Math.round(replied/repliable.length*100):0;
+  const posRate=Math.round(reviews.filter(r=>r.sentiment==='pos').length/reviews.length*100);
+  $('kpis').innerHTML=`
+    ${kpi('#7b3ff0','今月の口コミ',tm.length+'<small>件</small>',thisMonth(TODAY)?'新着あり':' ','up','前月比 +9%')}
+    ${kpi('#f5a623','平均評価',avgAll.toFixed(2)+'<small> / 5</small>','','up','+0.2pt')}
+    ${kpi('#16b877','返信率',replyRate+'<small>%</small>',replied+'件返信','up','目標達成')}
+    ${kpi('#0ea5b7','好意度',posRate+'<small>%</small>','ポジ比率','up','良好')}`;
+  // rating distribution
+  renderDistInto('distRows',reviews);
+  // donut sentiment
+  renderDonut();
+  // source bars (this month)
+  const srcCounts=SOURCES.map(s=>({n:s.n,c:tm.filter(r=>r.src===s.n).length}));
+  const mx=Math.max(...srcCounts.map(s=>s.c),1);
+  $('srcBars').innerHTML=srcCounts.map(s=>`
+    <div class="bar-row"><span class="mlabel">${srcIcon(s.n)} ${s.n.length>4?s.n.slice(0,4):s.n}</span>
+      <div class="bar-track"><div class="bar-fill" data-w="${Math.round(s.c/mx*100)}"></div></div>
+      <span class="mval">${s.c}件</span></div>`).join('');
+  animBars('#srcBars');
+  // activity
+  const acts=[
+    {i:'⭐',c:'#fef3da',t:'Google に ★5 の新しい口コミが届きました（海鮮処 みなと）',m:'5分前'},
+    {i:'⚡',c:'#f1eaff',t:'AI一括返信で 7件 の返信文を下書きしました',m:'32分前'},
+    {i:'✅',c:'#e6f8f0',t:'食べログ の口コミへ返信を公開しました',m:'1時間前'},
+    {i:'⚠️',c:'#fdeaea',t:'ホットペッパーに ★1 の口コミ。AIが優先対応を提案',m:'今日 9:02'},
+    {i:'🧠',c:'#f1eaff',t:'感情分析を更新：好意度が先週より +4pt 改善',m:'今日 8:10'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${a.m}</div></div></div>`).join('');
+}
+function renderDistInto(elId,data){
+  const counts=[5,4,3,2,1].map(r=>({r,c:data.filter(x=>x.rating===r).length}));
+  const mx=Math.max(...counts.map(c=>c.c),1);
+  $(elId).innerHTML=counts.map(c=>`
+    <div class="dist-row"><span class="sl">★${c.r}</span>
+      <div class="dist-track"><div class="dist-fill" data-w="${Math.round(c.c/mx*100)}"></div></div>
+      <span class="dv">${c.c}件</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#'+elId+' .dist-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+}
+function renderDonut(){
+  const pos=reviews.filter(r=>r.sentiment==='pos').length;
+  const neu=reviews.filter(r=>r.sentiment==='neu').length;
+  const neg=reviews.filter(r=>r.sentiment==='neg').length;
+  const t=reviews.length||1;
+  const pPos=pos/t*100,pNeu=neu/t*100;
+  const a1=pPos*3.6,a2=(pPos+pNeu)*3.6;
+  $('donut').style.background=`conic-gradient(var(--green) 0deg ${a1}deg,#c4cbd8 ${a1}deg ${a2}deg,var(--red) ${a2}deg 360deg)`;
+  $('donutPos').textContent=Math.round(pPos)+'%';
+  $('donutLegend').innerHTML=`
+    <div class="lg"><span class="sw" style="background:var(--green)"></span>ポジティブ<b>${pos}件</b></div>
+    <div class="lg"><span class="sw" style="background:#c4cbd8"></span>中立<b>${neu}件</b></div>
+    <div class="lg"><span class="sw" style="background:var(--red)"></span>ネガティブ<b>${neg}件</b></div>`;
+}
+function animBars(sel){setTimeout(()=>document.querySelectorAll(sel+' .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);}
+
+/* ============ LIST ============ */
+let filterStatus='all',filterSrc='all';
+function renderSrcFilter(){
+  $('srcFilter').innerHTML='<option value="all">すべての媒体</option>'+SOURCES.map(s=>`<option value="${esc(s.n)}">${s.i} ${esc(s.n)}</option>`).join('');
+  $('srcFilter').onchange=()=>{filterSrc=$('srcFilter').value;renderList();};
+}
+function renderChips(){
+  const opts=[['all','すべて'],['pending','未返信'],['draft','下書き'],['replied','返信済'],['ignored','対応不要']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=reviews.filter(r=>filterStatus==='all'||r.status===filterStatus)
+    .filter(r=>filterSrc==='all'||r.src===filterSrc)
+    .filter(r=>!q||(r.store+r.name+r.text+r.src).toLowerCase().includes(q))
+    .sort((a,b)=>b.date-a.date);
+  $('listRows').innerHTML=rows.length?rows.map(r=>`<tr onclick="openReply('${esc(r.id)}')">
+    <td><b>${esc(r.name)}</b><div style="color:var(--ink-3);font-size:11px;margin-top:2px">${esc(r.store)} ・ ${fmtDL(r.date)}</div></td>
+    <td><span class="src">${r.srcIcon} ${esc(r.src)}</span></td>
+    <td>${starsHTML(r.rating)}</td>
+    <td><div class="rvtext">${esc(r.text)}</div></td>
+    <td>${sentBadge(r.sentiment)}</td>
+    <td>${stBadge(r.status)}</td></tr>`).join('')
+    :'<tr><td colspan="6" class="empty-cell">該当する口コミがありません</td></tr>';
+  updatePendingBadge();
+}
+$('q').addEventListener('input',renderList);
+window.openReply=id=>{$('rSelect').value=id;go('reply');setReplyTarget(id);};
+
+/* ============ SENTIMENT ============ */
+function renderSentiment(){
+  const pos=reviews.filter(r=>r.sentiment==='pos').length;
+  const neg=reviews.filter(r=>r.sentiment==='neg').length;
+  const posRate=Math.round(pos/reviews.length*100);
+  const avgScore=Math.round(avg(reviews.map(r=>r.score)));
+  $('sentKpis').innerHTML=`
+    ${kpi('#16b877','好意度（ポジ比率）',posRate+'<small>%</small>',pos+'件','up','+4pt')}
+    ${kpi('#7b3ff0','平均感情スコア',avgScore+'<small>/100</small>','','up','良好')}
+    ${kpi('#e24a4a','要対応（ネガ）',neg+'<small>件</small>','低スコア','warn','優先返信')}
+    ${kpi('#0ea5b7','分析済み口コミ',reviews.length+'<small>件</small>','全媒体','up','自動分析')}`;
+  const POSKW=[['丁寧',38],['安心',29],['清潔',24],['スムーズ',21],['わかりやすい',18],['また利用したい',16],['雰囲気',14],['信頼',11]];
+  const NEGKW=[['待ち時間',17],['対応のばらつき',12],['説明不足',9],['料金',8],['駐車場',6],['そっけない',4]];
+  $('kwPos').innerHTML=POSKW.map(k=>`<span class="kw pos" style="font-size:${12+Math.min(k[1]/4,8)}px">${esc(k[0])} <b>${k[1]}</b></span>`).join('');
+  $('kwNeg').innerHTML=NEGKW.map(k=>`<span class="kw neg" style="font-size:${12+Math.min(k[1]/2,8)}px">${esc(k[0])} <b>${k[1]}</b></span>`).join('');
+  $('aiSummary').innerHTML=`全${reviews.length}件の口コミをAIが分析しました。<br>
+    <b style="color:var(--green)">好評ポイント：</b>「スタッフの丁寧な対応」「清潔感」「説明のわかりやすさ」が高く評価されています。<br><br>
+    <b style="color:var(--red)">改善のヒント：</b>低評価の主因は<b>「待ち時間」</b>と<b>「対応のばらつき」</b>。
+    予約枠の見直しと接客マニュアルの統一で、平均評価を <b>+0.3pt</b> 改善できる可能性があります。`;
+  const low=reviews.filter(r=>r.sentiment==='neg').sort((a,b)=>a.score-b.score);
+  $('sentRows').innerHTML=low.length?low.map(r=>`<tr onclick="openReply('${esc(r.id)}')">
+    <td><b>${esc(r.name)}</b><div style="color:var(--ink-3);font-size:11px;margin-top:2px">${esc(r.store)}</div></td>
+    <td>${starsHTML(r.rating)}</td>
+    <td><div class="rvtext">${esc(r.text)}</div></td>
+    <td class="r"><b style="color:var(--red)" class="tnum">${r.score}</b><span style="color:var(--ink-3);font-size:11px">/100</span></td>
+    <td class="r"><button class="btn primary" style="padding:6px 12px" onclick="event.stopPropagation();openReply('${esc(r.id)}')">返信</button></td></tr>`).join('')
+    :'<tr><td colspan="5" class="empty-cell">要対応の口コミはありません 🎉</td></tr>';
+}
+
+/* ============ TREND ============ */
+function renderTrend(){
+  const avgAll=avg(reviews.map(r=>r.rating));
+  const repliable=reviews.filter(r=>r.status!=='ignored');
+  const replyRate=repliable.length?Math.round(repliable.filter(r=>r.status==='replied').length/repliable.length*100):0;
+  $('trendKpis').innerHTML=`
+    ${kpi('#f5a623','現在の平均評価',avgAll.toFixed(2)+'<small>/5</small>','','up','上昇傾向')}
+    ${kpi('#7b3ff0','累計口コミ',reviews.length+'<small>件</small>','','up','蓄積中')}
+    ${kpi('#16b877','返信率',replyRate+'<small>%</small>','','up','改善中')}
+    ${kpi('#0ea5b7','★5の割合',Math.round(reviews.filter(r=>r.rating===5).length/reviews.length*100)+'<small>%</small>','','up','+6pt')}`;
+  const months=[];for(let k=5;k>=0;k--){const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1);months.push(d);}
+  const byMonth=months.map(m=>reviews.filter(r=>r.date.getMonth()===m.getMonth()&&r.date.getFullYear()===m.getFullYear()));
+  // synthetic but stable trend for empty months
+  const baseAvg=[4.1,4.0,4.2,4.3,4.4,Number(avgAll.toFixed(2))];
+  $('trendBars').innerHTML=months.map((m,i)=>{
+    const real=byMonth[i].length?avg(byMonth[i].map(r=>r.rating)):baseAvg[i];
+    const v=real.toFixed(2);
+    return `<div class="bar-row"><span class="mlabel">${m.getMonth()+1}月</span>
+      <div class="bar-track"><div class="bar-fill" data-w="${Math.round(real/5*100)}"></div></div>
+      <span class="mval">★${v}</span></div>`;
+  }).join('');
+  animBars('#trendBars');
+  const cnts=byMonth.map((arr,i)=>arr.length||[3,4,5,6,7,8][i]);
+  const mxC=Math.max(...cnts,1);
+  $('trendCntBars').innerHTML=months.map((m,i)=>`
+    <div class="bar-row"><span class="mlabel">${m.getMonth()+1}月</span>
+      <div class="bar-track"><div class="bar-fill" data-w="${Math.round(cnts[i]/mxC*100)}"></div></div>
+      <span class="mval">${cnts[i]}件</span></div>`).join('');
+  animBars('#trendCntBars');
+  const reply=[62,68,71,79,85,replyRate];
+  $('trendReplyBars').innerHTML=months.map((m,i)=>`
+    <div class="bar-row"><span class="mlabel">${m.getMonth()+1}月</span>
+      <div class="bar-track"><div class="bar-fill" data-w="${reply[i]}"></div></div>
+      <span class="mval">${reply[i]}%</span></div>`).join('');
+  animBars('#trendReplyBars');
+}
+
+/* ============ REPLY (AI draft) ============ */
+const TONES=[['polite','丁寧・フォーマル'],['warm','親しみ・あたたかい'],['apology','お詫び重視'],['concise','簡潔']];
+let curTone='polite',curReviewId=null;
+function renderToneRow(){
+  $('toneRow').innerHTML=TONES.map(t=>`<button class="tone ${t[0]===curTone?'on':''}" data-t="${t[0]}">${t[1]}</button>`).join('');
+  $('toneRow').querySelectorAll('.tone').forEach(b=>b.onclick=()=>{curTone=b.dataset.t;renderToneRow();});
+}
+function renderReplyView(){
+  $('rSelect').innerHTML=reviews.filter(r=>r.status!=='ignored').map(r=>`<option value="${esc(r.id)}">${r.rating}★ ${esc(r.store)} / ${esc(r.name)} (${esc(r.src)})</option>`).join('');
+  renderToneRow();
+  if(!curReviewId){const first=reviews.find(r=>r.status==='pending')||reviews[0];curReviewId=first.id;}
+  $('rSelect').value=curReviewId;
+  setReplyTarget(curReviewId);
+}
+$('rSelect')&&($('rSelect').onchange=()=>setReplyTarget($('rSelect').value));
+function setReplyTarget(id){
+  curReviewId=id;
+  const r=reviews.find(x=>x.id===id);if(!r)return;
+  $('rReviewBox').innerHTML=`<div class="rh"><span class="src">${r.srcIcon} ${esc(r.src)}</span>${starsHTML(r.rating)}${sentBadge(r.sentiment)}</div>
+    <div style="font-size:12px;color:var(--ink-3);margin-bottom:6px">${esc(r.name)} ・ ${esc(r.store)} ・ ${fmtDL(r.date)}</div>
+    <div class="rbody">${esc(r.text)}</div>`;
+}
+function buildReply(r,tone){
+  const store=r.store;
+  if(r.rating>=4){
+    const body={
+      polite:`この度は${store}をご利用いただき、また心のこもったお言葉を賜り誠にありがとうございます。スタッフ一同、大変励みになっております。今後もより一層ご満足いただけるよう努めてまいりますので、変わらぬご愛顧を賜りますようお願い申し上げます。またのご来店を心よりお待ちしております。`,
+      warm:`うれしいお言葉をありがとうございます！${store}スタッフ一同、とても喜んでおります😊 また皆さまに「来てよかった」と思っていただけるよう頑張ります。ぜひまた遊びにいらしてくださいね。`,
+      apology:`温かいご評価をありがとうございます。${store}をお選びいただけたこと、心より感謝申し上げます。一部至らぬ点があればいつでもお聞かせください。今後も改善を重ねてまいります。`,
+      concise:`${store}をご利用いただきありがとうございます。励みになるお言葉に感謝いたします。またのお越しをお待ちしております。`,
+    };return body[tone];
+  } else if(r.rating===3){
+    const body={
+      polite:`この度は${store}へ貴重なご意見をお寄せいただき、誠にありがとうございます。お客様によりご満足いただけるサービスを目指し、いただいたお声を社内で共有のうえ改善に努めてまいります。次回はより良いご体験をお届けできるよう尽力いたします。`,
+      warm:`ご意見ありがとうございます！もっと「来てよかった」と感じていただけるよう、${store}一同で工夫してまいります。またのご来店をお待ちしております😊`,
+      apology:`この度はご期待に十分お応えできず申し訳ございませんでした。いただいたお声を真摯に受け止め、${store}全体でサービス向上に取り組んでまいります。`,
+      concise:`貴重なご意見をありがとうございます。${store}一同、改善に努めてまいります。`,
+    };return body[tone];
+  } else {
+    const body={
+      polite:`この度は${store}をご利用いただいたにもかかわらず、ご不快な思いをおかけしてしまい誠に申し訳ございません。お客様からのご指摘を真摯に受け止め、原因を確認のうえ再発防止に努めてまいります。差し支えなければ詳細をお伺いし改善に活かしたく存じます。貴重なお声をいただき、ありがとうございました。`,
+      warm:`このたびはご不便をおかけして本当に申し訳ありません。せっかくお越しいただいたのに残念な思いをさせてしまい、${store}一同反省しております。改善してまいりますので、よろしければもう一度チャンスをいただけますと幸いです。`,
+      apology:`この度はご期待に沿えず、ご不快な思いをおかけし誠に申し訳ございませんでした。ご指摘いただいた点はただちに${store}内で共有し、待ち時間と接客対応の改善に着手いたします。心よりお詫び申し上げます。`,
+      concise:`ご不快な思いをおかけし申し訳ございませんでした。ご指摘の点は速やかに改善いたします。貴重なご意見をありがとうございました。`,
+    };return body[tone];
+  }
+}
+$('rGen').addEventListener('click',async()=>{
+  const r=reviews.find(x=>x.id===curReviewId);if(!r){showToast('口コミを選択してください');return;}
+  const btn=$('rGen');btn.textContent='⚡ AIが生成中…';btn.disabled=true;
+  $('rPreview').textContent='AIが口コミの感情を読み取り、返信文を作成しています…';
+  await new Promise(res=>setTimeout(res,850));
+  const text=buildReply(r,curTone);
+  $('rPreview').textContent=text;
+  $('rEdit').value=text;
+  const tl=TONES.find(t=>t[0]===curTone)[1];
+  $('rMeta').textContent=`生成完了 ・ トーン：${tl} ・ ${text.length}文字 ・ 所要 0.8秒`;
+  $('rAiHint').classList.add('show');setTimeout(()=>$('rAiHint').classList.remove('show'),2200);
+  btn.textContent='⚡ AIで返信文を再生成';btn.disabled=false;
+  showToast('返信文を生成しました（編集してから投稿できます）');
+});
+$('rSample').addEventListener('click',()=>{
+  const neg=reviews.find(r=>r.sentiment==='neg'&&r.status!=='ignored');
+  if(neg){curReviewId=neg.id;$('rSelect').value=neg.id;setReplyTarget(neg.id);curTone='apology';renderToneRow();$('rGen').click();}
+});
+$('rPost').addEventListener('click',()=>{
+  const r=reviews.find(x=>x.id===curReviewId);
+  const txt=$('rEdit').value.trim();
+  if(!r){showToast('口コミを選択してください');return;}
+  if(!txt){showToast('返信文を入力または生成してください');return;}
+  r.reply=txt;r.status='replied';
+  showToast(r.store+' の口コミへ返信を投稿しました');
+  updatePendingBadge();
+  setTimeout(()=>go('list'),700);
+});
+$('rCopy').addEventListener('click',async()=>{
+  const txt=$('rEdit').value.trim();if(!txt){showToast('コピーする返信文がありません');return;}
+  try{await navigator.clipboard.writeText(txt);showToast('返信文をコピーしました');}
+  catch(e){showToast('コピーしました（手動で貼り付けてください）');}
+});
+
+/* ============ AI BULK ============ */
+function renderAiView(){
+  const pending=reviews.filter(r=>r.status==='pending');
+  $('aiCnt').textContent=pending.length+'件';
+}
+$('aiRun').addEventListener('click',async()=>{
+  const pending=reviews.filter(r=>r.status==='pending');
+  if(!pending.length){showToast('未返信の口コミはありません 🎉');return;}
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 生成中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},110);
+  await new Promise(r=>setTimeout(r,1150));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  $('genItems').innerHTML=pending.map((r,i)=>{
+    const tone=r.rating<=2?'apology':(r.rating===3?'polite':'warm');
+    const reply=buildReply(r,tone);
+    const short=reply.length>96?reply.slice(0,96)+'…':reply;
+    return `<div class="gen-item" data-i="${i}"><span class="ck">✓</span>
+      <div class="gtxt"><div class="gn">${r.srcIcon} ${esc(r.store)} ・ ${esc(r.name)} ${starsHTML(r.rating)}</div>
+      <div class="gr">${esc(short)}</div></div></div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){
+    await new Promise(r=>setTimeout(r,170));
+    items[i].classList.add('in');
+    const tone=pending[i].rating<=2?'apology':(pending[i].rating===3?'polite':'warm');
+    pending[i].reply=buildReply(pending[i],tone);
+    pending[i].status='draft';
+  }
+  btn.disabled=false;btn.textContent='⚡ もう一度生成';
+  updatePendingBadge();
+  showToast(items.length+'件の返信文を一括で下書きしました');
+});
+
+/* ============ BADGE / INIT ============ */
+function updatePendingBadge(){$('navPending').textContent=reviews.filter(r=>r.status==='pending').length;}
+renderSrcFilter();renderChips();renderDash();updatePendingBadge();
+</script>
+</body>
+</html>

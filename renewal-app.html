@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜契約更新管理マシン（契約更新の見逃し防止）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cf0;--purple-soft:#efeafd;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.nav a .badge.amber{background:var(--amber)}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn.sm{padding:6px 12px;font-size:12px}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* timeline (renewal runway) */
+.runway{display:flex;flex-direction:column;gap:13px}
+.run-row{display:grid;grid-template-columns:128px 1fr 92px;align-items:center;gap:11px;font-size:12.5px}
+.run-row .mlabel{color:var(--ink-2);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.run-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden;position:relative}
+.run-fill{height:100%;border-radius:99px;width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.run-fill.ok{background:linear-gradient(90deg,var(--green),#37e29a)}
+.run-fill.soon{background:linear-gradient(90deg,var(--amber),#f0b95a)}
+.run-fill.now{background:linear-gradient(90deg,var(--red),#f07a7a)}
+.run-row .mval{text-align:right;font-weight:800;font-variant-numeric:tabular-nums}
+.run-row .mval.ok{color:var(--green)}.run-row .mval.soon{color:var(--amber)}.run-row .mval.now{color:var(--red)}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.active{background:var(--green-soft);color:var(--green)}
+.st.soon{background:var(--amber-soft);color:var(--amber)}
+.st.overdue{background:var(--red-soft);color:var(--red)}
+.st.renewed{background:var(--brand-soft);color:var(--brand)}
+.st.ended{background:var(--soft);color:var(--ink-3)}
+.daystag{font-weight:800;font-variant-numeric:tabular-nums}
+.daystag.ok{color:var(--green)}.daystag.soon{color:var(--amber)}.daystag.now{color:var(--red)}
+
+/* auto-renew pill */
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;padding:3px 9px;border-radius:99px}
+.pill.on{background:var(--purple-soft);color:var(--purple)}
+.pill.off{background:var(--soft);color:var(--ink-3)}
+
+/* register form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,400px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--brand)}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.toggle{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;cursor:pointer;font-size:13px;font-weight:700;color:var(--ink-2)}
+.toggle .sw{width:38px;height:22px;border-radius:99px;background:var(--line-2);position:relative;transition:.2s;flex-shrink:0}
+.toggle .sw::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle.on{color:var(--purple)}
+.toggle.on .sw{background:var(--purple)}
+.toggle.on .sw::after{left:18px}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* preview card */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:30px 32px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.pv-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
+.pv-title{font-size:22px;font-weight:900;letter-spacing:.18em;color:var(--brand-dk);border-bottom:3px solid var(--brand-dk);padding-bottom:5px}
+.pv-meta{text-align:right;font-size:11.5px;color:var(--ink-2)}
+.pv-meta .no{font-family:'Orbitron';color:var(--ink);font-weight:700}
+.pv-cust{font-size:19px;font-weight:900;border-bottom:1.5px solid #1a2233;display:inline-block;min-width:220px;padding-bottom:5px;margin-bottom:8px}
+.pv-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 18px;margin:16px 0}
+.pv-grid .cell{padding:9px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;font-size:12.5px}
+.pv-grid .cell .k{color:var(--ink-2);font-weight:600}
+.pv-grid .cell .vv{font-weight:800}
+.pv-alert{background:var(--soft);border-left:5px solid var(--brand-dk);border-radius:6px;padding:13px 18px;margin:16px 0;display:flex;justify-content:space-between;align-items:center}
+.pv-alert .a{font-family:'Orbitron';font-size:21px;font-weight:700;color:var(--brand-dk)}
+.pv-actions{margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
+.pv-actions .at-row{display:flex;gap:9px;padding:7px 0;font-size:12px;color:var(--ink-2);align-items:center}
+.pv-actions .at-row .dt{font-family:'Orbitron';color:var(--brand-dk);font-weight:700;min-width:74px}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">契約更新管理マシン<small>技マシン｜更新の見逃しゼロ</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">📑</span>契約一覧</a>
+      <a data-v="alert"><span class="i">⏰</span>更新アラート<span class="badge" id="navAlert">0</span></a>
+      <a data-v="create"><span class="i">✏️</span>契約を登録</a>
+      <a data-v="party"><span class="i">🏢</span>取引先</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI更新アクション</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="./">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。数値・取引先はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">契約更新の状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>更新が近い契約（残り日数）</h3><span class="more">90日以内</span></div>
+            <div class="pb"><div class="runway" id="runway"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="取引先・契約名・番号で検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>契約番号</th><th>取引先</th><th>契約名</th><th class="r">月額</th><th>更新日</th><th class="r">残り</th><th>自動更新</th><th>状態</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- ALERT -->
+      <section class="view" id="v-alert">
+        <div class="kpis" id="alertKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>対応が必要な更新（期限が近い順）</h3>
+            <button class="btn green" id="autoNotify" style="margin-left:auto">📨 AIで一括リマインド送信</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>契約番号</th><th>取引先</th><th class="r">月額</th><th>更新日</th><th class="r">残り</th><th>状態</th><th></th></tr></thead>
+              <tbody id="alertRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- CREATE -->
+      <section class="view" id="v-create">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>取引先</label>
+              <select id="cParty"></select></div>
+            <div class="fg"><label>契約名</label><input id="cName" placeholder="例：保守サポート契約"></div>
+            <div class="fg-row">
+              <div class="fg"><label>月額（円）</label><input id="cFee" type="number" min="0" placeholder="0"></div>
+              <div class="fg"><label>契約期間</label>
+                <select id="cTerm"><option value="12">1年（12ヶ月）</option><option value="6">半年（6ヶ月）</option><option value="24">2年（24ヶ月）</option><option value="1">月単位</option></select></div>
+            </div>
+            <div class="fg"><label>更新日（次回）</label><input id="cDue" type="date"></div>
+            <div class="fg"><label>通知タイミング</label>
+              <select id="cNotice"><option value="30">更新30日前</option><option value="60">更新60日前</option><option value="14">更新14日前</option><option value="90">更新90日前</option></select></div>
+            <div class="fg">
+              <div class="toggle on" id="cAuto"><div class="sw"></div><span>自動更新する（AIが期日に手続き）</span></div>
+            </div>
+            <div class="aihint" id="cAiHint">✨ AIが更新日と通知日を自動で計算しました</div>
+            <div class="linkrow" style="margin-top:16px">
+              <button class="btn primary" id="cIssue" style="flex:1;justify-content:center">⚡ AIで登録して見守り開始</button>
+              <button class="btn" id="cSample">サンプル</button>
+            </div>
+          </div>
+          <div>
+            <div class="paper" id="cPaper">
+              <div class="pv-top">
+                <div class="pv-title">契約更新カード</div>
+                <div class="pv-meta"><div>番号：<span class="no" id="pNo">—</span></div><div>登録日：<span id="pDate">—</span></div></div>
+              </div>
+              <div><span class="pv-cust" id="pParty">　御中</span></div>
+              <div style="font-size:11.5px;color:var(--ink-2)" id="pName">契約名を入力してください</div>
+              <div class="pv-alert"><span style="font-weight:700">次回更新日</span><span class="a" id="pDue2">—</span></div>
+              <div class="pv-grid">
+                <div class="cell"><span class="k">月額</span><span class="vv" id="pFee">¥0</span></div>
+                <div class="cell"><span class="k">契約期間</span><span class="vv" id="pTermV">—</span></div>
+                <div class="cell"><span class="k">年間換算</span><span class="vv" id="pYear">¥0</span></div>
+                <div class="cell"><span class="k">自動更新</span><span class="vv" id="pAuto">ON</span></div>
+              </div>
+              <div class="pv-actions">
+                <div style="font-size:12px;font-weight:800;margin-bottom:4px">📅 AIが自動で行う見守りスケジュール</div>
+                <div class="at-row"><span class="dt" id="pSch1">—</span>更新が近づいたら担当へ通知</div>
+                <div class="at-row"><span class="dt" id="pSch2">—</span>取引先へリマインドメールを下書き</div>
+                <div class="at-row"><span class="dt" id="pSch3">—</span>更新日に手続き（自動更新ON時）</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PARTIES -->
+      <section class="view" id="v-party">
+        <table class="tbl">
+          <thead><tr><th>取引先</th><th>区分</th><th class="r">契約数</th><th class="r">月額合計</th><th class="r">年間換算</th><th>担当</th></tr></thead>
+          <tbody id="partyRows"></tbody>
+        </table>
+      </section>
+
+      <!-- AI BULK -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">更新期限を見張って、アクションを自動化</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">登録済みの契約 <b id="aiCount">0</b>件 をAIがチェックし、更新が近い契約のリマインド準備を自動で行います。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで一括処理する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">月に3時間</div>
+              <ul>
+                <li>📒 契約書を1枚ずつ確認して期限を転記</li>
+                <li>🗓️ カレンダーに手で更新日を登録</li>
+                <li>😱 見落として自動更新・違約金が発生</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 全契約の更新日を自動で見張り</li>
+                <li>📨 期限が近い契約のリマインドを自動下書き</li>
+                <li>✅ 見逃しゼロ・違約金リスクを回避</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ AIが準備した更新アクション</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const PARTIES=[
+  {name:'大分中央クリニック',type:'医療',staff:'佐藤'},
+  {name:'さくら総合病院',type:'医療',staff:'佐藤'},
+  {name:'つくし介護センター',type:'介護',staff:'田中'},
+  {name:'豊後おおいた青果',type:'青果卸',staff:'鈴木'},
+  {name:'都町商店会',type:'小売',staff:'鈴木'},
+  {name:'別府温泉ホテル組合',type:'宿泊',staff:'高橋'},
+  {name:'大分海鮮市場',type:'飲食',staff:'高橋'},
+  {name:'みらい歯科医院',type:'医療',staff:'田中'},
+];
+const SVCS=[
+  {n:'AI業務自動化 保守サポート',p:50000},{n:'介護記録システム 利用契約',p:38000},
+  {n:'シフト管理システム 利用契約',p:28000},{n:'ホームページ保守契約',p:15000},
+  {n:'青果定期便 配送契約',p:9800},{n:'クラウド勤怠 利用契約',p:12000},
+  {n:'電子カルテ連携 オプション',p:22000},{n:'セキュリティ監視 契約',p:18000},
+];
+const MS=86400000;
+const TODAY=new Date();TODAY.setHours(0,0,0,0);
+function addMonths(d,m){const x=new Date(d);x.setMonth(x.getMonth()+m);return x;}
+function addDays(d,n){return new Date(d.getTime()+n*MS);}
+function daysLeft(d){return Math.round((d.getTime()-TODAY.getTime())/MS);}
+
+/* seed */
+let SEED=4242;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+let contracts=[];
+(function seed(){
+  for(let i=0;i<20;i++){
+    const c=pick(PARTIES);const sv=pick(SVCS);
+    const term=pick([12,12,6,24,12]);
+    // due date spread from -10 days (overdue) to +320 days
+    const offset=Math.floor(rnd()*330)-10;
+    const due=addDays(TODAY,offset);
+    const auto=rnd()>0.35;
+    const notice=pick([30,30,60,14]);
+    contracts.push({
+      no:'CT-'+(2026000+i+1),party:c.name,name:sv.n,fee:sv.p,term,due,auto,notice,
+      status:'active'
+    });
+  }
+})();
+
+/* status derivation: overdue / soon(<=notice) / active */
+function deriveStatus(ct){
+  if(ct.status==='renewed'||ct.status==='ended')return ct.status;
+  const dl=daysLeft(ct.due);
+  if(dl<0)return 'overdue';
+  if(dl<=ct.notice)return 'soon';
+  return 'active';
+}
+function dlClass(dl){return dl<0?'now':dl<=30?'soon':'ok';}
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+const fmtS=d=>(d.getFullYear()+'').slice(2)+'/'+(d.getMonth()+1)+'/'+d.getDate();
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STLABEL={active:'有効',soon:'更新間近',overdue:'期限超過',renewed:'更新済',ended:'終了'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]}</span>`;}
+function daysCell(dl,s){
+  if(s==='renewed')return '<span class="daystag ok">更新済</span>';
+  if(s==='ended')return '<span class="daystag" style="color:var(--ink-3)">終了</span>';
+  if(dl<0)return `<span class="daystag now">${Math.abs(dl)}日超過</span>`;
+  return `<span class="daystag ${dlClass(dl)}">あと${dl}日</span>`;
+}
+function autoPill(a){return a?'<span class="pill on">🔁 自動</span>':'<span class="pill off">手動</span>';}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','契約更新の状況をひと目で'],list:['契約一覧','登録した契約を管理します'],
+  alert:['更新アラート','期限が近い・超過した契約の対応'],create:['契約を登録','入力すると更新の見守りが自動で始まります'],
+  party:['取引先','取引先ごとの契約状況'],ai:['AI更新アクション','更新期限を見張って手続きを自動化']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn primary" onclick="go(\'create\')">＋ 契約を登録</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI更新アクション</button><button class="btn primary" onclick="go(\'create\')">＋ 契約を登録</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='alert')renderAlert();
+  if(v==='party')renderParty();
+  if(v==='ai')renderAi();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const live=contracts.filter(c=>deriveStatus(c)!=='ended');
+  const monthly=live.reduce((s,c)=>s+c.fee,0);
+  const soon=contracts.filter(c=>deriveStatus(c)==='soon');
+  const overdue=contracts.filter(c=>deriveStatus(c)==='overdue');
+  const autoN=contracts.filter(c=>c.auto&&['active','soon'].includes(deriveStatus(c))).length;
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','管理中の契約',live.length+'<small>件</small>',yen(monthly)+'/月','up','見守り中')}
+    ${kpi('#e3941f','更新間近',soon.length+'<small>件</small>','90日以内','warn',soon.length?'要確認':'なし')}
+    ${kpi('#e24a4a','期限超過',overdue.length+'<small>件</small>',' ',overdue.length?'down':'up',overdue.length?'至急対応':'なし')}
+    ${kpi('#7c5cf0','自動更新',autoN+'<small>件</small>','AIが手続き','up','見逃しゼロ')}`;
+  // runway: nearest 6 upcoming (not renewed/ended)
+  const up=contracts.filter(c=>['active','soon','overdue'].includes(deriveStatus(c)))
+    .sort((a,b)=>a.due-b.due).slice(0,6);
+  const HORIZON=120;
+  $('runway').innerHTML=up.length?up.map(c=>{
+    const dl=daysLeft(c.due);const cls=dl<0?'now':dl<=c.notice?'soon':'ok';
+    const pct=Math.max(6,Math.min(100,Math.round((1-Math.max(dl,0)/HORIZON)*100)));
+    return `<div class="run-row"><span class="mlabel" title="${esc(c.party)}">${esc(c.party)}</span>
+      <div class="run-track"><div class="run-fill ${cls}" style="width:0" data-w="${pct}"></div></div>
+      <span class="mval ${cls}">${dl<0?Math.abs(dl)+'日超過':'あと'+dl+'日'}</span></div>`;
+  }).join('')
+    :'<div class="empty-cell">更新が近い契約はありません</div>';
+  setTimeout(()=>document.querySelectorAll('#runway .run-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // activity
+  const acts=[
+    {i:'📨',c:'#e6f8f0',t:'つくし介護センター へ更新リマインドを送付',m:'2分前'},
+    {i:'🔁',c:'#efeafd',t:'CT-2026004 を自動更新しました（次回 12ヶ月後）',m:'1時間前'},
+    {i:'⚡',c:'#e6f8f0',t:'AIが全契約の更新日をチェック（見逃し0件）',m:'今日 9:14'},
+    {i:'⚠️',c:'#fdeaea',t:'大分中央クリニック の更新期限が近づいています',m:'今日 8:30'},
+    {i:'✏️',c:'#eaf1ff',t:'新規契約 CT-2026020 を登録しました',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+  syncBadges();
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub&&sub.trim()?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ LIST ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['active','有効'],['soon','更新間近'],['overdue','期限超過'],['renewed','更新済']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=contracts.map(c=>({c,s:deriveStatus(c),dl:daysLeft(c.due)}))
+    .filter(o=>filterStatus==='all'||o.s===filterStatus)
+    .filter(o=>!q||(o.c.party+o.c.name+o.c.no).toLowerCase().includes(q))
+    .sort((a,b)=>a.c.due-b.c.due);
+  $('listRows').innerHTML=rows.length?rows.map(o=>`<tr>
+    <td class="mono" style="font-size:12px">${esc(o.c.no)}</td><td><b>${esc(o.c.party)}</b></td>
+    <td style="color:var(--ink-2)">${esc(o.c.name)}</td>
+    <td class="r tnum"><b>${yen(o.c.fee)}</b></td>
+    <td style="color:var(--ink-2)">${esc(fmtS(o.c.due))}</td>
+    <td class="r">${daysCell(o.dl,o.s)}</td>
+    <td>${autoPill(o.c.auto)}</td>
+    <td>${stBadge(o.s)}</td></tr>`).join('')
+    :'<tr><td colspan="8" class="empty-cell">該当する契約がありません</td></tr>';
+}
+$('q').addEventListener('input',renderList);
+
+/* ============ ALERT ============ */
+function renderAlert(){
+  const need=contracts.filter(c=>['soon','overdue'].includes(deriveStatus(c)));
+  const od=need.filter(c=>deriveStatus(c)==='overdue');
+  const soon=need.filter(c=>deriveStatus(c)==='soon');
+  const atRisk=need.reduce((s,c)=>s+c.fee,0);
+  $('alertKpis').innerHTML=`
+    ${kpi('#e24a4a','期限超過',od.length+'<small>件</small>',' ','down',od.length?'至急':'なし')}
+    ${kpi('#e3941f','更新間近',soon.length+'<small>件</small>',' ','warn','通知タイミング内')}
+    ${kpi('#2f6df0','対象の月額',yen(atRisk),need.length+'件','up','管理対象')}
+    ${kpi('#7c5cf0','自動更新で対応',need.filter(c=>c.auto).length+'<small>件</small>','AIが手続き','up','安心')}`;
+  $('alertRows').innerHTML=need.length?need.map(c=>{
+    const s=deriveStatus(c);const dl=daysLeft(c.due);
+    return `<tr>
+      <td class="mono" style="font-size:12px">${esc(c.no)}</td><td><b>${esc(c.party)}</b></td>
+      <td class="r tnum"><b>${yen(c.fee)}</b></td>
+      <td style="color:var(--ink-2)">${esc(fmtS(c.due))}</td>
+      <td class="r">${daysCell(dl,s)}</td><td>${stBadge(s)}</td>
+      <td class="r" style="white-space:nowrap">
+        <button class="btn sm green" onclick="renewNow('${esc(c.no)}')">更新</button>
+        <button class="btn sm" onclick="remind('${esc(c.no)}')">📨 通知</button></td></tr>`;
+  }).join('')
+    :'<tr><td colspan="7" class="empty-cell">対応が必要な契約はありません 🎉</td></tr>';
+  syncBadges();
+}
+window.renewNow=no=>{const c=contracts.find(x=>x.no===no);if(c){c.due=addMonths(c.due,c.term);c.status='active';renderAlert();showToast(no+' を更新しました（次回 '+fmtS(c.due)+'）');}};
+window.remind=no=>{const c=contracts.find(x=>x.no===no);if(c){showToast(esc(c.party)+' へ更新リマインドを送付しました');}};
+$('autoNotify').addEventListener('click',async()=>{
+  const btn=$('autoNotify');const lbl=btn.textContent;btn.textContent='📨 送信中…';btn.disabled=true;
+  const need=contracts.filter(c=>['soon','overdue'].includes(deriveStatus(c)));
+  await new Promise(r=>setTimeout(r,900));
+  btn.textContent=lbl;btn.disabled=false;
+  showToast(need.length+'件の取引先へリマインドメールを一括送付しました');
+});
+
+/* ============ PARTIES ============ */
+function renderParty(){
+  $('partyRows').innerHTML=PARTIES.map(p=>{
+    const cs=contracts.filter(c=>c.party===p.name&&deriveStatus(c)!=='ended');
+    const m=cs.reduce((s,c)=>s+c.fee,0);
+    return `<tr><td><b>${esc(p.name)}</b></td>
+      <td><span class="st ended" style="background:var(--soft);color:var(--ink-2)">${esc(p.type)}</span></td>
+      <td class="r tnum">${cs.length}件</td>
+      <td class="r tnum">${yen(m)}</td>
+      <td class="r tnum" style="color:var(--ink-2)">${yen(m*12)}</td>
+      <td style="color:var(--ink-2)">${esc(p.staff)}</td></tr>`;
+  }).join('');
+}
+
+/* ============ CREATE ============ */
+function renderPartySelect(){$('cParty').innerHTML='<option value="">選択してください</option>'+PARTIES.map(p=>`<option>${esc(p.name)}</option>`).join('');}
+$('cAuto').addEventListener('click',()=>{$('cAuto').classList.toggle('on');renderPaper();});
+function curAuto(){return $('cAuto').classList.contains('on');}
+function renderPaper(){
+  const party=$('cParty').value||'';
+  $('pParty').textContent=party+'　御中';
+  $('pName').textContent=$('cName').value||'契約名を入力してください';
+  const fee=+$('cFee').value||0;const term=+$('cTerm').value||12;
+  $('pFee').textContent=yen(fee);
+  const termTxt={1:'月単位',6:'半年',12:'1年',24:'2年'}[term]||term+'ヶ月';
+  $('pTermV').textContent=termTxt;
+  $('pYear').textContent=yen(fee*12);
+  $('pAuto').textContent=curAuto()?'ON':'OFF';
+  const dueV=$('cDue').value;const notice=+$('cNotice').value||30;
+  if(dueV){
+    const due=new Date(dueV+'T00:00:00');
+    $('pDue2').textContent=fmtS(due);
+    $('pSch1').textContent=fmtS(addDays(due,-notice));
+    $('pSch2').textContent=fmtS(addDays(due,-Math.max(7,Math.floor(notice/2))));
+    $('pSch3').textContent=fmtS(due);
+  }else{
+    $('pDue2').textContent='—';$('pSch1').textContent='—';$('pSch2').textContent='—';$('pSch3').textContent='—';
+  }
+}
+['cParty','cName','cFee','cTerm','cDue','cNotice'].forEach(id=>{
+  $(id).addEventListener('input',renderPaper);$(id).addEventListener('change',renderPaper);
+});
+$('cTerm').addEventListener('change',()=>{
+  // AI auto-fills a sensible default due date if empty
+  if(!$('cDue').value){
+    const term=+$('cTerm').value||12;const d=addMonths(TODAY,term);
+    $('cDue').value=d.toISOString().slice(0,10);
+    $('cAiHint').classList.add('show');setTimeout(()=>$('cAiHint').classList.remove('show'),2200);
+    renderPaper();
+  }
+});
+$('cSample').addEventListener('click',()=>{
+  $('cParty').value='つくし介護センター';$('cName').value='介護記録システム 利用契約';
+  $('cFee').value=38000;$('cTerm').value='12';$('cNotice').value='30';
+  $('cDue').value=addDays(TODAY,45).toISOString().slice(0,10);
+  if(!curAuto())$('cAuto').classList.add('on');
+  renderPaper();
+});
+$('cIssue').addEventListener('click',async()=>{
+  if(!$('cParty').value||!$('cName').value||!$('cDue').value){showToast('取引先・契約名・更新日を入力してください');return;}
+  const btn=$('cIssue');const lbl=btn.textContent;btn.textContent='⚡ AIが登録中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,800));
+  const no='CT-'+(2026000+contracts.length+1);
+  $('pNo').textContent=no;$('pDate').textContent=fmtDL(new Date());
+  contracts.push({
+    no,party:$('cParty').value,name:$('cName').value,fee:+$('cFee').value||0,
+    term:+$('cTerm').value||12,due:new Date($('cDue').value+'T00:00:00'),
+    auto:curAuto(),notice:+$('cNotice').value||30,status:'active'
+  });
+  btn.textContent=lbl;btn.disabled=false;
+  showToast('契約 '+no+' を登録し、更新の見守りを開始しました');
+  syncBadges();
+  setTimeout(()=>go('list'),700);
+});
+
+/* ============ AI BULK ============ */
+function renderAi(){$('aiCount').textContent=contracts.filter(c=>deriveStatus(c)!=='ended').length;}
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');const lbl=btn.textContent;btn.disabled=true;btn.textContent='⚡ 処理中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},110);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // target: contracts needing action
+  const targets=contracts.filter(c=>['soon','overdue'].includes(deriveStatus(c)))
+    .sort((a,b)=>a.due-b.due).slice(0,6);
+  const ACT={overdue:{l:'⚠️ 至急更新の手続き',c:'var(--red)'},soon:{l:'📨 リマインド下書き',c:'var(--amber)'}};
+  $('genItems').innerHTML=targets.length?targets.map((c,i)=>{
+    const s=deriveStatus(c);const a=ACT[s];
+    return `<div class="gen-item" data-i="${i}"><span class="ck">✓</span>
+      <b style="flex:1">${esc(c.party)}</b>
+      <span style="color:var(--ink-3);font-size:12px">${esc(c.name)}</span>
+      <span style="font-size:11.5px;font-weight:800;color:${a.c}">${a.l}</span></div>`;
+  }).join('')
+    :'<div class="empty-cell" style="padding:18px">対応が必要な契約はありません 🎉</div>';
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,170));items[i].classList.add('in');}
+  btn.disabled=false;btn.textContent='⚡ もう一度処理';
+  showToast((targets.length||0)+'件の更新アクションをAIが準備しました');
+});
+
+/* ============ BADGES ============ */
+function syncBadges(){
+  const n=contracts.filter(c=>['soon','overdue'].includes(deriveStatus(c))).length;
+  const b=$('navAlert');b.textContent=n;
+  b.classList.toggle('amber', n>0 && contracts.filter(c=>deriveStatus(c)==='overdue').length===0);
+}
+
+/* ============ INIT ============ */
+renderPartySelect();renderChips();renderPaper();renderDash();syncBadges();
+</script>
+</body>
+</html>

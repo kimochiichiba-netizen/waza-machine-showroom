@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜営業日報マシン（営業日報・活動管理システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cff;--purple-soft:#efeaff;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.nav a .badge.b2{background:var(--purple)}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn.purple{background:var(--purple);border-color:var(--purple);color:#fff}
+.btn.purple:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-fill.g{background:linear-gradient(90deg,var(--green),#5fd6a8)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* funnel */
+.funnel{display:flex;flex-direction:column;gap:10px}
+.fn-row{display:flex;align-items:center;gap:12px}
+.fn-bar{height:38px;border-radius:9px;display:flex;align-items:center;padding:0 14px;color:#fff;font-weight:800;font-size:13px;min-width:90px;transition:width 1s cubic-bezier(.2,.8,.3,1);white-space:nowrap}
+.fn-meta{font-size:12px;color:var(--ink-2);font-weight:600}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.submitted{background:var(--green-soft);color:var(--green)}
+.st.approved{background:var(--brand-soft);color:var(--brand)}
+.st.draft{background:var(--amber-soft);color:var(--amber)}
+.st.unsubmitted{background:var(--red-soft);color:var(--red)}
+/* activity result badges */
+.rb{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;padding:3px 9px;border-radius:7px}
+.rb.win{background:var(--green-soft);color:var(--green)}
+.rb.next{background:var(--brand-soft);color:var(--brand)}
+.rb.hold{background:var(--amber-soft);color:var(--amber)}
+.rb.lost{background:var(--soft);color:var(--ink-3)}
+/* deal stage badges */
+.sb{display:inline-flex;font-size:11px;font-weight:800;padding:3px 10px;border-radius:7px}
+.sb.s1{background:var(--soft);color:var(--ink-2)}
+.sb.s2{background:var(--brand-soft);color:var(--brand)}
+.sb.s3{background:var(--purple-soft);color:var(--purple)}
+.sb.s4{background:var(--amber-soft);color:var(--amber)}
+.sb.s5{background:var(--green-soft);color:var(--green)}
+
+/* create form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{min-height:120px;resize:vertical;line-height:1.7}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* report paper preview */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:30px 34px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.pv-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
+.pv-title{font-size:23px;font-weight:900;letter-spacing:.16em;color:var(--brand-dk);border-bottom:3px solid var(--brand-dk);padding-bottom:5px}
+.pv-meta{text-align:right;font-size:11.5px;color:var(--ink-2)}
+.pv-meta .no{font-family:'Orbitron';color:var(--ink);font-weight:700}
+.rp-sec{margin-bottom:14px}
+.rp-sec .h{font-size:11px;font-weight:800;color:var(--brand-dk);letter-spacing:.04em;border-left:4px solid var(--brand-dk);padding-left:8px;margin-bottom:6px}
+.rp-sec .b{font-size:12.5px;color:#22303f;white-space:pre-wrap;line-height:1.75;padding-left:12px}
+.rp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}
+.rp-stat{background:var(--soft);border-radius:8px;padding:10px;text-align:center}
+.rp-stat b{display:block;font-family:'Orbitron';font-size:18px;color:var(--brand-dk)}
+.rp-stat span{font-size:10.5px;color:var(--ink-2)}
+
+/* AI generate / summary */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+
+/* AI summary input -> output */
+.sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;margin-top:18px}
+@media(max-width:860px){.sum-grid{grid-template-columns:1fr}}
+.sum-box{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.sum-box .bh{padding:11px 15px;font-size:12px;font-weight:800;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line)}
+.sum-box.before .bh{background:#f3f4f7;color:#6b7280}
+.sum-box.after .bh{background:var(--green-soft);color:var(--green)}
+.sum-box .bb{padding:15px}
+.sum-box textarea{width:100%;border:0;font-family:inherit;font-size:12.5px;line-height:1.8;resize:vertical;min-height:200px;color:#22303f}
+.sum-box textarea:focus{outline:none}
+.sum-out{min-height:200px;font-size:12.5px;line-height:1.85;color:#22303f;white-space:pre-wrap}
+.sum-out .ph{color:var(--ink-3);text-align:center;padding:60px 10px}
+.sum-out .blk{margin-bottom:13px}
+.sum-out .blk .t{font-weight:800;color:var(--brand-dk);font-size:12px;margin-bottom:3px}
+.typing::after{content:"▋";color:var(--green);animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.avatar{width:26px;height:26px;border-radius:50%;display:inline-grid;place-items:center;color:#fff;font-size:11px;font-weight:800;flex-shrink:0}
+.member{display:flex;align-items:center;gap:8px}
+.prog{height:7px;border-radius:99px;background:var(--soft);overflow:hidden;width:120px}
+.prog>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky))}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">営業日報マシン<small>技マシン｜営業日報・活動管理</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">📝</span>日報一覧<span class="badge" id="navDraft">0</span></a>
+      <a data-v="act"><span class="i">🏃</span>活動記録</a>
+      <a data-v="deal"><span class="i">🤝</span>案件連携</a>
+      <a data-v="week"><span class="i">📅</span>週次集計</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="create"><span class="i">⚡</span>AI日報作成</a>
+      <a data-v="ai"><span class="i">🧠</span>AI上長要約<span class="badge b2" id="navAi">NEW</span></a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 営業部 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。社員名・取引先・数値はすべてサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">本日の営業活動サマリー</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div>
+            <div class="panel">
+              <div class="ph"><h3>担当者別 今週の訪問件数</h3><span class="more">今週</span></div>
+              <div class="pb"><div class="bars" id="trendBars"></div></div>
+            </div>
+            <div class="panel">
+              <div class="ph"><h3>商談パイプライン（案件ステージ）</h3><span class="more more-link" data-go="deal">案件連携 →</span></div>
+              <div class="pb"><div class="funnel" id="funnel"></div></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- REPORT LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="担当者・訪問先・件名で検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>日付</th><th>担当者</th><th class="r">訪問件数</th><th>主な訪問先</th><th class="r">新規商談</th><th>状態</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- ACTIVITY -->
+      <section class="view" id="v-act">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="aq" placeholder="訪問先・担当者で検索"></div>
+          <div class="chips" id="actChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>日時</th><th>担当者</th><th>訪問先</th><th>区分</th><th>面談内容（要約）</th><th>結果</th></tr></thead>
+          <tbody id="actRows"></tbody>
+        </table>
+      </section>
+
+      <!-- DEALS -->
+      <section class="view" id="v-deal">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="dq" placeholder="案件名・取引先で検索"></div>
+          <div class="chips" id="dealChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>案件名</th><th>取引先</th><th>担当</th><th>ステージ</th><th class="r">想定金額</th><th>確度</th><th>次アクション</th></tr></thead>
+          <tbody id="dealRows"></tbody>
+        </table>
+      </section>
+
+      <!-- WEEKLY -->
+      <section class="view" id="v-week">
+        <div class="kpis" id="weekKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>担当者別 週次サマリー（活動量・成果）</h3>
+            <button class="btn purple" id="weekSummary" style="margin-left:auto">🧠 AIで週次レポートを作る</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>担当者</th><th class="r">訪問</th><th class="r">新規商談</th><th class="r">受注</th><th>目標達成率</th><th class="r">受注額</th></tr></thead>
+              <tbody id="weekRows"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="panel" id="weekReportPanel" style="display:none">
+          <div class="ph"><h3>🧠 AI週次レポート（営業部 マネージャー向け）</h3></div>
+          <div class="pb"><div class="sum-out" id="weekReportOut"></div></div>
+        </div>
+      </section>
+
+      <!-- CREATE (AI日報作成) -->
+      <section class="view" id="v-create">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg2">
+              <div class="fg"><label>担当者</label><select id="cStaff"></select></div>
+              <div class="fg"><label>日付</label><input id="cDate" type="date"></div>
+            </div>
+            <div class="fg"><label>訪問先（取引先）</label><select id="cCust"></select></div>
+            <div class="fg">
+              <label>活動メモ（箇条書き・話し言葉でOK）</label>
+              <textarea id="cMemo" placeholder="例：&#10;・午前 大分中央クリニックへ訪問、AI日報の話。事務長が興味あり&#10;・予算は来期と。来月もう一度デモ希望&#10;・午後 さくら総合病院、受付システムの相談うけた"></textarea>
+            </div>
+            <div class="linkrow" style="margin-top:6px">
+              <button class="btn primary" id="cGen" style="flex:1;justify-content:center">⚡ AIで日報を自動作成</button>
+              <button class="btn" id="cSample">サンプル入力</button>
+            </div>
+            <div class="aihint" id="cAiHint">✨ メモから整った日報を生成しました</div>
+          </div>
+          <div>
+            <div class="paper" id="cPaper">
+              <div class="pv-top">
+                <div class="pv-title">営 業 日 報</div>
+                <div class="pv-meta"><div>No：<span class="no" id="pNo">—</span></div><div>担当：<span id="pStaff">—</span></div><div>日付：<span id="pDate">—</span></div></div>
+              </div>
+              <div class="rp-grid">
+                <div class="rp-stat"><b id="pVisits">0</b><span>訪問件数</span></div>
+                <div class="rp-stat"><b id="pNew">0</b><span>新規商談</span></div>
+                <div class="rp-stat"><b id="pFollow">0</b><span>要フォロー</span></div>
+              </div>
+              <div class="rp-sec"><div class="h">本日の活動サマリー</div><div class="b" id="pSummary">← 左の「活動メモ」を入力し、AIで日報を自動作成してください。</div></div>
+              <div class="rp-sec"><div class="h">訪問先ごとの所感・反応</div><div class="b" id="pDetail">—</div></div>
+              <div class="rp-sec"><div class="h">明日の予定・ネクストアクション</div><div class="b" id="pNext">—</div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI 上長要約 -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🧠</div>
+            <div><div style="font-size:16px;font-weight:900">部下の日報を、上長向けに自動要約</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">本日提出された日報 <b>6件</b> を、AIが「上長が3分で把握できる」要約に整えます。重要案件・リスクも自動抽出。</div></div>
+            <button class="btn purple" id="aiRun" style="margin-left:auto">🧠 AIで上長要約を作る</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">1時間20分</div>
+              <ul>
+                <li>📄 部下6人分の日報を1つずつ読む</li>
+                <li>🖍 重要案件・リスクを手で拾い出す</li>
+                <li>✍️ 経営会議用に要点をまとめ直す</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 全員の日報を自動で読み込み</li>
+                <li>⭐ 重要案件・リスクを自動ハイライト</li>
+                <li>📋 上長向け要約を一発生成</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="sum-grid">
+            <div class="sum-box before">
+              <div class="bh">📄 入力：部下から提出された日報（生データ）</div>
+              <div class="bb"><textarea id="sumIn" spellcheck="false"></textarea></div>
+            </div>
+            <div class="sum-box after">
+              <div class="bh">⚡ 出力：上長向けAI要約</div>
+              <div class="bb"><div class="sum-out" id="sumOut"><div class="ph">← 左の日報を読み込み、「AIで上長要約を作る」を押すと、ここに要約が表示されます。</div></div></div>
+            </div>
+          </div>
+
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">⭐ AIが自動抽出した「上長が今すぐ見るべきポイント」</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const STAFF=[
+  {name:'佐藤 健太',init:'佐',color:'#2f6df0',area:'医療・介護'},
+  {name:'田中 美咲',init:'田',color:'#16b877',area:'介護・歯科'},
+  {name:'鈴木 大輔',init:'鈴',color:'#e3941f',area:'青果・小売'},
+  {name:'高橋 由香',init:'高',color:'#7c5cff',area:'飲食・宿泊'},
+  {name:'渡辺 翔',init:'渡',color:'#0ea5b7',area:'建設・士業'},
+  {name:'伊藤 沙織',init:'伊',color:'#e24a4a',area:'運送・農業'},
+];
+const CUSTOMERS=[
+  {name:'大分中央クリニック',type:'医療'},{name:'さくら総合病院',type:'医療'},
+  {name:'つくし介護センター',type:'介護'},{name:'みらい歯科医院',type:'医療'},
+  {name:'豊後おおいた青果',type:'青果卸'},{name:'都町商店会',type:'小売'},
+  {name:'別府温泉ホテル組合',type:'宿泊'},{name:'大分海鮮市場',type:'飲食'},
+  {name:'大分建設工業',type:'建設'},{name:'おおいた運送',type:'運送'},
+  {name:'豊後ファーム',type:'農業'},{name:'中央会計事務所',type:'士業'},
+];
+const ACT_KIND=['新規開拓','定期訪問','商談','クレーム対応','納品同行','デモ実施'];
+const RESULTS=[
+  {k:'win',label:'受注'},{k:'next',label:'次回アポ'},{k:'hold',label:'検討中'},{k:'lost',label:'失注'},
+];
+const DEAL_STAGES=[
+  {k:'s1',label:'初回接触'},{k:'s2',label:'ヒアリング'},{k:'s3',label:'提案'},{k:'s4',label:'見積・交渉'},{k:'s5',label:'受注'},
+];
+const TODAY=new Date();
+
+/* deterministic RNG (seeded) */
+let SEED=4242;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+function ri(min,max){return min+Math.floor(rnd()*(max-min+1));}
+
+/* seed activities (this week) */
+let activities=[];
+const MEMO_SNIPPETS=[
+  'AI日報の導入に事務長が前向き。来月デモを再依頼',
+  '予算は来期。決裁者は院長で次回同席を打診',
+  '現行システムの入力負担が課題とのこと。比較資料を送付',
+  '価格は他社より高いとの反応。費用対効果を整理し再提案',
+  '受付業務の自動化に強い興味。トライアル提案で合意',
+  '担当者交代で再ヒアリング。ニーズ再確認できた',
+  '繁忙期で先延ばし。3ヶ月後の再連絡で合意',
+  '紹介で別部署も検討可能とのこと。横展開を狙う',
+];
+(function seedActs(){
+  for(let i=0;i<26;i++){
+    const s=pick(STAFF);const c=pick(CUSTOMERS);
+    const dayOff=ri(0,6); // within this week-ish
+    const d=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-dayOff,9+ri(0,8),pick([0,15,30,45]));
+    const res=pick(RESULTS);
+    activities.push({id:i+1,staff:s.name,cust:c.name,custType:c.type,kind:pick(ACT_KIND),
+      memo:pick(MEMO_SNIPPETS),result:res.k,resultLabel:res.label,date:d});
+  }
+  activities.sort((a,b)=>b.date-a.date);
+})();
+
+/* seed daily reports (group activities by staff+day) */
+let reports=[];
+(function seedReports(){
+  const RP_STATUS=['submitted','submitted','approved','draft','submitted','unsubmitted','submitted','approved'];
+  const map={};
+  activities.forEach(a=>{
+    const key=a.staff+'|'+a.date.getFullYear()+'-'+a.date.getMonth()+'-'+a.date.getDate();
+    if(!map[key])map[key]={staff:a.staff,date:new Date(a.date.getFullYear(),a.date.getMonth(),a.date.getDate()),acts:[]};
+    map[key].acts.push(a);
+  });
+  let n=0;
+  Object.values(map).forEach(g=>{
+    const visits=g.acts.length;
+    const newDeals=g.acts.filter(a=>a.kind==='新規開拓'||a.kind==='商談').length;
+    const mainCust=g.acts.map(a=>a.cust).filter((v,i,arr)=>arr.indexOf(v)===i).slice(0,2).join('・');
+    reports.push({no:'DR-'+(2026000+(++n)),staff:g.staff,date:g.date,visits,newDeals,mainCust,
+      status:RP_STATUS[n%RP_STATUS.length],acts:g.acts});
+  });
+  reports.sort((a,b)=>b.date-a.date);
+})();
+
+/* seed deals */
+let deals=[];
+const DEAL_NAMES=[
+  'AI営業日報 全社導入','受付業務 自動化','シフト管理システム','介護記録 デジタル化',
+  '青果定期便 拡大','ホームページ刷新','請求業務 自動化','在庫管理システム',
+  '配送ルート最適化','勤怠管理クラウド','補助金申請サポート','LINE予約システム',
+];
+(function seedDeals(){
+  for(let i=0;i<12;i++){
+    const c=pick(CUSTOMERS);const s=pick(STAFF);const st=pick(DEAL_STAGES);
+    const amount=ri(3,40)*100000;
+    const probMap={s1:15,s2:30,s3:50,s4:70,s5:100};
+    deals.push({name:DEAL_NAMES[i],cust:c.name,staff:s.name,stage:st.k,stageLabel:st.label,
+      amount,prob:probMap[st.k],next:pick(['来週デモ','見積提出','院長へ提案','再ヒアリング','契約書送付','フォロー連絡','社内稟議待ち'])});
+  }
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+const fmtD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+const WD=['日','月','火','水','木','金','土'];
+const fmtDW=d=>(d.getMonth()+1)+'/'+d.getDate()+'('+WD[d.getDay()]+')';
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const RP_LABEL={submitted:'提出済',approved:'承認済',draft:'下書き',unsubmitted:'未提出'};
+function stBadge(s){return `<span class="st ${s}">${RP_LABEL[s]}</span>`;}
+function avatar(name){const s=STAFF.find(x=>x.name===name)||{init:name[0],color:'#8a94a6'};
+  return `<span class="avatar" style="background:${s.color}">${s.init}</span>`;}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function isThisWeek(d){const diff=(TODAY-d)/86400000;return diff>=-1&&diff<=6;}
+function isToday(d){return d.getFullYear()===TODAY.getFullYear()&&d.getMonth()===TODAY.getMonth()&&d.getDate()===TODAY.getDate();}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','本日の営業活動サマリー'],list:['日報一覧','提出された営業日報を管理します'],
+  act:['活動記録','訪問・商談の活動ログ'],deal:['案件連携','日報から自動連携された商談パイプライン'],
+  week:['週次集計','チーム全体の週次の活動量と成果'],create:['AI日報作成','活動メモを入れるとAIが日報を自動で組み立てます'],
+  ai:['AI上長要約','部下の日報を上長向けに自動要約します']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn primary" onclick="go(\'create\')">＋ 日報を作成</button>'
+    : v==='dash'?'<button class="btn purple" onclick="go(\'ai\')">🧠 AI上長要約</button><button class="btn primary" onclick="go(\'create\')">＋ 日報を作成</button>'
+    : v==='week'?'<button class="btn" onclick="go(\'deal\')">案件を見る</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='act')renderAct();
+  if(v==='deal')renderDeal();
+  if(v==='week')renderWeek();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const todayActs=activities.filter(a=>isToday(a.date));
+  const weekActs=activities.filter(a=>isThisWeek(a.date));
+  const submitted=reports.filter(r=>r.status==='submitted'||r.status==='approved').length;
+  const submitRate=Math.round(submitted/reports.length*100);
+  const newDeals=weekActs.filter(a=>a.kind==='新規開拓'||a.kind==='商談').length;
+  const wins=activities.filter(a=>a.result==='win').length;
+  const winAmt=deals.filter(d=>d.stage==='s5').reduce((s,d)=>s+d.amount,0);
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','今日の訪問',todayActs.length+'<small>件</small>','目標 8件','up','進行中')}
+    ${kpi('#16b877','日報 提出率',submitRate+'<small>%</small>',submitted+'/'+reports.length+'件','up','+8pt')}
+    ${kpi('#7c5cff','今週の新規商談',newDeals+'<small>件</small>','チーム合計','up','前週比 +3')}
+    ${kpi('#e3941f','今週の受注',yen(winAmt),wins+'件 成約','up','好調')}`;
+  // visits by staff (this week)
+  const vis=STAFF.map(s=>({s,n:weekActs.filter(a=>a.staff===s.name).length}));
+  const mx=Math.max(...vis.map(v=>v.n),1);
+  $('trendBars').innerHTML=vis.map(v=>`
+    <div class="bar-row"><span class="mlabel">${esc(v.s.init)}${esc(v.s.name.split(' ')[1]||'')}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(v.n/mx*100)}"></div></div>
+      <span class="mval">${v.n}件</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // funnel
+  const colors=['#8a94a6','#2f6df0','#7c5cff','#e3941f','#16b877'];
+  const counts=DEAL_STAGES.map(st=>deals.filter(d=>d.stage===st.k).length);
+  const fmax=Math.max(...counts,1);
+  $('funnel').innerHTML=DEAL_STAGES.map((st,i)=>`
+    <div class="fn-row">
+      <div class="fn-bar" style="width:0;background:${colors[i]}" data-w="${30+Math.round(counts[i]/fmax*55)}">${esc(st.label)}</div>
+      <span class="fn-meta">${counts[i]}件 ／ ${yen(deals.filter(d=>d.stage===st.k).reduce((s,d)=>s+d.amount,0))}</span>
+    </div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#funnel .fn-bar').forEach(b=>b.style.width=b.dataset.w+'%'),80);
+  // activity feed
+  const acts=[
+    {i:'🤝',c:'#e6f8f0',t:'大分中央クリニック で「AI営業日報 全社導入」が受注ステージへ',m:'12分前'},
+    {i:'📝',c:'#eaf1ff',t:'佐藤 健太 が本日の日報を提出（訪問4件）',m:'38分前'},
+    {i:'🧠',c:'#efeaff',t:'AI上長要約で 6名分の日報を自動要約しました',m:'今日 17:30'},
+    {i:'⚠️',c:'#fdeaea',t:'大分建設工業 の案件が2週間 動きなし。フォロー推奨',m:'今日 15:10'},
+    {i:'⚡',c:'#e6f8f0',t:'田中 美咲 の活動メモからAIが日報を自動作成',m:'今日 13:42'},
+    {i:'📅',c:'#fdf3e2',t:'渡辺 翔 の日報が未提出です（リマインド送信済）',m:'今日 12:00'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+  document.querySelectorAll('.more-link').forEach(m=>m.onclick=()=>go(m.dataset.go));
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?esc(sub)+' ・ ':''}${esc(d)}</div></div>`;}
+
+/* ============ REPORT LIST ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['submitted','提出済'],['approved','承認済'],['draft','下書き'],['unsubmitted','未提出']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=reports.filter(r=>filterStatus==='all'||r.status===filterStatus)
+    .filter(r=>!q||(r.staff+r.mainCust+r.no).toLowerCase().includes(q))
+    .sort((a,b)=>b.date-a.date);
+  $('listRows').innerHTML=rows.length?rows.map(r=>`<tr>
+    <td style="color:var(--ink-2)">${fmtDW(r.date)}</td>
+    <td><div class="member">${avatar(r.staff)}<b>${esc(r.staff)}</b></div></td>
+    <td class="r tnum"><b>${r.visits}</b>件</td>
+    <td style="color:var(--ink-2)">${esc(r.mainCust)||'—'}</td>
+    <td class="r tnum">${r.newDeals}件</td>
+    <td>${stBadge(r.status)}</td></tr>`).join('')
+    :'<tr><td colspan="6" class="empty-cell">該当する日報がありません</td></tr>';
+  $('navDraft').textContent=reports.filter(r=>r.status==='draft'||r.status==='unsubmitted').length;
+}
+
+/* ============ ACTIVITY ============ */
+let actFilter='all';
+function renderActChips(){
+  const opts=[['all','すべて'],['新規開拓','新規開拓'],['商談','商談'],['定期訪問','定期訪問'],['デモ実施','デモ実施'],['クレーム対応','クレーム対応']];
+  $('actChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===actFilter?'on':''}" data-s="${esc(o[0])}">${esc(o[1])}</button>`).join('');
+  $('actChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{actFilter=c.dataset.s;renderActChips();renderAct();});
+}
+function renderAct(){
+  const q=($('aq').value||'').toLowerCase();
+  let rows=activities.filter(a=>actFilter==='all'||a.kind===actFilter)
+    .filter(a=>!q||(a.cust+a.staff+a.memo).toLowerCase().includes(q));
+  $('actRows').innerHTML=rows.length?rows.map(a=>`<tr>
+    <td style="color:var(--ink-2);white-space:nowrap">${fmtD(a.date)} ${String(a.date.getHours()).padStart(2,'0')}:${String(a.date.getMinutes()).padStart(2,'0')}</td>
+    <td><div class="member">${avatar(a.staff)}<span>${esc(a.staff.split(' ')[0])}</span></div></td>
+    <td><b>${esc(a.cust)}</b></td>
+    <td><span class="rb lost">${esc(a.kind)}</span></td>
+    <td style="color:var(--ink-2);max-width:280px">${esc(a.memo)}</td>
+    <td><span class="rb ${a.result}">${esc(a.resultLabel)}</span></td></tr>`).join('')
+    :'<tr><td colspan="6" class="empty-cell">該当する活動がありません</td></tr>';
+}
+
+/* ============ DEALS ============ */
+let dealFilter='all';
+function renderDealChips(){
+  const opts=[['all','すべて']].concat(DEAL_STAGES.map(s=>[s.k,s.label]));
+  $('dealChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===dealFilter?'on':''}" data-s="${esc(o[0])}">${esc(o[1])}</button>`).join('');
+  $('dealChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{dealFilter=c.dataset.s;renderDealChips();renderDeal();});
+}
+function renderDeal(){
+  const q=($('dq').value||'').toLowerCase();
+  let rows=deals.filter(d=>dealFilter==='all'||d.stage===dealFilter)
+    .filter(d=>!q||(d.name+d.cust).toLowerCase().includes(q))
+    .sort((a,b)=>b.prob-a.prob);
+  $('dealRows').innerHTML=rows.length?rows.map(d=>`<tr>
+    <td><b>${esc(d.name)}</b></td>
+    <td style="color:var(--ink-2)">${esc(d.cust)}</td>
+    <td><div class="member">${avatar(d.staff)}<span>${esc(d.staff.split(' ')[0])}</span></div></td>
+    <td><span class="sb ${d.stage}">${esc(d.stageLabel)}</span></td>
+    <td class="r tnum"><b>${yen(d.amount)}</b></td>
+    <td><div style="display:flex;align-items:center;gap:8px"><div class="prog"><i style="width:${d.prob}%"></i></div><span class="tnum" style="font-size:12px;font-weight:700">${d.prob}%</span></div></td>
+    <td style="color:var(--ink-2)">${esc(d.next)}</td></tr>`).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する案件がありません</td></tr>';
+}
+
+/* ============ WEEKLY ============ */
+function renderWeek(){
+  const weekActs=activities.filter(a=>isThisWeek(a.date));
+  const totalVisits=weekActs.length;
+  const totalNew=weekActs.filter(a=>a.kind==='新規開拓'||a.kind==='商談').length;
+  const totalWins=weekActs.filter(a=>a.result==='win').length;
+  const winAmt=deals.filter(d=>d.stage==='s5').reduce((s,d)=>s+d.amount,0);
+  $('weekKpis').innerHTML=`
+    ${kpi('#2f6df0','今週の総訪問',totalVisits+'<small>件</small>','チーム6名','up','+12%')}
+    ${kpi('#7c5cff','新規商談',totalNew+'<small>件</small>','','up','+3件')}
+    ${kpi('#16b877','受注',totalWins+'<small>件</small>',yen(winAmt),'up','好調')}
+    ${kpi('#e3941f','日報 提出率',Math.round(reports.filter(r=>r.status!=='unsubmitted').length/reports.length*100)+'<small>%</small>','','up','+8pt')}`;
+  $('weekRows').innerHTML=STAFF.map(s=>{
+    const myActs=weekActs.filter(a=>a.staff===s.name);
+    const v=myActs.length;
+    const nw=myActs.filter(a=>a.kind==='新規開拓'||a.kind==='商談').length;
+    const wins=myActs.filter(a=>a.result==='win').length;
+    const winAmt=wins*ri(15,40)*10000; // illustrative
+    const goal=8;const rate=Math.min(Math.round(v/goal*100),140);
+    const rateCls=rate>=100?'g':'';
+    return `<tr>
+      <td><div class="member">${avatar(s.name)}<b>${esc(s.name)}</b></div><span style="font-size:10.5px;color:var(--ink-3);margin-left:34px">${esc(s.area)}</span></td>
+      <td class="r tnum"><b>${v}</b></td>
+      <td class="r tnum">${nw}</td>
+      <td class="r tnum">${wins}</td>
+      <td><div style="display:flex;align-items:center;gap:8px"><div class="bar-track" style="width:110px"><div class="bar-fill ${rateCls}" style="width:${Math.min(rate,100)}%"></div></div><span class="tnum" style="font-size:12px;font-weight:700;color:${rate>=100?'var(--green)':'var(--ink-2)'}">${rate}%</span></div></td>
+      <td class="r tnum" style="color:var(--ink-2)">${yen(winAmt)}</td></tr>`;
+  }).join('');
+}
+$('weekSummary').addEventListener('click',async()=>{
+  const btn=$('weekSummary');btn.disabled=true;btn.textContent='🧠 生成中…';
+  $('weekReportPanel').style.display='block';
+  const out=$('weekReportOut');out.innerHTML='<span class="typing">AIがチーム全員の日報・活動ログを分析中</span>';
+  $('weekReportPanel').scrollIntoView({behavior:'smooth',block:'nearest'});
+  await new Promise(r=>setTimeout(r,1200));
+  const weekActs=activities.filter(a=>isThisWeek(a.date));
+  const totalVisits=weekActs.length;
+  const totalNew=weekActs.filter(a=>a.kind==='新規開拓'||a.kind==='商談').length;
+  const topStaff=[...STAFF].map(s=>({s,n:weekActs.filter(a=>a.staff===s.name).length})).sort((a,b)=>b.n-a.n)[0];
+  const hotDeals=deals.filter(d=>d.stage==='s4'||d.stage==='s5').sort((a,b)=>b.amount-a.amount).slice(0,3);
+  const pipeline=deals.reduce((s,d)=>s+d.amount,0);
+  const blocks=[
+    {t:'■ 今週のハイライト',b:`チーム全体で訪問 ${totalVisits}件・新規商談 ${totalNew}件。最も活動量が多かったのは ${topStaff.s.name}（${topStaff.n}件）。前週比で訪問・商談ともに増加傾向です。`},
+    {t:'■ 注目すべき重要案件',b:hotDeals.map(d=>`・${d.cust}「${d.name}」（${d.stageLabel}／${yen(d.amount)}／確度${d.prob}%）`).join('\n')},
+    {t:'■ パイプライン全体',b:`進行中の案件は ${deals.length}件、合計 ${yen(pipeline)} 規模。受注ステージは ${deals.filter(d=>d.stage==='s5').length}件で着地が見込めます。`},
+    {t:'■ リスク・要フォロー',b:`・大分建設工業の案件が2週間 動きなし → 担当の渡辺へフォロー指示を推奨\n・渡辺 翔 の日報が未提出 → リマインド送信済\n・「価格が高い」との反応が複数。費用対効果の共通資料の整備を提案`},
+    {t:'■ 来週へのネクストアクション',b:`・受注確度70%以上の案件に決裁者同席のアポを優先\n・新規開拓は医療・介護領域が反応良。同領域へリソース集中を推奨`},
+  ];
+  out.innerHTML='';
+  for(const blk of blocks){
+    const div=document.createElement('div');div.className='blk';
+    div.innerHTML=`<div class="t">${esc(blk.t)}</div><div>${esc(blk.b)}</div>`;
+    out.appendChild(div);
+    await new Promise(r=>setTimeout(r,220));
+  }
+  btn.disabled=false;btn.textContent='🧠 もう一度作る';
+  showToast('週次レポートをAIが生成しました');
+});
+
+/* ============ CREATE (AI日報作成) ============ */
+function fillSelects(){
+  $('cStaff').innerHTML=STAFF.map(s=>`<option>${esc(s.name)}</option>`).join('');
+  $('cCust').innerHTML='<option value="">（メモから自動判定）</option>'+CUSTOMERS.map(c=>`<option>${esc(c.name)}</option>`).join('');
+  const d=TODAY;$('cDate').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+$('cSample').addEventListener('click',()=>{
+  $('cStaff').value='佐藤 健太';
+  $('cMemo').value=
+`・午前 大分中央クリニックへ訪問。AI営業日報の話、事務長が興味あり。予算は来期と。来月もう一度デモ希望
+・午後イチ さくら総合病院、受付の自動化で相談うけた。比較資料ほしいと
+・夕方 みらい歯科に電話、担当者交代したらしく再ヒアリングした
+・大分建設の件、2週間連絡とれてない。ちょっと心配`;
+  showToast('サンプルの活動メモを入力しました');
+});
+$('cGen').addEventListener('click',async()=>{
+  const memo=$('cMemo').value.trim();
+  if(!memo){showToast('活動メモを入力してください');return;}
+  const btn=$('cGen');btn.textContent='⚡ AIが日報を作成中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,900));
+  // parse memo lines
+  const lines=memo.split(/\n+/).map(l=>l.replace(/^[・\-\*\s]+/,'').trim()).filter(Boolean);
+  // detect customers mentioned
+  const mentioned=CUSTOMERS.filter(c=>memo.includes(c.name));
+  const visits=Math.max(mentioned.length,lines.length>0?Math.min(lines.length,lines.length):0);
+  const newKeywords=['興味','前向き','相談','提案','デモ','検討'];
+  const newDeals=lines.filter(l=>newKeywords.some(k=>l.includes(k))).length;
+  const followKeywords=['心配','とれてない','連絡','再','次回','来月','フォロー'];
+  const follow=lines.filter(l=>followKeywords.some(k=>l.includes(k))).length;
+  const now=new Date($('cDate').value||TODAY);
+  const staff=$('cStaff').value;
+  // build report content
+  $('pNo').textContent='DR-'+(2026000+reports.length+1);
+  $('pStaff').textContent=staff;
+  $('pDate').textContent=fmtDL(now);
+  $('pVisits').textContent=visits;
+  $('pNew').textContent=newDeals;
+  $('pFollow').textContent=follow;
+  const summary=`本日は${visits}件の活動を実施。`+
+    (mentioned.length?`主な訪問先は${mentioned.map(c=>c.name).join('・')}。`:'')+
+    (newDeals?`うち${newDeals}件で新たな商談の芽を確認。`:'')+
+    (follow?`要フォロー案件が${follow}件あり、明日以降の対応が必要。`:'全件、順調に進捗。');
+  $('pSummary').textContent=summary;
+  const detail=lines.map((l,i)=>{
+    const c=CUSTOMERS.find(c=>l.includes(c.name));
+    const tag=c?`【${c.name}】`:`【活動${i+1}】`;
+    // light "polish" of casual memo into report tone
+    let polished=l.replace(/うけた/g,'を受けた').replace(/ほしい/g,'希望').replace(/とれてない/g,'取れていない').replace(/らしく/g,'とのことで');
+    return `${tag} ${polished}`;
+  }).join('\n');
+  $('pDetail').textContent=detail||'—';
+  const nextItems=[];
+  lines.forEach(l=>{
+    const c=CUSTOMERS.find(c=>l.includes(c.name));
+    const cn=c?c.name:'';
+    if(l.includes('デモ'))nextItems.push(`${cn}：デモの日程調整・準備`);
+    if(l.includes('資料'))nextItems.push(`${cn}：比較資料を作成し送付`);
+    if(l.includes('再')||l.includes('ヒアリング'))nextItems.push(`${cn}：再ヒアリングのアポ取得`);
+    if(l.includes('心配')||l.includes('とれてない'))nextItems.push(`${cn}：状況確認のフォロー連絡（優先）`);
+  });
+  if(!nextItems.length)nextItems.push('既存案件の進捗フォロー');
+  $('pNext').textContent=nextItems.map(n=>'・'+n).join('\n');
+  // register report
+  reports.unshift({no:$('pNo').textContent,staff,date:now,visits,newDeals,
+    mainCust:mentioned.map(c=>c.name).slice(0,2).join('・'),status:'submitted',acts:[]});
+  btn.textContent='⚡ AIで日報を自動作成';btn.disabled=false;
+  $('cAiHint').classList.add('show');setTimeout(()=>$('cAiHint').classList.remove('show'),2200);
+  $('navDraft').textContent=reports.filter(r=>r.status==='draft'||r.status==='unsubmitted').length;
+  showToast('活動メモから日報を自動作成しました');
+});
+
+/* ============ AI 上長要約 ============ */
+const SAMPLE_REPORTS=
+`【佐藤 健太｜医療・介護担当】
+午前に大分中央クリニックを訪問。事務長がAI営業日報の全社導入に前向き。予算は来期検討とのことで、来月に院長同席で再デモ希望。さくら総合病院では受付自動化の相談を受け、比較資料を送付予定。
+
+【田中 美咲｜介護・歯科担当】
+つくし介護センターで介護記録のデジタル化をデモ。現場スタッフの入力負担が大きいとの課題感。トライアル提案で合意。みらい歯科は担当者交代で再ヒアリング。
+
+【鈴木 大輔｜青果・小売担当】
+豊後おおいた青果へ定期訪問、青果定期便の拡大を提案し見積依頼を獲得。都町商店会では複数店舗への横展開の可能性あり。
+
+【高橋 由香｜飲食・宿泊担当】
+別府温泉ホテル組合でLINE予約システムを提案。繁忙期のため導入は3ヶ月後で合意。大分海鮮市場は在庫管理に興味。
+
+【渡辺 翔｜建設・士業担当】
+大分建設工業の案件、2週間連絡が取れておらず停滞中。中央会計事務所は補助金申請サポートに関心。本日の日報は別途まとめ予定。
+
+【伊藤 沙織｜運送・農業担当】
+おおいた運送で配送ルート最適化のデモを実施、手応えあり。豊後ファームは価格が他社より高いとの反応、費用対効果の整理が必要。`;
+
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='🧠 要約中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,6);},120);
+  const out=$('sumOut');out.innerHTML='<span class="typing">AIが6名分の日報を読み込み中</span>';
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);$('baAfterT').textContent='6秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // build summary blocks
+  const blocks=[
+    {t:'■ 今日のサマリー（営業部 6名）',b:'全員が活動を実施し、訪問・商談ともに堅調。医療・介護領域で複数の有望商談が前進。1名（渡辺）が日報未提出のためリマインド済。'},
+    {t:'■ 前進した重要案件',b:'・大分中央クリニック「AI営業日報 全社導入」… 事務長が前向き、来月 院長同席で再デモ\n・つくし介護センター「介護記録 デジタル化」… トライアル提案で合意\n・豊後おおいた青果「青果定期便 拡大」… 見積依頼を獲得'},
+    {t:'■ 要対応・リスク',b:'・大分建設工業 … 2週間連絡が取れず停滞。渡辺へフォロー指示を推奨\n・豊後ファーム … 「価格が高い」との反応。費用対効果の共通資料を整備すべき'},
+    {t:'■ 上長へのおすすめアクション',b:'1. 大分中央クリニックの再デモに同席し、院長クロージングを後押し\n2. 渡辺の停滞案件を1on1で状況確認\n3. 反応の良い医療・介護領域へ訪問リソースを集中'},
+  ];
+  out.innerHTML='';
+  for(const blk of blocks){
+    const div=document.createElement('div');div.className='blk';
+    div.innerHTML=`<div class="t">${esc(blk.t)}</div><div>${esc(blk.b)}</div>`;
+    out.appendChild(div);
+    await new Promise(r=>setTimeout(r,260));
+  }
+  // highlight cards
+  const highlights=[
+    {i:'⭐',c:'#e6f8f0',t:'大分中央クリニック：全社導入が前進。来月の再デモに上長同席を推奨',tag:'好機'},
+    {i:'🔥',c:'#efeaff',t:'介護記録デジタル化：トライアル合意。受注確度アップ',tag:'前進'},
+    {i:'⚠️',c:'#fdeaea',t:'大分建設工業：2週間 停滞中。フォロー指示が必要',tag:'リスク'},
+    {i:'💰',c:'#fdf3e2',t:'青果定期便 拡大：見積依頼を獲得。次は条件交渉へ',tag:'商談'},
+  ];
+  $('genItems').innerHTML=highlights.map((h,i)=>
+    `<div class="gen-item" data-i="${i}"><span class="ck">${h.i}</span><b style="flex:1">${esc(h.t)}</b><span class="rb ${h.tag==='リスク'?'lost':h.tag==='好機'?'win':'next'}">${esc(h.tag)}</span></div>`).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,180));items[i].classList.add('in');}
+  btn.disabled=false;btn.textContent='🧠 もう一度要約する';
+  showToast('6名分の日報を上長向けに自動要約しました');
+});
+
+/* ============ INIT ============ */
+$('q').addEventListener('input',renderList);
+$('aq').addEventListener('input',renderAct);
+$('dq').addEventListener('input',renderDeal);
+fillSelects();
+$('sumIn').value=SAMPLE_REPORTS;
+renderChips();renderActChips();renderDealChips();renderDash();
+$('navDraft').textContent=reports.filter(r=>r.status==='draft'||r.status==='unsubmitted').length;
+</script>
+</body>
+</html>

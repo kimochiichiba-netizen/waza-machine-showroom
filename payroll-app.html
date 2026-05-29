@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜給与計算マシン（給与計算システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cf0;--purple-soft:#efebfd;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 90px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut / breakdown */
+.breakdown{display:flex;flex-direction:column;gap:11px}
+.bd-row{display:flex;align-items:center;gap:10px;font-size:12.5px}
+.bd-row .sw{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.bd-row .nm{color:var(--ink-2);font-weight:600;flex:1}
+.bd-row .vl{font-weight:800;font-variant-numeric:tabular-nums}
+.bd-bar{height:8px;border-radius:99px;background:var(--soft);overflow:hidden;margin-top:4px}
+.bd-bar i{display:block;height:100%;border-radius:99px;width:0;transition:width .9s cubic-bezier(.2,.8,.3,1)}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.who{display:flex;align-items:center;gap:10px}
+.who .av{width:30px;height:30px;border-radius:8px;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center;font-weight:800;font-size:12px;flex-shrink:0}
+.who .av.g{background:var(--green-soft);color:var(--green)}
+.who .av.a{background:var(--amber-soft);color:var(--amber)}
+.who .av.p{background:var(--purple-soft);color:var(--purple)}
+.who small{display:block;color:var(--ink-3);font-size:10.5px;font-weight:600}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.confirmed{background:var(--green-soft);color:var(--green)}
+.st.calculated{background:var(--brand-soft);color:var(--brand)}
+.st.draft{background:var(--amber-soft);color:var(--amber)}
+.st.paid{background:var(--purple-soft);color:var(--purple)}
+.st.pending{background:var(--soft);color:var(--ink-3)}
+.tag-s{font-size:11px;font-weight:700;padding:3px 9px;border-radius:7px;background:var(--soft);color:var(--ink-2)}
+
+/* calc form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--brand)}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* payslip preview */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:30px 32px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.pv-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}
+.pv-title{font-size:22px;font-weight:900;letter-spacing:.2em;color:var(--brand-dk);border-bottom:3px solid var(--brand-dk);padding-bottom:5px}
+.pv-meta{text-align:right;font-size:11.5px;color:var(--ink-2)}
+.pv-meta .no{font-family:'Orbitron';color:var(--ink);font-weight:700}
+.pv-cust{font-size:18px;font-weight:900;border-bottom:1.5px solid #1a2233;display:inline-block;min-width:200px;padding-bottom:5px;margin-bottom:8px}
+.pv-total{background:var(--soft);border-left:5px solid var(--brand-dk);border-radius:6px;padding:13px 18px;margin:16px 0;display:flex;justify-content:space-between;align-items:center}
+.pv-total .a{font-family:'Orbitron';font-size:22px;font-weight:700;color:var(--brand-dk)}
+.pv-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+@media(max-width:560px){.pv-cols{grid-template-columns:1fr}}
+table.pv{width:100%;border-collapse:collapse}
+table.pv caption{text-align:left;font-weight:800;font-size:12px;padding:0 0 6px;color:var(--ink)}
+table.pv th{background:var(--brand-dk);color:#fff;font-size:10.5px;padding:6px 10px;text-align:left}
+table.pv th.r,table.pv td.r{text-align:right}
+table.pv td{padding:6px 10px;border-bottom:1px solid var(--line);font-size:11.5px}
+table.pv tr.sum td{font-weight:800;background:var(--soft)}
+table.pv.ded th{background:#b14747}
+.pv-foot{margin-top:14px;font-size:11px;color:var(--ink-2);border-top:1px solid var(--line);padding-top:12px}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+
+/* transfer */
+.bankcard{display:flex;align-items:center;gap:14px;padding:16px 18px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(135deg,#0f1830,#1f3a6b);color:#fff;margin-bottom:18px}
+.bankcard .ic{font-size:26px}
+.bankcard b{display:block;font-size:15px}
+.bankcard small{color:#aab8d8;font-size:11.5px}
+.bankcard .amt{margin-left:auto;text-align:right}
+.bankcard .amt .n{font-family:'Orbitron';font-size:22px;font-weight:700}
+.bankcard .amt small{color:#aab8d8}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">給与計算マシン<small>技マシン｜給与計算</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">👥</span>給与一覧</a>
+      <a data-v="calc"><span class="i">🧮</span>給与計算</a>
+      <a data-v="slip"><span class="i">📄</span>明細発行</a>
+      <a data-v="bank"><span class="i">🏦</span>振込<span class="badge" id="navUnpaid">0</span></a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI自動計算</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。従業員・数値はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">2026年5月度の給与状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>月次の給与総額推移</h3><span class="more">過去6ヶ月</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>控除の内訳（今月）</h3></div>
+            <div class="pb"><div class="breakdown" id="breakdown"></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>部門別の人件費</h3></div>
+            <div class="pb"><div class="bars" id="deptBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="氏名・部門・社員番号で検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>従業員</th><th>部門</th><th>勤怠</th><th class="r">総支給</th><th class="r">控除</th><th class="r">差引支給</th><th>状態</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- CALC -->
+      <section class="view" id="v-calc">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>従業員</label><select id="cEmp"></select></div>
+            <div class="fg"><label>基本給</label><input id="cBase" type="number" min="0" placeholder="0"></div>
+            <div class="fg2">
+              <div class="fg" style="margin-bottom:0"><label>残業時間（h）</label><input id="cOt" type="number" min="0" value="0"></div>
+              <div class="fg" style="margin-bottom:0"><label>残業単価（円/h）</label><input id="cOtr" type="number" min="0" value="0"></div>
+            </div>
+            <div class="fg2" style="margin-top:13px">
+              <div class="fg" style="margin-bottom:0"><label>役職手当</label><input id="cPos" type="number" min="0" value="0"></div>
+              <div class="fg" style="margin-bottom:0"><label>通勤手当（非課税）</label><input id="cComm" type="number" min="0" value="0"></div>
+            </div>
+            <div class="aihint" id="cAiHint" style="margin-top:8px">✨ AIが社会保険料・所得税を自動計算しました</div>
+            <div style="display:flex;gap:8px;margin-top:16px">
+              <button class="btn primary" id="cCalc" style="flex:1;justify-content:center">⚡ AIで自動計算する</button>
+              <button class="btn" id="cSample">サンプル</button>
+            </div>
+            <div style="margin-top:16px;border-top:1px solid var(--line);padding-top:14px;font-size:11.5px;color:var(--ink-3)">
+              社会保険料率は協会けんぽ大分支部（2026年度・健康保険10.0% / 厚生年金18.3% / 雇用保険0.6%）の労使折半でAIが自動適用します。
+            </div>
+          </div>
+          <div>
+            <div class="paper" id="cPaper">
+              <div class="pv-top">
+                <div class="pv-title">給 与 明 細 書</div>
+                <div class="pv-meta"><div>対象月：<span id="pPeriod">2026年5月度</span></div><div>社員番号：<span class="no" id="pNo">—</span></div><div>支給日：<span id="pDate">2026年5月25日</span></div></div>
+              </div>
+              <div><span class="pv-cust" id="pEmp">　殿</span></div>
+              <div style="font-size:11.5px;color:var(--ink-2)">下記の通り支給いたします。</div>
+              <div class="pv-total"><span style="font-weight:700">差引支給額</span><span class="a" id="pNet">¥0</span></div>
+              <div class="pv-cols">
+                <table class="pv">
+                  <caption>支給</caption>
+                  <thead><tr><th>項目</th><th class="r">金額</th></tr></thead>
+                  <tbody id="pPay"></tbody>
+                  <tbody><tr class="sum"><td>総支給額</td><td class="r" id="pGross">¥0</td></tr></tbody>
+                </table>
+                <table class="pv ded">
+                  <caption>控除</caption>
+                  <thead><tr><th>項目</th><th class="r">金額</th></tr></thead>
+                  <tbody id="pDed"></tbody>
+                  <tbody><tr class="sum"><td>控除合計</td><td class="r" id="pDedSum">¥0</td></tr></tbody>
+                </table>
+              </div>
+              <div class="pv-foot">
+                振込先：大分銀行 都町支店（普通）／ 支給日に下記口座へお振込みします。お疲れさまでした。
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIP -->
+      <section class="view" id="v-slip">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="qSlip" placeholder="氏名・部門で検索"></div>
+          <button class="btn green" id="slipAll" style="margin-left:auto">📨 確定者へ明細を一括発行</button>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>従業員</th><th>部門</th><th class="r">差引支給</th><th>計算状態</th><th>明細</th><th></th></tr></thead>
+          <tbody id="slipRows"></tbody>
+        </table>
+      </section>
+
+      <!-- BANK -->
+      <section class="view" id="v-bank">
+        <div class="bankcard">
+          <div class="ic">🏦</div>
+          <div><b>給与振込データ（全銀フォーマット）</b><small>大分銀行 都町支店 ／ カ）キモチイチバ ／ 支給日 2026-05-25</small></div>
+          <div class="amt"><div class="n" id="bankTotal">¥0</div><small id="bankCnt">0名分</small></div>
+        </div>
+        <div class="kpis" id="bankKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>振込待ち（確定済の従業員）</h3>
+            <button class="btn green" id="bankRun" style="margin-left:auto">⚡ 振込データを生成して送信</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>従業員</th><th>部門</th><th class="r">差引支給</th><th>振込先</th><th>状態</th><th></th></tr></thead>
+              <tbody id="bankRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI AUTO -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">勤怠データから給与を自動計算・明細を一括生成</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">タイムカードの勤怠データ <b id="aiCnt">14名分</b> から、残業・社会保険・税金を含む給与をAIが自動計算します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで一括計算する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">4時間30分</div>
+              <ul>
+                <li>⏱ タイムカードを1人ずつ集計</li>
+                <li>📐 残業・社保・税金を電卓で計算</li>
+                <li>⌨️ 給与ソフトに手入力・明細を印刷</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 勤怠データを自動で取込・集計</li>
+                <li>📊 残業・社保・税金を自動計算</li>
+                <li>📄 全員分の明細を一括生成</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ 自動計算された給与</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const EMPLOYEES=[
+  {no:'EMP-001',name:'佐藤 健一',dept:'管理部',role:'部長',base:420000,pos:50000,comm:12000,ot:0,otr:3200,av:'佐',cls:''},
+  {no:'EMP-002',name:'田中 美咲',dept:'管理部',role:'主任',base:310000,pos:20000,comm:8000,ot:6,otr:2400,av:'田',cls:'g'},
+  {no:'EMP-003',name:'鈴木 大輔',dept:'営業部',role:'課長',base:380000,pos:35000,comm:15000,ot:12,otr:2900,av:'鈴',cls:'a'},
+  {no:'EMP-004',name:'高橋 由美',dept:'営業部',role:'担当',base:265000,pos:0,comm:10000,ot:18,otr:2100,av:'高',cls:'p'},
+  {no:'EMP-005',name:'伊藤 翔太',dept:'営業部',role:'担当',base:250000,pos:0,comm:9000,ot:22,otr:2000,av:'伊',cls:''},
+  {no:'EMP-006',name:'渡辺 麻衣',dept:'配送部',role:'リーダー',base:288000,pos:15000,comm:6000,ot:9,otr:2200,av:'渡',cls:'g'},
+  {no:'EMP-007',name:'山本 拓也',dept:'配送部',role:'ドライバー',base:240000,pos:0,comm:5000,ot:28,otr:1900,av:'山',cls:'a'},
+  {no:'EMP-008',name:'中村 さくら',dept:'配送部',role:'ドライバー',base:235000,pos:0,comm:5000,ot:16,otr:1850,av:'中',cls:'p'},
+  {no:'EMP-009',name:'小林 直樹',dept:'製造部',role:'班長',base:295000,pos:18000,comm:7000,ot:14,otr:2300,av:'小',cls:''},
+  {no:'EMP-010',name:'加藤 恵子',dept:'製造部',role:'担当',base:228000,pos:0,comm:6000,ot:8,otr:1800,av:'加',cls:'g'},
+  {no:'EMP-011',name:'吉田 亮',dept:'製造部',role:'担当',base:232000,pos:0,comm:6500,ot:20,otr:1820,av:'吉',cls:'a'},
+  {no:'EMP-012',name:'山田 千夏',dept:'管理部',role:'担当',base:255000,pos:0,comm:8500,ot:4,otr:2000,av:'山',cls:'p'},
+  {no:'EMP-013',name:'松本 健',dept:'営業部',role:'担当',base:258000,pos:0,comm:11000,ot:15,otr:2050,av:'松',cls:''},
+  {no:'EMP-014',name:'井上 香織',dept:'製造部',role:'パート',base:168000,pos:0,comm:4000,ot:0,otr:1300,av:'井',cls:'g'},
+];
+const DEPT_COLORS={'管理部':'#2f6df0','営業部':'#16b877','配送部':'#e3941f','製造部':'#7c5cf0'};
+const TODAY=new Date(2026,4,30);
+const PAY_DATE=new Date(2026,4,25);
+const STATUSES=['confirmed','calculated','draft','pending'];
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STLABEL={confirmed:'確定済',calculated:'計算済',draft:'下書き',paid:'振込済',pending:'未計算'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]}</span>`;}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+
+/* ============ PAYROLL ENGINE ============ */
+// 協会けんぽ大分（労使折半・本人負担分）：健保5.0% 厚年9.15% 雇用0.6%
+function calcPayroll(e){
+  const otPay=Math.round(e.ot*e.otr);
+  const taxable=e.base+e.pos+otPay; // 通勤手当は非課税
+  const gross=taxable+e.comm;
+  const health=Math.round(taxable*0.050);
+  const pension=Math.round(taxable*0.0915);
+  const employ=Math.round(taxable*0.006);
+  const social=health+pension+employ;
+  const taxBase=taxable-social;
+  const incomeTax=Math.max(0,Math.round(taxBase*0.05)); // 源泉所得税（簡易）
+  const residentTax=Math.round(e.base*0.04); // 住民税（概算）
+  const deduction=social+incomeTax+residentTax;
+  const net=gross-deduction;
+  return {otPay,gross,health,pension,employ,social,incomeTax,residentTax,deduction,net,taxable};
+}
+// seed: assign each employee a computed payroll + status
+let SEED=4242;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+let roster=EMPLOYEES.map((e,i)=>{
+  const p=calcPayroll(e);
+  let st=STATUSES[Math.floor(rnd()*STATUSES.length)];
+  if(i<8)st='confirmed';
+  return {...e,...p,status:st};
+});
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','2026年5月度の給与状況'],list:['給与一覧','従業員ごとの給与を管理します'],
+  calc:['給与計算','入力するとリアルタイムで明細が組み上がります'],slip:['明細発行','給与明細を発行・配布します'],
+  bank:['振込','給与の振込データを管理します'],ai:['AI自動計算','勤怠データから給与を自動で計算します']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn primary" onclick="go(\'calc\')">＋ 給与計算</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI自動計算</button><button class="btn primary" onclick="go(\'calc\')">＋ 給与計算</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='slip')renderSlip();
+  if(v==='bank')renderBank();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const totalGross=roster.reduce((s,e)=>s+e.gross,0);
+  const totalDed=roster.reduce((s,e)=>s+e.deduction,0);
+  const totalNet=roster.reduce((s,e)=>s+e.net,0);
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','今月の給与総額',yen(totalGross),roster.length+'名 対象','up','前月比 +3.2%')}
+    ${kpi('#7c5cf0','対象人数',roster.length+'<small>名</small>','','up','全部門')}
+    ${kpi('#e3941f','控除額 合計',yen(totalDed),'社保・税','warn','法定どおり')}
+    ${kpi('#16b877','差引支給 合計',yen(totalNet),'手取り','up','振込準備OK')}`;
+  // trend (6ヶ月)
+  const months=[];for(let k=5;k>=0;k--){months.push(new Date(2026,4-k,1));}
+  const base=totalGross;
+  const factors=[0.93,0.95,0.97,0.96,0.98,1.0];
+  const sums=factors.map((f,i)=>Math.round(base*f*(0.99+rnd()*0.02)));
+  const mx=Math.max(...sums,1);
+  $('trendBars').innerHTML=months.map((m,i)=>`
+    <div class="bar-row"><span class="mlabel">${m.getMonth()+1}月</span>
+      <div class="bar-track"><div class="bar-fill" data-w="${Math.round(sums[i]/mx*100)}"></div></div>
+      <span class="mval">${yen(sums[i])}</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // breakdown (控除)
+  const health=roster.reduce((s,e)=>s+e.health,0);
+  const pension=roster.reduce((s,e)=>s+e.pension,0);
+  const employ=roster.reduce((s,e)=>s+e.employ,0);
+  const inc=roster.reduce((s,e)=>s+e.incomeTax,0);
+  const res=roster.reduce((s,e)=>s+e.residentTax,0);
+  const bd=[['#16b877','健康保険',health],['#2f6df0','厚生年金',pension],['#0ea5b7','雇用保険',employ],['#e3941f','源泉所得税',inc],['#7c5cf0','住民税',res]];
+  const bdMx=Math.max(...bd.map(x=>x[2]),1);
+  $('breakdown').innerHTML=bd.map(x=>`<div>
+    <div class="bd-row"><span class="sw" style="background:${x[0]}"></span><span class="nm">${x[1]}</span><span class="vl">${yen(x[2])}</span></div>
+    <div class="bd-bar"><i data-w="${Math.round(x[2]/bdMx*100)}" style="background:${x[0]}"></i></div></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#breakdown .bd-bar i').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // dept bars
+  const depts={};roster.forEach(e=>{depts[e.dept]=(depts[e.dept]||0)+e.gross;});
+  const dMx=Math.max(...Object.values(depts),1);
+  $('deptBars').innerHTML=Object.entries(depts).map(([d,v])=>`
+    <div class="bar-row"><span class="mlabel" style="font-size:11.5px">${d}</span>
+      <div class="bar-track"><div class="bar-fill" data-w="${Math.round(v/dMx*100)}" style="background:${DEPT_COLORS[d]}"></div></div>
+      <span class="mval">${yen(v)}</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#deptBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),120);
+  // activity
+  const acts=[
+    {i:'⚡',c:'#e6f8f0',t:'AI自動計算で 14名分の給与を計算（一致率100%）',m:'2分前'},
+    {i:'📄',c:'#eaf1ff',t:'佐藤 健一 さんの給与明細を発行',m:'10分前'},
+    {i:'✅',c:'#e6f8f0',t:'営業部 5名の給与を確定しました',m:'1時間前'},
+    {i:'⚠️',c:'#fdeaea',t:'山本 拓也 さんの残業が36協定の上限に近づいています',m:'今日 9:20'},
+    {i:'🏦',c:'#efebfd',t:'5月度の振込データ（全銀）を作成',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${a.m}</div></div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ LIST ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['confirmed','確定済'],['calculated','計算済'],['draft','下書き'],['pending','未計算']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
+}
+function avTag(e){return `<div class="who"><div class="av ${e.cls}">${esc(e.av)}</div><div><b>${esc(e.name)}</b><small>${esc(e.no)} ・ ${esc(e.role)}</small></div></div>`;}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=roster.filter(e=>filterStatus==='all'||e.status===filterStatus)
+    .filter(e=>!q||(e.name+e.dept+e.no).toLowerCase().includes(q));
+  $('listRows').innerHTML=rows.length?rows.map(e=>`<tr>
+    <td>${avTag(e)}</td>
+    <td><span class="tag-s" style="color:${DEPT_COLORS[e.dept]}">${esc(e.dept)}</span></td>
+    <td style="color:var(--ink-2)">残業 ${e.ot}h</td>
+    <td class="r tnum"><b>${yen(e.gross)}</b></td>
+    <td class="r tnum" style="color:var(--red)">-${yen(e.deduction)}</td>
+    <td class="r tnum"><b style="color:var(--brand)">${yen(e.net)}</b></td>
+    <td>${stBadge(e.status)}</td></tr>`).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する従業員がいません</td></tr>';
+}
+
+/* ============ CALC ============ */
+function renderEmpSelect(){$('cEmp').innerHTML='<option value="">選択してください</option>'+EMPLOYEES.map(e=>`<option value="${esc(e.no)}">${esc(e.name)}（${esc(e.dept)}）</option>`).join('');}
+function readForm(){
+  const no=$('cEmp').value;const emp=EMPLOYEES.find(e=>e.no===no);
+  return {no,name:emp?emp.name:'',base:+$('cBase').value||0,ot:+$('cOt').value||0,otr:+$('cOtr').value||0,pos:+$('cPos').value||0,comm:+$('cComm').value||0};
+}
+function renderPaper(){
+  const f=readForm();
+  $('pNo').textContent=f.no||'—';
+  $('pEmp').textContent=(f.name||'')+'　殿';
+  const p=calcPayroll(f);
+  $('pPay').innerHTML=[
+    ['基本給',f.base],['役職手当',f.pos],['残業手当',p.otPay],['通勤手当（非課税）',f.comm]
+  ].map(r=>`<tr><td>${r[0]}</td><td class="r">${yen(r[1])}</td></tr>`).join('');
+  $('pDed').innerHTML=[
+    ['健康保険',p.health],['厚生年金',p.pension],['雇用保険',p.employ],['源泉所得税',p.incomeTax],['住民税',p.residentTax]
+  ].map(r=>`<tr><td>${r[0]}</td><td class="r">${yen(r[1])}</td></tr>`).join('');
+  $('pGross').textContent=yen(p.gross);
+  $('pDedSum').textContent=yen(p.deduction);
+  $('pNet').textContent=yen(p.net);
+}
+['cBase','cOt','cOtr','cPos','cComm'].forEach(id=>$(id).addEventListener('input',renderPaper));
+$('cEmp').addEventListener('change',()=>{
+  const e=EMPLOYEES.find(x=>x.no===$('cEmp').value);
+  if(e){$('cBase').value=e.base;$('cOt').value=e.ot;$('cOtr').value=e.otr;$('cPos').value=e.pos;$('cComm').value=e.comm;}
+  renderPaper();
+});
+$('cSample').addEventListener('click',()=>{
+  const e=EMPLOYEES[2];
+  $('cEmp').value=e.no;$('cBase').value=e.base;$('cOt').value=e.ot;$('cOtr').value=e.otr;$('cPos').value=e.pos;$('cComm').value=e.comm;
+  renderPaper();
+});
+$('cCalc').addEventListener('click',async()=>{
+  const f=readForm();
+  if(!f.no||!f.base){showToast('従業員と基本給を入力してください');return;}
+  const btn=$('cCalc');btn.textContent='⚡ AIが計算中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,800));
+  $('cAiHint').classList.add('show');setTimeout(()=>$('cAiHint').classList.remove('show'),2200);
+  renderPaper();
+  const p=calcPayroll(f);
+  const idx=roster.findIndex(x=>x.no===f.no);
+  if(idx>=0){roster[idx]={...roster[idx],...f,...p,status:'calculated'};}
+  btn.textContent='⚡ AIで自動計算する';btn.disabled=false;
+  showToast(f.name+' さんの給与を計算しました（差引 '+yen(p.net)+'）');
+});
+
+/* ============ SLIP ============ */
+function renderSlip(){
+  const q=($('qSlip').value||'').toLowerCase();
+  let rows=roster.filter(e=>!q||(e.name+e.dept).toLowerCase().includes(q));
+  $('slipRows').innerHTML=rows.map(e=>`<tr>
+    <td>${avTag(e)}</td>
+    <td><span class="tag-s" style="color:${DEPT_COLORS[e.dept]}">${esc(e.dept)}</span></td>
+    <td class="r tnum"><b style="color:var(--brand)">${yen(e.net)}</b></td>
+    <td>${stBadge(e.status)}</td>
+    <td>${e.slipIssued?'<span class="st confirmed">発行済</span>':'<span class="st pending">未発行</span>'}</td>
+    <td class="r"><button class="btn" style="padding:6px 12px" onclick="issueSlip('${esc(e.no)}')">${e.slipIssued?'再発行':'📄 明細発行'}</button></td></tr>`).join('');
+}
+window.issueSlip=no=>{const e=roster.find(x=>x.no===no);if(e){e.slipIssued=true;renderSlip();showToast(e.name+' さんの給与明細を発行しました');}};
+$('qSlip').addEventListener('input',renderSlip);
+$('slipAll').addEventListener('click',async()=>{
+  const btn=$('slipAll');btn.textContent='📨 発行中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,900));
+  let n=0;roster.forEach(e=>{if(e.status==='confirmed'&&!e.slipIssued){e.slipIssued=true;n++;}});
+  btn.textContent='📨 確定者へ明細を一括発行';btn.disabled=false;
+  renderSlip();showToast('確定済 '+n+'名へ給与明細を一括発行しました');
+});
+
+/* ============ BANK ============ */
+function renderBank(){
+  const target=roster.filter(e=>e.status==='confirmed');
+  const sumNet=target.reduce((s,e)=>s+e.net,0);
+  $('bankTotal').textContent=yen(sumNet);
+  $('bankCnt').textContent=target.length+'名分';
+  const paidCnt=roster.filter(e=>e.status==='paid').length;
+  $('bankKpis').innerHTML=`
+    ${kpi('#2f6df0','振込待ち 合計',yen(sumNet),target.length+'名','warn','支給日 5/25')}
+    ${kpi('#16b877','振込済',yen(roster.filter(e=>e.status==='paid').reduce((s,e)=>s+e.net,0)),paidCnt+'名','up','完了')}
+    ${kpi('#7c5cf0','口座登録率',Math.round(roster.length/roster.length*100)+'<small>%</small>','','up','全員OK')}
+    ${kpi('#e3941f','振込手数料（概算）',yen((target.length)*110),target.length+'件','warn','大分銀行')}`;
+  $('bankRows').innerHTML=target.length?target.sort((a,b)=>a.no<b.no?-1:1).map(e=>`<tr>
+    <td>${avTag(e)}</td>
+    <td><span class="tag-s" style="color:${DEPT_COLORS[e.dept]}">${esc(e.dept)}</span></td>
+    <td class="r tnum"><b>${yen(e.net)}</b></td>
+    <td style="color:var(--ink-2);font-size:12px" class="mono">${1200000+(+e.no.replace('EMP-',''))*7}</td>
+    <td>${stBadge('confirmed')}</td>
+    <td class="r"><button class="btn green" style="padding:6px 12px" onclick="payOne('${esc(e.no)}')">振込</button></td></tr>`).join('')
+    :'<tr><td colspan="6" class="empty-cell">振込待ちはありません 🎉</td></tr>';
+  $('navUnpaid').textContent=target.length;
+}
+window.payOne=no=>{const e=roster.find(x=>x.no===no);if(e){e.status='paid';renderBank();showToast(e.name+' さんへ '+yen(e.net)+' を振込みました');}};
+$('bankRun').addEventListener('click',async()=>{
+  const btn=$('bankRun');btn.textContent='⚡ 送信中…';btn.disabled=true;
+  const target=roster.filter(e=>e.status==='confirmed');
+  await new Promise(r=>setTimeout(r,1000));
+  target.forEach(e=>e.status='paid');
+  btn.textContent='⚡ 振込データを生成して送信';btn.disabled=false;
+  renderBank();showToast('全銀データを生成し '+target.length+'名へ一括振込しました');
+});
+
+/* ============ AI AUTO ============ */
+$('aiCnt').textContent=EMPLOYEES.length+'名分';
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 計算中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='00:'+String(Math.min(s,12)).padStart(2,'0');},110);
+  await new Promise(r=>setTimeout(r,1300));
+  clearInterval(t);$('baAfterT').textContent='12秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  const targets=EMPLOYEES.slice(0,8);
+  $('genItems').innerHTML=targets.map((e,i)=>{
+    const p=calcPayroll(e);
+    return `<div class="gen-item" data-i="${i}"><span class="ck">✓</span>
+      <b style="flex:1">${esc(e.name)}</b>
+      <span style="color:var(--ink-3);font-size:12px">${esc(e.dept)} ・ 残業${e.ot}h</span>
+      <span class="tnum" style="font-weight:800;color:var(--brand)">${yen(p.net)}</span></div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){
+    await new Promise(r=>setTimeout(r,160));items[i].classList.add('in');
+    const idx=roster.findIndex(x=>x.no===targets[i].no);
+    if(idx>=0)roster[idx].status='confirmed';
+  }
+  btn.disabled=false;btn.textContent='⚡ もう一度計算';
+  showToast(items.length+'名分の給与を自動計算しました');
+});
+
+/* ============ INIT ============ */
+renderEmpSelect();renderPaper();renderChips();renderDash();
+$('navUnpaid').textContent=roster.filter(e=>e.status==='confirmed').length;
+</script>
+</body>
+</html>

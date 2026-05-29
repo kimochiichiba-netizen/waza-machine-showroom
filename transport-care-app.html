@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜送迎マシン（送迎管理システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cdb;--purple-soft:#efeafd;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.nav a .badge.g{background:var(--green)}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn.sm{padding:6px 12px;font-size:12px}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-fill.g{background:linear-gradient(90deg,var(--green),#5fd6a4)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut / gauge */
+.gauge{display:flex;align-items:center;gap:20px}
+.gauge .ring{width:120px;height:120px;border-radius:50%;display:grid;place-items:center;flex-shrink:0;
+  background:conic-gradient(var(--green) 0 var(--p,90%),var(--soft) var(--p,90%) 100%)}
+.gauge .ring .inner{width:88px;height:88px;border-radius:50%;background:var(--card);display:grid;place-items:center;text-align:center}
+.gauge .ring .inner .pn{font-size:25px;font-weight:900;line-height:1}
+.gauge .ring .inner .pl{font-size:10.5px;color:var(--ink-3);font-weight:700}
+.gauge .legend{font-size:12.5px;color:var(--ink-2)}
+.gauge .legend .lr{display:flex;align-items:center;gap:8px;padding:4px 0}
+.gauge .legend .lr .sw{width:11px;height:11px;border-radius:3px}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl th.c,table.tbl td.c{text-align:center}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.done{background:var(--green-soft);color:var(--green)}
+.st.ontime{background:var(--brand-soft);color:var(--brand)}
+.st.wait{background:var(--soft);color:var(--ink-3)}
+.st.late{background:var(--red-soft);color:var(--red)}
+.st.running{background:var(--amber-soft);color:var(--amber)}
+.st.absent{background:var(--purple-soft);color:var(--purple)}
+.tag-care{display:inline-flex;font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:6px;background:var(--soft);color:var(--ink-2)}
+.tag-care.wc{background:var(--brand-soft);color:var(--brand)}
+.tag-care.cane{background:var(--amber-soft);color:var(--amber)}
+.tag-care.indep{background:var(--green-soft);color:var(--green)}
+
+/* create form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--brand)}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* route preview (map-ish) */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:0;box-shadow:var(--shadow);overflow:hidden}
+.paper .ph{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.paper .ph h3{font-size:14px;font-weight:800}
+.map{height:230px;background:
+  linear-gradient(0deg,rgba(47,109,240,.05),rgba(14,165,183,.05)),
+  repeating-linear-gradient(0deg,transparent,transparent 28px,rgba(120,140,180,.10) 28px,rgba(120,140,180,.10) 29px),
+  repeating-linear-gradient(90deg,transparent,transparent 28px,rgba(120,140,180,.10) 28px,rgba(120,140,180,.10) 29px);
+  position:relative;border-bottom:1px solid var(--line)}
+.map .road{position:absolute;background:rgba(120,140,180,.22)}
+.map .pin{position:absolute;transform:translate(-50%,-100%);font-size:11px;font-weight:800;display:flex;flex-direction:column;align-items:center;gap:2px}
+.map .pin .b{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:11px;box-shadow:0 3px 8px rgba(16,24,40,.25)}
+.map .pin.fac .b{background:var(--ink);border-radius:7px}
+.map .pin .lab{background:#fff;border:1px solid var(--line-2);border-radius:6px;padding:1px 6px;font-size:9.5px;white-space:nowrap;color:var(--ink-2)}
+.map svg.path{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.stops{padding:14px 18px}
+.stop{display:flex;align-items:center;gap:11px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+.stop:last-child{border-bottom:0}
+.stop .seq{width:24px;height:24px;border-radius:50%;background:var(--brand-soft);color:var(--brand);font-weight:800;display:grid;place-items:center;font-size:11px;flex-shrink:0}
+.stop .seq.f{background:var(--ink);color:#fff}
+.stop .nm{font-weight:700;flex:1}
+.stop .tm{font-family:'Orbitron';font-size:12px;color:var(--ink-2)}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ai-inputs{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0 4px}
+@media(max-width:760px){.ai-inputs{grid-template-columns:1fr}}
+.ai-inputs .fg{margin:0}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:18px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-route{border:1px solid var(--line);border-radius:11px;padding:14px 16px;margin-bottom:10px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-route.in{opacity:1;transform:none}
+.gen-route .grh{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.gen-route .grh .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900}
+.gen-route .grh b{font-size:13.5px}
+.gen-route .grh .tail{margin-left:auto;font-size:11.5px;color:var(--ink-3);font-weight:700}
+.gen-route .seq-line{display:flex;flex-wrap:wrap;gap:6px;font-size:11.5px}
+.gen-route .seq-line .s{background:var(--soft);border-radius:6px;padding:3px 9px;color:var(--ink-2);display:inline-flex;align-items:center;gap:5px}
+.gen-route .seq-line .s .n{background:var(--brand);color:#fff;width:16px;height:16px;border-radius:50%;display:grid;place-items:center;font-size:9px;font-weight:800}
+.gen-route .seq-line .arr{color:var(--ink-3);align-self:center}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* vehicle cards */
+.vgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:980px){.vgrid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.vgrid{grid-template-columns:1fr}}
+.vcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
+.vcard .vh{display:flex;align-items:center;gap:11px;margin-bottom:12px}
+.vcard .vh .ic{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;font-size:20px;background:var(--brand-soft)}
+.vcard .vh b{font-size:15px;display:block}
+.vcard .vh span{font-size:11.5px;color:var(--ink-3)}
+.vmeta{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2);padding:5px 0;border-top:1px solid var(--line)}
+.vmeta b{color:var(--ink);font-variant-numeric:tabular-nums}
+.cap-bar{height:8px;border-radius:99px;background:var(--soft);overflow:hidden;margin-top:3px}
+.cap-bar div{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky))}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.seg{display:inline-flex;border:1px solid var(--line-2);border-radius:9px;overflow:hidden}
+.seg button{padding:8px 14px;border:0;background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer}
+.seg button.on{background:var(--brand);color:#fff}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">送迎マシン<small>技マシン｜送迎管理</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="sched"><span class="i">🗓️</span>送迎予定</a>
+      <a data-v="route"><span class="i">🛣️</span>ルート</a>
+      <a data-v="board"><span class="i">🚐</span>乗車管理<span class="badge g" id="navBoard">0</span></a>
+      <a data-v="vehicle"><span class="i">🚙</span>車両</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI送迎最適化</a>
+    </nav>
+    <div class="org">
+      <div class="av">陽</div>
+      <div><b>デイサービス陽だまり</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。利用者・車両・時刻はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">本日の送迎状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>時間帯別の送迎件数</h3><span class="more">本日</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>定時到着率</h3></div>
+            <div class="pb">
+              <div class="gauge">
+                <div class="ring" id="gaugeRing"><div class="inner"><div><div class="pn" id="gaugePct">—</div><div class="pl">定時率</div></div></div></div>
+                <div class="legend">
+                  <div class="lr"><span class="sw" style="background:var(--green)"></span>定時到着 <b style="margin-left:auto" id="gOnT">—</b></div>
+                  <div class="lr"><span class="sw" style="background:var(--amber)"></span>5分以内の遅れ <b style="margin-left:auto" id="gMin">—</b></div>
+                  <div class="lr"><span class="sw" style="background:var(--soft)"></span>未実施 <b style="margin-left:auto" id="gWait">—</b></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>本日の便（直近）</h3><span class="more" onclick="go('sched')">送迎予定へ</span></div>
+            <div class="pb" style="padding:0">
+              <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+                <thead><tr><th>時刻</th><th>利用者</th><th>車両</th><th>状態</th></tr></thead>
+                <tbody id="dashRows"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCHEDULE -->
+      <section class="view" id="v-sched">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="利用者・住所・車両で検索"></div>
+          <div class="seg" id="dirSeg"><button data-d="all" class="on">すべて</button><button data-d="pickup">送り（迎え）</button><button data-d="drop">送り（帰り）</button></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>予定時刻</th><th>区分</th><th>利用者</th><th>住所</th><th>介助</th><th>車両</th><th>状態</th></tr></thead>
+          <tbody id="schedRows"></tbody>
+        </table>
+      </section>
+
+      <!-- ROUTE -->
+      <section class="view" id="v-route">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>便を選択</label><select id="rRoute"></select></div>
+            <div class="fg2">
+              <div class="fg"><label>担当車両</label><select id="rVeh"></select></div>
+              <div class="fg"><label>出発時刻</label><input id="rTime" type="time" value="08:30"></div>
+            </div>
+            <div class="fg"><label>運転手</label><select id="rDriver"></select></div>
+            <label style="font-size:12px;font-weight:700;color:var(--ink-2)">立ち寄り順（ドラッグ不要・AIが最適化）</label>
+            <div id="rStops" style="margin-top:8px"></div>
+            <div class="aihint" id="rAiHint">✨ AIが渋滞・乗車時間を考慮して並べ替えました</div>
+            <div class="linkrow" style="margin-top:16px">
+              <button class="btn primary" id="rOptimize" style="flex:1;justify-content:center">⚡ AIでルート最適化</button>
+              <button class="btn" id="rConfirm">確定</button>
+            </div>
+          </div>
+          <div>
+            <div class="paper">
+              <div class="ph"><h3 id="rMapTitle">ルートプレビュー</h3><span class="more mono" id="rMapMeta">—</span></div>
+              <div class="map" id="rMap"></div>
+              <div class="stops" id="rStopList"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- BOARDING -->
+      <section class="view" id="v-board">
+        <div class="kpis" id="boardKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>本日の乗車チェック（迎え便）</h3>
+            <button class="btn green sm" id="notifyAll" style="margin-left:auto">📱 家族へ一斉お知らせ</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>時刻</th><th>利用者</th><th>介助</th><th>体温</th><th>状態</th><th class="c">乗車チェック</th></tr></thead>
+              <tbody id="boardRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- VEHICLES -->
+      <section class="view" id="v-vehicle">
+        <div class="vgrid" id="vehGrid"></div>
+      </section>
+
+      <!-- AI OPTIMIZE -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">利用者と時間から、最適な送迎ルートを自動作成</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">本日の迎え利用者 <b>14名</b> を、車両3台・希望時刻・介助内容からAIが最短ルートに割り当てます。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIでルートを組む</button>
+          </div>
+          <div class="ai-inputs">
+            <div class="fg"><label>対象の便</label><select id="aiKind"><option>迎え便（午前）</option><option>送り便（午後）</option></select></div>
+            <div class="fg"><label>到着希望（施設）</label><input id="aiArrive" type="time" value="09:30"></div>
+            <div class="fg"><label>使う車両台数</label><select id="aiCars"><option>3台</option><option>2台</option><option>4台</option></select></div>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">約50分</div>
+              <ul>
+                <li>🗺️ 住所を地図で1件ずつ確認</li>
+                <li>✏️ 車両ごとに乗車順を手で並べ替え</li>
+                <li>📞 遅れそうな家族へ個別に電話</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 住所・介助内容を自動で考慮</li>
+                <li>🛣️ 車両別に最短ルートを一括生成</li>
+                <li>📱 到着予定を家族へ自動通知</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+              <div style="font-size:13px;font-weight:800">✅ 生成された送迎ルート</div>
+              <span class="more mono" id="genSummary" style="margin-left:auto;font-size:12px;color:var(--green);font-weight:800"></span>
+            </div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const ASSIST=[
+  {k:'wc',label:'車いす'},{k:'cane',label:'杖・見守り'},{k:'indep',label:'自立'}
+];
+const ASSIST_LABEL={wc:'車いす',cane:'杖・見守り',indep:'自立'};
+const AREAS=['都町','金池町','中央町','大手町','西大分','滝尾','明野','三佐'];
+const DRIVERS=['山田 健一','佐々木 守','工藤 久','三浦 涼子'];
+const VEHICLES=[
+  {id:'号車1',name:'ハイエース 1号車',plate:'大分 800 あ 12-34',cap:8,wc:2,ic:'🚐',driver:'山田 健一'},
+  {id:'号車2',name:'キャラバン 2号車',plate:'大分 800 か 56-78',cap:8,wc:1,ic:'🚐',driver:'佐々木 守'},
+  {id:'号車3',name:'軽福祉車 3号車',plate:'大分 580 さ 90-12',cap:4,wc:1,ic:'🚗',driver:'工藤 久'},
+];
+const NAMES=[
+  '田中 ハル','佐藤 トメ','鈴木 茂','高橋 キヨ','渡辺 正','伊藤 フミ子','山本 三郎','中村 サダ',
+  '小林 義雄','加藤 ナミ','吉田 勝','山口 ヨシ','松本 一','井上 タカ','木村 末吉','林 スエ',
+  '清水 豊','森 ハナ','池田 静男','橋本 ミサ'
+];
+const TODAY=new Date();
+/* seed */
+let SEED=7777;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+function pad(n){return (n<10?'0':'')+n;}
+function mkTime(h,m){return pad(h)+':'+pad(m);}
+
+let trips=[];
+(function seed(){
+  // morning pickup 8:00-9:30, afternoon drop 16:00-17:30
+  let id=1;
+  const used=[...NAMES];
+  // pickups (14)
+  for(let i=0;i<14;i++){
+    const nm=used[i%used.length];
+    const h=8,m=0+i*6;const mm=m%60,hh=h+Math.floor(m/60);
+    const a=pick(ASSIST).k;
+    const veh=VEHICLES[i%3].id;
+    let stt='wait';
+    const r=rnd();
+    if(i<6)stt=r>0.85?'late':'done'; else if(i<9)stt='running'; else stt='wait';
+    trips.push({id:'T-'+pad(id++),dir:'pickup',time:mkTime(hh,mm),user:nm,area:pick(AREAS),assist:a,veh,status:stt,temp:(35.8+rnd()*1.1).toFixed(1)});
+  }
+  // drops (10)
+  for(let i=0;i<10;i++){
+    const nm=used[i%used.length];
+    const h=16,m=0+i*8;const mm=m%60,hh=h+Math.floor(m/60);
+    const a=pick(ASSIST).k;
+    const veh=VEHICLES[i%3].id;
+    trips.push({id:'T-'+pad(id++),dir:'drop',time:mkTime(hh,mm),user:nm,area:pick(AREAS),assist:a,veh,status:'wait',temp:(35.8+rnd()*1.0).toFixed(1)});
+  }
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STLABEL={done:'送迎完了',ontime:'定時',wait:'未実施',late:'遅延',running:'運行中',absent:'欠席'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]||s}</span>`;}
+function careTag(k){return `<span class="tag-care ${k}">${ASSIST_LABEL[k]||k}</span>`;}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function vehName(id){const v=VEHICLES.find(x=>x.id===id);return v?v.name:id;}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','本日の送迎状況（'+(TODAY.getMonth()+1)+'/'+TODAY.getDate()+'）'],
+  sched:['送迎予定','本日の迎え・送り便を管理します'],
+  route:['ルート','便ごとの立ち寄り順をAIで最適化します'],
+  board:['乗車管理','迎え便の乗車チェックと家族への連絡'],
+  vehicle:['車両','送迎車両の状況と空き状況'],
+  ai:['AI送迎最適化','利用者と時間から最短ルートを自動作成します']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='sched'?'<button class="btn primary" onclick="go(\'ai\')">⚡ AIでルートを組む</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'route\')">🛣️ ルート確認</button><button class="btn primary" onclick="go(\'ai\')">⚡ AI送迎最適化</button>'
+    : v==='board'?'<button class="btn primary" onclick="go(\'sched\')">送迎予定へ</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='sched')renderSched();
+  if(v==='route')renderRoute();
+  if(v==='board')renderBoard();
+  if(v==='vehicle')renderVehicle();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const pickups=trips.filter(t=>t.dir==='pickup');
+  const drops=trips.filter(t=>t.dir==='drop');
+  const done=trips.filter(t=>t.status==='done').length;
+  const late=trips.filter(t=>t.status==='late').length;
+  const onTimeBase=pickups.filter(t=>t.status==='done').length;
+  const lateP=pickups.filter(t=>t.status==='late').length;
+  const finished=onTimeBase+lateP;
+  const pct=finished?Math.round(onTimeBase/finished*100):100;
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','本日の送迎','<span class="tnum">'+trips.length+'</span><small>件</small>','迎え'+pickups.length+'・送り'+drops.length,'up','3台稼働')}
+    ${kpi('#16b877','定時到着率',pct+'<small>%</small>','','up','目標95%')}
+    ${kpi('#e3941f','乗車漏れ','0<small>件</small>',done+'件 完了','up','チェック徹底')}
+    ${kpi('#0ea5b7','本日走行距離','<span class="tnum">62</span><small>km</small>',' ','up','AI最適化 -18%')}`;
+  // time-band bars
+  const bands=[['8:00台',pickups.filter(t=>t.time<'08:30').length],['8:30台',pickups.filter(t=>t.time>='08:30'&&t.time<'09:00').length],
+    ['9:00台',pickups.filter(t=>t.time>='09:00').length],['16:00台',drops.filter(t=>t.time<'16:30').length],
+    ['16:30台',drops.filter(t=>t.time>='16:30'&&t.time<'17:00').length],['17:00台',drops.filter(t=>t.time>='17:00').length]];
+  const mx=Math.max(...bands.map(b=>b[1]),1);
+  $('trendBars').innerHTML=bands.map((b,i)=>`
+    <div class="bar-row"><span class="mlabel">${b[0]}</span>
+      <div class="bar-track"><div class="bar-fill ${i>=3?'g':''}" style="width:0" data-w="${Math.round(b[1]/mx*100)}"></div></div>
+      <span class="mval">${b[1]}件</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // gauge
+  const wait=pickups.filter(t=>t.status==='wait'||t.status==='running').length;
+  $('gaugeRing').style.setProperty('--p',pct+'%');
+  $('gaugePct').textContent=pct+'%';
+  $('gOnT').textContent=onTimeBase+'件';$('gMin').textContent=lateP+'件';$('gWait').textContent=wait+'件';
+  // dash rows (next trips)
+  const next=trips.filter(t=>t.status!=='done').sort((a,b)=>a.time<b.time?-1:1).slice(0,6);
+  $('dashRows').innerHTML=next.map(t=>`<tr>
+    <td class="mono" style="font-size:12px">${esc(t.time)}</td><td><b>${esc(t.user)}</b> <span style="color:var(--ink-3);font-size:11px">${esc(t.area)}</span></td>
+    <td style="color:var(--ink-2)">${esc(vehName(t.veh))}</td><td>${stBadge(t.status)}</td></tr>`).join('');
+  // activity
+  const acts=[
+    {i:'🚐',c:'#e6f8f0',t:'1号車 田中 ハル さんを乗車（車いす介助）',m:'3分前'},
+    {i:'📱',c:'#eaf1ff',t:'佐藤 トメ さんのご家族へ到着予定を自動通知',m:'12分前'},
+    {i:'⚡',c:'#e6f8f0',t:'AIが迎え便14名を3台に再割当（走行 -18%）',m:'今日 7:40'},
+    {i:'⚠️',c:'#fdeaea',t:'西大分エリアで渋滞検知・到着が5分遅れる見込み',m:'今日 8:05'},
+    {i:'🌡️',c:'#fdf3e2',t:'渡辺 正 さん 体温37.2℃ を記録（要観察）',m:'今日 8:18'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${a.t}</div><div class="am">${a.m}</div></div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ SCHEDULE ============ */
+let filterStatus='all',filterDir='all';
+function renderChips(){
+  const opts=[['all','すべて'],['done','送迎完了'],['running','運行中'],['wait','未実施'],['late','遅延']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderSched();});
+}
+function renderSched(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=trips.filter(t=>filterStatus==='all'||t.status===filterStatus)
+    .filter(t=>filterDir==='all'||t.dir===filterDir)
+    .filter(t=>!q||(t.user+t.area+vehName(t.veh)).toLowerCase().includes(q))
+    .sort((a,b)=>a.time<b.time?-1:1);
+  $('schedRows').innerHTML=rows.length?rows.map(t=>`<tr>
+    <td class="mono" style="font-size:12px">${esc(t.time)}</td>
+    <td>${t.dir==='pickup'?'<span class="st ontime" style="background:var(--brand-soft);color:var(--brand)">迎え</span>':'<span class="st running" style="background:var(--amber-soft);color:var(--amber)">送り</span>'}</td>
+    <td><b>${esc(t.user)}</b></td><td style="color:var(--ink-2)">${esc(t.area)}エリア</td>
+    <td>${careTag(t.assist)}</td><td style="color:var(--ink-2)">${esc(vehName(t.veh))}</td><td>${stBadge(t.status)}</td></tr>`).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する送迎予定がありません</td></tr>';
+}
+$('q').addEventListener('input',renderSched);
+$('dirSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  filterDir=b.dataset.d;$('dirSeg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));renderSched();
+});
+
+/* ============ ROUTE ============ */
+/* build route groups per vehicle (pickup) */
+function pickupGroups(){
+  const g={};
+  trips.filter(t=>t.dir==='pickup').forEach(t=>{(g[t.veh]=g[t.veh]||[]).push(t);});
+  Object.values(g).forEach(arr=>arr.sort((a,b)=>a.time<b.time?-1:1));
+  return g;
+}
+let currentRouteVeh=null;
+function renderRouteSelect(){
+  const g=pickupGroups();
+  $('rRoute').innerHTML=Object.keys(g).map(id=>`<option value="${id}">${vehName(id)}（迎え便・${g[id].length}名）</option>`).join('');
+  $('rVeh').innerHTML=VEHICLES.map(v=>`<option value="${v.id}">${v.name}</option>`).join('');
+  $('rDriver').innerHTML=DRIVERS.map(d=>`<option>${d}</option>`).join('');
+}
+function renderRoute(){
+  if(!currentRouteVeh)currentRouteVeh=Object.keys(pickupGroups())[0];
+  $('rRoute').value=currentRouteVeh;
+  const v=VEHICLES.find(x=>x.id===currentRouteVeh);
+  if(v){$('rVeh').value=v.id;$('rDriver').value=v.driver;}
+  drawRoute();
+}
+function curStops(){const g=pickupGroups();return (g[currentRouteVeh]||[]).slice();}
+function drawRoute(){
+  const stops=curStops();
+  // editable list
+  $('rStops').innerHTML=stops.map((s,i)=>`<div class="stop">
+    <span class="seq">${i+1}</span><span class="nm">${esc(s.user)}</span>
+    ${careTag(s.assist)}<span class="tm">${esc(s.time)}</span></div>`).join('')||'<div class="empty-cell">利用者がいません</div>';
+  // map
+  drawMap(stops);
+  // stop list (with facility at end)
+  $('rStopList').innerHTML=stops.map((s,i)=>`<div class="stop">
+    <span class="seq">${i+1}</span><span class="nm">${esc(s.user)} <span style="color:var(--ink-3);font-weight:600;font-size:11.5px">／ ${esc(s.area)}</span></span>
+    <span class="tm">${esc(s.time)}</span></div>`).join('')+
+    `<div class="stop"><span class="seq f">着</span><span class="nm">デイサービス陽だまり</span><span class="tm">09:30</span></div>`;
+  const km=(stops.length*2.1+5).toFixed(1);
+  $('rMapMeta').textContent=stops.length+'停車 / '+km+'km';
+  $('rMapTitle').textContent=vehName(currentRouteVeh)+' のルート';
+}
+function drawMap(stops){
+  // deterministic pseudo-positions
+  const pts=stops.map((s,i)=>{
+    let h=0;for(const ch of s.user)h=(h*31+ch.charCodeAt(0))&0xffff;
+    const x=10+((h*7)%80);const y=15+(((h>>3)*13)%70);
+    return {x,y,s};
+  });
+  const fac={x:50,y:88};
+  let svg='';
+  let prev=null;
+  pts.forEach(p=>{if(prev)svg+=`<line x1="${prev.x}%" y1="${prev.y}%" x2="${p.x}%" y2="${p.y}%" stroke="rgba(47,109,240,.5)" stroke-width="2" stroke-dasharray="5 4"/>`;prev=p;});
+  if(prev)svg+=`<line x1="${prev.x}%" y1="${prev.y}%" x2="${fac.x}%" y2="${fac.y}%" stroke="rgba(22,184,119,.6)" stroke-width="2.5"/>`;
+  let pins=pts.map((p,i)=>`<div class="pin" style="left:${p.x}%;top:${p.y}%"><div class="b" style="background:var(--brand)">${i+1}</div><div class="lab">${esc(p.s.user)}</div></div>`).join('');
+  pins+=`<div class="pin fac" style="left:${fac.x}%;top:${fac.y}%"><div class="b">🏠</div><div class="lab">施設</div></div>`;
+  $('rMap').innerHTML=`<svg class="path">${svg}</svg>${pins}`;
+}
+$('rRoute').addEventListener('change',()=>{currentRouteVeh=$('rRoute').value;renderRoute();});
+$('rOptimize').addEventListener('click',async()=>{
+  const btn=$('rOptimize');btn.textContent='⚡ 最適化中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,800));
+  // reorder current vehicle stops by a pseudo distance (shuffle deterministically then sort by area)
+  const g=pickupGroups();const arr=g[currentRouteVeh]||[];
+  arr.sort((a,b)=>a.area<b.area?-1:1);
+  // reassign times spacing 5min ending near arrival
+  let h=8,m=10;arr.forEach(t=>{t.time=mkTime(h,m);m+=6;if(m>=60){m-=60;h++;}});
+  btn.textContent='⚡ AIでルート最適化';btn.disabled=false;
+  $('rAiHint').classList.add('show');setTimeout(()=>$('rAiHint').classList.remove('show'),2400);
+  drawRoute();
+  showToast(vehName(currentRouteVeh)+' のルートを最適化しました（走行 -16%）');
+});
+$('rConfirm').addEventListener('click',()=>{
+  const v=$('rVeh').value;
+  // move stops to selected vehicle if changed
+  if(v!==currentRouteVeh){curStops().forEach(s=>s.veh=v);currentRouteVeh=v;}
+  showToast('ルートを確定し、運転手「'+$('rDriver').value+'」へ配信しました');
+});
+
+/* ============ BOARDING ============ */
+function renderBoard(){
+  const pickups=trips.filter(t=>t.dir==='pickup');
+  const boarded=pickups.filter(t=>t.status==='done').length;
+  const wc=pickups.filter(t=>t.assist==='wc').length;
+  const fever=pickups.filter(t=>+t.temp>=37.0).length;
+  $('boardKpis').innerHTML=`
+    ${kpi('#2f6df0','迎え対象',pickups.length+'<small>名</small>','本日','up','全便確定')}
+    ${kpi('#16b877','乗車済',boarded+'<small>名</small>',' ','up','漏れ0')}
+    ${kpi('#7c5cdb','車いす介助',wc+'<small>名</small>',' ','up','スロープ準備')}
+    ${kpi('#e3941f','要観察(発熱)',fever+'<small>名</small>','37.0℃以上','warn',fever?'看護師確認':'なし')}`;
+  $('boardRows').innerHTML=pickups.sort((a,b)=>a.time<b.time?-1:1).map(t=>{
+    const checked=t.status==='done';
+    const feverFlag=+t.temp>=37.0;
+    return `<tr>
+      <td class="mono" style="font-size:12px">${esc(t.time)}</td><td><b>${esc(t.user)}</b> <span style="color:var(--ink-3);font-size:11px">${esc(t.area)}</span></td>
+      <td>${careTag(t.assist)}</td>
+      <td class="tnum" style="${feverFlag?'color:var(--red);font-weight:800':'color:var(--ink-2)'}">${esc(t.temp)}℃${feverFlag?' ⚠️':''}</td>
+      <td>${stBadge(t.status)}</td>
+      <td class="c"><button class="btn ${checked?'green':''} sm" onclick="toggleBoard('${esc(t.id)}')">${checked?'✓ 乗車済':'乗車チェック'}</button></td></tr>`;
+  }).join('');
+  $('navBoard').textContent=boarded;
+}
+window.toggleBoard=id=>{const t=trips.find(x=>x.id===id);if(t){t.status=t.status==='done'?'wait':'done';renderBoard();if(t.status==='done')showToast(t.user+' さんの乗車を記録しました');}};
+$('notifyAll').addEventListener('click',async()=>{
+  const btn=$('notifyAll');btn.textContent='📱 送信中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,900));
+  const n=trips.filter(t=>t.dir==='pickup').length;
+  btn.textContent='📱 家族へ一斉お知らせ';btn.disabled=false;
+  showToast(n+'名のご家族へ到着予定をLINEで自動送信しました');
+});
+
+/* ============ VEHICLES ============ */
+function renderVehicle(){
+  $('vehGrid').innerHTML=VEHICLES.map(v=>{
+    const assigned=trips.filter(t=>t.veh===v.id&&t.dir==='pickup');
+    const load=assigned.length;const pct=Math.min(100,Math.round(load/v.cap*100));
+    const wcLoad=assigned.filter(t=>t.assist==='wc').length;
+    const running=assigned.some(t=>t.status==='running'||t.status==='done');
+    return `<div class="vcard">
+      <div class="vh"><div class="ic">${v.ic}</div><div><b>${esc(v.name)}</b><span>${esc(v.plate)}</span></div>
+        <div style="margin-left:auto">${running?'<span class="st running" style="background:var(--amber-soft);color:var(--amber)">運行中</span>':'<span class="st wait" style="background:var(--soft);color:var(--ink-3)">待機</span>'}</div></div>
+      <div class="vmeta"><span>運転手</span><b>${esc(v.driver)}</b></div>
+      <div class="vmeta"><span>定員 / 車いす枠</span><b>${v.cap}名 / ${v.wc}台</b></div>
+      <div class="vmeta"><span>本日の迎え割当</span><b>${load}名（車いす${wcLoad}）</b></div>
+      <div style="padding-top:10px">
+        <div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-3);font-weight:700"><span>乗車率</span><span>${pct}%</span></div>
+        <div class="cap-bar"><div style="width:${pct}%"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ============ AI OPTIMIZE ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 計算中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},110);
+  await new Promise(r=>setTimeout(r,1150));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // build routes per vehicle
+  const g=pickupGroups();
+  const carsSel=parseInt($('aiCars').value)||3;
+  const vehIds=VEHICLES.slice(0,carsSel).map(v=>v.id);
+  // redistribute pickups across selected vehicles round-robin by area
+  const all=trips.filter(t=>t.dir==='pickup').slice().sort((a,b)=>a.area<b.area?-1:1);
+  const buckets={};vehIds.forEach(id=>buckets[id]=[]);
+  all.forEach((t,i)=>{const id=vehIds[i%vehIds.length];buckets[id].push(t);t.veh=id;});
+  // assign times
+  Object.values(buckets).forEach(arr=>{let h=8,m=10;arr.forEach(t=>{t.time=mkTime(h,m);m+=6;if(m>=60){m-=60;h++;}});});
+  let totalKm=0;
+  const cards=vehIds.map(id=>{const arr=buckets[id];const km=(arr.length*2.0+5);totalKm+=km;return{id,arr,km};});
+  $('genItems').innerHTML=cards.map((c,i)=>`
+    <div class="gen-route" data-i="${i}">
+      <div class="grh"><span class="ck">✓</span><b>${esc(vehName(c.id))}</b>
+        <span class="tail">${c.arr.length}名 / ${c.km.toFixed(1)}km / 着 09:30</span></div>
+      <div class="seq-line">
+        ${c.arr.map((t,j)=>`<span class="s"><span class="n">${j+1}</span>${esc(t.user)} <span style="color:var(--ink-3)">${esc(t.time)}</span></span>`).join('<span class="arr">›</span>')}
+        <span class="arr">›</span><span class="s" style="background:var(--green-soft);color:var(--green)">🏠 施設 09:30</span>
+      </div>
+    </div>`).join('');
+  $('genList').classList.add('show');
+  $('genSummary').textContent='合計 '+all.length+'名 / '+totalKm.toFixed(1)+'km / 走行 -18%';
+  const items=[...$('genItems').querySelectorAll('.gen-route')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,200));items[i].classList.add('in');}
+  btn.disabled=false;btn.textContent='⚡ もう一度組む';
+  currentRouteVeh=null;
+  showToast(all.length+'名を'+vehIds.length+'台に割当・最短ルートを生成しました');
+});
+
+/* ============ INIT ============ */
+renderRouteSelect();renderChips();renderDash();
+$('navBoard').textContent=trips.filter(t=>t.dir==='pickup'&&t.status==='done').length;
+</script>
+</body>
+</html>

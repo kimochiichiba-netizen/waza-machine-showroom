@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜予算管理マシン（予算管理システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cf0;--purple-soft:#efeaff;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--amber);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel+.panel,.cols+.panel{margin-top:16px}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart (budget vs actual) */
+.bars{display:flex;flex-direction:column;gap:15px}
+.bar-row{display:grid;grid-template-columns:96px 1fr 70px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:14px;border-radius:99px;background:var(--soft);overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-fill.over{background:linear-gradient(90deg,var(--red),#f17a7a)}
+.bar-fill.warn{background:linear-gradient(90deg,var(--amber),#f0b35a)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut / gauge */
+.gauge-wrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.gauge{width:150px;height:150px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;position:relative;
+  background:conic-gradient(var(--brand) 0deg,var(--brand) var(--deg,0deg),var(--soft) var(--deg,0deg),var(--soft) 360deg);
+  transition:--deg 1s ease}
+.gauge::after{content:"";position:absolute;inset:18px;border-radius:50%;background:var(--card)}
+.gauge .gv{position:relative;z-index:1;text-align:center}
+.gauge .gv b{font-size:30px;font-weight:900;letter-spacing:-.02em}
+.gauge .gv span{display:block;font-size:11px;color:var(--ink-3);font-weight:700}
+.gleg{display:flex;flex-direction:column;gap:9px;font-size:12.5px}
+.gleg .gl{display:flex;align-items:center;gap:9px}
+.gleg .gl .gd{width:11px;height:11px;border-radius:3px}
+.gleg .gl b{margin-left:auto;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.ok{background:var(--green-soft);color:var(--green)}
+.st.active{background:var(--brand-soft);color:var(--brand)}
+.st.draft{background:var(--soft);color:var(--ink-3)}
+.st.over{background:var(--red-soft);color:var(--red)}
+.st.warn{background:var(--amber-soft);color:var(--amber)}
+
+/* mini inline progress in table */
+.minibar{height:8px;width:120px;border-radius:99px;background:var(--soft);overflow:hidden;display:inline-block;vertical-align:middle}
+.minibar i{display:block;height:100%;border-radius:99px;background:var(--brand)}
+.minibar i.over{background:var(--red)}.minibar i.warn{background:var(--amber)}
+
+/* create / edit form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--brand)}
+.line-head{display:grid;grid-template-columns:1fr 110px 28px;gap:7px;font-size:11px;color:var(--ink-3);font-weight:700;padding:0 2px 6px}
+.line-row{display:grid;grid-template-columns:1fr 110px 28px;gap:7px;margin-bottom:7px;align-items:center}
+.line-row input{padding:8px 9px;font-size:12.5px;border:1px solid var(--line-2);border-radius:8px;font-family:inherit}
+.line-row .x{border:1px solid var(--line-2);background:var(--red-soft);color:var(--red);border-radius:7px;cursor:pointer;height:30px}
+.addline{width:100%;margin-top:3px;padding:9px;border:1px dashed var(--line-2);background:transparent;border-radius:8px;color:var(--brand);font-weight:700;font-size:12.5px;cursor:pointer}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* budget summary preview (paper) */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:30px 34px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.pv-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
+.pv-title{font-size:21px;font-weight:900;letter-spacing:.14em;color:var(--brand-dk);border-bottom:3px solid var(--brand-dk);padding-bottom:5px}
+.pv-meta{text-align:right;font-size:11.5px;color:var(--ink-2)}
+.pv-meta .no{font-family:'Orbitron';color:var(--ink);font-weight:700}
+.pv-total{background:var(--soft);border-left:5px solid var(--brand-dk);border-radius:6px;padding:13px 18px;margin:16px 0;display:flex;justify-content:space-between;align-items:center}
+.pv-total .a{font-family:'Orbitron';font-size:23px;font-weight:700;color:var(--brand-dk)}
+table.pv{width:100%;border-collapse:collapse;margin-bottom:14px}
+table.pv th{background:var(--brand-dk);color:#fff;font-size:11px;padding:8px 11px;text-align:left}
+table.pv th.r,table.pv td.r{text-align:right}
+table.pv td{padding:8px 11px;border-bottom:1px solid var(--line);font-size:12px}
+table.pv tfoot td{font-weight:800;background:var(--soft)}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900}
+.gen-item .delta{font-weight:800;font-variant-numeric:tabular-nums}
+.gen-item .delta.up{color:var(--green)}.gen-item .delta.down{color:var(--red)}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.section-title{font-size:13px;font-weight:800;color:var(--ink-2);margin:4px 0 12px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">予算管理マシン<small>技マシン｜予算管理</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">📋</span>予算一覧</a>
+      <a data-v="create"><span class="i">✏️</span>予算編成</a>
+      <a data-v="compare"><span class="i">📈</span>実績比較<span class="badge" id="navOver">0</span></a>
+      <a data-v="dept"><span class="i">🏢</span>部門別</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI予算案</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 経営管理</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。数値・部門はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">2026年度 予算の執行状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>部門別 予算と実績</h3><span class="more">2026年度</span></div>
+            <div class="pb"><div class="bars" id="deptBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>年間予算の消化状況</h3></div>
+            <div class="pb">
+              <div class="gauge-wrap">
+                <div class="gauge" id="gauge"><div class="gv"><b id="gPct">0%</b><span>消化率</span></div></div>
+                <div class="gleg" id="gleg"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="ph"><h3>最近のアクティビティ</h3></div>
+          <div class="pb"><div class="acts" id="acts"></div></div>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="予算名・部門・コードで検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>予算コード</th><th>予算名</th><th>部門</th><th class="r">予算額</th><th class="r">実績</th><th style="width:160px">消化率</th><th>状態</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- CREATE / 予算編成 -->
+      <section class="view" id="v-create">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>部門</label>
+              <select id="cDept"></select></div>
+            <div class="fg"><label>予算名</label><input id="cName" placeholder="例：2026年度 販促キャンペーン"></div>
+            <label style="font-size:12px;font-weight:700;color:var(--ink-2)">費目（科目を選ぶとAIが前年実績から金額提案）</label>
+            <div class="line-head" style="margin-top:7px"><div>費目（勘定科目）</div><div>年間予算額</div><div></div></div>
+            <div id="cLines"></div>
+            <button class="addline" id="cAdd">＋ 費目を追加</button>
+            <div class="aihint" id="cAiHint">✨ AIが前年実績から予算額を自動入力しました</div>
+            <div class="linkrow" style="margin-top:16px">
+              <button class="btn primary" id="cIssue" style="flex:1;justify-content:center">⚡ AIで精査して登録</button>
+              <button class="btn" id="cSample">サンプル</button>
+            </div>
+          </div>
+          <div>
+            <div class="paper" id="cPaper">
+              <div class="pv-top">
+                <div class="pv-title">予 算 計 画 書</div>
+                <div class="pv-meta"><div>コード：<span class="no" id="pNo">—</span></div><div>部門：<span id="pDeptN">—</span></div><div>年度：2026年度</div></div>
+              </div>
+              <div style="font-size:16px;font-weight:900;border-bottom:1.5px solid #1a2233;display:inline-block;min-width:220px;padding-bottom:5px;margin-bottom:8px" id="pNameN">（予算名）</div>
+              <div style="font-size:11.5px;color:var(--ink-2)">下記の通り年間予算を計画します。</div>
+              <div class="pv-total"><span style="font-weight:700">年間予算 合計</span><span class="a" id="pGrand">¥0</span></div>
+              <table class="pv"><thead><tr><th>費目（勘定科目）</th><th class="r" style="width:130px">年間予算額</th><th class="r" style="width:80px">構成比</th></tr></thead><tbody id="pRows"></tbody>
+                <tfoot><tr><td>合計</td><td class="r" id="pFoot">¥0</td><td class="r">100%</td></tr></tfoot></table>
+              <div style="margin-top:14px;font-size:11px;color:var(--ink-2);border-top:1px solid var(--line);padding-top:12px">
+                承認フロー：起案 → 部門長 → 経営会議 → 確定 ／ ※確定後の変更は補正予算として記録されます。
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- COMPARE / 実績比較 -->
+      <section class="view" id="v-compare">
+        <div class="kpis" id="cmpKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>予算 vs 実績（費目別の差異分析）</h3>
+            <button class="btn" id="cmpExport" style="margin-left:auto">📤 月次レポート出力</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>費目</th><th>部門</th><th class="r">予算額</th><th class="r">実績額</th><th class="r">差異</th><th class="r">差異率</th><th>判定</th></tr></thead>
+              <tbody id="cmpRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- DEPT / 部門別 -->
+      <section class="view" id="v-dept">
+        <div class="panel">
+          <div class="ph"><h3>部門別 予算消化サマリー</h3><span class="more">クリックで明細</span></div>
+          <div class="pb"><div class="bars" id="deptBars2"></div></div>
+        </div>
+        <table class="tbl" style="margin-top:16px">
+          <thead><tr><th>部門</th><th>部門長</th><th class="r">予算額</th><th class="r">実績</th><th class="r">残予算</th><th class="r">消化率</th><th>状態</th></tr></thead>
+          <tbody id="deptRows"></tbody>
+        </table>
+      </section>
+
+      <!-- AI BUDGET -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">過去実績から 来期予算案を自動作成</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">過去3年の実績データ <b>36ヶ月分</b> から、部門別・費目別の来期予算案をAIが自動で作成します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで予算案を作成する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">3日（約14時間）</div>
+              <ul>
+                <li>📑 各部門から実績Excelを収集</li>
+                <li>⌨️ 前年比・季節変動を手計算で調整</li>
+                <li>📨 整合性チェックと差し戻しを往復</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 全部門の実績を自動集計・分析</li>
+                <li>📈 前年比・物価・季節要因をAIが補正</li>
+                <li>✅ 部門別の来期予算案を一括生成</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ AIが作成した来期予算案（前年実績との比較）</div>
+            <div id="genItems"></div>
+            <div style="margin-top:12px;text-align:right">
+              <button class="btn green" id="aiAdopt" style="display:none">この予算案を一覧に取り込む</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const DEPTS=[
+  {name:'営業部',head:'佐藤 健一'},
+  {name:'医療事業部',head:'田中 美咲'},
+  {name:'青果卸事業部',head:'鈴木 大輔'},
+  {name:'システム開発部',head:'高橋 涼'},
+  {name:'管理部',head:'渡辺 由美'},
+  {name:'マーケティング部',head:'伊藤 翔'},
+];
+// 勘定科目マスタ（前年実績付き：AI提案の根拠）
+const ACCOUNTS=[
+  {n:'人件費',py:42000000},{n:'外注費',py:18000000},{n:'広告宣伝費',py:9600000},
+  {n:'旅費交通費',py:3200000},{n:'消耗品費',py:2400000},{n:'通信費',py:1800000},
+  {n:'地代家賃',py:7200000},{n:'システム利用料',py:5400000},{n:'仕入原価',py:31000000},
+  {n:'研修費',py:1600000},{n:'接待交際費',py:2200000},{n:'減価償却費',py:4800000},
+];
+const TODAY=new Date();
+let SEED=4096;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+// 予算データ生成：部門×費目で年間予算と実績を持つ
+const STATUSES=['active','active','ok','over','warn','active'];
+let budgets=[];
+(function seed(){
+  let code=1001;
+  const names=['年間運営予算','販促キャンペーン','人材採用・育成','設備・システム投資','仕入・原価予算','部門固定費'];
+  for(let d=0;d<DEPTS.length;d++){
+    const dept=DEPTS[d];
+    const nItems=2+Math.floor(rnd()*3);
+    const accs=[...ACCOUNTS].sort(()=>rnd()-0.5).slice(0,nItems);
+    const lines=accs.map(a=>{
+      const budget=Math.round(a.py*(0.6+rnd()*0.9)/10000)*10000; // 万円単位
+      const ratio=0.45+rnd()*0.85; // 消化率0.45〜1.30
+      const actual=Math.round(budget*ratio/1000)*1000;
+      return {acc:a.n,budget,actual};
+    });
+    const budget=lines.reduce((s,l)=>s+l.budget,0);
+    const actual=lines.reduce((s,l)=>s+l.actual,0);
+    const rate=actual/budget;
+    let stt;
+    if(rate>1.0)stt='over';else if(rate>0.85)stt='warn';else if(rate>0.55)stt='active';else stt='ok';
+    budgets.push({code:'BG-'+(code++),name:pick(names),dept:dept.name,head:dept.head,lines,budget,actual,status:stt});
+  }
+})();
+function allLines(){const r=[];budgets.forEach(b=>b.lines.forEach(l=>r.push({...l,dept:b.dept,code:b.code})));return r;}
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+const yenM=n=>{const m=n/10000;return m>=10000?'¥'+(m/10000).toFixed(2)+'億':'¥'+Math.round(m).toLocaleString()+'万';};
+const pct=n=>Math.round(n*100)+'%';
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STLABEL={ok:'良好',active:'執行中',warn:'要注意',over:'超過',draft:'下書き'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]}</span>`;}
+function rateClass(rate){return rate>1.0?'over':rate>0.85?'warn':'';}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','2026年度 予算の執行状況'],list:['予算一覧','編成した予算を管理します'],
+  create:['予算編成','入力するとリアルタイムで予算計画書が組み上がります'],compare:['実績比較','予算と実績の差異を分析します'],
+  dept:['部門別','部門ごとの予算消化を管理します'],ai:['AI予算案','過去実績から来期予算案を自動で作ります']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn primary" onclick="go(\'create\')">＋ 新規編成</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI予算案</button><button class="btn primary" onclick="go(\'create\')">＋ 新規編成</button>'
+    : v==='compare'?'<button class="btn" onclick="go(\'dept\')">部門別を見る</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='compare')renderCompare();
+  if(v==='dept')renderDept();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const totalB=budgets.reduce((s,b)=>s+b.budget,0);
+  const totalA=budgets.reduce((s,b)=>s+b.actual,0);
+  const rate=totalA/totalB;
+  const variance=totalB-totalA;
+  // 着地見込：現在消化率を年度進捗(70%想定)で線形外挿
+  const progress=0.70;
+  const forecast=Math.round(totalA/progress);
+  const fDiff=forecast-totalB;
+  const overCount=budgets.filter(b=>b.status==='over').length;
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','年間予算 総額',yenM(totalB),budgets.length+'本の予算','up','前年比 +8%')}
+    ${kpi('#16b877','予算消化率',pct(rate),yenM(totalA)+' 執行','up','想定どおり')}
+    ${kpi('#e3941f','予算差異（残）',yenM(Math.abs(variance)),variance>=0?'残予算':'超過','warn',variance>=0?'未消化あり':'予算超過')}
+    ${kpi(fDiff>0?'#e24a4a':'#16b877','着地見込',yenM(forecast),'年度末予測',fDiff>0?'down':'up',(fDiff>0?'+':'')+yenM(Math.abs(fDiff))+' 乖離')}`;
+  // dept bars
+  renderDeptBars('deptBars');
+  // gauge
+  const deg=Math.min(rate,1)*360;
+  const g=$('gauge');g.style.background=`conic-gradient(${rate>1?'var(--red)':rate>0.85?'var(--amber)':'var(--brand)'} 0deg ${deg}deg, var(--soft) ${deg}deg 360deg)`;
+  $('gPct').textContent=pct(rate);
+  $('gleg').innerHTML=`
+    <div class="gl"><span class="gd" style="background:var(--brand)"></span>執行済み<b>${yenM(totalA)}</b></div>
+    <div class="gl"><span class="gd" style="background:var(--soft);border:1px solid var(--line-2)"></span>残予算<b>${yenM(Math.max(variance,0))}</b></div>
+    <div class="gl"><span class="gd" style="background:var(--green)"></span>年間予算<b>${yenM(totalB)}</b></div>`;
+  // activity
+  const acts=[
+    {i:'⚡',c:'#e6f8f0',t:'AI予算案で 6部門の来期予算を自動作成（前年比 +6.2%）',m:'今日 9:14'},
+    {i:'⚠️',c:'#fdeaea',t:'マーケティング部「広告宣伝費」が予算を超過しました',m:'今日 8:30'},
+    {i:'📈',c:'#eaf1ff',t:'5月度の実績データを取り込み、差異を再計算しました',m:'1時間前'},
+    {i:'✅',c:'#e6f8f0',t:'システム開発部の補正予算が経営会議で承認されました',m:'昨日'},
+    {i:'📋',c:'#efeaff',t:'BG-1003 青果卸事業部の予算を新規編成しました',m:'2日前'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${a.t}</div><div class="am">${a.m}</div></div></div>`).join('');
+  $('navOver').textContent=overCount;
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+function renderDeptBars(target){
+  const mx=Math.max(...budgets.map(b=>b.budget),1);
+  $(target).innerHTML=budgets.map(b=>{
+    const rate=b.actual/b.budget;
+    const w=Math.round(Math.min(b.actual,b.budget)/mx*100);
+    const over=b.actual>b.budget?Math.round((b.actual-b.budget)/mx*100):0;
+    const cls=rateClass(rate);
+    return `<div class="bar-row"><span class="mlabel">${esc(b.dept)}</span>
+      <div class="bar-track" title="予算 ${yenM(b.budget)} / 実績 ${yenM(b.actual)}">
+        <div class="bar-fill ${cls}" style="width:0" data-w="${w+over}"></div></div>
+      <span class="mval" style="${cls==='over'?'color:var(--red)':''}">${pct(rate)}</span></div>`;
+  }).join('');
+  setTimeout(()=>document.querySelectorAll('#'+target+' .bar-fill').forEach(b=>b.style.width=Math.min(b.dataset.w,100)+'%'),60);
+}
+
+/* ============ LIST ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['ok','良好'],['active','執行中'],['warn','要注意'],['over','超過']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=budgets.filter(b=>filterStatus==='all'||b.status===filterStatus)
+    .filter(b=>!q||(b.name+b.dept+b.code).toLowerCase().includes(q))
+    .sort((a,b)=>b.actual/b.budget-a.actual/a.budget);
+  $('listRows').innerHTML=rows.length?rows.map(b=>{
+    const rate=b.actual/b.budget;const cls=rateClass(rate);
+    return `<tr onclick="openBudget('${esc(b.code)}')">
+    <td class="mono" style="font-size:12px">${esc(b.code)}</td><td><b>${esc(b.name)}</b></td><td style="color:var(--ink-2)">${esc(b.dept)}</td>
+    <td class="r tnum">${yenM(b.budget)}</td><td class="r tnum"><b>${yenM(b.actual)}</b></td>
+    <td><span class="minibar"><i class="${cls}" style="width:${Math.min(Math.round(rate*100),100)}%"></i></span> <span class="tnum" style="font-size:11.5px;color:var(--ink-2)">${pct(rate)}</span></td>
+    <td>${stBadge(b.status)}</td></tr>`;
+  }).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する予算がありません</td></tr>';
+}
+window.openBudget=code=>{const b=budgets.find(x=>x.code===code);if(b)showToast(b.code+'「'+b.name+'」の明細を開きました（'+b.lines.length+'費目）');};
+$('q').addEventListener('input',renderList);
+
+/* ============ COMPARE ============ */
+function renderCompare(){
+  const lines=allLines();
+  const totalB=lines.reduce((s,l)=>s+l.budget,0);
+  const totalA=lines.reduce((s,l)=>s+l.actual,0);
+  const overLines=lines.filter(l=>l.actual>l.budget);
+  const biggestOver=overLines.sort((a,b)=>(b.actual-b.budget)-(a.actual-a.budget))[0];
+  $('cmpKpis').innerHTML=`
+    ${kpi('#2f6df0','予算 合計',yenM(totalB),lines.length+'費目','up','')}
+    ${kpi('#16b877','実績 合計',yenM(totalA),pct(totalA/totalB)+' 消化','up','')}
+    ${kpi('#e24a4a','超過費目',overLines.length+'件',biggestOver?esc(biggestOver.acc):'','down',overLines.length?'要見直し':'なし')}
+    ${kpi('#e3941f','最大の差異',biggestOver?yenM(biggestOver.actual-biggestOver.budget):'¥0',biggestOver?esc(biggestOver.dept):'','warn','超過額')}`;
+  $('cmpRows').innerHTML=lines.sort((a,b)=>(b.actual-b.budget)-(a.actual-a.budget)).map(l=>{
+    const diff=l.budget-l.actual;const dr=l.actual/l.budget-1;
+    const over=l.actual>l.budget;
+    const st=over?'over':dr>-0.15?'warn':'ok';
+    return `<tr>
+      <td><b>${esc(l.acc)}</b></td><td style="color:var(--ink-2)">${esc(l.dept)}</td>
+      <td class="r tnum">${yenM(l.budget)}</td><td class="r tnum">${yenM(l.actual)}</td>
+      <td class="r tnum" style="color:${over?'var(--red)':'var(--green)'};font-weight:800">${over?'-':'+'}${yenM(Math.abs(diff))}</td>
+      <td class="r tnum" style="color:${over?'var(--red)':'var(--ink-2)'}">${(dr>=0?'+':'')}${Math.round(dr*100)}%</td>
+      <td>${stBadge(st)}</td></tr>`;
+  }).join('');
+}
+$('cmpExport').addEventListener('click',async()=>{
+  const btn=$('cmpExport');btn.textContent='📤 出力中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,800));
+  btn.textContent='📤 月次レポート出力';btn.disabled=false;
+  showToast('5月度の予実差異レポートを出力しました（PDF）');
+});
+
+/* ============ DEPT ============ */
+function renderDept(){
+  renderDeptBars('deptBars2');
+  $('deptRows').innerHTML=budgets.map(b=>{
+    const rate=b.actual/b.budget;const rest=b.budget-b.actual;
+    return `<tr onclick="openBudget('${esc(b.code)}')">
+      <td><b>${esc(b.dept)}</b></td><td style="color:var(--ink-2)">${esc(b.head)}</td>
+      <td class="r tnum">${yenM(b.budget)}</td><td class="r tnum">${yenM(b.actual)}</td>
+      <td class="r tnum" style="color:${rest<0?'var(--red)':'var(--ink-2)'}">${yenM(rest)}</td>
+      <td class="r tnum"><b>${pct(rate)}</b></td><td>${stBadge(b.status)}</td></tr>`;
+  }).join('');
+}
+
+/* ============ CREATE / 予算編成 ============ */
+let cLines=[{acc:'',amt:''},{acc:'',amt:''}];
+function renderDeptSelect(){$('cDept').innerHTML='<option value="">選択してください</option>'+DEPTS.map(d=>`<option>${d.name}</option>`).join('');}
+function renderLines(){
+  $('cLines').innerHTML=cLines.map((l,i)=>`<div class="line-row" data-i="${i}">
+    <input class="ln" list="cAccList" placeholder="費目（勘定科目）" value="${(l.acc||'').replace(/"/g,'&quot;')}">
+    <input class="lp" type="number" min="0" placeholder="0" value="${l.amt}">
+    <button class="x">✕</button></div>`).join('');
+  $('cLines').querySelectorAll('.line-row').forEach(row=>{
+    const i=+row.dataset.i;
+    const ln=row.querySelector('.ln'),lp=row.querySelector('.lp');
+    ln.oninput=()=>{cLines[i].acc=ln.value;const h=ACCOUNTS.find(x=>x.n===ln.value);if(h&&!cLines[i].amt){const proposal=Math.round(h.py*1.05/10000)*10000;cLines[i].amt=proposal;lp.value=proposal;$('cAiHint').classList.add('show');setTimeout(()=>$('cAiHint').classList.remove('show'),2200);}renderPaper();};
+    lp.oninput=()=>{cLines[i].amt=+lp.value||0;renderPaper();};
+    row.querySelector('.x').onclick=()=>{cLines.splice(i,1);if(!cLines.length)cLines.push({acc:'',amt:''});renderLines();renderPaper();};
+  });
+}
+function renderPaper(){
+  $('pDeptN').textContent=$('cDept').value||'—';
+  $('pNameN').textContent=$('cName').value||'（予算名）';
+  const valid=cLines.filter(l=>l.acc||+l.amt>0);
+  const total=valid.reduce((s,l)=>s+(+l.amt||0),0);
+  $('pRows').innerHTML=valid.length?valid.map(l=>{
+    const r=total?Math.round((+l.amt||0)/total*100):0;
+    return `<tr><td>${esc(l.acc)||'（費目）'}</td><td class="r tnum">${yen(+l.amt||0)}</td><td class="r">${r}%</td></tr>`;
+  }).join('')
+    :'<tr><td colspan="3" style="text-align:center;color:#aab2c4;padding:14px">← 費目を入力してください</td></tr>';
+  $('pGrand').textContent=yen(total);$('pFoot').textContent=yen(total);
+}
+$('cDept').addEventListener('change',renderPaper);
+$('cName').addEventListener('input',renderPaper);
+$('cAdd').addEventListener('click',()=>{cLines.push({acc:'',amt:''});renderLines();renderPaper();});
+$('cSample').addEventListener('click',()=>{
+  $('cDept').value='マーケティング部';$('cName').value='2026年度 販促キャンペーン';
+  cLines=[{acc:'広告宣伝費',amt:10080000},{acc:'外注費',amt:4500000},{acc:'旅費交通費',amt:1200000}];
+  renderLines();renderPaper();
+});
+$('cIssue').addEventListener('click',async()=>{
+  const valid=cLines.filter(l=>l.acc||+l.amt>0);
+  if(!$('cDept').value||!valid.length){showToast('部門と費目を入力してください');return;}
+  const btn=$('cIssue');btn.textContent='⚡ AIが精査中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,800));
+  const code='BG-'+(1001+budgets.length);
+  $('pNo').textContent=code;
+  const total=valid.reduce((s,l)=>s+(+l.amt||0),0);
+  const lines=valid.map(l=>({acc:l.acc,budget:+l.amt||0,actual:0}));
+  const dept=DEPTS.find(d=>d.name===$('cDept').value);
+  budgets.push({code,name:$('cName').value||'新規予算',dept:$('cDept').value,head:dept?dept.head:'—',lines,budget:total,actual:0,status:'ok'});
+  btn.textContent='⚡ AIで精査して登録';btn.disabled=false;
+  showToast('予算 '+code+' を登録しました（一覧に追加）');
+  setTimeout(()=>go('list'),700);
+});
+
+/* ============ AI BUDGET ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 作成中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  $('aiAdopt').style.display='none';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},110);
+  await new Promise(r=>setTimeout(r,1200));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // 来期予算案：各部門の今期実績ベースに +物価/季節補正
+  const proposals=DEPTS.map(d=>{
+    const cur=budgets.filter(b=>b.dept===d.name).reduce((s,b)=>s+b.actual,0)||budgets[0].actual;
+    const adj=0.94+rnd()*0.18; // -6%〜+12%
+    const next=Math.round(cur*adj/10000)*10000;
+    return {dept:d.name,cur,next,delta:next-cur};
+  });
+  window.__aiProposals=proposals;
+  $('genItems').innerHTML=proposals.map((p,i)=>{
+    const dr=p.cur?(p.next/p.cur-1):0;
+    return `<div class="gen-item" data-i="${i}"><span class="ck">✓</span><b style="flex:1">${esc(p.dept)}</b>
+      <span style="color:var(--ink-3);font-size:12px">今期 ${yenM(p.cur)}</span>
+      <span style="color:var(--ink-2);font-size:12px">→ 来期 ${yenM(p.next)}</span>
+      <span class="delta ${dr>=0?'up':'down'}">${dr>=0?'+':''}${Math.round(dr*100)}%</span></div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,180));items[i].classList.add('in');}
+  btn.disabled=false;btn.textContent='⚡ もう一度作成';
+  $('aiAdopt').style.display='inline-flex';
+  showToast(proposals.length+'部門の来期予算案を作成しました');
+});
+$('aiAdopt').addEventListener('click',()=>{
+  const proposals=window.__aiProposals||[];
+  let n=0;
+  proposals.forEach(p=>{
+    const code='BG-'+(1001+budgets.length);
+    budgets.push({code,name:'2027年度 来期予算案（AI生成）',dept:p.dept,head:(DEPTS.find(d=>d.name===p.dept)||{}).head||'—',
+      lines:[{acc:'部門予算（一式）',budget:p.next,actual:0}],budget:p.next,actual:0,status:'draft'});
+    n++;
+  });
+  showToast(n+'件の来期予算案を一覧に取り込みました');
+  setTimeout(()=>go('list'),700);
+});
+
+/* ============ INIT ============ */
+(()=>{const dl=document.createElement('datalist');dl.id='cAccList';dl.innerHTML=ACCOUNTS.map(a=>`<option value="${a.n}">前年実績 ${yen(a.py)}</option>`).join('');document.body.appendChild(dl);})();
+renderDeptSelect();renderLines();renderPaper();renderChips();renderDash();
+</script>
+</body>
+</html>

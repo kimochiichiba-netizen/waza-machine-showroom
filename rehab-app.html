@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜リハビリ記録マシン（リハビリ記録管理システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cf0;--purple-soft:#efeaff;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:62px 1fr 86px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.done{background:var(--green-soft);color:var(--green)}
+.st.ongoing{background:var(--brand-soft);color:var(--brand)}
+.st.planned{background:var(--soft);color:var(--ink-3)}
+.st.alert{background:var(--red-soft);color:var(--red)}
+.st.review{background:var(--amber-soft);color:var(--amber)}
+.st.achieved{background:var(--green-soft);color:var(--green)}
+.st.progress{background:var(--brand-soft);color:var(--brand)}
+.st.delayed{background:var(--red-soft);color:var(--red)}
+.tag-pill{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:7px;background:var(--soft);color:var(--ink-2)}
+
+/* avatar */
+.av-u{width:30px;height:30px;border-radius:50%;display:inline-grid;place-items:center;font-weight:800;font-size:12px;color:#fff;flex-shrink:0}
+.u-cell{display:flex;align-items:center;gap:10px}
+
+/* create form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:70px;line-height:1.6}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.rating{display:flex;gap:6px}
+.rating .rb{flex:1;padding:9px 0;border:1px solid var(--line-2);border-radius:8px;background:var(--card);font-weight:800;font-size:13px;color:var(--ink-2);cursor:pointer;text-align:center;transition:all .15s}
+.rating .rb.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* record preview (SOAP / paper) */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:30px 32px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.pv-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}
+.pv-title{font-size:21px;font-weight:900;letter-spacing:.14em;color:var(--brand-dk);border-bottom:3px solid var(--brand-dk);padding-bottom:5px}
+.pv-meta{text-align:right;font-size:11.5px;color:var(--ink-2)}
+.pv-meta .no{font-family:'Orbitron';color:var(--ink);font-weight:700}
+.pv-pat{font-size:18px;font-weight:900;border-bottom:1.5px solid #1a2233;display:inline-block;min-width:200px;padding-bottom:5px;margin-bottom:6px}
+.soap{margin-top:8px}
+.soap-row{display:grid;grid-template-columns:34px 1fr;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+.soap-row:last-child{border-bottom:0}
+.soap-k{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-weight:900;font-size:15px;color:#fff}
+.soap-k.s{background:var(--brand)}.soap-k.o{background:var(--sky)}.soap-k.a{background:var(--purple)}.soap-k.p{background:var(--green)}
+.soap-t{font-size:11px;font-weight:800;color:var(--ink-3);margin-bottom:2px}
+.soap-c{font-size:12.5px;color:#1a2233;line-height:1.7}
+.measure{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.measure .m{background:var(--soft);border-radius:8px;padding:8px 12px;font-size:11.5px}
+.measure .m b{font-family:'Orbitron';font-size:14px;color:var(--brand-dk);display:block}
+
+/* progress / before-after chart */
+.pchart{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:760px){.pchart{grid-template-columns:1fr}}
+.svgcard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.svgcard .ti{font-size:12.5px;font-weight:800;margin-bottom:6px;display:flex;align-items:center;gap:7px}
+.legend{display:flex;gap:14px;font-size:11px;color:var(--ink-2);margin-top:6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+/* goals */
+.goal{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:15px 17px;margin-bottom:12px;box-shadow:var(--shadow)}
+.goal .gt{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.goal .gt b{font-size:14px}
+.goal .gt .who{color:var(--ink-3);font-size:12px;margin-left:auto}
+.goal .gbar{height:12px;border-radius:99px;background:var(--soft);overflow:hidden;margin:8px 0 5px}
+.goal .gbar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--green),var(--sky));width:0;transition:width 1.1s cubic-bezier(.2,.8,.3,1)}
+.goal .gm{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-2)}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.ai-input{margin-top:18px;border-top:1px solid var(--line);padding-top:16px}
+.ai-input label{font-size:12px;font-weight:700;color:var(--ink-2);display:block;margin-bottom:6px}
+.ai-input textarea{width:100%;padding:11px 13px;border:1px solid var(--line-2);border-radius:10px;font-family:inherit;font-size:13px;line-height:1.7;resize:vertical;min-height:74px}
+.ai-input textarea:focus{outline:none;border-color:var(--brand)}
+.gen-out{margin-top:16px;display:none}
+.gen-out.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:flex-start;gap:11px;padding:11px 13px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s;background:#fff}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:22px;height:22px;border-radius:7px;display:grid;place-items:center;font-size:12px;font-weight:900;color:#fff;flex-shrink:0}
+
+/* AI orb */
+.orb{width:56px;height:56px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:24px;flex-shrink:0}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.sub-soft{font-size:12px;color:var(--ink-3);margin:-6px 0 16px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">リハビリ記録マシン<small>技マシン｜リハビリ記録管理</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="users"><span class="i">🧑‍🦽</span>利用者一覧</a>
+      <a data-v="records"><span class="i">📝</span>訓練記録</a>
+      <a data-v="goals"><span class="i">🎯</span>目標管理</a>
+      <a data-v="assess"><span class="i">📈</span>評価<span class="badge" id="navReview">0</span></a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI記録</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>大分リハビリ介護センター</b><span>デモ環境 / 機能訓練指導員</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。利用者・記録はすべて架空のサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">本日のリハビリ実施状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>週ごとの訓練実施回数</h3><span class="more">過去6週間</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>利用者の改善度（直近30日）</h3></div>
+            <div class="pb"><div class="bars" id="improveBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>本日の訓練予定</h3><span class="more" onclick="go('records')">記録へ</span></div>
+            <div class="pb"><div class="acts" id="todaySched"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- USERS -->
+      <section class="view" id="v-users">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="uq" placeholder="氏名・担当・要介護度で検索"></div>
+          <div class="chips" id="careChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>利用者</th><th>年齢/性別</th><th>要介護度</th><th>主な疾患</th><th>担当</th><th class="r">改善度</th><th>状態</th></tr></thead>
+          <tbody id="userRows"></tbody>
+        </table>
+      </section>
+
+      <!-- RECORDS -->
+      <section class="view" id="v-records">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>利用者</label><select id="rUser"></select></div>
+            <div class="fg2">
+              <div class="fg"><label>実施日</label><input id="rDate" type="date"></div>
+              <div class="fg"><label>担当者</label><input id="rStaff" placeholder="例：山田 PT"></div>
+            </div>
+            <div class="fg"><label>訓練メニュー（選ぶとAIが目安時間を提案）</label>
+              <select id="rMenu"></select>
+              <div class="aihint" id="rAiHint">✨ AIが標準実施時間と注意点を自動入力しました</div>
+            </div>
+            <div class="fg2">
+              <div class="fg"><label>実施時間（分）</label><input id="rMin" type="number" min="0" value="20"></div>
+              <div class="fg"><label>負荷・回数</label><input id="rLoad" placeholder="例：10回×3セット"></div>
+            </div>
+            <div class="fg"><label>本人の様子・所見（メモ）</label>
+              <textarea id="rNote" placeholder="例：右膝の屈曲がスムーズになり、平行棒なしで5m歩行できた。痛みの訴えなし。"></textarea></div>
+            <div class="fg"><label>本人の状態（5段階）</label>
+              <div class="rating" id="rRate">
+                <div class="rb" data-r="1">1</div><div class="rb" data-r="2">2</div>
+                <div class="rb on" data-r="3">3</div><div class="rb" data-r="4">4</div><div class="rb" data-r="5">5</div>
+              </div>
+            </div>
+            <div class="linkrow" style="margin-top:16px">
+              <button class="btn primary" id="rSave" style="flex:1;justify-content:center">⚡ AIで記録を仕上げて保存</button>
+              <button class="btn" id="rSample">サンプル</button>
+            </div>
+          </div>
+          <div>
+            <div class="paper" id="rPaper">
+              <div class="pv-top">
+                <div class="pv-title">リハビリ実施記録</div>
+                <div class="pv-meta"><div>記録番号：<span class="no" id="rNo">—</span></div><div>実施日：<span id="rPDate">—</span></div><div>担当：<span id="rPStaff">—</span></div></div>
+              </div>
+              <div><span class="pv-pat" id="rPat">　様</span></div>
+              <div style="font-size:11.5px;color:var(--ink-2)" id="rMenuLine">訓練メニュー：—</div>
+              <div class="measure" id="rMeasure"></div>
+              <div class="soap" id="rSoap">
+                <div class="soap-row"><div class="soap-k s">S</div><div><div class="soap-t">S（主観的情報）</div><div class="soap-c" id="soapS">—</div></div></div>
+                <div class="soap-row"><div class="soap-k o">O</div><div><div class="soap-t">O（客観的情報）</div><div class="soap-c" id="soapO">—</div></div></div>
+                <div class="soap-row"><div class="soap-k a">A</div><div><div class="soap-t">A（評価・考察）</div><div class="soap-c" id="soapA">—</div></div></div>
+                <div class="soap-row"><div class="soap-k p">P</div><div><div class="soap-t">P（計画）</div><div class="soap-c" id="soapP">—</div></div></div>
+              </div>
+              <div style="margin-top:16px;font-size:11px;color:var(--ink-2);border-top:1px solid var(--line);padding-top:12px">
+                ※ メモを入力し「AIで記録を仕上げて保存」を押すと、AIが介護記録用のSOAP形式に自動整形します。
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- GOALS -->
+      <section class="view" id="v-goals">
+        <div class="sub-soft">利用者ごとのリハビリ目標と達成状況。バーが100%になると目標達成です。</div>
+        <div class="kpis" id="goalKpis"></div>
+        <div id="goalList"></div>
+      </section>
+
+      <!-- ASSESS -->
+      <section class="view" id="v-assess">
+        <div class="toolbar">
+          <div class="fg" style="margin:0;min-width:260px;flex:1"><select id="aUser" style="max-width:340px"></select></div>
+        </div>
+        <div class="panel" style="margin-bottom:16px">
+          <div class="ph"><h3 id="aTitle">機能評価の推移（Before / After）</h3><span class="st done" style="margin-left:auto">改善傾向</span></div>
+          <div class="pb">
+            <div class="pchart">
+              <div class="svgcard">
+                <div class="ti">🚶 歩行・移動能力スコア</div>
+                <div id="chartWalk"></div>
+                <div class="legend"><span><i style="background:var(--ink-3)"></i>開始時</span><span><i style="background:var(--brand)"></i>現在</span></div>
+              </div>
+              <div class="svgcard">
+                <div class="ti">💪 ADL（日常生活動作）スコア</div>
+                <div id="chartAdl"></div>
+                <div class="legend"><span><i style="background:var(--ink-3)"></i>開始時</span><span><i style="background:var(--green)"></i>現在</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>評価項目</th><th class="r">開始時</th><th class="r">現在</th><th class="r">変化</th><th>判定</th></tr></thead>
+          <tbody id="assessRows"></tbody>
+        </table>
+      </section>
+
+      <!-- AI -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">話した訓練内容から、介護記録を自動で作成</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">現場でメモした一言を入力するだけで、AIがSOAP形式の正式な記録と進捗グラフを自動で生成します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで記録を生成する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">1人あたり 12分</div>
+              <ul>
+                <li>📝 メモを見ながら記録用紙に清書</li>
+                <li>⌨️ SOAP形式に書き直して整える</li>
+                <li>📊 評価表に数値を転記してグラフ化</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 一言メモをSOAP記録に自動整形</li>
+                <li>📈 評価スコアを自動で数値化・グラフ化</li>
+                <li>✅ 計画（次回メニュー）まで自動提案</li>
+              </ul>
+            </div>
+          </div>
+          <div class="ai-input">
+            <label>現場の一言メモ（このまま入力でOK・敬語不要）</label>
+            <textarea id="aiNote">田中さん、今日は平行棒なしで5メートル歩けた。先週より膝の曲がりが良い。本人もうれしそう。痛みはなし。次は階段の昇降を少しやってみたい。</textarea>
+          </div>
+          <div class="gen-out" id="genOut">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ AIが生成した記録・評価</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const COLORS=['#2f6df0','#16b877','#e3941f','#7c5cf0','#0ea5b7','#e24a4a','#1f57cf','#11a98c'];
+const USERS=[
+  {id:'U001',name:'田中 静子',age:78,sex:'女',care:'要介護2',dx:'脳梗塞後 右片麻痺',staff:'山田 PT',improve:24,status:'ongoing'},
+  {id:'U002',name:'佐々木 正一',age:82,sex:'男',care:'要介護3',dx:'大腿骨頸部骨折 術後',staff:'鈴木 OT',improve:31,status:'ongoing'},
+  {id:'U003',name:'渡辺 ハル',age:85,sex:'女',care:'要介護1',dx:'変形性膝関節症',staff:'山田 PT',improve:18,status:'ongoing'},
+  {id:'U004',name:'小林 健太郎',age:71,sex:'男',care:'要支援2',dx:'パーキンソン病',staff:'高橋 PT',improve:9,status:'review'},
+  {id:'U005',name:'加藤 文子',age:88,sex:'女',care:'要介護4',dx:'廃用症候群',staff:'鈴木 OT',improve:5,status:'alert'},
+  {id:'U006',name:'伊藤 茂',age:76,sex:'男',care:'要介護2',dx:'脊柱管狭窄症 術後',staff:'高橋 PT',improve:27,status:'ongoing'},
+  {id:'U007',name:'中村 久美',age:80,sex:'女',care:'要介護1',dx:'関節リウマチ',staff:'山田 PT',improve:14,status:'review'},
+  {id:'U008',name:'山口 武',age:90,sex:'男',care:'要介護3',dx:'脳出血後 左片麻痺',staff:'鈴木 OT',improve:21,status:'ongoing'},
+  {id:'U009',name:'松本 千代',age:74,sex:'女',care:'要支援1',dx:'腰部脊柱管狭窄症',staff:'高橋 PT',improve:33,status:'done'},
+  {id:'U010',name:'井上 義男',age:83,sex:'男',care:'要介護2',dx:'糖尿病性末梢神経障害',staff:'山田 PT',improve:12,status:'ongoing'},
+];
+const MENUS=[
+  {n:'歩行訓練（平行棒）',min:20,note:'転倒に注意。手すりの位置を確認。'},
+  {n:'関節可動域訓練（ROM）',min:15,note:'痛みのない範囲でゆっくり。'},
+  {n:'筋力増強訓練（下肢）',min:20,note:'呼吸を止めない。負荷は段階的に。'},
+  {n:'バランス訓練',min:15,note:'監視下で実施。ふらつき注意。'},
+  {n:'起立・着座訓練',min:15,note:'立ち上がり時の血圧低下に注意。'},
+  {n:'階段昇降訓練',min:20,note:'手すり使用。1段ずつ確実に。'},
+  {n:'ADL訓練（更衣・整容）',min:25,note:'できる動作は自立を促す。'},
+  {n:'物理療法（温熱）',min:15,note:'低温やけどに注意。'},
+  {n:'嚥下・口腔機能訓練',min:15,note:'むせ込みに注意。誤嚥予防。'},
+];
+const STATUSES=['ongoing','ongoing','done','review','alert'];
+const TODAY=new Date();
+
+/* seed records */
+let SEED=2026;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+let records=[];
+(function seed(){
+  for(let i=0;i<40;i++){
+    const u=pick(USERS);const m=pick(MENUS);
+    const back=Math.floor(rnd()*42);
+    const d=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-back);
+    const rate=2+Math.floor(rnd()*4); // 2..5
+    let stt; if(rate>=4)stt='done'; else if(rate<=2)stt='review'; else stt='ongoing';
+    records.push({no:'REC-'+(70000+i+1),uid:u.id,user:u.name,menu:m.n,min:m.min+Math.floor(rnd()*10),
+      load:(8+Math.floor(rnd()*8))+'回×'+(2+Math.floor(rnd()*2))+'セット',rate,staff:u.staff,date:d,status:stt});
+  }
+})();
+
+/* goals */
+const GOALS=[
+  {uid:'U001',title:'屋内を伝い歩きで自立移動',progress:72,start:'開始時：車椅子全介助',now:'現在：手すりで10m歩行',who:'山田 PT',state:'progress'},
+  {uid:'U002',title:'トイレ動作の自立',progress:88,start:'開始時：2人介助',now:'現在：見守りで可能',who:'鈴木 OT',state:'progress'},
+  {uid:'U003',title:'階段昇降（手すりあり）',progress:54,start:'開始時：昇降不可',now:'現在：5段を介助で',who:'山田 PT',state:'progress'},
+  {uid:'U004',title:'すり足歩行の改善',progress:38,start:'開始時：歩行器全介助',now:'現在：歩行器で見守り',who:'高橋 PT',state:'delayed'},
+  {uid:'U006',title:'屋外歩行 100mの達成',progress:95,start:'開始時：屋内のみ',now:'現在：屋外80m連続',who:'高橋 PT',state:'progress'},
+  {uid:'U009',title:'復職に向けた持久力向上',progress:100,start:'開始時：30分で疲労',now:'現在：目標達成・卒業',who:'高橋 PT',state:'achieved'},
+];
+
+/* assessment timeseries per user */
+function assessFor(uid){
+  const u=USERS.find(x=>x.id===uid)||USERS[0];
+  const base=20+(u.id.charCodeAt(3)%6)*4;
+  const walkStart=base, walkNow=Math.min(100,base+u.improve+8);
+  const adlStart=base+6, adlNow=Math.min(100,base+6+u.improve+4);
+  // 6 points each
+  const series=(s,e)=>{const a=[];for(let i=0;i<6;i++){a.push(Math.round(s+(e-s)*(i/5)+(rnd()-0.5)*3));}a[0]=s;a[5]=e;return a;};
+  return {
+    walk:series(walkStart,walkNow), adl:series(adlStart,adlNow),
+    rows:[
+      ['歩行・移動能力',walkStart,walkNow],
+      ['ADL（日常生活動作）',adlStart,adlNow],
+      ['下肢筋力（MMT換算）',base-2,Math.min(100,base-2+u.improve+5)],
+      ['バランス能力',base+3,Math.min(100,base+3+u.improve)],
+      ['関節可動域（膝屈曲）',base+8,Math.min(100,base+8+u.improve-2)],
+    ]
+  };
+}
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const fmtD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+const fmtSlash=d=>d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate();
+const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STLABEL={done:'良好',ongoing:'継続中',planned:'予定',alert:'要注意',review:'要再評価',
+  achieved:'達成',progress:'進行中',delayed:'遅れあり'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]||s}</span>`;}
+function avColor(name){let h=0;for(const c of name)h=(h*31+c.charCodeAt(0))>>>0;return COLORS[h%COLORS.length];}
+function avTag(name){return `<span class="av-u" style="background:${avColor(name)}">${esc(name.slice(0,1))}</span>`;}
+function thisWeekIdx(d){return Math.floor((TODAY-d)/(7*864e5));}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','本日のリハビリ実施状況'],users:['利用者一覧','リハビリ利用者ごとの状況を管理します'],
+  records:['訓練記録','メモを入力するとAIが介護記録に整形します'],goals:['目標管理','利用者ごとのリハビリ目標と達成状況'],
+  assess:['評価','機能評価のBefore / Afterと推移'],ai:['AI記録','話した訓練内容から記録を自動で作ります']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='users'||v==='dash'
+    ? '<button class="btn" onclick="go(\'ai\')">⚡ AI記録</button><button class="btn primary" onclick="go(\'records\')">＋ 訓練記録を入力</button>'
+    : v==='records' ? '<button class="btn" onclick="go(\'users\')">利用者一覧</button>' : '';
+  if(v==='dash')renderDash();
+  if(v==='users')renderUsers();
+  if(v==='goals')renderGoals();
+  if(v==='assess')renderAssess();
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const today=records.filter(r=>iso(r.date)===iso(TODAY));
+  const totalSessions=records.length;
+  const achieved=GOALS.filter(g=>g.progress>=100).length;
+  const avgImprove=Math.round(USERS.reduce((s,u)=>s+u.improve,0)/USERS.length);
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','利用者数',USERS.length+'<small>名</small>','介護中 '+USERS.filter(u=>u.status==='ongoing').length+'名','up','安定稼働')}
+    ${kpi('#0ea5b7','今月の実施回数',totalSessions+'<small>回</small>','本日 '+today.length+'回','up','前月比 +8%')}
+    ${kpi('#16b877','目標達成',achieved+'<small>件</small>',GOALS.length+'件中','up','卒業 1名')}
+    ${kpi('#e3941f','平均改善度','+'+avgImprove+'<small>pt</small>','直近30日','up','改善傾向')}`;
+  // weekly sessions
+  const weeks=[];for(let k=5;k>=0;k--){weeks.push(k);}
+  const counts=weeks.map(k=>records.filter(r=>thisWeekIdx(r.date)===k).length);
+  const mx=Math.max(...counts,1);
+  $('trendBars').innerHTML=weeks.map((k,i)=>`
+    <div class="bar-row"><span class="mlabel">${k===0?'今週':k+'週前'}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(counts[i]/mx*100)}"></div></div>
+      <span class="mval">${counts[i]}回</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // improvement bars (top 6)
+  const top=[...USERS].sort((a,b)=>b.improve-a.improve).slice(0,6);
+  const imx=Math.max(...top.map(u=>u.improve),1);
+  $('improveBars').innerHTML=top.map(u=>`
+    <div class="bar-row"><span class="mlabel" style="font-size:11.5px">${esc(u.name.split(' ')[0])}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0;background:linear-gradient(90deg,var(--green),var(--sky))" data-w="${Math.round(u.improve/imx*100)}"></div></div>
+      <span class="mval">+${u.improve}pt</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#improveBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),120);
+  // activity
+  const acts=[
+    {i:'⚡',c:'#e6f8f0',t:'AI記録で 田中 静子 様のSOAP記録を自動作成',m:'5分前'},
+    {i:'🎯',c:'#e6f8f0',t:'松本 千代 様が目標「持久力向上」を達成・卒業',m:'1時間前'},
+    {i:'📝',c:'#eaf1ff',t:'佐々木 正一 様の歩行訓練を記録（20分）',m:'今日 10:20'},
+    {i:'⚠️',c:'#fdeaea',t:'加藤 文子 様の改善度が停滞・再評価を推奨',m:'今日 9:05'},
+    {i:'📈',c:'#eaf1ff',t:'伊藤 茂 様のADLスコアが +27pt 改善',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${a.t}</div><div class="am">${a.m}</div></div></div>`).join('');
+  // today schedule
+  const sched=[
+    {t:'09:30',u:'田中 静子',m:'歩行訓練（平行棒）',s:'山田 PT'},
+    {t:'10:15',u:'佐々木 正一',m:'起立・着座訓練',s:'鈴木 OT'},
+    {t:'11:00',u:'渡辺 ハル',m:'関節可動域訓練（ROM）',s:'山田 PT'},
+    {t:'13:30',u:'伊藤 茂',m:'階段昇降訓練',s:'高橋 PT'},
+    {t:'14:15',u:'加藤 文子',m:'バランス訓練',s:'鈴木 OT'},
+  ];
+  $('todaySched').innerHTML=sched.map(s=>`<div class="act">
+    <div class="ai mono" style="background:var(--brand-soft);color:var(--brand);font-size:11px;font-weight:700">${s.t}</div>
+    <div style="flex:1"><div class="at">${esc(s.u)} 様 ・ ${esc(s.m)}</div><div class="am">担当：${esc(s.s)}</div></div>
+    ${avTag(s.u)}</div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ USERS ============ */
+let careFilter='all';
+function renderCareChips(){
+  const opts=[['all','すべて'],['ongoing','継続中'],['review','要再評価'],['alert','要注意'],['done','良好']];
+  $('careChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===careFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('careChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{careFilter=c.dataset.s;renderCareChips();renderUsers();});
+}
+function renderUsers(){
+  const q=($('uq').value||'').toLowerCase();
+  let rows=USERS.filter(u=>careFilter==='all'||u.status===careFilter)
+    .filter(u=>!q||(u.name+u.staff+u.care+u.dx).toLowerCase().includes(q));
+  $('userRows').innerHTML=rows.length?rows.map(u=>`<tr onclick="openUser('${u.id}')">
+    <td><div class="u-cell">${avTag(u.name)}<div><b>${esc(u.name)}</b><div style="font-size:11px;color:var(--ink-3)" class="mono">${esc(u.id)}</div></div></div></td>
+    <td style="color:var(--ink-2)">${u.age}歳 / ${esc(u.sex)}</td>
+    <td><span class="tag-pill">${esc(u.care)}</span></td>
+    <td style="color:var(--ink-2)">${esc(u.dx)}</td>
+    <td style="color:var(--ink-2)">${esc(u.staff)}</td>
+    <td class="r tnum"><b style="color:var(--green)">+${u.improve}pt</b></td>
+    <td>${stBadge(u.status)}</td></tr>`).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する利用者がいません</td></tr>';
+}
+$('uq').addEventListener('input',renderUsers);
+window.openUser=id=>{const u=USERS.find(x=>x.id===id);if(!u)return;$('aUser').value=id;go('assess');renderAssess();};
+
+/* ============ GOALS ============ */
+function renderGoals(){
+  const achieved=GOALS.filter(g=>g.progress>=100).length;
+  const avg=Math.round(GOALS.reduce((s,g)=>s+g.progress,0)/GOALS.length);
+  const delayed=GOALS.filter(g=>g.state==='delayed').length;
+  $('goalKpis').innerHTML=`
+    ${kpi('#16b877','達成済み',achieved+'<small>件</small>',GOALS.length+'件中','up','卒業実績')}
+    ${kpi('#2f6df0','平均達成率',avg+'<small>%</small>','','up','順調')}
+    ${kpi('#e3941f','遅れあり',delayed+'<small>件</small>','要見直し','warn','計画調整')}
+    ${kpi('#7c5cf0','進行中',GOALS.filter(g=>g.state==='progress').length+'<small>件</small>','','up','継続支援')}`;
+  $('goalList').innerHTML=GOALS.map((g,idx)=>{
+    const u=USERS.find(x=>x.id===g.uid);
+    return `<div class="goal">
+      <div class="gt">${avTag(u?u.name:'—')}<b>${esc(u?u.name:'')} 様</b>${stBadge(g.state)}<span class="who">担当：${esc(g.who)}</span></div>
+      <div style="font-size:13.5px;font-weight:700;margin-bottom:2px">🎯 ${esc(g.title)}</div>
+      <div class="gbar"><i data-w="${g.progress}"></i></div>
+      <div class="gm"><span>${esc(g.start)} → ${esc(g.now)}</span><b class="tnum">${g.progress}%</b></div>
+    </div>`;
+  }).join('');
+  setTimeout(()=>document.querySelectorAll('#goalList .gbar i').forEach(b=>b.style.width=b.dataset.w+'%'),80);
+}
+
+/* ============ ASSESS ============ */
+function renderAssessSelect(){$('aUser').innerHTML=USERS.map(u=>`<option value="${u.id}">${esc(u.name)} 様（${esc(u.care)}・${esc(u.dx)}）</option>`).join('');}
+function lineChart(data,color){
+  const W=300,H=120,pad=18,n=data.length;
+  const max=Math.max(...data,...data,100),min=Math.min(...data,0);
+  const sx=i=>pad+(W-pad*2)*(i/(n-1));
+  const sy=v=>H-pad-(H-pad*2)*((v-min)/(max-min||1));
+  // baseline (start value flat) for comparison
+  const baseY=sy(data[0]);
+  let path='';data.forEach((v,i)=>{path+=(i?'L':'M')+sx(i).toFixed(1)+' '+sy(v).toFixed(1)+' ';});
+  let area=`M ${pad} ${H-pad} `;data.forEach((v,i)=>{area+='L'+sx(i).toFixed(1)+' '+sy(v).toFixed(1)+' ';});area+=`L ${W-pad} ${H-pad} Z`;
+  let dots='';data.forEach((v,i)=>{dots+=`<circle cx="${sx(i).toFixed(1)}" cy="${sy(v).toFixed(1)}" r="3.2" fill="#fff" stroke="${color}" stroke-width="2"/>`;});
+  const gid='g'+Math.floor(rnd()*1e6);
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none">
+    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${color}" stop-opacity=".22"/><stop offset="1" stop-color="${color}" stop-opacity="0"/></linearGradient></defs>
+    <line x1="${pad}" y1="${baseY.toFixed(1)}" x2="${W-pad}" y2="${baseY.toFixed(1)}" stroke="#cfd6e4" stroke-width="1" stroke-dasharray="4 4"/>
+    <path d="${area}" fill="url(#${gid})"/>
+    <path d="${path}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    ${dots}
+    <text x="${pad}" y="${(baseY-6).toFixed(1)}" font-size="10" fill="#8a94a6">開始 ${data[0]}</text>
+    <text x="${W-pad}" y="${(sy(data[n-1])-8).toFixed(1)}" font-size="11" fill="${color}" text-anchor="end" font-weight="700">現在 ${data[n-1]}</text>
+  </svg>`;
+}
+function renderAssess(){
+  const uid=$('aUser').value||USERS[0].id;
+  const u=USERS.find(x=>x.id===uid)||USERS[0];
+  const a=assessFor(uid);
+  $('aTitle').textContent=u.name+' 様 ｜ 機能評価の推移（Before / After）';
+  $('chartWalk').innerHTML=lineChart(a.walk,'#2f6df0');
+  $('chartAdl').innerHTML=lineChart(a.adl,'#16b877');
+  $('assessRows').innerHTML=a.rows.map(([label,s,e])=>{
+    const diff=e-s;const judge=diff>=15?'achieved':diff>=5?'progress':diff>=0?'review':'delayed';
+    const jl=diff>=15?'大幅改善':diff>=5?'改善':diff>=0?'横ばい':'低下';
+    return `<tr><td><b>${esc(label)}</b></td><td class="r tnum" style="color:var(--ink-3)">${s}</td>
+      <td class="r tnum"><b>${e}</b></td>
+      <td class="r tnum"><b style="color:${diff>=0?'var(--green)':'var(--red)'}">${diff>=0?'+':''}${diff}pt</b></td>
+      <td><span class="st ${judge}">${jl}</span></td></tr>`;
+  }).join('');
+}
+$('aUser').addEventListener('change',renderAssess);
+
+/* ============ RECORDS (CREATE) ============ */
+let rRate=3;
+function renderRUserSelect(){$('rUser').innerHTML='<option value="">選択してください</option>'+USERS.map(u=>`<option value="${u.id}">${esc(u.name)} 様（${esc(u.care)}）</option>`).join('');}
+function renderRMenuSelect(){$('rMenu').innerHTML='<option value="">選択してください</option>'+MENUS.map(m=>`<option value="${esc(m.n)}">${esc(m.n)}</option>`).join('');}
+function buildSOAP(){
+  const u=USERS.find(x=>x.id===$('rUser').value);
+  const menu=$('rMenu').value;const note=$('rNote').value.trim();const load=$('rLoad').value.trim();const min=$('rMin').value;
+  const rateWord={1:'強い疲労・拒否あり',2:'やや疲労',3:'良好',4:'意欲的',5:'非常に意欲的'}[rRate]||'良好';
+  return {
+    S: note ? note : (u?`「${u.name.split(' ')[0]}」様より特記事項の訴えなし。`:'本人の訴え：—'),
+    O: menu ? `${menu}を実施（${min}分${load?'・'+load:''}）。バイタル安定、表情・反応は「${rateWord}」。`:'実施内容：—',
+    A: menu ? `前回比で動作の安定性が向上。状態評価は5段階で「${rRate}」。リスク管理上の問題は認めず、目標到達に向け順調。`:'評価：—',
+    P: menu ? `次回は同メニューを継続し、負荷を段階的に増加。階段昇降など応用動作へ移行を検討。`:'計画：—'
+  };
+}
+function renderRPaper(){
+  const u=USERS.find(x=>x.id===$('rUser').value);
+  $('rPat').textContent=(u?u.name:'')+'　様';
+  const menu=$('rMenu').value;const min=$('rMin').value||0;const load=$('rLoad').value.trim();
+  $('rMenuLine').textContent='訓練メニュー：'+(menu||'—');
+  $('rPStaff').textContent=$('rStaff').value||'—';
+  $('rPDate').textContent=$('rDate').value? fmtDL(new Date($('rDate').value)) : '—';
+  $('rMeasure').innerHTML = menu ? `
+    <div class="m">実施時間<b>${esc(String(min))}分</b></div>
+    ${load?`<div class="m">負荷<b style="font-size:12.5px">${esc(load)}</b></div>`:''}
+    <div class="m">状態評価<b>${rRate} / 5</b></div>` : '';
+  const s=buildSOAP();
+  $('soapS').textContent=s.S;$('soapO').textContent=s.O;$('soapA').textContent=s.A;$('soapP').textContent=s.P;
+}
+$('rUser').addEventListener('change',renderRPaper);
+$('rMenu').addEventListener('change',()=>{
+  const m=MENUS.find(x=>x.n===$('rMenu').value);
+  if(m){$('rMin').value=m.min;$('rAiHint').classList.add('show');setTimeout(()=>$('rAiHint').classList.remove('show'),2200);}
+  renderRPaper();
+});
+['rMin','rLoad','rNote','rStaff','rDate'].forEach(id=>$(id).addEventListener('input',renderRPaper));
+$('rRate').querySelectorAll('.rb').forEach(b=>b.onclick=()=>{
+  rRate=+b.dataset.r;$('rRate').querySelectorAll('.rb').forEach(x=>x.classList.toggle('on',x===b));renderRPaper();
+});
+$('rSample').addEventListener('click',()=>{
+  $('rUser').value='U001';$('rStaff').value='山田 PT';$('rDate').value=iso(TODAY);
+  $('rMenu').value='歩行訓練（平行棒）';$('rMin').value=20;$('rLoad').value='往復5回';
+  $('rNote').value='右膝の屈曲がスムーズになり、平行棒なしで5m歩行できた。痛みの訴えなし。本人も意欲的。';
+  rRate=4;$('rRate').querySelectorAll('.rb').forEach(x=>x.classList.toggle('on',+x.dataset.r===4));
+  renderRPaper();
+});
+$('rSave').addEventListener('click',async()=>{
+  if(!$('rUser').value||!$('rMenu').value){showToast('利用者と訓練メニューを入力してください');return;}
+  const btn=$('rSave');btn.textContent='⚡ AIが記録を整形中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,850));
+  const u=USERS.find(x=>x.id===$('rUser').value);
+  const no='REC-'+(70000+records.length+1);
+  $('rNo').textContent=no;
+  const d=$('rDate').value?new Date($('rDate').value):new Date();
+  records.push({no,uid:u.id,user:u.name,menu:$('rMenu').value,min:+$('rMin').value||0,
+    load:$('rLoad').value||'—',rate:rRate,staff:$('rStaff').value||u.staff,date:d,
+    status:rRate>=4?'done':rRate<=2?'review':'ongoing'});
+  // small improvement bump
+  u.improve+=1;
+  btn.textContent='⚡ AIで記録を仕上げて保存';btn.disabled=false;
+  renderRPaper();
+  showToast('記録 '+no+' をSOAP形式で保存しました');
+});
+
+/* ============ AI RECORD ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const note=$('aiNote').value.trim();
+  if(!note){showToast('現場のメモを入力してください');return;}
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 生成中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,7);},120);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);$('baAfterT').textContent='6秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // detect user name from note (simple), default 田中
+  let who='田中 静子';for(const u of USERS){if(note.includes(u.name.split(' ')[0])){who=u.name;break;}}
+  const items=[
+    {ck:'#2f6df0',k:'S',t:'S（主観的情報）',c:'「先週より膝の曲がりが良い」と本人より良好な反応。喜びの表出あり。痛みの訴えなし。'},
+    {ck:'#0ea5b7',k:'O',t:'O（客観的情報）',c:'平行棒なしで5m連続歩行が可能となった。右膝関節可動域に改善傾向。バイタル安定。'},
+    {ck:'#7c5cf0',k:'A',t:'A（評価・考察）',c:'歩行能力・下肢筋力ともに前回比で改善。応用動作への移行が可能なレベルに到達。'},
+    {ck:'#16b877',k:'P',t:'P（計画）',c:'次回より階段昇降訓練を段階的に導入。歩行距離の延長を継続して評価する。'},
+    {ck:'#e3941f',k:'📈',t:'評価スコア（自動採点）',c:'歩行・移動能力 +8pt / ADL +5pt を自動記録。グラフに反映済み。'},
+  ];
+  $('genItems').innerHTML=`<div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--ink-2)">対象：<b>${esc(who)} 様</b> ／ AIがSOAP記録と評価を自動生成しました</div>`
+    + items.map((it,i)=>`<div class="gen-item" data-i="${i}">
+      <span class="ck" style="background:${it.ck}">${esc(it.k)}</span>
+      <div style="flex:1"><div style="font-size:11px;font-weight:800;color:var(--ink-3)">${esc(it.t)}</div>
+      <div style="font-size:12.5px;color:#1a2233;line-height:1.7">${esc(it.c)}</div></div></div>`).join('');
+  $('genOut').classList.add('show');
+  const els=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<els.length;i++){await new Promise(r=>setTimeout(r,200));els[i].classList.add('in');}
+  // reflect improvement
+  const tu=USERS.find(x=>x.name===who);if(tu)tu.improve+=2;
+  records.push({no:'REC-'+(70000+records.length+1),uid:tu?tu.id:'U001',user:who,menu:'歩行訓練（平行棒）',min:20,
+    load:'5m歩行',rate:4,staff:tu?tu.staff:'山田 PT',date:new Date(),status:'done'});
+  btn.disabled=false;btn.textContent='⚡ もう一度生成';
+  showToast(who+' 様のSOAP記録を自動生成し保存しました');
+});
+
+/* ============ INIT ============ */
+renderRUserSelect();renderRMenuSelect();
+$('rDate').value=iso(TODAY);
+renderRPaper();
+renderCareChips();
+renderAssessSelect();
+renderDash();
+$('navReview').textContent=USERS.filter(u=>u.status==='review'||u.status==='alert').length;
+</script>
+</body>
+</html>

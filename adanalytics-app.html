@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜広告効果分析マシン（広告ROI最適化システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#7b3ff0;--brand-dk:#5f23cf;--brand-soft:#f1eaff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--pink:#ec4899;
+  --sb:#160f30;--sb-2:#1c163c;--sb-ink:#c8c4e0;--sb-ink-2:#8a83a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#a78bfa,#ec4899,#fbbf24,#a78bfa);
+  display:grid;place-items:center;color:#fff;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(123,63,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:90px 1fr 92px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600;display:flex;align-items:center;gap:6px}
+.bar-row .mlabel .md{width:9px;height:9px;border-radius:3px;flex-shrink:0}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--pink));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* line/area trend (simple svg) */
+.trend-wrap{position:relative}
+.trend-svg{width:100%;height:170px;display:block}
+.legend{display:flex;gap:16px;font-size:11.5px;color:var(--ink-2);font-weight:600;margin-top:6px;flex-wrap:wrap}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+
+/* donut */
+.donut-wrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.donut-legend{display:flex;flex-direction:column;gap:9px;font-size:12.5px;flex:1;min-width:150px}
+.donut-legend .dl{display:flex;align-items:center;gap:9px}
+.donut-legend .dl i{width:11px;height:11px;border-radius:3px}
+.donut-legend .dl .n{font-weight:600;color:var(--ink-2)}
+.donut-legend .dl .p{margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.mbadge{display:inline-flex;align-items:center;gap:6px;font-weight:700}
+.mbadge .md{width:9px;height:9px;border-radius:3px;flex-shrink:0}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.good{background:var(--green-soft);color:var(--green)}
+.st.mid{background:var(--brand-soft);color:var(--brand)}
+.st.low{background:var(--amber-soft);color:var(--amber)}
+.st.bad{background:var(--red-soft);color:var(--red)}
+.roas-bar{height:6px;border-radius:99px;background:var(--soft);overflow:hidden;width:80px;display:inline-block;vertical-align:middle;margin-left:8px}
+.roas-bar i{display:block;height:100%;border-radius:99px}
+
+/* form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--brand)}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* alloc table (before/after) */
+.alloc{width:100%;border-collapse:collapse;font-size:12.5px}
+.alloc th{background:var(--soft);font-size:11px;color:var(--ink-2);font-weight:700;text-align:left;padding:10px 12px}
+.alloc th.r,.alloc td.r{text-align:right}
+.alloc td{padding:11px 12px;border-top:1px solid var(--line)}
+.alloc .delta{font-weight:800;font-size:11.5px}
+.alloc .delta.up{color:var(--green)}.alloc .delta.down{color:var(--red)}.alloc .delta.flat{color:var(--ink-3)}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+.gen-item .rec{flex:1}
+.gen-item .rec b{display:block;font-size:13px}
+.gen-item .rec span{font-size:11px;color:var(--ink-3)}
+.gen-item .amt{font-weight:800;font-variant-numeric:tabular-nums;text-align:right}
+.gen-item .amt small{display:block;font-size:10.5px;font-weight:600}
+.gen-item .amt .up{color:var(--green)}.gen-item .amt .down{color:var(--red)}
+
+/* summary box */
+.sumbox{margin-top:16px;padding:16px 18px;border-radius:12px;background:linear-gradient(180deg,var(--brand-soft),#faf7ff);border:1px solid #e3d6ff;display:none}
+.sumbox.show{display:block;animation:fade .4s}
+.sumbox .st-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:6px}
+@media(max-width:620px){.sumbox .st-grid{grid-template-columns:1fr}}
+.sumbox .sx{background:#fff;border:1px solid #e3d6ff;border-radius:10px;padding:12px 14px}
+.sumbox .sx .l{font-size:11px;color:var(--ink-3);font-weight:700}
+.sumbox .sx .v{font-size:20px;font-weight:900;margin-top:3px}
+.sumbox .sx .v.g{color:var(--green)}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#a78bfa,#ec4899);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(123,63,240,.4)}50%{box-shadow:0 0 40px rgba(236,72,153,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.cv-funnel{display:flex;flex-direction:column;gap:8px}
+.funnel-row{display:flex;align-items:center;gap:12px;font-size:12.5px}
+.funnel-bar{height:34px;border-radius:8px;display:flex;align-items:center;padding:0 14px;color:#fff;font-weight:800;min-width:60px;transition:width .9s cubic-bezier(.2,.8,.3,1)}
+.funnel-row .fl{width:120px;color:var(--ink-2);font-weight:600;flex-shrink:0}
+.funnel-row .fr{margin-left:auto;font-weight:700;color:var(--ink-3);font-size:11.5px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">広告効果分析マシン<small>技マシン｜広告ROI最適化</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="media"><span class="i">📡</span>媒体別</a>
+      <a data-v="camp"><span class="i">🎯</span>キャンペーン</a>
+      <a data-v="cv"><span class="i">🔀</span>CV分析</a>
+      <a data-v="budget"><span class="i">💰</span>予算配分</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI最適化<span class="badge">NEW</span></a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。数値・媒体はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">2026年5月の広告効果</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div>
+            <div class="panel">
+              <div class="ph"><h3>広告費とCVの推移</h3><span class="more">過去6ヶ月</span></div>
+              <div class="pb">
+                <div class="trend-wrap"><svg class="trend-svg" id="trendSvg" viewBox="0 0 600 170" preserveAspectRatio="none"></svg></div>
+                <div class="legend">
+                  <span><i style="background:var(--brand)"></i>広告費（千円）</span>
+                  <span><i style="background:var(--green)"></i>CV数（件）</span>
+                </div>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="ph"><h3>媒体別のROAS</h3><span class="more">今月</span></div>
+              <div class="pb"><div class="bars" id="mediaBars"></div></div>
+            </div>
+          </div>
+          <div>
+            <div class="panel">
+              <div class="ph"><h3>広告費の内訳</h3></div>
+              <div class="pb">
+                <div class="donut-wrap">
+                  <svg width="140" height="140" viewBox="0 0 140 140" id="donut"></svg>
+                  <div class="donut-legend" id="donutLegend"></div>
+                </div>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="ph"><h3>最近のアクティビティ</h3></div>
+              <div class="pb"><div class="acts" id="acts"></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MEDIA -->
+      <section class="view" id="v-media">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="qMedia" placeholder="媒体名で検索"></div>
+          <div class="chips" id="mediaChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>媒体</th><th class="r">広告費</th><th class="r">表示回数</th><th class="r">クリック</th><th class="r">CV数</th><th class="r">CPA</th><th class="r">ROAS</th><th>評価</th></tr></thead>
+          <tbody id="mediaRows"></tbody>
+        </table>
+      </section>
+
+      <!-- CAMPAIGNS -->
+      <section class="view" id="v-camp">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="qCamp" placeholder="キャンペーン名・媒体で検索"></div>
+          <div class="chips" id="campChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>キャンペーン</th><th>媒体</th><th class="r">広告費</th><th class="r">CV数</th><th class="r">CPA</th><th class="r">ROAS</th><th>状態</th></tr></thead>
+          <tbody id="campRows"></tbody>
+        </table>
+      </section>
+
+      <!-- CV ANALYSIS -->
+      <section class="view" id="v-cv">
+        <div class="kpis" id="cvKpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>コンバージョン・ファネル</h3><span class="more">今月</span></div>
+            <div class="pb"><div class="cv-funnel" id="cvFunnel"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>媒体別のCV内訳</h3></div>
+            <div class="pb"><div class="bars" id="cvBars"></div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="ph"><h3>CVに繋がった経路（直近）</h3></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>日時</th><th>媒体</th><th>キャンペーン</th><th>コンバージョン</th><th class="r">推定売上</th></tr></thead>
+              <tbody id="cvRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- BUDGET -->
+      <section class="view" id="v-budget">
+        <div class="create-grid">
+          <div class="formcard">
+            <div style="font-size:14px;font-weight:800;margin-bottom:12px">予算シミュレーション</div>
+            <div class="fg"><label>月間 総広告予算</label><input id="bTotal" type="number" min="0" step="10000" value="1000000"></div>
+            <div class="fg"><label>目標 ROAS（％）</label><input id="bTarget" type="number" min="0" step="10" value="400"></div>
+            <div class="fg"><label>配分の方針</label>
+              <select id="bPolicy">
+                <option value="roas">ROASの高い媒体を優先</option>
+                <option value="cv">CV数の多い媒体を優先</option>
+                <option value="even">均等に配分</option>
+              </select></div>
+            <button class="btn primary" id="bRun" style="width:100%;justify-content:center;margin-top:6px">⚡ AIで配分を計算</button>
+            <div class="aihint" id="bHint">✨ AIが各媒体の費用対効果から最適配分を計算しました</div>
+          </div>
+          <div class="panel" style="margin:0">
+            <div class="ph"><h3>媒体別 予算配分（Before → After）</h3><span class="more" id="bSumLbl">未計算</span></div>
+            <div class="pb" style="padding:0">
+              <table class="alloc">
+                <thead><tr><th>媒体</th><th class="r">現状予算</th><th class="r">推奨予算</th><th class="r">増減</th></tr></thead>
+                <tbody id="allocRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI OPTIMIZE -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div style="flex:1;min-width:200px"><div style="font-size:16px;font-weight:900">広告データからAIが効果分析・予算再配分を提案</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">5媒体・<b>12キャンペーン</b>の実績データをAIが分析し、ムダ打ちを抑えてROASを最大化する配分を提案します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで分析・最適化する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">3時間20分</div>
+              <ul>
+                <li>📥 各媒体の管理画面からCSVを個別ダウンロード</li>
+                <li>📊 Excelに貼ってCPA・ROASを手計算</li>
+                <li>🤔 勘と経験で予算を振り分け（根拠が曖昧）</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 全媒体のデータを自動で取り込み・統合</li>
+                <li>📈 CPA・ROASを自動算出し効率を可視化</li>
+                <li>💡 ROASを最大化する再配分を数値根拠つきで提案</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">💡 AIの予算再配分プラン</div>
+            <div id="genItems"></div>
+          </div>
+          <div class="sumbox" id="sumBox">
+            <div style="font-size:13px;font-weight:800">📈 この再配分で見込める効果</div>
+            <div class="st-grid">
+              <div class="sx"><div class="l">想定ROAS</div><div class="v g" id="sxRoas">—</div></div>
+              <div class="sx"><div class="l">想定CV数（月）</div><div class="v" id="sxCv">—</div></div>
+              <div class="sx"><div class="l">予算は据え置き</div><div class="v" id="sxBudget">—</div></div>
+            </div>
+            <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn green" id="aiApply">✅ この配分を予算プランに反映</button>
+              <button class="btn" onclick="go('budget')">予算配分の画面で確認</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const MEDIA=[
+  {name:'Google検索広告',type:'検索',color:'#4285f4',spend:280000,imp:142000,clicks:5800,cv:142,rev:1380000},
+  {name:'Google ディスプレイ',type:'ディスプレイ',color:'#34a853',spend:120000,imp:980000,clicks:3100,cv:38,rev:312000},
+  {name:'Yahoo!検索広告',type:'検索',color:'#ff0033',spend:160000,imp:88000,clicks:3400,cv:74,rev:622000},
+  {name:'Instagram広告',type:'SNS',color:'#ec4899',spend:140000,imp:520000,clicks:6900,cv:58,rev:498000},
+  {name:'LINE広告',type:'SNS',color:'#06c755',spend:100000,imp:430000,clicks:4200,cv:44,rev:352000},
+];
+const CAMPS=[
+  {name:'5月_医療機関向け_検索',media:'Google検索広告',spend:120000,cv:71,rev:760000,status:'active'},
+  {name:'5月_介護施設_検索',media:'Yahoo!検索広告',spend:90000,cv:42,rev:392000,status:'active'},
+  {name:'青果定期便_リターゲ',media:'Google ディスプレイ',spend:70000,cv:24,rev:198000,status:'active'},
+  {name:'就労支援_認知拡大',media:'Instagram広告',spend:80000,cv:31,rev:262000,status:'active'},
+  {name:'LINE友だち追加_5月',media:'LINE広告',spend:60000,cv:29,rev:241000,status:'active'},
+  {name:'AI自動化_検索_新規',media:'Google検索広告',spend:160000,cv:71,rev:620000,status:'active'},
+  {name:'シャインマスカット予約',media:'Instagram広告',spend:60000,cv:27,rev:236000,status:'active'},
+  {name:'HP制作_資料DL',media:'Yahoo!検索広告',spend:70000,cv:32,rev:230000,status:'active'},
+  {name:'冬季_問い合わせ獲得',media:'Google ディスプレイ',spend:50000,cv:14,rev:114000,status:'paused'},
+  {name:'地域認知_別府エリア',media:'LINE広告',spend:40000,cv:15,rev:111000,status:'active'},
+  {name:'歯科クリニック_検索',media:'Yahoo!検索広告',spend:0,cv:0,rev:0,status:'paused'},
+  {name:'年末キャンペーン_LP',media:'Instagram広告',spend:0,cv:0,rev:0,status:'draft'},
+];
+const TODAY=new Date();
+function ym(d){return (d.getMonth()+1)}
+
+/* deterministic rng */
+let SEED=2026;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+const num=n=>Math.round(n).toLocaleString();
+const fmtDL=d=>(d.getMonth()+1)+'/'+d.getDate();
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function cpa(m){return m.cv>0?Math.round(m.spend/m.cv):0;}
+function roas(m){return m.spend>0?Math.round(m.rev/m.spend*100):0;}
+function roasClass(r){return r>=400?'good':r>=250?'mid':r>=150?'low':'bad';}
+function roasLabel(r){return r>=400?'優秀':r>=250?'良好':r>=150?'要改善':'見直し';}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','2026年'+ym(TODAY)+'月の広告効果'],media:['媒体別','媒体ごとの費用対効果を比較'],
+  camp:['キャンペーン','配信中のキャンペーン実績'],cv:['CV分析','コンバージョンの内訳と経路'],
+  budget:['予算配分','広告予算の配分シミュレーション'],ai:['AI最適化','広告データから効果分析と再配分を提案']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='dash'?'<button class="btn" onclick="go(\'media\')">📡 媒体別を見る</button><button class="btn primary" onclick="go(\'ai\')">⚡ AI最適化</button>'
+    : (v==='media'||v==='camp')?'<button class="btn primary" onclick="go(\'ai\')">⚡ AIで最適化</button>'
+    : v==='budget'?'<button class="btn primary" onclick="go(\'ai\')">⚡ AIで自動計算</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='media')renderMedia();
+  if(v==='camp')renderCamp();
+  if(v==='cv')renderCv();
+  if(v==='budget')renderBudget();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const spend=MEDIA.reduce((s,m)=>s+m.spend,0);
+  const cv=MEDIA.reduce((s,m)=>s+m.cv,0);
+  const rev=MEDIA.reduce((s,m)=>s+m.rev,0);
+  const avgCpa=Math.round(spend/cv);
+  const avgRoas=Math.round(rev/spend*100);
+  $('kpis').innerHTML=`
+    ${kpi('#7b3ff0','今月の広告費',yen(spend),'5媒体','down','前月比 -4%')}
+    ${kpi('#16b877','CV数',num(cv)+'<small>件</small>','','up','前月比 +18%')}
+    ${kpi('#e3941f','CPA（獲得単価）',yen(avgCpa),'目標¥3,000','up','目標内')}
+    ${kpi('#0ea5b7','ROAS（費用対効果）',avgRoas+'<small>%</small>','広告費の'+(avgRoas/100).toFixed(1)+'倍','up','+22pt')}`;
+
+  // trend line svg (spend in 千円, cv)
+  const months=[];for(let k=5;k>=0;k--){months.push(new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1));}
+  const spendSeries=[920,860,1010,780,840,spend/1000].map(Math.round);
+  const cvSeries=[214,238,261,289,302,cv];
+  drawTrend(months,spendSeries,cvSeries);
+
+  // media ROAS bars
+  const mx=Math.max(...MEDIA.map(m=>roas(m)),1);
+  $('mediaBars').innerHTML=MEDIA.map(m=>{const r=roas(m);return `
+    <div class="bar-row"><span class="mlabel"><span class="md" style="background:${m.color}"></span>${esc(m.name)}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0;background:linear-gradient(90deg,${m.color},${m.color}aa)" data-w="${Math.round(r/mx*100)}"></div></div>
+      <span class="mval">${r}%</span></div>`;}).join('');
+  setTimeout(()=>document.querySelectorAll('#mediaBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+
+  // donut (spend share)
+  drawDonut(MEDIA.map(m=>({n:m.name,v:m.spend,c:m.color})),spend);
+
+  const acts=[
+    {i:'⚡',c:'#f1eaff',t:'AI最適化が「Instagram広告→Google検索」へ¥40,000の振替を提案',m:'12分前'},
+    {i:'📈',c:'#e6f8f0',t:'Google検索広告 のROASが 493% に上昇',m:'1時間前'},
+    {i:'🎯',c:'#f1eaff',t:'キャンペーン「AI自動化_検索_新規」のCVが71件に到達',m:'今日 10:20'},
+    {i:'⚠️',c:'#fdeaea',t:'Google ディスプレイ のCPAが目標を超過（要見直し）',m:'今日 9:05'},
+    {i:'⏸️',c:'#fdf3e2',t:'「冬季_問い合わせ獲得」を一時停止しました',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+function drawTrend(months,spend,cv){
+  const W=600,H=170,pad=24;
+  const maxS=Math.max(...spend)*1.15,maxC=Math.max(...cv)*1.2;
+  const x=i=>pad+(W-pad*2)*i/(months.length-1);
+  const yS=v=>H-pad-(H-pad*2)*v/maxS;
+  const yC=v=>H-pad-(H-pad*2)*v/maxC;
+  const lineS=spend.map((v,i)=>`${x(i)},${yS(v)}`).join(' ');
+  const areaS=`${x(0)},${H-pad} `+lineS+` ${x(months.length-1)},${H-pad}`;
+  const lineC=cv.map((v,i)=>`${x(i)},${yC(v)}`).join(' ');
+  let grid='';for(let g=0;g<=3;g++){const yy=pad+(H-pad*2)*g/3;grid+=`<line x1="${pad}" y1="${yy}" x2="${W-pad}" y2="${yy}" stroke="#eef1f7" stroke-width="1"/>`;}
+  const xl=months.map((m,i)=>`<text x="${x(i)}" y="${H-6}" font-size="10" fill="#8a94a6" text-anchor="middle">${m.getMonth()+1}月</text>`).join('');
+  const dotsS=spend.map((v,i)=>`<circle cx="${x(i)}" cy="${yS(v)}" r="3.2" fill="#7b3ff0"/>`).join('');
+  const dotsC=cv.map((v,i)=>`<circle cx="${x(i)}" cy="${yC(v)}" r="3.2" fill="#16b877"/>`).join('');
+  $('trendSvg').innerHTML=`
+    <defs><linearGradient id="gS" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7b3ff0" stop-opacity="0.22"/><stop offset="100%" stop-color="#7b3ff0" stop-opacity="0"/></linearGradient></defs>
+    ${grid}
+    <polygon points="${areaS}" fill="url(#gS)"/>
+    <polyline points="${lineS}" fill="none" stroke="#7b3ff0" stroke-width="2.5" stroke-linejoin="round"/>
+    <polyline points="${lineC}" fill="none" stroke="#16b877" stroke-width="2.5" stroke-dasharray="1 0" stroke-linejoin="round"/>
+    ${dotsS}${dotsC}${xl}`;
+}
+function drawDonut(data,total){
+  const cx=70,cy=70,r=52,sw=20;const C=2*Math.PI*r;let off=0;let segs='';
+  data.forEach(d=>{const frac=d.v/total;const len=C*frac;
+    segs+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${d.c}" stroke-width="${sw}" stroke-dasharray="${len} ${C-len}" stroke-dashoffset="${-off}" transform="rotate(-90 ${cx} ${cy})"/>`;
+    off+=len;});
+  $('donut').innerHTML=segs+`<text x="${cx}" y="${cy-2}" text-anchor="middle" font-size="11" fill="#8a94a6">合計</text>
+    <text x="${cx}" y="${cy+14}" text-anchor="middle" font-size="14" font-weight="900" fill="#1d2733">${yen(total)}</text>`;
+  $('donutLegend').innerHTML=data.map(d=>`<div class="dl"><i style="background:${d.c}"></i><span class="n">${esc(d.n)}</span><span class="p">${Math.round(d.v/total*100)}%</span></div>`).join('');
+}
+
+/* ============ MEDIA ============ */
+let mediaFilter='all',mediaQ='';
+function renderMediaChips(){
+  const opts=[['all','すべて'],['検索','検索'],['ディスプレイ','ディスプレイ'],['SNS','SNS']];
+  $('mediaChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===mediaFilter?'on':''}" data-s="${esc(o[0])}">${esc(o[1])}</button>`).join('');
+  $('mediaChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{mediaFilter=c.dataset.s;renderMediaChips();renderMedia();});
+}
+function renderMedia(){
+  const mxRoas=Math.max(...MEDIA.map(m=>roas(m)),1);
+  const rows=MEDIA.filter(m=>mediaFilter==='all'||m.type===mediaFilter)
+    .filter(m=>!mediaQ||m.name.toLowerCase().includes(mediaQ));
+  $('mediaRows').innerHTML=rows.length?rows.map(m=>{const r=roas(m),c=cpa(m);return `<tr>
+    <td><span class="mbadge"><span class="md" style="background:${m.color}"></span>${esc(m.name)}</span><div style="font-size:11px;color:var(--ink-3);margin-left:15px">${esc(m.type)}</div></td>
+    <td class="r tnum">${yen(m.spend)}</td><td class="r tnum" style="color:var(--ink-2)">${num(m.imp)}</td>
+    <td class="r tnum" style="color:var(--ink-2)">${num(m.clicks)}</td><td class="r tnum"><b>${m.cv}</b></td>
+    <td class="r tnum">${yen(c)}</td>
+    <td class="r tnum"><b>${r}%</b><span class="roas-bar"><i style="width:${Math.round(r/mxRoas*100)}%;background:${m.color}"></i></span></td>
+    <td><span class="st ${roasClass(r)}">${roasLabel(r)}</span></td></tr>`;}).join('')
+    :'<tr><td colspan="8" class="empty-cell">該当する媒体がありません</td></tr>';
+}
+$('qMedia').addEventListener('input',e=>{mediaQ=e.target.value.toLowerCase();renderMedia();});
+
+/* ============ CAMPAIGNS ============ */
+let campFilter='all',campQ='';
+const CSTLABEL={active:'配信中',paused:'停止中',draft:'下書き'};
+function campSt(s){const map={active:'good',paused:'low',draft:'mid'};return `<span class="st ${map[s]}">${CSTLABEL[s]}</span>`;}
+function renderCampChips(){
+  const opts=[['all','すべて'],['active','配信中'],['paused','停止中'],['draft','下書き']];
+  $('campChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===campFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('campChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{campFilter=c.dataset.s;renderCampChips();renderCamp();});
+}
+function renderCamp(){
+  const rows=CAMPS.filter(c=>campFilter==='all'||c.status===campFilter)
+    .filter(c=>!campQ||(c.name+c.media).toLowerCase().includes(campQ))
+    .sort((a,b)=>b.cv-a.cv);
+  const mxR=Math.max(...CAMPS.map(c=>c.spend>0?Math.round(c.rev/c.spend*100):0),1);
+  $('campRows').innerHTML=rows.length?rows.map(c=>{
+    const r=c.spend>0?Math.round(c.rev/c.spend*100):0;const cp=c.cv>0?Math.round(c.spend/c.cv):0;
+    const mc=(MEDIA.find(m=>m.name===c.media)||{}).color||'#999';
+    return `<tr>
+    <td><b>${esc(c.name)}</b></td>
+    <td><span class="mbadge"><span class="md" style="background:${mc}"></span><span style="color:var(--ink-2);font-size:12px">${esc(c.media)}</span></span></td>
+    <td class="r tnum">${yen(c.spend)}</td><td class="r tnum"><b>${c.cv}</b></td>
+    <td class="r tnum">${cp?yen(cp):'—'}</td>
+    <td class="r tnum"><b>${r?r+'%':'—'}</b>${r?`<span class="roas-bar"><i style="width:${Math.round(r/mxR*100)}%;background:${mc}"></i></span>`:''}</td>
+    <td>${campSt(c.status)}</td></tr>`;}).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当するキャンペーンがありません</td></tr>';
+}
+$('qCamp').addEventListener('input',e=>{campQ=e.target.value.toLowerCase();renderCamp();});
+
+/* ============ CV ANALYSIS ============ */
+function renderCv(){
+  const cv=MEDIA.reduce((s,m)=>s+m.cv,0);
+  const clicks=MEDIA.reduce((s,m)=>s+m.clicks,0);
+  const imp=MEDIA.reduce((s,m)=>s+m.imp,0);
+  const rev=MEDIA.reduce((s,m)=>s+m.rev,0);
+  const cvr=(cv/clicks*100);
+  $('cvKpis').innerHTML=`
+    ${kpi('#16b877','総CV数',num(cv)+'<small>件</small>','','up','前月比 +18%')}
+    ${kpi('#0ea5b7','CVR（成約率）',cvr.toFixed(2)+'<small>%</small>','クリックから','up','+0.4pt')}
+    ${kpi('#7b3ff0','クリック数',num(clicks)+'<small>件</small>','','up','順調')}
+    ${kpi('#e3941f','推定売上',yen(rev),'CV経由','up','好調')}`;
+  // funnel
+  const stages=[['表示回数',imp,'#a78bfa'],['クリック',clicks,'#7b3ff0'],['サイト来訪',Math.round(clicks*0.82),'#5f23cf'],['CV（成約）',cv,'#16b877']];
+  const mx=stages[0][1];
+  $('cvFunnel').innerHTML=stages.map((s,i)=>{const w=Math.max(s[1]/mx*100,4);
+    return `<div class="funnel-row"><span class="fl">${s[0]}</span>
+      <div class="funnel-bar" style="width:0;background:${s[2]}" data-w="${w}">${num(s[1])}</div>
+      <span class="fr">${i>0?'転換率 '+(s[1]/stages[i-1][1]*100).toFixed(1)+'%':''}</span></div>`;}).join('');
+  setTimeout(()=>document.querySelectorAll('#cvFunnel .funnel-bar').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // cv by media bars
+  const mxCv=Math.max(...MEDIA.map(m=>m.cv),1);
+  $('cvBars').innerHTML=MEDIA.map(m=>`
+    <div class="bar-row"><span class="mlabel"><span class="md" style="background:${m.color}"></span>${esc(m.name)}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0;background:linear-gradient(90deg,${m.color},${m.color}aa)" data-w="${Math.round(m.cv/mxCv*100)}"></div></div>
+      <span class="mval">${m.cv}件</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#cvBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // recent cv rows
+  const cvs=[
+    {t:'5/30 14:22',media:'Google検索広告',camp:'AI自動化_検索_新規',cvn:'資料ダウンロード',rev:0},
+    {t:'5/30 13:05',media:'Yahoo!検索広告',camp:'5月_介護施設_検索',cvn:'問い合わせフォーム送信',rev:50000},
+    {t:'5/30 11:48',media:'Instagram広告',camp:'シャインマスカット予約',cvn:'商品予約',rev:9800},
+    {t:'5/30 10:31',media:'LINE広告',camp:'LINE友だち追加_5月',cvn:'友だち追加→相談',rev:0},
+    {t:'5/29 18:12',media:'Google検索広告',camp:'5月_医療機関向け_検索',cvn:'無料相談 申込',rev:80000},
+    {t:'5/29 16:40',media:'Google ディスプレイ',camp:'青果定期便_リターゲ',cvn:'定期便 申込',rev:9800},
+  ];
+  $('cvRows').innerHTML=cvs.map(c=>{const mc=(MEDIA.find(m=>m.name===c.media)||{}).color||'#999';return `<tr>
+    <td class="tnum" style="color:var(--ink-2);font-size:12px">${esc(c.t)}</td>
+    <td><span class="mbadge"><span class="md" style="background:${mc}"></span><span style="font-size:12px">${esc(c.media)}</span></span></td>
+    <td style="color:var(--ink-2)">${esc(c.camp)}</td><td><b>${esc(c.cvn)}</b></td>
+    <td class="r tnum">${c.rev?yen(c.rev):'—'}</td></tr>`;}).join('');
+}
+
+/* ============ BUDGET ============ */
+function computeAlloc(total,policy){
+  // weight by policy
+  const weights=MEDIA.map(m=>{
+    if(policy==='even')return 1;
+    if(policy==='cv')return m.cv;
+    return roas(m); // roas
+  });
+  const wsum=weights.reduce((a,b)=>a+b,0);
+  return MEDIA.map((m,i)=>{
+    const rec=Math.round(total*weights[i]/wsum/1000)*1000;
+    return {name:m.name,color:m.color,cur:m.spend,rec};
+  });
+}
+function renderBudget(alloc){
+  const total=+$('bTotal').value||0;
+  const policy=$('bPolicy').value;
+  alloc=alloc||computeAlloc(total,policy);
+  const curSum=MEDIA.reduce((s,m)=>s+m.spend,0);
+  $('bSumLbl').textContent='総額 '+yen(alloc.reduce((s,a)=>s+a.rec,0));
+  $('allocRows').innerHTML=alloc.map(a=>{
+    const d=a.rec-a.cur;const cls=d>0?'up':d<0?'down':'flat';const sign=d>0?'+':'';
+    return `<tr>
+      <td><span class="mbadge"><span class="md" style="background:${a.color}"></span>${esc(a.name)}</span></td>
+      <td class="r tnum" style="color:var(--ink-2)">${yen(a.cur)}</td>
+      <td class="r tnum"><b>${yen(a.rec)}</b></td>
+      <td class="r"><span class="delta ${cls}">${d===0?'±0':sign+yen(d).replace('¥','¥')}</span></td></tr>`;
+  }).join('');
+  return alloc;
+}
+let lastAlloc=null;
+$('bRun').addEventListener('click',async()=>{
+  const btn=$('bRun');btn.textContent='⚡ AIが計算中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,800));
+  lastAlloc=renderBudget();
+  btn.textContent='⚡ AIで配分を計算';btn.disabled=false;
+  $('bHint').classList.add('show');setTimeout(()=>$('bHint').classList.remove('show'),2400);
+  showToast('AIが最適な予算配分を計算しました');
+});
+['bTotal','bTarget','bPolicy'].forEach(id=>$(id).addEventListener('change',()=>{if(lastAlloc)lastAlloc=renderBudget();}));
+
+/* ============ AI OPTIMIZE ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 分析中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  $('genList').classList.remove('show');$('sumBox').classList.remove('show');
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},120);
+  await new Promise(r=>setTimeout(r,1200));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+
+  // AI proposed reallocation: shift budget from low ROAS to high ROAS, keep total constant
+  const total=MEDIA.reduce((s,m)=>s+m.spend,0);
+  const alloc=computeAlloc(total,'roas');
+  const recs=MEDIA.map((m,i)=>{
+    const a=alloc[i];const d=a.rec-m.spend;
+    return {name:m.name,color:m.color,type:m.type,cur:m.spend,rec:a.rec,d,roas:roas(m)};
+  }).sort((a,b)=>b.d-a.d);
+
+  $('genItems').innerHTML=recs.map((r,i)=>{
+    const sign=r.d>0?'+':'';const cls=r.d>0?'up':r.d<0?'down':'';
+    const reason=r.d>0?`ROAS ${r.roas}% と効率が高く、増額で更にCV獲得が見込めます`
+      :r.d<0?`ROAS ${r.roas}% と効率が低め。減額しムダ打ちを抑えます`
+      :'現状維持が最適です';
+    return `<div class="gen-item" data-i="${i}"><span class="ck">✓</span>
+      <div class="rec"><b><span class="md" style="display:inline-block;width:9px;height:9px;border-radius:3px;background:${r.color};margin-right:6px"></span>${esc(r.name)}</b><span>${esc(reason)}</span></div>
+      <div class="amt">${yen(r.rec)}<small><span class="${cls}">${r.d===0?'±0':sign+yen(r.d)}</span></small></div></div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,180));items[i].classList.add('in');}
+
+  // summary: estimate improved roas
+  const curRoas=Math.round(MEDIA.reduce((s,m)=>s+m.rev,0)/total*100);
+  const newRoas=curRoas+38;
+  const curCv=MEDIA.reduce((s,m)=>s+m.cv,0);
+  const newCv=Math.round(curCv*1.16);
+  $('sxRoas').innerHTML=newRoas+'% <small style="font-size:12px;color:#8a94a6">(現状 '+curRoas+'%)</small>';
+  $('sxCv').innerHTML=num(newCv)+'件 <small style="font-size:12px;color:#16b877">+'+(newCv-curCv)+'</small>';
+  $('sxBudget').textContent=yen(total);
+  $('sumBox').classList.add('show');
+  lastAlloc=alloc;
+  btn.disabled=false;btn.textContent='⚡ もう一度分析する';
+  showToast('AIが効果分析と再配分プランを生成しました');
+});
+$('aiApply').addEventListener('click',()=>{
+  if(lastAlloc){renderBudget(lastAlloc);}
+  showToast('再配分プランを予算配分の画面に反映しました');
+  setTimeout(()=>go('budget'),700);
+});
+
+/* ============ INIT ============ */
+renderMediaChips();renderCampChips();renderDash();
+</script>
+</body>
+</html>

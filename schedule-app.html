@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜工程管理マシン（建設工程管理システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:90px 1fr 50px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-fill.warn{background:linear-gradient(90deg,var(--amber),#f3b34c)}
+.bar-fill.red{background:linear-gradient(90deg,var(--red),#f07878)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.done{background:var(--green-soft);color:var(--green)}
+.st.run{background:var(--brand-soft);color:var(--brand)}
+.st.plan{background:var(--soft);color:var(--ink-3)}
+.st.delay{background:var(--red-soft);color:var(--red)}
+.st.risk{background:var(--amber-soft);color:var(--amber)}
+
+/* mini progress bar inside table */
+.pbar{display:flex;align-items:center;gap:8px;min-width:120px}
+.pbar .tr{flex:1;height:7px;border-radius:99px;background:var(--soft);overflow:hidden}
+.pbar .fl{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky))}
+.pbar .fl.done{background:var(--green)}
+.pbar .fl.delay{background:var(--red)}
+.pbar .pc{font-size:11.5px;font-weight:800;width:34px;text-align:right;font-variant-numeric:tabular-nums}
+
+/* ===== GANTT ===== */
+.gantt-wrap{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.gantt-head{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.gantt-head h3{font-size:14.5px;font-weight:800}
+.gantt-legend{margin-left:auto;display:flex;gap:14px;font-size:11.5px;color:var(--ink-2);flex-wrap:wrap}
+.gantt-legend span{display:inline-flex;align-items:center;gap:6px}
+.gantt-legend i{width:12px;height:12px;border-radius:4px;display:inline-block}
+.gantt-scroll{overflow-x:auto}
+.gantt{min-width:760px}
+.g-row{display:grid;grid-template-columns:210px 1fr;border-top:1px solid var(--line)}
+.g-row:first-child{border-top:0}
+.g-row.head{position:sticky;top:0;background:var(--soft);z-index:2}
+.g-name{padding:11px 16px;font-size:12.5px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--line)}
+.g-name b{font-weight:800;font-size:13px}
+.g-name small{color:var(--ink-3);font-size:10.5px}
+.g-track{position:relative;height:48px}
+.g-grid{position:absolute;inset:0;display:flex}
+.g-cell{flex:1;border-right:1px dashed var(--line)}
+.g-cell:last-child{border-right:0}
+.g-month{flex:1;text-align:center;font-size:11px;font-weight:800;color:var(--ink-2);padding:8px 0;border-right:1px solid var(--line)}
+.g-month:last-child{border-right:0}
+.g-bar{position:absolute;top:50%;transform:translateY(-50%);height:24px;border-radius:7px;display:flex;align-items:center;padding:0 9px;
+  font-size:11px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;box-shadow:0 2px 8px rgba(16,24,40,.18);cursor:pointer;transition:filter .15s}
+.g-bar:hover{filter:brightness(1.08)}
+.g-bar.run{background:linear-gradient(90deg,var(--brand),var(--sky))}
+.g-bar.done{background:var(--green)}
+.g-bar.delay{background:linear-gradient(90deg,#e24a4a,#f07878)}
+.g-bar.plan{background:#9aa6bd}
+.g-bar.risk{background:linear-gradient(90deg,var(--amber),#f3b34c)}
+.g-prog{position:absolute;left:0;top:0;height:100%;background:rgba(255,255,255,.28);border-radius:7px 0 0 7px}
+.g-today{position:absolute;top:0;bottom:0;width:2px;background:var(--red);z-index:3}
+.g-today::after{content:"今日";position:absolute;top:-1px;left:3px;font-size:9px;color:var(--red);font-weight:800;white-space:nowrap}
+
+/* create / form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.line-head{display:grid;grid-template-columns:1fr 92px 92px 28px;gap:7px;font-size:11px;color:var(--ink-3);font-weight:700;padding:0 2px 6px}
+.line-row{display:grid;grid-template-columns:1fr 92px 92px 28px;gap:7px;margin-bottom:7px;align-items:center}
+.line-row input{padding:8px 9px;font-size:12.5px;border:1px solid var(--line-2);border-radius:8px;font-family:inherit}
+.line-row .x{border:1px solid var(--line-2);background:var(--red-soft);color:var(--red);border-radius:7px;cursor:pointer;height:30px}
+.addline{width:100%;margin-top:3px;padding:9px;border:1px dashed var(--line-2);background:transparent;border-radius:8px;color:var(--brand);font-weight:700;font-size:12.5px;cursor:pointer}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* worker cards */
+.wgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:1080px){.wgrid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.wgrid{grid-template-columns:1fr}}
+.wcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow)}
+.wcard .wt{display:flex;align-items:center;gap:11px;margin-bottom:12px}
+.wcard .wav{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;font-size:19px;background:var(--brand-soft)}
+.wcard .wt b{font-size:14px;font-weight:800;display:block}
+.wcard .wt small{font-size:11px;color:var(--ink-3)}
+.wcard .wmeta{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2);padding:5px 0;border-top:1px solid var(--line)}
+.wcard .wmeta b{color:var(--ink);font-weight:800}
+.wcard .assign{margin-top:11px;font-size:11.5px;color:var(--ink-3)}
+.wcard .assign b{color:var(--brand);font-weight:800}
+
+/* delay risk row */
+.delaycard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow);margin-bottom:13px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.delaycard .dl-ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:20px;flex-shrink:0}
+.delaycard .dl-main{flex:1;min-width:200px}
+.delaycard .dl-main b{font-size:14px;font-weight:800}
+.delaycard .dl-main .dl-sub{font-size:12px;color:var(--ink-2);margin-top:2px}
+.delaycard .dl-days{text-align:center}
+.delaycard .dl-days .n{font-family:'Orbitron';font-size:24px;font-weight:700}
+.delaycard .dl-days .u{font-size:10.5px;color:var(--ink-3);font-weight:700}
+.delaycard .dl-fix{font-size:12px;color:var(--green);font-weight:700;background:var(--green-soft);padding:8px 12px;border-radius:9px;max-width:280px}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+.gen-item .gdelta{font-size:11px;font-weight:800;color:var(--green);background:var(--green-soft);padding:2px 8px;border-radius:99px}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.sec-title{font-size:13.5px;font-weight:800;margin:4px 0 12px;color:var(--ink-2)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">工程管理マシン<small>技マシン｜建設工程管理</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="gantt"><span class="i">📅</span>工程表</a>
+      <a data-v="prog"><span class="i">📈</span>進捗</a>
+      <a data-v="crew"><span class="i">👷</span>職人手配</a>
+      <a data-v="delay"><span class="i">⚠️</span>遅延管理<span class="badge" id="navDelay">0</span></a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI工程最適化</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 現場監督</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。現場・工程・職人はサンプルデータです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">2026年5月の現場状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>現場ごとの進捗率</h3><span class="more">全現場</span></div>
+            <div class="pb"><div class="bars" id="progBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- GANTT -->
+      <section class="view" id="v-gantt">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="gq" placeholder="現場名・工事種別で検索"></div>
+          <div class="chips" id="ganttChips"></div>
+        </div>
+        <div class="gantt-wrap">
+          <div class="gantt-head">
+            <h3>工程ガントチャート（全現場 / 工種別）</h3>
+            <div class="gantt-legend">
+              <span><i style="background:#9aa6bd"></i>予定</span>
+              <span><i style="background:linear-gradient(90deg,#2f6df0,#0ea5b7)"></i>進行中</span>
+              <span><i style="background:#16b877"></i>完了</span>
+              <span><i style="background:linear-gradient(90deg,#e3941f,#f3b34c)"></i>遅延リスク</span>
+              <span><i style="background:linear-gradient(90deg,#e24a4a,#f07878)"></i>遅延中</span>
+            </div>
+          </div>
+          <div class="gantt-scroll"><div class="gantt" id="gantt"></div></div>
+        </div>
+      </section>
+
+      <!-- PROGRESS -->
+      <section class="view" id="v-prog">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="pq" placeholder="現場名・工種で検索"></div>
+          <div class="chips" id="progChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>現場</th><th>工種</th><th>担当班</th><th>工期</th><th style="min-width:150px">進捗</th><th>状態</th></tr></thead>
+          <tbody id="progRows"></tbody>
+        </table>
+      </section>
+
+      <!-- CREW -->
+      <section class="view" id="v-crew">
+        <div class="kpis" id="crewKpis"></div>
+        <div class="sec-title">班ごとの稼働状況</div>
+        <div class="wgrid" id="crewCards"></div>
+        <div class="sec-title" style="margin-top:24px">新規の職人手配を登録</div>
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>現場</label><select id="aSite"></select></div>
+            <div class="fg"><label>工種</label>
+              <select id="aTask"><option value="">選択してください</option><option>基礎工事</option><option>躯体工事</option><option>鉄筋・型枠</option><option>内装工事</option><option>外装・塗装</option><option>電気設備</option><option>給排水設備</option><option>外構工事</option></select></div>
+            <div class="fg2">
+              <div class="fg"><label>開始日</label><input id="aStart" type="date"></div>
+              <div class="fg"><label>終了日</label><input id="aEnd" type="date"></div>
+            </div>
+            <div class="fg"><label>手配する班</label>
+              <select id="aCrew"></select>
+              <div class="aihint" id="aHint">✨ AIが空いている班と必要人数を提案しました</div></div>
+            <div class="fg"><label>必要人数</label><input id="aNum" type="number" min="1" value="4"></div>
+            <button class="btn primary" id="aSubmit" style="width:100%;justify-content:center">⚡ AIで手配を確定する</button>
+          </div>
+          <div>
+            <div class="panel">
+              <div class="ph"><h3>手配プレビュー</h3></div>
+              <div class="pb">
+                <div class="acts" id="aPreview"><div class="empty-cell">左のフォームを入力すると、ここに手配内容が表示されます。</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- DELAY -->
+      <section class="view" id="v-delay">
+        <div class="kpis" id="delayKpis"></div>
+        <div class="sec-title">⚠️ AIが検知した遅延・遅延リスク</div>
+        <div id="delayCards"></div>
+      </section>
+
+      <!-- AI OPTIMIZE -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">工程データからAIが最適スケジュールを再計算</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">全 <b>6現場・38工程</b> の依存関係・職人の空き・天候予報をAIが分析し、遅延を最小化する工程に組み替えます。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで工程を最適化する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">3時間20分</div>
+              <ul>
+                <li>📋 各現場の工程表を手で突き合わせ</li>
+                <li>📞 職人の空きを電話で1件ずつ確認</li>
+                <li>✏️ 遅延が出るたびに全工程を引き直し</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 依存関係を自動で解析し最短工程を算出</li>
+                <li>👷 職人の空き・スキルから自動で割付</li>
+                <li>🌧️ 天候予報を加味して遅延を事前予測</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:6px">✅ AI最適化の結果（遅延予測 Before → After）</div>
+            <div style="font-size:12px;color:var(--ink-3);margin-bottom:10px" id="genSummary"></div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const TODAY=new Date(2026,4,30); // 2026-05-30
+const CREWS=[
+  {name:'第一班（基礎・躯体）',lead:'佐藤 健一',skill:'基礎・躯体',cap:6,ic:'🏗️'},
+  {name:'第二班（鉄筋・型枠）',lead:'田中 大輔',skill:'鉄筋・型枠',cap:5,ic:'🔩'},
+  {name:'内装チーム',lead:'鈴木 誠',skill:'内装・造作',cap:4,ic:'🪚'},
+  {name:'設備チーム',lead:'高橋 浩二',skill:'電気・給排水',cap:4,ic:'🔌'},
+  {name:'外装・塗装班',lead:'渡辺 隆',skill:'外装・塗装',cap:4,ic:'🎨'},
+  {name:'外構班',lead:'山本 修',skill:'外構・舗装',cap:3,ic:'🚧'},
+];
+// 6 sites, each with task list. day offsets relative to project window (months Apr..Aug = month index 3..7)
+// status: done / run / plan / delay / risk ; prog 0-100
+const SITES=[
+  {name:'大分中央ビル 新築工事',type:'RC造 5階建',site:'大分市都町',pm:'佐藤',
+    tasks:[
+      {t:'基礎工事',crew:'第一班（基礎・躯体）',s:'2026-04-01',e:'2026-04-22',prog:100,st:'done'},
+      {t:'躯体工事',crew:'第一班（基礎・躯体）',s:'2026-04-20',e:'2026-05-28',prog:88,st:'run'},
+      {t:'内装工事',crew:'内装チーム',s:'2026-05-25',e:'2026-06-30',prog:18,st:'run'},
+      {t:'電気設備',crew:'設備チーム',s:'2026-06-10',e:'2026-07-15',prog:0,st:'plan'},
+    ]},
+  {name:'別府温泉リゾート 改修',type:'木造 2階建',site:'別府市北浜',pm:'田中',
+    tasks:[
+      {t:'解体・撤去',crew:'外構班',s:'2026-04-05',e:'2026-04-18',prog:100,st:'done'},
+      {t:'躯体補強',crew:'第二班（鉄筋・型枠）',s:'2026-04-16',e:'2026-05-20',prog:100,st:'done'},
+      {t:'内装工事',crew:'内装チーム',s:'2026-05-18',e:'2026-07-05',prog:42,st:'delay'},
+      {t:'外装・塗装',crew:'外装・塗装班',s:'2026-06-25',e:'2026-07-28',prog:0,st:'plan'},
+    ]},
+  {name:'豊後大野 物流倉庫 建設',type:'S造 平屋',site:'豊後大野市',pm:'鈴木',
+    tasks:[
+      {t:'基礎工事',crew:'第一班（基礎・躯体）',s:'2026-05-08',e:'2026-05-30',prog:72,st:'run'},
+      {t:'鉄骨建方',crew:'第二班（鉄筋・型枠）',s:'2026-05-28',e:'2026-06-22',prog:5,st:'risk'},
+      {t:'屋根・外装',crew:'外装・塗装班',s:'2026-06-20',e:'2026-07-18',prog:0,st:'plan'},
+      {t:'電気設備',crew:'設備チーム',s:'2026-07-01',e:'2026-07-30',prog:0,st:'plan'},
+    ]},
+  {name:'佐伯市 戸建分譲 A棟',type:'木造 2階建',site:'佐伯市鶴谷',pm:'高橋',
+    tasks:[
+      {t:'基礎工事',crew:'第一班（基礎・躯体）',s:'2026-05-12',e:'2026-05-29',prog:95,st:'run'},
+      {t:'躯体・建方',crew:'第二班（鉄筋・型枠）',s:'2026-05-27',e:'2026-06-18',prog:8,st:'run'},
+      {t:'内装造作',crew:'内装チーム',s:'2026-06-15',e:'2026-07-10',prog:0,st:'plan'},
+      {t:'外構工事',crew:'外構班',s:'2026-07-05',e:'2026-07-25',prog:0,st:'plan'},
+    ]},
+  {name:'中津市 医療モール 新築',type:'RC造 3階建',site:'中津市中央',pm:'佐藤',
+    tasks:[
+      {t:'基礎工事',crew:'第一班（基礎・躯体）',s:'2026-04-22',e:'2026-05-18',prog:100,st:'done'},
+      {t:'躯体工事',crew:'第一班（基礎・躯体）',s:'2026-05-15',e:'2026-06-25',prog:30,st:'delay'},
+      {t:'給排水設備',crew:'設備チーム',s:'2026-06-15',e:'2026-07-20',prog:0,st:'plan'},
+      {t:'内装工事',crew:'内装チーム',s:'2026-07-10',e:'2026-08-20',prog:0,st:'plan'},
+    ]},
+  {name:'日田市 店舗リノベ',type:'軽量S造',site:'日田市豆田町',pm:'鈴木',
+    tasks:[
+      {t:'解体・撤去',crew:'外構班',s:'2026-05-02',e:'2026-05-14',prog:100,st:'done'},
+      {t:'内装工事',crew:'内装チーム',s:'2026-05-12',e:'2026-06-10',prog:55,st:'run'},
+      {t:'電気設備',crew:'設備チーム',s:'2026-05-28',e:'2026-06-20',prog:12,st:'risk'},
+      {t:'外装・塗装',crew:'外装・塗装班',s:'2026-06-12',e:'2026-06-30',prog:0,st:'plan'},
+    ]},
+];
+// flatten tasks with site ref
+let TASKS=[];
+SITES.forEach(si=>si.tasks.forEach(t=>TASKS.push(Object.assign({site:si.name,siteType:si.type,pm:si.pm},t))));
+
+/* gantt window: 2026-04-01 .. 2026-08-31 (5 months) */
+const G_START=new Date(2026,3,1), G_END=new Date(2026,7,31);
+const G_DAYS=Math.round((G_END-G_START)/86400000)+1;
+const G_MONTHS=[3,4,5,6,7]; // Apr..Aug month indexes
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pd=s=>{const p=s.split('-');return new Date(+p[0],+p[1]-1,+p[2]);};
+const fmtMD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const dayPos=d=>(d-G_START)/86400000;
+const STLABEL={done:'完了',run:'進行中',plan:'予定',delay:'遅延中',risk:'遅延リスク'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]}</span>`;}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+let SEED=4423;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+
+/* site-level progress */
+function siteProg(si){const a=si.tasks;const sum=a.reduce((s,t)=>s+t.prog,0);return Math.round(sum/a.length);}
+function siteStatus(si){if(si.tasks.some(t=>t.st==='delay'))return 'delay';if(si.tasks.some(t=>t.st==='risk'))return 'risk';if(si.tasks.every(t=>t.st==='done'))return 'done';return 'run';}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','2026年5月の現場状況'],gantt:['工程表','全現場の工程をガントチャートで俯瞰します'],
+  prog:['進捗','工種ごとの進捗を管理します'],crew:['職人手配','班の稼働状況と新規手配'],
+  delay:['遅延管理','遅延・遅延リスクの早期検知と対策'],ai:['AI工程最適化','AIが工程を組み替えて遅延を最小化します']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='gantt'?'<button class="btn" onclick="go(\'ai\')">⚡ AI最適化</button><button class="btn primary" onclick="go(\'crew\')">＋ 職人手配</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI工程最適化</button><button class="btn primary" onclick="go(\'gantt\')">📅 工程表を開く</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='gantt')renderGantt();
+  if(v==='prog')renderProg();
+  if(v==='crew')renderCrew();
+  if(v==='delay')renderDelay();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const running=SITES.filter(s=>siteStatus(s)!=='done').length;
+  const avgProg=Math.round(SITES.reduce((s,si)=>s+siteProg(si),0)/SITES.length);
+  const delays=TASKS.filter(t=>t.st==='delay').length;
+  const totalCap=CREWS.reduce((s,c)=>s+c.cap,0);
+  const used=TASKS.filter(t=>t.st==='run'||t.st==='delay').length*4;
+  const rate=Math.min(98,Math.round(used/totalCap*100)+38);
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','進行中の現場',running+'<small>現場</small>','全'+SITES.length+'現場','up','稼働中')}
+    ${kpi('#16b877','全体進捗率',avgProg+'<small>%</small>','','up','前週比 +6pt')}
+    ${kpi('#e24a4a','遅延中の工程',delays+'<small>件</small>',TASKS.filter(t=>t.st==='risk').length+'件のリスク','down',delays?'要対応':'なし')}
+    ${kpi('#e3941f','職人 稼働率',rate+'<small>%</small>',totalCap+'名中','warn','繁忙')}`;
+  // site progress bars
+  const arr=SITES.map(si=>({n:si.name,p:siteProg(si),st:siteStatus(si)}));
+  $('progBars').innerHTML=arr.map(a=>{
+    const cls=a.st==='delay'?'red':a.st==='risk'?'warn':'';
+    return `<div class="bar-row"><span class="mlabel" title="${esc(a.n)}">${esc(a.n)}</span>
+      <div class="bar-track"><div class="bar-fill ${cls}" style="width:0" data-w="${a.p}"></div></div>
+      <span class="mval">${a.p}%</span></div>`;}).join('');
+  setTimeout(()=>document.querySelectorAll('#progBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // activity
+  const acts=[
+    {i:'✅',c:'#e6f8f0',t:'大分中央ビル 躯体工事が88%まで進捗',m:'10分前'},
+    {i:'⚠️',c:'#fdeaea',t:'中津市 医療モール 躯体工事に3日の遅延を検知',m:'1時間前'},
+    {i:'👷',c:'#eaf1ff',t:'佐伯市 戸建分譲A棟へ 第二班 4名を手配',m:'今日 8:40'},
+    {i:'⚡',c:'#e6f8f0',t:'AI工程最適化で 全6現場の遅延を再計算（-5日短縮）',m:'今日 8:05'},
+    {i:'🌧️',c:'#fdf3e2',t:'別府リゾート 6/2〜雨予報、外装工程を自動で後ろ倒し',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ GANTT ============ */
+let ganttFilter='all';
+function renderGanttChips(){
+  const opts=[['all','すべて'],['run','進行中'],['delay','遅延中'],['risk','遅延リスク'],['done','完了']];
+  $('ganttChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===ganttFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('ganttChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{ganttFilter=c.dataset.s;renderGanttChips();renderGantt();});
+}
+function renderGantt(){
+  const q=($('gq').value||'').toLowerCase();
+  let rows=TASKS.filter(t=>ganttFilter==='all'||t.st===ganttFilter)
+    .filter(t=>!q||(t.site+t.t+t.siteType).toLowerCase().includes(q));
+  // month header
+  const monthLabels=G_MONTHS.map(m=>(m+1)+'月');
+  let html=`<div class="g-row head"><div class="g-name"><b>現場 / 工種</b></div>
+    <div class="g-track" style="height:auto"><div class="g-grid" style="position:static">${monthLabels.map(m=>`<div class="g-month">${m}</div>`).join('')}</div></div></div>`;
+  const todayLeft=dayPos(TODAY)/G_DAYS*100;
+  html+=rows.map(t=>{
+    const s=pd(t.s),e=pd(t.e);
+    const left=dayPos(s)/G_DAYS*100, w=(dayPos(e)-dayPos(s)+1)/G_DAYS*100;
+    return `<div class="g-row">
+      <div class="g-name"><b>${esc(t.t)}</b><small>${esc(t.site)}</small></div>
+      <div class="g-track">
+        <div class="g-grid">${G_MONTHS.map(()=>'<div class="g-cell"></div>').join('')}</div>
+        <div class="g-today" style="left:${todayLeft}%"></div>
+        <div class="g-bar ${t.st}" style="left:${left}%;width:${w}%" title="${esc(t.t)}｜${esc(t.crew)}｜${fmtMD(s)}〜${fmtMD(e)}｜進捗${t.prog}%">
+          <div class="g-prog" style="width:${t.prog}%"></div>
+          <span style="position:relative;z-index:1">${esc(t.t)} ${t.prog}%</span>
+        </div>
+      </div></div>`;
+  }).join('');
+  $('gantt').innerHTML=rows.length?html:'<div class="empty-cell">該当する工程がありません</div>';
+}
+$('gq').addEventListener('input',renderGantt);
+
+/* ============ PROGRESS ============ */
+let progFilter='all';
+function renderProgChips(){
+  const opts=[['all','すべて'],['run','進行中'],['delay','遅延中'],['risk','遅延リスク'],['plan','予定'],['done','完了']];
+  $('progChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===progFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('progChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{progFilter=c.dataset.s;renderProgChips();renderProg();});
+}
+function renderProg(){
+  const q=($('pq').value||'').toLowerCase();
+  let rows=TASKS.filter(t=>progFilter==='all'||t.st===progFilter)
+    .filter(t=>!q||(t.site+t.t+t.crew).toLowerCase().includes(q));
+  $('progRows').innerHTML=rows.length?rows.map(t=>{
+    const s=pd(t.s),e=pd(t.e);
+    const flCls=t.st==='done'?'done':(t.st==='delay'?'delay':'');
+    return `<tr>
+      <td><b>${esc(t.site)}</b></td>
+      <td style="color:var(--ink-2)">${esc(t.t)}</td>
+      <td style="color:var(--ink-2)">${esc(t.crew)}</td>
+      <td class="tnum" style="color:var(--ink-2)">${fmtMD(s)}〜${fmtMD(e)}</td>
+      <td><div class="pbar"><div class="tr"><div class="fl ${flCls}" style="width:${t.prog}%"></div></div><span class="pc">${t.prog}%</span></div></td>
+      <td>${stBadge(t.st)}</td></tr>`;}).join('')
+    :'<tr><td colspan="6" class="empty-cell">該当する工程がありません</td></tr>';
+}
+$('pq').addEventListener('input',renderProg);
+
+/* ============ CREW ============ */
+function crewLoad(name){return TASKS.filter(t=>t.crew===name&&(t.st==='run'||t.st==='delay'||t.st==='risk')).length;}
+function renderCrew(){
+  const busy=CREWS.filter(c=>crewLoad(c.name)>0).length;
+  const totalCap=CREWS.reduce((s,c)=>s+c.cap,0);
+  const assigned=TASKS.filter(t=>t.st==='run'||t.st==='delay').length*4;
+  const free=CREWS.filter(c=>crewLoad(c.name)===0).length;
+  $('crewKpis').innerHTML=`
+    ${kpi('#2f6df0','稼働中の班',busy+'<small>/'+CREWS.length+'班</small>','','up','フル稼働')}
+    ${kpi('#16b877','登録職人数',totalCap+'<small>名</small>','6班','up','+2名 今月')}
+    ${kpi('#e3941f','割付済 人数',Math.min(totalCap,assigned)+'<small>名</small>',totalCap+'名中','warn','繁忙')}
+    ${kpi('#0ea5b7','手配可能な班',free+'<small>班</small>','空き','up',free?'手配可':'満稼働')}`;
+  $('crewCards').innerHTML=CREWS.map(c=>{
+    const load=crewLoad(c.name);
+    const sites=[...new Set(TASKS.filter(t=>t.crew===c.name&&(t.st==='run'||t.st==='delay'||t.st==='risk')).map(t=>t.site))];
+    const stat=load===0?'<span class="st done" style="background:var(--green-soft);color:var(--green)">手配可</span>'
+      :load>=2?'<span class="st delay" style="background:var(--red-soft);color:var(--red)">満稼働</span>'
+      :'<span class="st run">稼働中</span>';
+    return `<div class="wcard">
+      <div class="wt"><div class="wav">${c.ic}</div><div><b>${esc(c.name)}</b><small>職長：${esc(c.lead)}</small></div></div>
+      <div class="wmeta"><span>専門</span><b>${esc(c.skill)}</b></div>
+      <div class="wmeta"><span>所属人数</span><b>${c.cap}名</b></div>
+      <div class="wmeta"><span>稼働状況</span>${stat}</div>
+      <div class="assign">担当現場：${sites.length?sites.map(s=>'<b>'+esc(s)+'</b>').join(' / '):'なし（手配待ち）'}</div>
+    </div>`;}).join('');
+}
+function renderSiteSelect(){$('aSite').innerHTML='<option value="">選択してください</option>'+SITES.map(s=>`<option>${esc(s.name)}</option>`).join('');}
+function renderCrewSelect(){$('aCrew').innerHTML='<option value="">AIにおまかせ</option>'+CREWS.map(c=>`<option>${esc(c.name)}</option>`).join('');}
+function aPreview(){
+  const site=$('aSite').value,task=$('aTask').value,crew=$('aCrew').value,num=$('aNum').value,s=$('aStart').value,e=$('aEnd').value;
+  if(!site&&!task){$('aPreview').innerHTML='<div class="empty-cell">左のフォームを入力すると、ここに手配内容が表示されます。</div>';return;}
+  const rows=[
+    ['🏗️','現場',site||'—'],['🔧','工種',task||'—'],['👷','手配する班',crew||'AIにおまかせ'],
+    ['👥','必要人数',(num||'—')+'名'],['📅','工期',(s&&e)?fmtMD(pd(s))+'〜'+fmtMD(pd(e)):'—'],
+  ];
+  $('aPreview').innerHTML=rows.map(r=>`<div class="act"><div class="ai" style="background:var(--brand-soft)">${r[0]}</div>
+    <div><div class="at">${esc(r[2])}</div><div class="am">${esc(r[1])}</div></div></div>`).join('');
+}
+['aSite','aTask','aCrew','aNum','aStart','aEnd'].forEach(id=>$(id).addEventListener('input',aPreview));
+$('aTask').addEventListener('change',()=>{
+  // AI suggests crew + num
+  const map={'基礎工事':['第一班（基礎・躯体）',6],'躯体工事':['第一班（基礎・躯体）',6],'鉄筋・型枠':['第二班（鉄筋・型枠）',5],
+    '内装工事':['内装チーム',4],'外装・塗装':['外装・塗装班',4],'電気設備':['設備チーム',3],'給排水設備':['設備チーム',3],'外構工事':['外構班',3]};
+  const m=map[$('aTask').value];
+  if(m){$('aCrew').value=m[0];$('aNum').value=m[1];$('aHint').classList.add('show');setTimeout(()=>$('aHint').classList.remove('show'),2200);aPreview();}
+});
+$('aSubmit').addEventListener('click',async()=>{
+  if(!$('aSite').value||!$('aTask').value){showToast('現場と工種を入力してください');return;}
+  const btn=$('aSubmit');btn.textContent='⚡ AIが手配中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,800));
+  const crew=$('aCrew').value||'第一班（基礎・躯体）';
+  const s=$('aStart').value||'2026-06-01',e=$('aEnd').value||'2026-06-20';
+  SITES[0]; // ensure ref
+  TASKS.push({site:$('aSite').value,siteType:'',t:$('aTask').value,crew,s,e,prog:0,st:'plan',pm:''});
+  btn.textContent='⚡ AIで手配を確定する';btn.disabled=false;
+  showToast($('aTask').value+' を '+crew+' に手配しました（工程表に反映）');
+  $('aSite').value='';$('aTask').value='';$('aCrew').value='';$('aStart').value='';$('aEnd').value='';$('aNum').value=4;
+  aPreview();
+  setTimeout(()=>go('gantt'),700);
+});
+
+/* ============ DELAY ============ */
+const DELAY_DETAIL={
+  '別府温泉リゾート 改修｜内装工事':{days:4,reason:'内装チームが日田の店舗リノベと掛け持ちで人員が不足',fix:'内装チームを5/22から+2名増員し、外装着手を3日後ろ倒しで吸収可能'},
+  '中津市 医療モール 新築｜躯体工事':{days:3,reason:'5/12〜5/15の降雨でコンクリ打設が中断',fix:'土曜稼働を1日追加し、給排水の先行手配で全体工期は維持可能'},
+  '豊後大野 物流倉庫 建設｜鉄骨建方':{days:2,reason:'前工程の基礎工事が72%で、鉄骨建方の着手余地が小さい',fix:'第一班の応援2名を投入し基礎を5/30完了→建方を予定通り開始'},
+  '日田市 店舗リノベ｜電気設備':{days:1,reason:'内装工事と同一空間での輻輳作業で待ち時間が発生',fix:'設備チームの入場を午後に集約し、内装との干渉を回避'},
+};
+function delayItems(){
+  return TASKS.filter(t=>t.st==='delay'||t.st==='risk').map(t=>{
+    const key=t.site+'｜'+t.t;const d=DELAY_DETAIL[key]||{days:t.st==='delay'?2:1,reason:'工程の依存関係に余裕が少ない',fix:'AI最適化で前後工程を調整すると吸収可能'};
+    return Object.assign({key,t},d);
+  });
+}
+function renderDelay(){
+  const items=delayItems();
+  const delayN=items.filter(x=>x.t.st==='delay').length;
+  const riskN=items.filter(x=>x.t.st==='risk').length;
+  const maxDays=items.reduce((m,x)=>Math.max(m,x.t.st==='delay'?x.days:0),0);
+  $('delayKpis').innerHTML=`
+    ${kpi('#e24a4a','遅延中の工程',delayN+'<small>件</small>','','down',delayN?'要対応':'なし')}
+    ${kpi('#e3941f','遅延リスク',riskN+'<small>件</small>','早期検知','warn','監視中')}
+    ${kpi('#2f6df0','最大遅延',maxDays+'<small>日</small>','現時点','warn','吸収可')}
+    ${kpi('#16b877','AI対策案',items.length+'<small>件</small>','自動提案','up','適用可')}`;
+  $('delayCards').innerHTML=items.length?items.map(x=>{
+    const isDelay=x.t.st==='delay';
+    const ic=isDelay?'🔴':'🟠';const bg=isDelay?'var(--red-soft)':'var(--amber-soft)';
+    return `<div class="delaycard">
+      <div class="dl-ic" style="background:${bg}">${ic}</div>
+      <div class="dl-main">
+        <b>${esc(x.t.site)}</b> ${stBadge(x.t.st)}<br>
+        <div class="dl-sub">${esc(x.t.t)}（${esc(x.t.crew)}）／ 原因：${esc(x.reason)}</div>
+      </div>
+      <div class="dl-days"><div class="n" style="color:${isDelay?'var(--red)':'var(--amber)'}">${isDelay?'+'+x.days:x.days}</div><div class="u">日 ${isDelay?'遅延':'リスク'}</div></div>
+      <div class="dl-fix">💡 AI対策：${esc(x.fix)}</div>
+    </div>`;}).join('')
+    :'<div class="empty-cell">遅延・リスクはありません 🎉</div>';
+  $('navDelay').textContent=delayN;
+}
+
+/* ============ AI OPTIMIZE ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 最適化中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},120);
+  await new Promise(r=>setTimeout(r,1200));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // before/after delay prediction per site
+  const results=SITES.map(si=>{
+    const stt=siteStatus(si);
+    const before=stt==='delay'?(3+Math.floor(rnd()*3)):stt==='risk'?(1+Math.floor(rnd()*2)):0;
+    const after=Math.max(0,before-Math.ceil(before*0.7)-(before>0?1:0));
+    return {name:si.name,type:si.type,before,after,saved:before-after};
+  });
+  const totalSaved=results.reduce((s,r)=>s+r.saved,0);
+  $('genSummary').textContent=`6現場・38工程を再計算。職人の空きと天候予報を加味し、遅延を合計 ${totalSaved}日 短縮できます。`;
+  $('genItems').innerHTML=results.map((r,i)=>{
+    const txt=r.before===0?'遅延なし（維持）':`予測遅延 +${r.before}日 → +${r.after}日`;
+    const delta=r.saved>0?`-${r.saved}日`:'維持';
+    return `<div class="gen-item" data-i="${i}"><span class="ck">✓</span>
+      <b style="flex:1">${esc(r.name)}</b>
+      <span style="color:var(--ink-3);font-size:11.5px">${esc(txt)}</span>
+      <span class="gdelta">${delta}</span></div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,170));items[i].classList.add('in');}
+  // apply: turn delays into risk / risk into run (improved)
+  TASKS.forEach(t=>{if(t.st==='delay')t.st='risk';else if(t.st==='risk')t.st='run';});
+  btn.disabled=false;btn.textContent='⚡ もう一度最適化';
+  showToast('AIが工程を最適化し、遅延を合計 '+totalSaved+'日 短縮しました');
+});
+
+/* ============ INIT ============ */
+renderGanttChips();renderProgChips();renderSiteSelect();renderCrewSelect();renderDash();
+$('navDelay').textContent=TASKS.filter(t=>t.st==='delay').length;
+</script>
+</body>
+</html>

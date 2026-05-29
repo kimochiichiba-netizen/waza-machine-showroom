@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜ポイント管理マシン（会員・販促システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#7b3ff0;--brand-dk:#5f25cf;--brand-soft:#f1eaff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--pink:#e7479a;--gold:#d9a328;
+  --sb:#1a1030;--sb-2:#241640;--sb-ink:#cfc4e6;--sb-ink-2:#8a7da6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#b78cff,#e7479a,#d9a328,#b78cff);
+  display:grid;place-items:center;color:#1a0a2a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(123,63,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--pink);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 92px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--pink));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut / tier viz */
+.tierwrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.donut{width:140px;height:140px;border-radius:50%;flex-shrink:0;position:relative;display:grid;place-items:center}
+.donut::after{content:"";position:absolute;inset:22px;background:var(--card);border-radius:50%}
+.donut .dc{position:relative;z-index:1;text-align:center}
+.donut .dc b{font-size:22px;font-weight:900;display:block;line-height:1}
+.donut .dc span{font-size:10.5px;color:var(--ink-3);font-weight:700}
+.legend{flex:1;min-width:160px;display:flex;flex-direction:column;gap:9px}
+.legend .lg{display:flex;align-items:center;gap:9px;font-size:12.5px}
+.legend .lg .sw{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.legend .lg .nm{font-weight:700}
+.legend .lg .vl{margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.active{background:var(--green-soft);color:var(--green)}
+.st.dormant{background:var(--amber-soft);color:var(--amber)}
+.st.churn{background:var(--red-soft);color:var(--red)}
+.st.new{background:var(--brand-soft);color:var(--brand)}
+/* tier badges */
+.tier{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;padding:4px 11px;border-radius:99px}
+.tier.bronze{background:#f6ecdf;color:#a06a2c}
+.tier.silver{background:#eceef2;color:#6b7689}
+.tier.gold{background:#fbf1cf;color:#b08410}
+.tier.platinum{background:#ece9fb;color:#6a4ed6}
+
+/* avatar */
+.mem{display:flex;align-items:center;gap:10px}
+.mem .av{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px;flex-shrink:0}
+.mem .nm b{font-size:13px}
+.mem .nm span{display:block;font-size:11px;color:var(--ink-3)}
+
+/* generic 2-col grids */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:980px){.grid2{grid-template-columns:1fr}}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:980px){.grid3{grid-template-columns:1fr}}
+
+/* reward cards */
+.rwd{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column}
+.rwd .rh{padding:16px 18px;background:linear-gradient(135deg,var(--brand-soft),#fbf5ff);display:flex;align-items:center;gap:12px}
+.rwd .rh .ic{width:42px;height:42px;border-radius:11px;background:#fff;display:grid;place-items:center;font-size:22px;box-shadow:var(--shadow)}
+.rwd .rh b{font-size:14.5px;font-weight:800}
+.rwd .rh span{font-size:11.5px;color:var(--ink-3)}
+.rwd .rb{padding:14px 18px;flex:1}
+.rwd .cost{font-family:'Orbitron';font-size:20px;font-weight:700;color:var(--brand-dk)}
+.rwd .cost small{font-size:12px;color:var(--ink-3);font-family:inherit;font-weight:700}
+.rwd .meta{font-size:12px;color:var(--ink-2);margin-top:7px}
+.rwd .rf{padding:0 18px 16px}
+.progw{height:7px;background:var(--soft);border-radius:99px;overflow:hidden;margin-top:8px}
+.progf{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--green),var(--sky));width:0;transition:width .9s ease}
+
+/* point form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,400px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--brand)}
+.seg{display:flex;gap:7px}
+.seg button{flex:1;padding:10px;border:1px solid var(--line-2);background:var(--card);border-radius:9px;font-weight:700;font-size:13px;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.seg button.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* member card preview */
+.mcard{background:linear-gradient(135deg,#2a1750,#5f25cf);border-radius:16px;padding:22px;color:#fff;box-shadow:var(--shadow-lg);position:relative;overflow:hidden}
+.mcard::before{content:"";position:absolute;right:-40px;top:-40px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.07)}
+.mcard::after{content:"";position:absolute;right:30px;bottom:-50px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.05)}
+.mcard .mc-top{display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1}
+.mcard .mc-brand{font-weight:900;letter-spacing:.04em}
+.mcard .mc-brand small{display:block;font-size:10px;opacity:.7;font-weight:500}
+.mcard .mc-tier{font-size:11px;font-weight:800;padding:4px 12px;border-radius:99px;background:rgba(255,255,255,.18)}
+.mcard .mc-pt{position:relative;z-index:1;margin:22px 0 4px}
+.mcard .mc-pt .lbl{font-size:11px;opacity:.75;font-weight:700}
+.mcard .mc-pt .v{font-family:'Orbitron';font-size:34px;font-weight:700;line-height:1}
+.mcard .mc-pt .v small{font-size:14px;opacity:.8}
+.mcard .mc-name{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:flex-end;margin-top:18px;font-size:12.5px}
+.mcard .mc-name b{font-size:15px}
+.histbox{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);margin-top:16px;overflow:hidden}
+.histbox .hh{padding:13px 16px;border-bottom:1px solid var(--line);font-weight:800;font-size:13.5px}
+.hist{display:flex;align-items:center;gap:11px;padding:11px 16px;border-bottom:1px solid var(--line);font-size:12.5px}
+.hist:last-child{border-bottom:0}
+.hist .hi{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;font-size:13px;flex-shrink:0}
+.hist .ht{font-weight:700}
+.hist .hm{font-size:11px;color:var(--ink-3)}
+.hist .hp{margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums}
+.hist .hp.plus{color:var(--green)}.hist .hp.minus{color:var(--red)}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--line);border-radius:11px;margin-bottom:9px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+.gen-item .gmain{flex:1;min-width:0}
+.gen-item .gmain .gt{font-weight:800}
+.gen-item .gmain .gm{font-size:11.5px;color:var(--ink-3)}
+.gen-item .gtag{font-size:11px;font-weight:800;padding:3px 10px;border-radius:99px;background:var(--brand-soft);color:var(--brand);white-space:nowrap}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#c79bff,#7b3ff0);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(123,63,240,.4)}50%{box-shadow:0 0 40px rgba(231,71,154,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.sechead{font-size:13px;font-weight:800;color:var(--ink-2);margin:4px 0 12px;display:flex;align-items:center;gap:8px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">ポイント管理マシン<small>技マシン｜会員・販促</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="members"><span class="i">👥</span>会員一覧</a>
+      <a data-v="points"><span class="i">⭐</span>ポイント</a>
+      <a data-v="rewards"><span class="i">🎁</span>特典</a>
+      <a data-v="analytics"><span class="i">📈</span>分析</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI販促<span class="badge" id="navAi">NEW</span></a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>都町セレクトマート</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。会員・数値はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">2026年5月の会員・ポイント状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>月次のポイント付与・利用推移</h3><span class="more">過去6ヶ月</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>会員ランク構成</h3><span class="more">全 <span id="tierTotal">0</span> 名</span></div>
+            <div class="pb"><div class="tierwrap"><div class="donut" id="tierDonut"></div><div class="legend" id="tierLegend"></div></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>来店の多い会員 TOP5</h3></div>
+            <div class="pb"><div class="acts" id="topMembers"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MEMBERS -->
+      <section class="view" id="v-members">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="氏名・会員番号・電話で検索"></div>
+          <div class="chips" id="memChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>会員</th><th>ランク</th><th class="r">保有pt</th><th class="r">累計購入</th><th class="r">来店回数</th><th>最終来店</th><th>状態</th></tr></thead>
+          <tbody id="memRows"></tbody>
+        </table>
+      </section>
+
+      <!-- POINTS -->
+      <section class="view" id="v-points">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="sechead">⭐ ポイントを付与 / 利用する</div>
+            <div class="fg"><label>会員</label><select id="pMember"></select></div>
+            <div class="fg"><label>操作</label>
+              <div class="seg" id="pSeg">
+                <button class="on" data-m="earn">＋ 付与</button>
+                <button data-m="redeem">− 利用</button>
+              </div>
+            </div>
+            <div class="fg" id="pAmtWrap"><label id="pAmtLabel">購入金額（円）</label><input id="pAmt" type="number" min="0" placeholder="例：3200"></div>
+            <div class="aihint" id="pAiHint">✨ AIが付与率を判定しました（ゴールド会員は1.5倍）</div>
+            <div class="fg"><label>メモ（任意）</label><input id="pMemo" placeholder="例：5月分まとめ買い"></div>
+            <button class="btn primary" id="pSubmit" style="width:100%;justify-content:center">⭐ この内容で記録する</button>
+          </div>
+          <div>
+            <div class="mcard" id="mcard">
+              <div class="mc-top">
+                <div class="mc-brand">都町セレクトマート<small>MEMBER CARD</small></div>
+                <div class="mc-tier" id="mcTier">—</div>
+              </div>
+              <div class="mc-pt"><div class="lbl">保有ポイント</div><div class="v tnum"><span id="mcPt">0</span><small> pt</small></div></div>
+              <div class="mc-name"><div><b id="mcName">会員を選択</b><div style="opacity:.7" id="mcNo">No. —</div></div><div style="text-align:right">次のランクまで<br><b id="mcNext">—</b></div></div>
+            </div>
+            <div class="histbox">
+              <div class="hh">📜 ポイント履歴</div>
+              <div id="pHist"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- REWARDS -->
+      <section class="view" id="v-rewards">
+        <div class="sechead">🎁 交換できる特典（クーポン・景品）</div>
+        <div class="grid3" id="rewardGrid"></div>
+        <div class="panel" style="margin-top:6px">
+          <div class="ph"><h3>最近の特典交換</h3></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>会員</th><th>交換した特典</th><th class="r">消費pt</th><th>日時</th></tr></thead>
+              <tbody id="redeemRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ANALYTICS -->
+      <section class="view" id="v-analytics">
+        <div class="kpis" id="anaKpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>曜日別の来店傾向</h3><span class="more">直近4週間</span></div>
+            <div class="pb"><div class="bars" id="dowBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>人気の購入カテゴリ</h3></div>
+            <div class="pb"><div class="bars" id="catBars"></div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="ph"><h3>ランク別の貢献度（累計購入額）</h3></div>
+          <div class="pb"><div class="bars" id="tierBars"></div></div>
+        </div>
+      </section>
+
+      <!-- AI PROMO -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">購買データから最適クーポン・特典をAIが提案</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">休眠・優良など <b>会員ごとの状況</b> をAIが解析し、再来店につながる販促を1人ずつ自動で立案します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで販促を立案する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">3時間20分</div>
+              <ul>
+                <li>📊 購買履歴を会員ごとに目視で確認</li>
+                <li>🤔 誰にどのクーポンを出すか手探りで決定</li>
+                <li>📨 一斉メールでバラまき（反応率が低い）</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 購買パターンを自動でセグメント分け</li>
+                <li>🎯 1人ずつ最適なクーポン・特典を提案</li>
+                <li>✉️ 配信メッセージ案まで自動で生成</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">🎯 AIが立案した販促プラン（会員別）</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+const num=n=>Math.round(n).toLocaleString();
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const TODAY=new Date();
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+let SEED=4242;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+function fmtD(d){return (d.getMonth()+1)+'/'+d.getDate();}
+function daysAgo(n){return new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-n);}
+
+/* ============ DATA ============ */
+const TIERS={bronze:{l:'ブロンズ',min:0,rate:1},silver:{l:'シルバー',min:500,rate:1.2},gold:{l:'ゴールド',min:2000,rate:1.5},platinum:{l:'プラチナ',min:5000,rate:2}};
+const TIER_COLOR={bronze:'#a06a2c',silver:'#6b7689',gold:'#d9a328',platinum:'#7b3ff0'};
+const AV_COLOR=['#7b3ff0','#e7479a','#0ea5b7','#16b877','#e3941f','#5f25cf','#e24a4a','#d9a328'];
+function tierOf(pt){if(pt>=5000)return 'platinum';if(pt>=2000)return 'gold';if(pt>=500)return 'silver';return 'bronze';}
+function tierBadge(t){return `<span class="tier ${t}">${TIERS[t].l}</span>`;}
+
+const FNAMES=['田中','佐藤','鈴木','高橋','渡辺','伊藤','山本','中村','小林','加藤','吉田','山田','松本','井上','木村'];
+const GNAMES=['美咲','健太','由香','大輔','陽子','翔','彩花','直樹','麻衣','拓也','里奈','涼介','千尋','悠斗','綾'];
+const CATS=['生鮮食品','惣菜・弁当','日用品','お酒','菓子・パン','飲料'];
+const STLABEL={active:'アクティブ',dormant:'休眠ぎみ',churn:'離反リスク',new:'新規'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]}</span>`;}
+
+let members=[];
+(function seed(){
+  for(let i=0;i<24;i++){
+    const last=pick(FNAMES),given=pick(GNAMES);
+    const name=last+' '+given;
+    const pt=Math.floor(rnd()*7200);
+    const visits=2+Math.floor(rnd()*58);
+    const avgSpend=1200+Math.floor(rnd()*4800);
+    const total=visits*avgSpend;
+    const lastVisitDays=Math.floor(rnd()*70);
+    let status;
+    if(visits<5&&lastVisitDays<30)status='new';
+    else if(lastVisitDays>45)status='churn';
+    else if(lastVisitDays>25)status='dormant';
+    else status='active';
+    const cat=pick(CATS);
+    members.push({
+      no:'M-'+(10240+i),name,kana:'',pt,visits,total,avgSpend,
+      lastVisit:daysAgo(lastVisitDays),lastVisitDays,status,cat,
+      av:AV_COLOR[i%AV_COLOR.length],initial:last[0]
+    });
+  }
+})();
+function tier(m){return tierOf(m.pt);}
+
+// point history (per member, generated)
+function historyFor(m){
+  const h=[];let base=m.pt;
+  const types=[
+    {i:'🛒',c:'#e6f8f0',t:'購入で付与',sign:1},
+    {i:'🎁',c:'#f1eaff',t:'特典に交換',sign:-1},
+    {i:'🎂',c:'#fdf3e2',t:'誕生日ボーナス',sign:1},
+    {i:'🛒',c:'#e6f8f0',t:'購入で付与',sign:1},
+  ];
+  for(let k=0;k<5;k++){
+    const tp=types[Math.floor(rnd()*types.length)];
+    const amt=tp.sign>0?(20+Math.floor(rnd()*240)):-(50+Math.floor(rnd()*200));
+    h.push({i:tp.i,c:tp.c,t:tp.t,amt,d:daysAgo(k*7+Math.floor(rnd()*5))});
+  }
+  return h;
+}
+
+const REWARDS=[
+  {ic:'☕',n:'ドリンク1杯 無料券',sub:'店内カフェ',cost:300,stock:'在庫 ∞',pop:88},
+  {ic:'🥬',n:'生鮮100円OFFクーポン',sub:'次回お買い物',cost:200,stock:'在庫 ∞',pop:95},
+  {ic:'🍱',n:'お弁当 半額券',sub:'惣菜コーナー',cost:500,stock:'残り 120',pop:72},
+  {ic:'🎟️',n:'500円お買物券',sub:'全商品対象',cost:1000,stock:'残り 80',pop:64},
+  {ic:'🧴',n:'日用品セット',sub:'プレゼント景品',cost:1800,stock:'残り 35',pop:41},
+  {ic:'🍷',n:'プレミアム会員ギフト',sub:'プラチナ限定',cost:3000,stock:'残り 12',pop:28},
+];
+
+const REDEEMS=[
+  {who:0,r:'生鮮100円OFFクーポン',pt:200,d:daysAgo(0)},
+  {who:3,r:'ドリンク1杯 無料券',pt:300,d:daysAgo(0)},
+  {who:6,r:'お弁当 半額券',pt:500,d:daysAgo(1)},
+  {who:1,r:'500円お買物券',pt:1000,d:daysAgo(2)},
+  {who:9,r:'生鮮100円OFFクーポン',pt:200,d:daysAgo(3)},
+];
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','2026年5月の会員・ポイント状況'],members:['会員一覧','登録会員を管理します'],
+  points:['ポイント','付与・利用とポイント履歴'],rewards:['特典','クーポン・景品の交換管理'],
+  analytics:['分析','来店・購買データを可視化します'],ai:['AI販促','購買データから最適な販促をAIが提案']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='members'?'<button class="btn primary" onclick="go(\'points\')">＋ ポイント操作</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI販促</button><button class="btn primary" onclick="go(\'points\')">＋ ポイント操作</button>'
+    : v==='rewards'?'<button class="btn primary" onclick="go(\'points\')">＋ ポイント操作</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='members')renderMembers();
+  if(v==='points')renderPoints();
+  if(v==='rewards')renderRewards();
+  if(v==='analytics')renderAnalytics();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const total=members.length;
+  const active=members.filter(m=>m.status==='active'||m.status==='new').length;
+  const activeRate=Math.round(active/total*100);
+  const earnM=members.reduce((s,m)=>s+m.pt,0);
+  const usedM=Math.round(earnM*0.42);
+  const repeat=Math.round(members.filter(m=>m.visits>=10).length/total*100);
+  $('kpis').innerHTML=`
+    ${kpi('#7b3ff0','会員数',num(total)+'<small>名</small>','今月 +6名','up','前月比 +35%')}
+    ${kpi('#16b877','アクティブ率',activeRate+'<small>%</small>',active+'名','up','+4pt')}
+    ${kpi('#e3941f','今月の付与/利用',num(Math.round(earnM/6))+'<small>/</small>'+num(Math.round(usedM/6)),'pt','warn','利用率 42%')}
+    ${kpi('#e7479a','再来率',repeat+'<small>%</small>','10回以上来店','up','+8pt')}`;
+  // trend (earn vs use overlaid as two-tone — simplified to net trend bars)
+  const months=['12月','1月','2月','3月','4月','5月'];
+  const earn=[42000,48000,51000,58000,64000,72000];
+  const mx=Math.max(...earn);
+  $('trendBars').innerHTML=months.map((m,i)=>`
+    <div class="bar-row"><span class="mlabel">${m}</span>
+      <div class="bar-track"><div class="bar-fill" data-w="${Math.round(earn[i]/mx*100)}"></div></div>
+      <span class="mval">${num(earn[i])}<span style="color:var(--ink-3);font-size:11px"> pt付与</span></span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // activity
+  const acts=[
+    {i:'⭐',c:'#e6f8f0',t:'田中 美咲 さまに 64pt を付与（購入¥3,200）',m:'3分前'},
+    {i:'🎁',c:'#f1eaff',t:'佐藤 健太 さまが「生鮮100円OFF」を交換',m:'18分前'},
+    {i:'🆕',c:'#f1eaff',t:'新規会員 2名 が登録（QR入会）',m:'1時間前'},
+    {i:'⚡',c:'#e6f8f0',t:'AI販促で休眠会員 12名へクーポンを自動立案',m:'今日 9:40'},
+    {i:'🎂',c:'#fdf3e2',t:'本日が誕生日の会員 3名へボーナス付与',m:'今日 8:00'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${a.m}</div></div></div>`).join('');
+  renderTierDonut();
+  // top members by visits
+  const top=[...members].sort((a,b)=>b.visits-a.visits).slice(0,5);
+  $('topMembers').innerHTML=top.map((m,i)=>`<div class="act"><div class="ai" style="background:${m.av};color:#fff;font-weight:800">${esc(m.initial)}</div>
+    <div style="flex:1"><div class="at">${esc(m.name)} ${tierBadge(tier(m))}</div><div class="am">来店 ${m.visits}回 ・ 保有 ${num(m.pt)}pt</div></div>
+    <div style="font-weight:900;color:var(--ink-3);font-size:13px">#${i+1}</div></div>`).join('');
+}
+function renderTierDonut(){
+  const counts={bronze:0,silver:0,gold:0,platinum:0};
+  members.forEach(m=>counts[tier(m)]++);
+  const total=members.length;$('tierTotal').textContent=total;
+  const order=['platinum','gold','silver','bronze'];
+  let acc=0;const segs=[];
+  order.forEach(t=>{const pct=counts[t]/total*100;segs.push(`${TIER_COLOR[t]} ${acc}% ${acc+pct}%`);acc+=pct;});
+  $('tierDonut').style.background=`conic-gradient(${segs.join(',')})`;
+  $('tierDonut').innerHTML=`<div class="dc"><b>${total}</b><span>会員</span></div>`;
+  $('tierLegend').innerHTML=order.map(t=>`<div class="lg"><span class="sw" style="background:${TIER_COLOR[t]}"></span>
+    <span class="nm">${TIERS[t].l}</span><span class="vl">${counts[t]}名 <span style="color:var(--ink-3);font-weight:700">(${Math.round(counts[t]/total*100)}%)</span></span></div>`).join('');
+}
+
+/* ============ MEMBERS ============ */
+let memFilter='all';
+function renderMemChips(){
+  const opts=[['all','すべて'],['active','アクティブ'],['new','新規'],['dormant','休眠ぎみ'],['churn','離反リスク']];
+  $('memChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===memFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('memChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{memFilter=c.dataset.s;renderMemChips();renderMembers();});
+}
+function renderMembers(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=members.filter(m=>memFilter==='all'||m.status===memFilter)
+    .filter(m=>!q||(m.name+m.no).toLowerCase().includes(q))
+    .sort((a,b)=>b.pt-a.pt);
+  $('memRows').innerHTML=rows.length?rows.map(m=>`<tr onclick="openMember('${esc(m.no)}')">
+    <td><div class="mem"><div class="av" style="background:${m.av}">${esc(m.initial)}</div><div class="nm"><b>${esc(m.name)}</b><span class="mono">${esc(m.no)}</span></div></div></td>
+    <td>${tierBadge(tier(m))}</td>
+    <td class="r tnum"><b>${num(m.pt)}</b> <span style="color:var(--ink-3);font-size:11px">pt</span></td>
+    <td class="r tnum" style="color:var(--ink-2)">${yen(m.total)}</td>
+    <td class="r tnum" style="color:var(--ink-2)">${m.visits}回</td>
+    <td style="color:var(--ink-2)">${fmtD(m.lastVisit)}（${m.lastVisitDays}日前）</td>
+    <td>${stBadge(m.status)}</td></tr>`).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する会員がいません</td></tr>';
+}
+$('q').addEventListener('input',renderMembers);
+window.openMember=no=>{const m=members.find(x=>x.no===no);if(m){$('pMember').value=no;go('points');}};
+
+/* ============ POINTS ============ */
+let pMode='earn';
+function renderMemberSelect(){
+  $('pMember').innerHTML='<option value="">会員を選択してください</option>'+
+    [...members].sort((a,b)=>b.pt-a.pt).map(m=>`<option value="${esc(m.no)}">${esc(m.name)}（${esc(m.no)} / ${num(m.pt)}pt）</option>`).join('');
+}
+function selectedMember(){return members.find(m=>m.no===$('pMember').value);}
+function renderCard(){
+  const m=selectedMember();
+  if(!m){$('mcTier').textContent='—';$('mcPt').textContent='0';$('mcName').textContent='会員を選択';$('mcNo').textContent='No. —';$('mcNext').textContent='—';$('pHist').innerHTML='<div class="hist" style="color:var(--ink-3)">会員を選ぶと履歴が表示されます</div>';return;}
+  const t=tier(m);$('mcTier').textContent=TIERS[t].l;$('mcPt').textContent=num(m.pt);
+  $('mcName').textContent=m.name;$('mcNo').textContent='No. '+m.no;
+  const order=['bronze','silver','gold','platinum'];const idx=order.indexOf(t);
+  if(idx<order.length-1){const need=TIERS[order[idx+1]].min-m.pt;$('mcNext').textContent=num(Math.max(need,0))+'pt';}
+  else $('mcNext').textContent='最高ランク 🎉';
+  const h=historyFor(m);
+  $('pHist').innerHTML=h.map(x=>`<div class="hist"><div class="hi" style="background:${x.c}">${x.i}</div>
+    <div style="flex:1"><div class="ht">${esc(x.t)}</div><div class="hm">${fmtD(x.d)}</div></div>
+    <div class="hp ${x.amt>=0?'plus':'minus'}">${x.amt>=0?'+':''}${num(x.amt)}pt</div></div>`).join('');
+}
+$('pMember').addEventListener('change',renderCard);
+$('pSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  pMode=b.dataset.m;$('pSeg').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+  $('pAmtLabel').textContent=pMode==='earn'?'購入金額（円）':'利用するポイント（pt）';
+  $('pAmt').placeholder=pMode==='earn'?'例：3200':'例：200';
+});
+function renderPoints(){renderMemberSelect();renderCard();}
+$('pAmt').addEventListener('input',()=>{
+  if(pMode==='earn'&&selectedMember()){$('pAiHint').classList.add('show');setTimeout(()=>$('pAiHint').classList.remove('show'),2200);}
+});
+$('pSubmit').addEventListener('click',()=>{
+  const m=selectedMember();const amt=+$('pAmt').value||0;
+  if(!m){showToast('会員を選択してください');return;}
+  if(amt<=0){showToast('金額・ポイントを入力してください');return;}
+  if(pMode==='earn'){
+    const t=tier(m);const rate=TIERS[t].rate;
+    const gain=Math.floor(amt/100*rate);
+    m.pt+=gain;m.visits+=1;m.total+=amt;m.lastVisit=new Date();m.lastVisitDays=0;
+    if(m.status!=='active')m.status='active';
+    showToast(`${m.name} さまに ${gain}pt を付与しました（${TIERS[t].l}・${rate}倍）`);
+  }else{
+    if(m.pt<amt){showToast('保有ポイントが足りません');return;}
+    m.pt-=amt;
+    showToast(`${m.name} さまの ${amt}pt を利用しました`);
+  }
+  $('pAmt').value='';$('pMemo').value='';
+  renderMemberSelect();$('pMember').value=m.no;renderCard();
+});
+
+/* ============ REWARDS ============ */
+function renderRewards(){
+  $('rewardGrid').innerHTML=REWARDS.map((r,i)=>`<div class="rwd">
+    <div class="rh"><div class="ic">${r.ic}</div><div><b>${esc(r.n)}</b><span>${esc(r.sub)}</span></div></div>
+    <div class="rb"><div class="cost">${num(r.cost)}<small> pt</small></div><div class="meta">${esc(r.stock)} ・ 人気度 ${r.pop}%</div></div>
+    <div class="rf"><button class="btn primary" style="width:100%;justify-content:center" onclick="redeemReward(${i})">この特典を交換</button>
+      <div class="progw"><div class="progf" data-w="${r.pop}"></div></div></div></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#rewardGrid .progf').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  renderRedeems();
+}
+function renderRedeems(){
+  $('redeemRows').innerHTML=REDEEMS.map(x=>{const m=members[x.who];return `<tr>
+    <td><div class="mem"><div class="av" style="background:${m.av}">${esc(m.initial)}</div><div class="nm"><b>${esc(m.name)}</b><span class="mono">${esc(m.no)}</span></div></div></td>
+    <td>${esc(x.r)}</td><td class="r tnum" style="color:var(--red);font-weight:800">−${num(x.pt)}pt</td>
+    <td style="color:var(--ink-2)">${fmtD(x.d)}</td></tr>`;}).join('');
+}
+window.redeemReward=i=>{
+  const r=REWARDS[i];
+  const m=[...members].sort((a,b)=>b.pt-a.pt)[Math.floor(rnd()*5)];
+  if(m.pt<r.cost){showToast('交換できる会員のポイントが不足しています');return;}
+  m.pt-=r.cost;
+  REDEEMS.unshift({who:members.indexOf(m),r:r.n,pt:r.cost,d:new Date()});
+  if(REDEEMS.length>8)REDEEMS.pop();
+  renderRedeems();
+  showToast(`${m.name} さまが「${r.n}」を ${num(r.cost)}pt で交換しました`);
+};
+
+/* ============ ANALYTICS ============ */
+function renderAnalytics(){
+  const total=members.length;
+  const avgVisit=Math.round(members.reduce((s,m)=>s+m.visits,0)/total);
+  const avgSpend=Math.round(members.reduce((s,m)=>s+m.avgSpend,0)/total);
+  const ltv=Math.round(members.reduce((s,m)=>s+m.total,0)/total);
+  $('anaKpis').innerHTML=`
+    ${kpi('#7b3ff0','平均来店回数',avgVisit+'<small>回</small>','会員あたり','up','+1.2回')}
+    ${kpi('#16b877','平均客単価',yen(avgSpend),'1回あたり','up','+6%')}
+    ${kpi('#e3941f','平均LTV',yen(ltv),'累計購入','up','右肩上がり')}
+    ${kpi('#e7479a','休眠会員',members.filter(m=>m.status==='dormant'||m.status==='churn').length+'<small>名</small>','要フォロー','warn','AI販促対象')}`;
+  // DOW
+  const dows=['月','火','水','木','金','土','日'];
+  const dv=[58,52,49,61,88,142,118];const dmx=Math.max(...dv);
+  bars('dowBars',dows.map((d,i)=>({l:d+'曜',w:Math.round(dv[i]/dmx*100),v:dv[i]+'人'})));
+  // categories
+  const cv={};CATS.forEach(c=>cv[c]=0);members.forEach(m=>cv[m.cat]+=m.visits);
+  const cmx=Math.max(...Object.values(cv));
+  bars('catBars',CATS.map(c=>({l:c.length>4?c.slice(0,4):c,w:Math.round(cv[c]/cmx*100),v:cv[c]+'件',full:c})),true);
+  // tier contribution
+  const tc={bronze:0,silver:0,gold:0,platinum:0};members.forEach(m=>tc[tier(m)]+=m.total);
+  const tmx=Math.max(...Object.values(tc),1);const order=['platinum','gold','silver','bronze'];
+  bars('tierBars',order.map(t=>({l:TIERS[t].l,w:Math.round(tc[t]/tmx*100),v:yen(tc[t]),color:TIER_COLOR[t]})));
+}
+function bars(id,data){
+  $(id).innerHTML=data.map(d=>`<div class="bar-row"><span class="mlabel">${esc(d.full||d.l)}</span>
+    <div class="bar-track"><div class="bar-fill" data-w="${d.w}" ${d.color?`style="background:${d.color}"`:''}></div></div>
+    <span class="mval">${esc(d.v)}</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#'+id+' .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+}
+
+/* ============ AI PROMO ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 解析中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},110);
+  await new Promise(r=>setTimeout(r,1150));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // pick segmented members & craft offers
+  const dormant=members.filter(m=>m.status==='dormant'||m.status==='churn');
+  const gold=members.filter(m=>tier(m)==='gold'||tier(m)==='platinum');
+  const newbie=members.filter(m=>m.status==='new');
+  const plans=[];
+  dormant.slice(0,3).forEach(m=>plans.push({m,seg:'休眠ぎみ',offer:'生鮮100円OFF＋2倍ポイント',msg:`${m.name}さま、お久しぶりです。${m.cat}が今だけお得です`}));
+  gold.slice(0,2).forEach(m=>plans.push({m,seg:'優良会員',offer:'プレミアム会員ギフト 引換券',msg:`いつもありがとうございます。${m.name}さま限定の特典をご用意`}));
+  newbie.slice(0,2).forEach(m=>plans.push({m,seg:'新規',offer:'次回使える500円お買物券',msg:`ご入会ありがとうございます。${m.name}さまへ歓迎クーポン`}));
+  if(!plans.length){members.slice(0,4).forEach(m=>plans.push({m,seg:'おすすめ',offer:'お買物クーポン',msg:`${m.name}さまへ`}));}
+  $('genItems').innerHTML=plans.map((p,i)=>`<div class="gen-item" data-i="${i}">
+    <span class="ck">✓</span>
+    <div class="gmain"><div class="gt">${esc(p.m.name)} <span class="tnum" style="font-weight:700;color:var(--ink-3);font-size:12px">${esc(p.m.no)}</span></div>
+      <div class="gm">配信文：「${esc(p.msg)}」</div></div>
+    <span class="gtag">${esc(p.seg)} → ${esc(p.offer)}</span></div>`).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,170));items[i].classList.add('in');}
+  btn.disabled=false;btn.textContent='⚡ もう一度立案する';
+  showToast(plans.length+'名分の販促プランをAIが立案しました');
+  $('aiSub').innerHTML='完了：'+plans.length+'名分のクーポン・特典・配信文を生成しました。配信準備までワンクリックです。';
+});
+
+/* ============ INIT ============ */
+renderMemChips();
+renderDash();
+</script>
+</body>
+</html>

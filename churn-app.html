@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜解約予兆検知マシン（チャーン予測システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cff;--purple-soft:#efeaff;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn.red{background:var(--red);border-color:var(--red);color:#fff}
+.btn.red:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+.panel+.panel{margin-top:16px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--red),var(--amber));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut / risk distribution */
+.donut-wrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.donut{width:138px;height:138px;border-radius:50%;flex-shrink:0;position:relative;background:conic-gradient(var(--red) 0 0)}
+.donut::after{content:"";position:absolute;inset:20px;background:var(--card);border-radius:50%}
+.donut .center{position:absolute;inset:0;display:grid;place-items:center;text-align:center;z-index:1}
+.donut .center b{font-size:24px;font-weight:900;line-height:1}
+.donut .center span{font-size:10.5px;color:var(--ink-3);font-weight:700}
+.legend{display:flex;flex-direction:column;gap:9px;font-size:12.5px}
+.legend .lr{display:flex;align-items:center;gap:9px}
+.legend .lr .sw{width:11px;height:11px;border-radius:3px}
+.legend .lr b{margin-left:auto;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px;vertical-align:middle}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.high{background:var(--red-soft);color:var(--red)}
+.st.mid{background:var(--amber-soft);color:var(--amber)}
+.st.low{background:var(--green-soft);color:var(--green)}
+.st.safe{background:var(--brand-soft);color:var(--brand)}
+.st.churned{background:var(--soft);color:var(--ink-3)}
+.st.retained{background:var(--green-soft);color:var(--green)}
+.st.open{background:var(--amber-soft);color:var(--amber)}
+.st.done{background:var(--green-soft);color:var(--green)}
+
+/* risk meter inline */
+.rmeter{display:flex;align-items:center;gap:9px;min-width:130px}
+.rmeter .track{flex:1;height:8px;border-radius:99px;background:var(--soft);overflow:hidden}
+.rmeter .fill{height:100%;border-radius:99px}
+.rmeter b{font-size:12.5px;font-variant-numeric:tabular-nums;width:34px;text-align:right}
+
+/* tag pills */
+.tag-pill{display:inline-block;background:var(--soft);color:var(--ink-2);font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:6px;margin:1px 2px 1px 0}
+.tag-pill.warn{background:var(--red-soft);color:var(--red)}
+
+/* form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:74px}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+
+/* AI generate / before-after */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* customer detail / signal cards */
+.sigcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.sigcard{border:1px solid var(--line);border-radius:11px;padding:14px;background:var(--card)}
+.sigcard .h{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:800;margin-bottom:8px}
+.sigcard .h .ic{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;font-size:14px}
+.sigcard .desc{font-size:11.5px;color:var(--ink-2)}
+.sigcard .num{font-size:18px;font-weight:900;margin-top:6px}
+.sigcard.bad .num{color:var(--red)}.sigcard.warnc .num{color:var(--amber)}.sigcard.ok .num{color:var(--green)}
+
+/* mini sparkline (usage trend) */
+.spark{display:flex;align-items:flex-end;gap:3px;height:34px}
+.spark i{flex:1;background:var(--brand-soft);border-radius:2px 2px 0 0;min-height:3px;transition:height .6s}
+.spark i.dn{background:var(--red-soft)}
+
+/* recommendation list */
+.rec{display:flex;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}
+.rec:last-child{border-bottom:0}
+.rec .ic{width:34px;height:34px;border-radius:9px;flex-shrink:0;display:grid;place-items:center;font-size:16px;background:var(--purple-soft);color:var(--purple)}
+.rec .t{font-weight:700;font-size:13.5px}
+.rec .m{font-size:11.5px;color:var(--ink-3);margin-top:2px}
+.rec .ac{margin-left:auto;align-self:center}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.muted{color:var(--ink-3)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">解約予兆検知マシン<small>技マシン｜チャーン予測</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="cust"><span class="i">👥</span>顧客一覧</a>
+      <a data-v="risk"><span class="i">🌡️</span>リスク度</a>
+      <a data-v="alert"><span class="i">🚨</span>予兆アラート<span class="badge" id="navAlert">0</span></a>
+      <a data-v="action"><span class="i">🎯</span>対策</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI検知</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。顧客・数値はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">解約リスクの全体状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>解約率の推移</h3><span class="more">過去6ヶ月</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>リスク度の分布</h3></div>
+            <div class="pb"><div class="donut-wrap"><div class="donut" id="donut"><div class="center" id="donutCenter"></div></div><div class="legend" id="donutLegend"></div></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>要注意の顧客 トップ5</h3><span class="more" onclick="go('risk')">リスク度を見る →</span></div>
+            <div class="pb" style="padding:0">
+              <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+                <thead><tr><th>顧客</th><th>プラン</th><th>リスク度</th><th>主な予兆</th></tr></thead>
+                <tbody id="topRiskRows"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CUSTOMERS -->
+      <section class="view" id="v-cust">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="qc" placeholder="顧客名・業種・担当で検索"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>顧客</th><th>業種</th><th>プラン</th><th class="r">月額</th><th class="r">利用日数/月</th><th>契約状態</th><th>担当</th></tr></thead>
+          <tbody id="custRows"></tbody>
+        </table>
+      </section>
+
+      <!-- RISK -->
+      <section class="view" id="v-risk">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="qr" placeholder="顧客名で検索"></div>
+          <div class="chips" id="riskChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>顧客</th><th>プラン</th><th style="min-width:150px">リスク度</th><th>判定</th><th>主な予兆</th><th class="r">月額</th></tr></thead>
+          <tbody id="riskRows"></tbody>
+        </table>
+      </section>
+
+      <!-- ALERTS -->
+      <section class="view" id="v-alert">
+        <div class="panel">
+          <div class="ph"><h3>予兆アラート（高・中リスク顧客）</h3>
+            <button class="btn primary" id="alertScan" style="margin-left:auto">⚡ 今すぐ再スキャン</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>検知日</th><th>顧客</th><th>リスク度</th><th>検知された予兆</th><th>状態</th><th></th></tr></thead>
+              <tbody id="alertRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ACTION -->
+      <section class="view" id="v-action">
+        <div class="create-grid">
+          <div class="formcard">
+            <div style="font-size:14px;font-weight:900;margin-bottom:14px">🎯 引き留め対策を登録</div>
+            <div class="fg"><label>対象の顧客</label><select id="aCust"></select></div>
+            <div class="fg"><label>対策の種類</label>
+              <select id="aType">
+                <option>担当者からフォロー電話</option>
+                <option>活用相談ミーティングを設定</option>
+                <option>追加トレーニングを提案</option>
+                <option>プラン見直し・割引の提案</option>
+                <option>成功事例の共有メール</option>
+              </select></div>
+            <div class="fg"><label>担当者</label>
+              <select id="aOwner"><option>佐藤</option><option>田中</option><option>鈴木</option><option>高橋</option></select></div>
+            <div class="fg"><label>メモ（任意）</label><textarea id="aNote" placeholder="例：ログイン頻度が落ちているため、活用方法を再案内する"></textarea></div>
+            <button class="btn primary" id="aAdd" style="width:100%;justify-content:center">＋ 対策を登録する</button>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>進行中の引き留め対策</h3><span class="more" id="actCount"></span></div>
+            <div class="pb" style="padding:0">
+              <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+                <thead><tr><th>顧客</th><th>対策</th><th>担当</th><th>状態</th><th></th></tr></thead>
+                <tbody id="actionRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI DETECT -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">利用データの変化から解約予兆をAIが検知</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">ログイン頻度・利用日数・問い合わせ・支払い遅延などの変化を、<b id="aiCount">28社</b>分まとめてAIが分析します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで予兆検知する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">3時間20分</div>
+              <ul>
+                <li>📑 顧客ごとに利用ログを目視で確認</li>
+                <li>📉 先月と比べて減っていないか集計</li>
+                <li>🤔 経験と勘で「危なそうな客」を選ぶ</li>
+                <li>⏰ 気づいた時にはもう解約申請…</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 全顧客の利用変化を自動で分析</li>
+                <li>🌡️ リスク度を0〜100点で自動スコア化</li>
+                <li>🚨 予兆の理由つきでアラート表示</li>
+                <li>🎯 解約される前に手を打てる</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">🚨 AIが検知した解約予兆</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const TODAY=new Date();
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+let SEED=4242;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+
+/* risk level helpers */
+function riskLevel(score){return score>=70?'high':score>=40?'mid':'low';}
+const RL_LABEL={high:'高リスク',mid:'中リスク',low:'安全'};
+const RL_COLOR={high:'#e24a4a',mid:'#e3941f',low:'#16b877'};
+function riskBadge(score){const l=riskLevel(score);return `<span class="st ${l}">${RL_LABEL[l]}</span>`;}
+function riskMeter(score){const l=riskLevel(score);return `<div class="rmeter"><div class="track"><div class="fill" style="width:${score}%;background:${RL_COLOR[l]}"></div></div><b>${score}</b></div>`;}
+
+/* ============ DATA ============ */
+// 予兆の種類
+const SIGNALS={
+  login:{ic:'📉',t:'ログイン激減'},
+  usage:{ic:'🕒',t:'利用日数の低下'},
+  ticket:{ic:'📨',t:'問い合わせ増加'},
+  pay:{ic:'💳',t:'支払い遅延'},
+  nps:{ic:'😟',t:'満足度の低下'},
+  contact:{ic:'🔕',t:'連絡が取れない'},
+  feature:{ic:'🧩',t:'主要機能の未使用'},
+};
+const PLANS=[['ライトプラン',9800],['スタンダードプラン',29800],['プロプラン',59800],['エンタープライズ',128000]];
+const NAMES=[
+  ['大分中央クリニック','医療','佐藤'],['さくら総合病院','医療','佐藤'],['つくし介護センター','介護','田中'],
+  ['豊後おおいた青果','青果卸','鈴木'],['都町商店会','小売','鈴木'],['別府温泉ホテル組合','宿泊','高橋'],
+  ['大分海鮮市場','飲食','高橋'],['みらい歯科医院','医療','田中'],['ひまわり訪問看護','介護','田中'],
+  ['大分運送サービス','運送','鈴木'],['臼杵建設工業','建設','高橋'],['佐伯水産加工','飲食','高橋'],
+  ['緑風会計事務所','士業','佐藤'],['大分まちかど薬局','医療','田中'],['南豊後ファーム','農業','鈴木'],
+  ['由布院温泉旅館','宿泊','高橋'],['杵築こども園','介護','田中'],['日田の森林組合','農業','鈴木'],
+  ['大分テック商事','小売','佐藤'],['なごみ歯科クリニック','医療','田中'],['豊後牛ファクトリー','飲食','高橋'],
+  ['中津運輸倉庫','運送','鈴木'],['ひじ整形外科','医療','佐藤'],['大分social司法書士','士業','佐藤'],
+  ['竹田高原野菜','農業','鈴木'],['別府ベイサイドホテル','宿泊','高橋'],['大分ケアプランセンター','介護','田中'],
+  ['国東半島漁協','飲食','高橋'],
+];
+
+// 各顧客に利用指標を生成し、リスクスコアを“理由から”算出
+const customers=NAMES.map((n,idx)=>{
+  const plan=PLANS[Math.floor(rnd()*PLANS.length)];
+  // 利用指標
+  const loginPrev=8+Math.floor(rnd()*14);                 // 先月のログイン/週
+  const loginDrop=Math.floor(rnd()*loginPrev);            // 減少量
+  const loginNow=Math.max(0,loginPrev-loginDrop);
+  const usagePrev=14+Math.floor(rnd()*12);                // 先月の利用日数
+  const usageNow=Math.max(1,usagePrev-Math.floor(rnd()*usagePrev));
+  const tickets=Math.floor(rnd()*7);                      // 直近の問い合わせ件数
+  const payLate=rnd()>0.78;                               // 支払い遅延
+  const npsDrop=rnd()>0.6;                                // 満足度低下
+  const noContact=rnd()>0.85;                             // 連絡不能
+  const tenure=3+Math.floor(rnd()*40);                    // 契約月数
+
+  // スコア組み立て（理由が説明できる加点方式）
+  let score=6;const reasons=[];
+  const loginRate=loginPrev?loginDrop/loginPrev:0;
+  if(loginRate>0.5){score+=30;reasons.push('login');}
+  else if(loginRate>0.25){score+=16;reasons.push('login');}
+  const usageRate=usagePrev?(usagePrev-usageNow)/usagePrev:0;
+  if(usageRate>0.5){score+=24;reasons.push('usage');}
+  else if(usageRate>0.3){score+=12;reasons.push('usage');}
+  if(tickets>=4){score+=15;reasons.push('ticket');}
+  if(payLate){score+=18;reasons.push('pay');}
+  if(npsDrop){score+=12;reasons.push('nps');}
+  if(noContact){score+=14;reasons.push('contact');}
+  if(usageNow<=4){if(!reasons.includes('feature')){score+=8;reasons.push('feature');}}
+  score=Math.max(3,Math.min(99,Math.round(score)));
+
+  // sparkline（直近8週のログイン推移）
+  const spark=[];let base=loginPrev;
+  for(let w=0;w<8;w++){base=Math.max(0,base-(w>=5?Math.round(loginDrop/3):Math.floor(rnd()*2-0.5)));spark.push(base);}
+  spark[7]=loginNow;
+
+  return {
+    id:'C'+(1001+idx),name:n[0],type:n[1],staff:n[2],plan:plan[0],fee:plan[1],
+    loginPrev,loginNow,usagePrev,usageNow,tickets,payLate,npsDrop,noContact,tenure,
+    score,reasons:reasons.length?reasons:['feature'],spark,
+    status:'active' // active / churned / retained
+  };
+});
+// 既存の解約済み/引き留め成功サンプルを少し混ぜる（実績KPI用）
+customers[24].status='retained';customers[24].score=34;
+customers[27].status='retained';customers[27].score=29;
+customers[19].status='churned';customers[19].score=88;
+
+function reasonTags(c){return c.reasons.slice(0,3).map(r=>`<span class="tag-pill warn">${SIGNALS[r].ic} ${SIGNALS[r].t}</span>`).join('');}
+
+/* 引き留め対策（最初から数件） */
+let actions=[
+  {cust:'豊後おおいた青果',type:'活用相談ミーティングを設定',owner:'鈴木',state:'open'},
+  {cust:'別府温泉ホテル組合',type:'担当者からフォロー電話',owner:'高橋',state:'open'},
+  {cust:'竹田高原野菜',type:'追加トレーニングを提案',owner:'鈴木',state:'done'},
+];
+
+/* アラート（高・中リスクから生成） */
+function buildAlerts(){
+  return customers.filter(c=>c.status==='active'&&c.score>=40)
+    .sort((a,b)=>b.score-a.score)
+    .map((c,i)=>({cust:c.name,score:c.score,reasons:c.reasons,
+      date:(TODAY.getMonth()+1)+'/'+(TODAY.getDate()-(i%5)),
+      state:actions.find(a=>a.cust===c.name)?'対応中':'未対応'}));
+}
+
+/* ============ ROUTING ============ */
+const TITLES={
+  dash:['ダッシュボード','解約リスクの全体状況'],
+  cust:['顧客一覧','契約中の顧客と利用状況'],
+  risk:['リスク度','AIが算出した解約リスクスコア'],
+  alert:['予兆アラート','手を打つべき顧客の通知'],
+  action:['対策','引き留めアクションを管理します'],
+  ai:['AI検知','利用変化から解約予兆を自動で見つけます']
+};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='dash'?'<button class="btn" onclick="go(\'alert\')">🚨 アラートを見る</button><button class="btn primary" onclick="go(\'ai\')">⚡ AIで予兆検知</button>'
+    : v==='risk'?'<button class="btn primary" onclick="go(\'ai\')">⚡ 再スキャン</button>'
+    : v==='alert'?'<button class="btn primary" onclick="go(\'action\')">🎯 対策を登録</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='cust')renderCust();
+  if(v==='risk')renderRisk();
+  if(v==='alert')renderAlert();
+  if(v==='action')renderAction();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+function renderDash(){
+  const active=customers.filter(c=>c.status==='active');
+  const high=active.filter(c=>riskLevel(c.score)==='high');
+  const mid=active.filter(c=>riskLevel(c.score)==='mid');
+  const low=active.filter(c=>riskLevel(c.score)==='low');
+  const retained=customers.filter(c=>c.status==='retained').length;
+  const churned=customers.filter(c=>c.status==='churned').length;
+  const total=customers.length;
+  const churnRate=(churned/total*100).toFixed(1);
+  const arrAtRisk=high.reduce((s,c)=>s+c.fee*12,0);
+
+  $('kpis').innerHTML=`
+    ${kpi('#e24a4a','解約リスク客',high.length+'<small>社</small>','年間'+yen(arrAtRisk)+'相当','down','要対応')}
+    ${kpi('#e3941f','予兆を検知',(high.length+mid.length)+'<small>件</small>',' ','warn','監視中')}
+    ${kpi('#16b877','引き留め成功',retained+'<small>社</small>','今四半期','up','+'+retained+'社')}
+    ${kpi('#2f6df0','解約率',churnRate+'<small>%</small>','月次','up','前月比 -0.8pt')}`;
+
+  // churn trend (過去6ヶ月)
+  const trend=[2.8,3.1,2.6,2.9,2.4,+churnRate];
+  const mx=Math.max(...trend,1);
+  const months=[];for(let k=5;k>=0;k--){const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1);months.push(d.getMonth()+1);}
+  $('trendBars').innerHTML=months.map((m,i)=>`
+    <div class="bar-row"><span class="mlabel">${m}月</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(trend[i]/mx*100)}"></div></div>
+      <span class="mval">${trend[i]}%</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+
+  // donut
+  const h=high.length,m=mid.length,l=low.length,tot=h+m+l||1;
+  const p1=h/tot*100,p2=(h+m)/tot*100;
+  $('donut').style.background=`conic-gradient(${RL_COLOR.high} 0 ${p1}%,${RL_COLOR.mid} ${p1}% ${p2}%,${RL_COLOR.low} ${p2}% 100%)`;
+  $('donutCenter').innerHTML=`<div><b>${tot}</b><span>契約中</span></div>`;
+  $('donutLegend').innerHTML=`
+    <div class="lr"><span class="sw" style="background:${RL_COLOR.high}"></span>高リスク<b>${h}社</b></div>
+    <div class="lr"><span class="sw" style="background:${RL_COLOR.mid}"></span>中リスク<b>${m}社</b></div>
+    <div class="lr"><span class="sw" style="background:${RL_COLOR.low}"></span>安全<b>${l}社</b></div>`;
+
+  // top risk
+  const top=active.slice().sort((a,b)=>b.score-a.score).slice(0,5);
+  $('topRiskRows').innerHTML=top.map(c=>`<tr onclick="go('risk')">
+    <td><b>${esc(c.name)}</b></td><td class="muted">${esc(c.plan)}</td>
+    <td>${riskMeter(c.score)}</td><td>${reasonTags(c)}</td></tr>`).join('');
+
+  // activity
+  const acts=[
+    {i:'🚨',c:'#fdeaea',t:'豊後おおいた青果 のリスク度が 82点に上昇',m:'12分前'},
+    {i:'📉',c:'#fdf3e2',t:'別府温泉ホテル組合 のログインが先週比 -64%',m:'1時間前'},
+    {i:'🎯',c:'#efeaff',t:'鈴木 が 竹田高原野菜 へ追加トレーニングを実施',m:'今日 10:20'},
+    {i:'✅',c:'#e6f8f0',t:'大分ケアプランセンター を引き留め成功（リスク度29点に改善）',m:'今日 9:05'},
+    {i:'⚡',c:'#e6f8f0',t:'AI検知が 28社を再スキャン（高リスク '+high.length+'社）',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${a.t}</div><div class="am">${a.m}</div></div></div>`).join('');
+}
+
+/* ============ CUSTOMERS ============ */
+function renderCust(){
+  const q=($('qc').value||'').toLowerCase();
+  const ST={active:['retained','契約中'],retained:['retained','引き留め成功'],churned:['churned','解約済']};
+  const rows=customers.filter(c=>!q||(c.name+c.type+c.staff+c.plan).toLowerCase().includes(q));
+  $('custRows').innerHTML=rows.length?rows.map(c=>{
+    const sl=c.status==='churned'?['churned','解約済']:c.status==='retained'?['retained','引き留め成功']:['safe','契約中'];
+    return `<tr onclick="go('risk')">
+      <td><b>${esc(c.name)}</b><div class="am muted" style="font-size:11px">${esc(c.id)}</div></td>
+      <td><span class="tag-pill">${esc(c.type)}</span></td>
+      <td class="muted">${esc(c.plan)}</td>
+      <td class="r tnum">${yen(c.fee)}</td>
+      <td class="r tnum">${c.usageNow}日 <span class="muted" style="font-size:11px">(先月${c.usagePrev})</span></td>
+      <td><span class="st ${sl[0]}">${sl[1]}</span></td>
+      <td class="muted">${esc(c.staff)}</td></tr>`;
+  }).join(''):'<tr><td colspan="7" class="empty-cell">該当する顧客がいません</td></tr>';
+}
+$('qc').addEventListener('input',renderCust);
+
+/* ============ RISK ============ */
+let riskFilter='all';
+function renderRiskChips(){
+  const opts=[['all','すべて'],['high','高リスク'],['mid','中リスク'],['low','安全']];
+  $('riskChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===riskFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('riskChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{riskFilter=c.dataset.s;renderRiskChips();renderRisk();});
+}
+function renderRisk(){
+  const q=($('qr').value||'').toLowerCase();
+  let rows=customers.filter(c=>c.status!=='churned')
+    .filter(c=>riskFilter==='all'||riskLevel(c.score)===riskFilter)
+    .filter(c=>!q||c.name.toLowerCase().includes(q))
+    .sort((a,b)=>b.score-a.score);
+  $('riskRows').innerHTML=rows.length?rows.map(c=>`<tr onclick="go('action')">
+    <td><b>${esc(c.name)}</b><div class="am muted" style="font-size:11px">${esc(c.type)} ・ ${esc(c.staff)}</div></td>
+    <td class="muted">${esc(c.plan)}</td>
+    <td>${riskMeter(c.score)}</td>
+    <td>${riskBadge(c.score)}</td>
+    <td>${reasonTags(c)}</td>
+    <td class="r tnum">${yen(c.fee)}</td></tr>`).join('')
+    :'<tr><td colspan="6" class="empty-cell">該当する顧客がいません</td></tr>';
+}
+$('qr').addEventListener('input',renderRisk);
+
+/* ============ ALERTS ============ */
+function renderAlert(){
+  const alerts=buildAlerts();
+  $('alertRows').innerHTML=alerts.length?alerts.map(a=>{
+    const tags=a.reasons.slice(0,3).map(r=>`<span class="tag-pill warn">${SIGNALS[r].ic} ${SIGNALS[r].t}</span>`).join('');
+    const stCls=a.state==='対応中'?'done':'open';
+    return `<tr>
+      <td class="muted tnum">${esc(a.date)}</td>
+      <td><b>${esc(a.cust)}</b></td>
+      <td>${riskBadge(a.score)} <b class="tnum" style="font-size:12px;margin-left:4px">${a.score}</b></td>
+      <td>${tags}</td>
+      <td><span class="st ${stCls}">${a.state}</span></td>
+      <td class="r"><button class="btn primary" style="padding:6px 12px" onclick="quickAction('${esc(a.cust)}')">🎯 対策</button></td></tr>`;
+  }).join(''):'<tr><td colspan="6" class="empty-cell">高・中リスクの顧客はいません 🎉</td></tr>';
+  $('navAlert').textContent=alerts.length;
+}
+window.quickAction=name=>{
+  go('action');
+  setTimeout(()=>{$('aCust').value=name;showToast(name+' の対策を登録できます');},120);
+};
+
+/* ============ ACTION ============ */
+function renderActionSelect(){
+  $('aCust').innerHTML=customers.filter(c=>c.status!=='churned').sort((a,b)=>b.score-a.score)
+    .map(c=>`<option>${esc(c.name)}</option>`).join('');
+}
+function renderAction(){
+  renderActionSelect();
+  $('actCount').textContent=actions.length+'件';
+  $('actionRows').innerHTML=actions.length?actions.map((a,i)=>{
+    const stCls=a.state==='done'?'done':'open';const stLb=a.state==='done'?'完了':'対応中';
+    return `<tr>
+      <td><b>${esc(a.cust)}</b></td>
+      <td class="muted">${esc(a.type)}</td>
+      <td class="muted">${esc(a.owner)}</td>
+      <td><span class="st ${stCls}">${stLb}</span></td>
+      <td class="r">${a.state==='done'?'<span class="muted" style="font-size:12px">✓</span>':`<button class="btn green" style="padding:6px 12px" onclick="completeAction(${i})">完了にする</button>`}</td></tr>`;
+  }).join(''):'<tr><td colspan="5" class="empty-cell">進行中の対策はありません</td></tr>';
+}
+window.completeAction=i=>{
+  if(actions[i]){actions[i].state='done';
+    // 引き留め成功として該当顧客のスコアを改善＆ステータス変更
+    const c=customers.find(x=>x.name===actions[i].cust);
+    if(c&&c.status==='active'){c.score=Math.max(20,c.score-40);if(c.score<40)c.status='retained';}
+    renderAction();showToast(actions[i].cust+' の対策を完了にしました（リスク改善）');}
+};
+$('aAdd').addEventListener('click',()=>{
+  const cust=$('aCust').value;if(!cust){showToast('対象の顧客を選んでください');return;}
+  actions.unshift({cust,type:$('aType').value,owner:$('aOwner').value,state:'open'});
+  $('aNote').value='';
+  renderAction();showToast(cust+' への引き留め対策を登録しました');
+});
+
+/* ============ AI DETECT ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 検知中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},110);
+  await new Promise(r=>setTimeout(r,1200));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+
+  const detected=customers.filter(c=>c.status==='active'&&c.score>=40).sort((a,b)=>b.score-a.score).slice(0,7);
+  $('genItems').innerHTML=detected.map((c,i)=>{
+    const top=c.reasons[0];
+    return `<div class="gen-item" data-i="${i}">
+      <span class="ck">!</span>
+      <b style="flex:1">${esc(c.name)}</b>
+      <span class="tag-pill warn" style="margin:0">${SIGNALS[top].ic} ${SIGNALS[top].t}</span>
+      <span style="color:${RL_COLOR[riskLevel(c.score)]};font-weight:900" class="tnum">${c.score}点</span></div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,170));items[i].classList.add('in');}
+  btn.disabled=false;btn.textContent='⚡ もう一度検知';
+  $('navAlert').textContent=buildAlerts().length;
+  showToast(detected.length+'社の解約予兆を検知しました');
+});
+
+/* ============ INIT ============ */
+renderRiskChips();
+renderDash();
+$('navAlert').textContent=buildAlerts().length;
+$('aiCount').textContent=customers.filter(c=>c.status==='active').length+'社';
+</script>
+</body>
+</html>

@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜気象アラートマシン（農業気象リスク管理システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f9de0;--brand-dk:#1f7bcf;--brand-soft:#e6f4ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7b5ae0;--purple-soft:#efeaff;
+  --sb:#0e2233;--sb-2:#143047;--sb-ink:#bcd2e0;--sb-ink-2:#6e8aa0;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,157,224,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn.red{background:var(--red);border-color:var(--red);color:#fff}
+.btn.red:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+@media(max-width:980px){.cols2{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-fill.rain{background:linear-gradient(90deg,#2f9de0,#5ec8e0)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* line/temp chart (SVG) */
+.chartwrap{position:relative}
+.chartwrap svg{width:100%;height:200px;display:block}
+.legend{display:flex;gap:16px;font-size:11.5px;color:var(--ink-2);font-weight:600;margin-top:10px;flex-wrap:wrap}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:14px;height:3px;border-radius:2px;display:inline-block}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* forecast strip */
+.fc-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:10px}
+@media(max-width:760px){.fc-strip{grid-template-columns:repeat(3,1fr)}}
+.fc-day{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:13px 10px;text-align:center}
+.fc-day.alert{background:var(--red-soft);border-color:#f3c2c2}
+.fc-day.warn{background:var(--amber-soft);border-color:#f0dca6}
+.fc-day .dn{font-size:11.5px;color:var(--ink-2);font-weight:700}
+.fc-day .ic{font-size:26px;margin:7px 0}
+.fc-day .tmp{font-size:13px;font-weight:800}
+.fc-day .tmp .lo{color:var(--brand)}
+.fc-day .rn{font-size:11px;color:var(--brand-dk);font-weight:700;margin-top:3px}
+.fc-day .rk{font-size:10px;font-weight:800;margin-top:6px;padding:2px 0;border-radius:6px}
+.fc-day .rk.r{background:#f7d0d0;color:var(--red)}
+.fc-day .rk.a{background:#f3dcb0;color:#9a6512}
+.fc-day .rk.g{background:#c9eed9;color:var(--green)}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.safe{background:var(--green-soft);color:var(--green)}
+.st.caution{background:var(--amber-soft);color:var(--amber)}
+.st.danger{background:var(--red-soft);color:var(--red)}
+.st.done{background:var(--brand-soft);color:var(--brand)}
+.st.todo{background:var(--soft);color:var(--ink-3)}
+.st.doing{background:var(--purple-soft);color:var(--purple)}
+
+/* risk meter */
+.meter{height:8px;border-radius:99px;background:var(--soft);overflow:hidden;min-width:90px}
+.meter>i{display:block;height:100%;border-radius:99px}
+.meter>i.g{background:var(--green)}.meter>i.a{background:var(--amber)}.meter>i.r{background:var(--red)}
+
+/* create form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,400px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:72px}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:flex-start;gap:11px;padding:12px 14px;border:1px solid var(--line);border-radius:11px;margin-bottom:9px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item.danger{border-color:#f3c2c2;background:var(--red-soft)}
+.gen-item.warn{border-color:#f0dca6;background:var(--amber-soft)}
+.gen-item .ck{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:15px}
+.gen-item .gtitle{font-weight:800}
+.gen-item .gmeta{color:var(--ink-2);font-size:11.5px;margin-top:2px}
+.gen-item .gact{margin-top:7px;font-size:12px;color:var(--ink);background:rgba(255,255,255,.7);border:1px solid var(--line);border-radius:8px;padding:7px 10px}
+.gen-item .gact b{color:var(--green)}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#5ec8e0,#2f9de0);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(47,157,224,.4)}50%{box-shadow:0 0 40px rgba(94,200,224,.55)}}
+
+/* detail card list */
+.dlist{display:flex;flex-direction:column;gap:8px}
+.drow{display:flex;justify-content:space-between;font-size:12.5px;padding:7px 0;border-bottom:1px dashed var(--line)}
+.drow:last-child{border-bottom:0}
+.drow span:first-child{color:var(--ink-2)}
+.drow b{font-weight:800}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+
+/* alert banner */
+.alertbanner{display:flex;align-items:center;gap:14px;background:linear-gradient(90deg,#fdeaea,#fdf3f3);border:1px solid #f3c2c2;border-radius:14px;padding:16px 18px;margin-bottom:20px}
+.alertbanner .ab-ic{width:44px;height:44px;border-radius:11px;background:var(--red);color:#fff;display:grid;place-items:center;font-size:22px;flex-shrink:0;animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(226,74,74,.4)}50%{box-shadow:0 0 0 8px rgba(226,74,74,0)}}
+.alertbanner b{color:var(--red);font-size:14px}
+.alertbanner .ab-sub{font-size:12px;color:var(--ink-2);margin-top:2px}
+.alertbanner .btn{margin-left:auto}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">気象アラートマシン<small>技マシン｜農業気象リスク管理</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="forecast"><span class="i">🌤️</span>気象予報</a>
+      <a data-v="fields"><span class="i">🌾</span>圃場別リスク<span class="badge" id="navRisk">0</span></a>
+      <a data-v="actions"><span class="i">✅</span>対策</a>
+      <a data-v="history"><span class="i">📜</span>履歴</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI予測</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。気象データ・圃場はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">大分市・周辺圃場の気象リスク状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="alertbanner" id="alertBanner" style="display:none">
+          <div class="ab-ic">⚠️</div>
+          <div><b id="abTitle">霜注意報</b><div class="ab-sub" id="abSub"></div></div>
+          <button class="btn red" onclick="go('actions')">対策を確認</button>
+        </div>
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>気温推移（直近7日 / 最高・最低）</h3><span class="more">℃</span></div>
+            <div class="pb">
+              <div class="chartwrap"><div id="tempChart"></div></div>
+              <div class="legend">
+                <span><i style="background:#e24a4a"></i>最高気温</span>
+                <span><i style="background:#2f9de0"></i>最低気温</span>
+                <span><i style="background:#16b877"></i>適温下限(5℃)</span>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+        <div class="cols2">
+          <div class="panel">
+            <div class="ph"><h3>圃場別の現在リスク</h3><span class="more" onclick="go('fields')">すべて見る</span></div>
+            <div class="pb"><div class="bars" id="fieldRiskBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>降水確率（7日予報）</h3><span class="more">%</span></div>
+            <div class="pb"><div class="bars" id="rainBars"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FORECAST -->
+      <section class="view" id="v-forecast">
+        <div class="panel" style="margin-bottom:16px">
+          <div class="ph"><h3>7日間 気象予報（大分市）</h3><span class="more" id="fcUpdated"></span></div>
+          <div class="pb"><div class="fc-strip" id="fcStrip"></div></div>
+        </div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>気温推移</h3></div>
+            <div class="pb"><div class="chartwrap"><div id="tempChart2"></div></div>
+              <div class="legend"><span><i style="background:#e24a4a"></i>最高</span><span><i style="background:#2f9de0"></i>最低</span></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>気象指標（本日）</h3></div>
+            <div class="pb"><div class="dlist" id="metToday"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FIELDS (圃場別リスク) -->
+      <section class="view" id="v-fields">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="fq" placeholder="圃場名・作物・地区で検索"></div>
+          <div class="chips" id="fieldChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>圃場</th><th>作物</th><th>地区</th><th>主リスク</th><th>リスク度</th><th>判定</th></tr></thead>
+          <tbody id="fieldRows"></tbody>
+        </table>
+      </section>
+
+      <!-- ACTIONS (対策) -->
+      <section class="view" id="v-actions">
+        <div class="create-grid">
+          <div class="formcard">
+            <div style="font-size:14px;font-weight:800;margin-bottom:12px">📝 対策を新規登録</div>
+            <div class="fg"><label>対象の圃場</label><select id="aField"></select></div>
+            <div class="fg"><label>リスク種別</label>
+              <select id="aType"><option>霜害</option><option>台風・強風</option><option>大雨・冠水</option><option>高温・熱波</option><option>乾燥・干ばつ</option></select></div>
+            <div class="fg"><label>対策内容</label><textarea id="aBody" placeholder="例：べたがけ資材で保温、夕方に散水して地温確保"></textarea></div>
+            <div class="fg-row">
+              <div class="fg"><label>担当</label><input id="aStaff" placeholder="例：佐藤"></div>
+              <div class="fg"><label>実施予定日</label><input id="aDue" type="date"></div>
+            </div>
+            <button class="btn primary" id="aSave" style="width:100%;justify-content:center">＋ 対策を登録</button>
+            <button class="btn" id="aSample" style="width:100%;justify-content:center;margin-top:8px">サンプルを入力</button>
+          </div>
+          <div>
+            <div class="panel">
+              <div class="ph"><h3>対策タスク一覧</h3>
+                <span class="more" id="actCount"></span></div>
+              <div class="pb" style="padding:0">
+                <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+                  <thead><tr><th>圃場 / 種別</th><th>対策内容</th><th>担当</th><th>予定</th><th>状態</th><th></th></tr></thead>
+                  <tbody id="actRows"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- HISTORY -->
+      <section class="view" id="v-history">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="hq" placeholder="圃場・事象・対応で検索"></div>
+          <div class="chips" id="histChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>発生日</th><th>圃場</th><th>気象事象</th><th>影響</th><th>対応</th><th>結果</th></tr></thead>
+          <tbody id="histRows"></tbody>
+        </table>
+      </section>
+
+      <!-- AI PREDICT -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">気象データから圃場リスクをAI予測</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">気象庁・アメダスの予報データと<b>8圃場</b>の作物・標高・履歴を突き合わせ、霜・台風・大雨リスクと対策をAIが自動判定します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで予測する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">2時間20分</div>
+              <ul>
+                <li>📺 天気予報を見て各圃場の影響を頭で予想</li>
+                <li>📞 圃場ごとに担当へ電話・LINEで連絡</li>
+                <li>📝 対策をホワイトボードに手書き・抜け漏れ多発</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🛰️ 予報データを圃場ごとに自動解析</li>
+                <li>🎯 霜・台風・大雨リスクを数値で判定</li>
+                <li>💡 圃場別の対策案まで自動提案</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">🎯 AIが検出したリスクと対策提案</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const FIELDS=[
+  {name:'高崎山ぶどう園 A',crop:'シャインマスカット',area:'大分市高崎',elev:120,staff:'川宿田'},
+  {name:'高崎山ぶどう園 B',crop:'巨峰',area:'大分市高崎',elev:135,staff:'川宿田'},
+  {name:'戸次トマトハウス',crop:'大玉トマト',area:'大分市戸次',elev:40,staff:'佐藤'},
+  {name:'判田いちご農園',crop:'いちご(章姫)',area:'大分市判田',elev:55,staff:'田中'},
+  {name:'野津原ねぎ畑',crop:'白ねぎ',area:'大分市野津原',elev:210,staff:'鈴木'},
+  {name:'坂ノ市キャベツ畑',crop:'春キャベツ',area:'大分市坂ノ市',elev:15,staff:'鈴木'},
+  {name:'佐賀関みかん山',crop:'温州みかん',area:'大分市佐賀関',elev:90,staff:'高橋'},
+  {name:'稙田ピーマンハウス',crop:'ピーマン',area:'大分市稙田',elev:60,staff:'佐藤'},
+];
+
+/* deterministic seed */
+let SEED=20260530;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+const TODAY=new Date(2026,4,30);
+
+/* 7-day forecast (今日含む) */
+const WICONS={sunny:'☀️',cloud:'⛅',rain:'🌧️',storm:'⛈️',frost:'❄️'};
+const FORECAST=[
+  {d:0,hi:9, lo:2,  rain:10, wind:4,  w:'sunny', risk:'frost'},
+  {d:1,hi:7, lo:-1, rain:5,  wind:3,  w:'sunny', risk:'frost'},
+  {d:2,hi:14,lo:6,  rain:30, wind:6,  w:'cloud', risk:'none'},
+  {d:3,hi:19,lo:11, rain:80, wind:9,  w:'rain',  risk:'rain'},
+  {d:4,hi:21,lo:14, rain:95, wind:18, w:'storm', risk:'storm'},
+  {d:5,hi:18,lo:12, rain:60, wind:11, w:'rain',  risk:'rain'},
+  {d:6,hi:23,lo:13, rain:20, wind:5,  w:'cloud', risk:'none'},
+];
+const WDAY=['日','月','火','水','木','金','土'];
+function dayDate(off){return new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+off);}
+
+/* 圃場リスク判定（予報×作物） */
+const RISKDEF={frost:'霜害',storm:'台風・強風',rain:'大雨・冠水',heat:'高温',none:'安定'};
+function fieldRisk(f){
+  // 標高が高い・露地・霜弱い作物で霜リスク増。台風週は強風リスク
+  let score=0, kind='none';
+  const minLo=Math.min(...FORECAST.slice(0,2).map(x=>x.lo));
+  const frostSens=/みかん|いちご|ぶどう|シャイン|巨峰|ピーマン|トマト/.test(f.crop)?1:0.5;
+  const open=!/ハウス/.test(f.name);
+  if(minLo<=2){let s=(5-minLo)*9 + f.elev*0.12 + frostSens*14 - (open?0:30); s=Math.max(0,s); if(s>score){score=s;kind='frost';}}
+  const maxWind=Math.max(...FORECAST.map(x=>x.wind));
+  if(maxWind>=15){let s=maxWind*3.2 + (open?22:4) + (/ぶどう|みかん|ねぎ/.test(f.crop)?12:4); if(s>score){score=s;kind='storm';}}
+  const maxRain=Math.max(...FORECAST.map(x=>x.rain));
+  if(maxRain>=80){let s=(maxRain-50)*0.85 + (f.elev<30?20:6) + (/いちご|キャベツ|トマト/.test(f.crop)?8:0); if(s>score){score=s;kind='rain';}}
+  score=Math.min(100,Math.round(score));
+  let level= score>=60?'danger': score>=30?'caution':'safe';
+  return {score,kind,level};
+}
+/* 履歴データ */
+const HIST=[
+  {date:dayDate(-3),  field:'佐賀関みかん山',  event:'最低2℃の冷え込み', impact:'軽微（着色やや遅延）', resp:'防霜ファン稼働',  result:'safe'},
+  {date:dayDate(-12), field:'戸次トマトハウス', event:'日中32℃の高温',     impact:'なし',                resp:'遮光カーテン+換気', result:'safe'},
+  {date:dayDate(-18), field:'坂ノ市キャベツ畑', event:'1日降水量68mm',     impact:'一部畝で滞水',        resp:'排水溝の増設',     result:'caution'},
+  {date:dayDate(-25), field:'高崎山ぶどう園 A', event:'最大瞬間風速21m/s',  impact:'棚の一部破損',        resp:'被覆撤去・補強',   result:'caution'},
+  {date:dayDate(-31), field:'判田いちご農園',   event:'最低-1℃の遅霜',     impact:'花芽の一部に被害',    resp:'べたがけ未実施',   result:'danger'},
+  {date:dayDate(-40), field:'野津原ねぎ畑',     event:'乾燥10日継続',       impact:'生育やや停滞',        resp:'スプリンクラー散水', result:'safe'},
+];
+/* 対策タスク（初期） */
+let ACTIONS=[
+  {field:'佐賀関みかん山',  type:'霜害',      body:'防霜ファンを夜間自動運転に設定',   staff:'高橋', due:dayDate(0),  status:'doing'},
+  {field:'高崎山ぶどう園 A',type:'台風・強風',body:'被覆資材を撤去し棚を補強',         staff:'川宿田', due:dayDate(3), status:'todo'},
+  {field:'判田いちご農園',  type:'霜害',      body:'べたがけ資材で保温、夕方散水',     staff:'田中', due:dayDate(0),  status:'done'},
+];
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const fmtD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+const LV={safe:'安全',caution:'注意',danger:'警戒'};
+const LVCLASS={danger:'r',caution:'a',safe:'g'};
+function lvBadge(l){return `<span class="st ${l}">${LV[l]}</span>`;}
+
+/* ============ ROUTING ============ */
+const TITLES={
+  dash:['ダッシュボード','大分市・周辺圃場の気象リスク状況'],
+  forecast:['気象予報','大分市の7日間予報と気象指標'],
+  fields:['圃場別リスク','圃場ごとの気象リスクを判定します'],
+  actions:['対策','検出されたリスクへの対策を管理します'],
+  history:['履歴','過去の気象事象と対応の記録'],
+  ai:['AI予測','気象データから圃場リスクを自動予測します']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='dash'?'<button class="btn" onclick="go(\'forecast\')">🌤️ 予報を見る</button><button class="btn primary" onclick="go(\'ai\')">⚡ AI予測</button>'
+    : v==='fields'?'<button class="btn primary" onclick="go(\'ai\')">⚡ AIで再判定</button>'
+    : v==='actions'?'<button class="btn" onclick="go(\'fields\')">🌾 リスク一覧へ</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='forecast')renderForecast();
+  if(v==='fields')renderFields();
+  if(v==='actions')renderActions();
+  if(v==='history')renderHistory();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ TEMP CHART (SVG) ============ */
+function tempChartSVG(){
+  const W=560,H=200,pad=30, bot=H-26, top=14;
+  const his=[ /* 直近7日の実績(today含む) */
+    {hi:9,lo:2},{hi:7,lo:-1},{hi:11,lo:1},{hi:13,lo:4},{hi:16,lo:7},{hi:18,lo:9},{hi:15,lo:6}
+  ];
+  // reverse so 6日前→今日
+  const data=[{hi:18,lo:9},{hi:16,lo:7},{hi:13,lo:4},{hi:11,lo:1},{hi:7,lo:-1},{hi:9,lo:2},{hi:14,lo:6}];
+  const all=data.flatMap(d=>[d.hi,d.lo]).concat([5]);
+  const mn=Math.min(...all,-2),mx=Math.max(...all,20);
+  const x=i=>pad+i*((W-pad*2)/(data.length-1));
+  const y=v=>top+(1-(v-mn)/(mx-mn))*(bot-top);
+  const lineHi=data.map((d,i)=>`${x(i)},${y(d.hi)}`).join(' ');
+  const lineLo=data.map((d,i)=>`${x(i)},${y(d.lo)}`).join(' ');
+  const y5=y(5);
+  const labels=data.map((d,i)=>{const dd=dayDate(-6+i);return `<text x="${x(i)}" y="${H-6}" font-size="10" fill="#8a94a6" text-anchor="middle">${dd.getMonth()+1}/${dd.getDate()}</text>`;}).join('');
+  const dotsHi=data.map((d,i)=>`<circle cx="${x(i)}" cy="${y(d.hi)}" r="3.2" fill="#e24a4a"/>`).join('');
+  const dotsLo=data.map((d,i)=>`<circle cx="${x(i)}" cy="${y(d.lo)}" r="3.2" fill="#2f9de0"/>`).join('');
+  const valLo=data.map((d,i)=>`<text x="${x(i)}" y="${y(d.lo)+15}" font-size="9.5" fill="#2f9de0" text-anchor="middle" font-weight="700">${d.lo}°</text>`).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    <line x1="${pad}" y1="${y5}" x2="${W-pad}" y2="${y5}" stroke="#16b877" stroke-width="1.2" stroke-dasharray="4 4" opacity=".7"/>
+    <text x="${W-pad+2}" y="${y5+3}" font-size="9" fill="#16b877" text-anchor="start">5℃</text>
+    <polyline points="${lineHi}" fill="none" stroke="#e24a4a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="${lineLo}" fill="none" stroke="#2f9de0" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    ${dotsHi}${dotsLo}${valLo}${labels}
+  </svg>`;
+}
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const risks=FIELDS.map(f=>({f,r:fieldRisk(f)}));
+  const danger=risks.filter(x=>x.r.level==='danger');
+  const caution=risks.filter(x=>x.r.level==='caution');
+  const maxRain=Math.max(...FORECAST.map(x=>x.rain));
+  const minLo=Math.min(...FORECAST.slice(0,2).map(x=>x.lo));
+  const doneRate=Math.round(ACTIONS.filter(a=>a.status==='done').length/Math.max(ACTIONS.length,1)*100);
+  $('kpis').innerHTML=`
+    ${kpi('#e24a4a','警戒中の圃場',danger.length+'<small> 圃場</small>',caution.length+'圃場が注意','down','要対策')}
+    ${kpi('#2f9de0','最大降水確率',maxRain+'<small>%</small>','明後日 大雨予報','warn','排水準備')}
+    ${kpi('#0ea5b7','明朝の最低気温',minLo+'<small>℃</small>','霜の恐れあり',minLo<=2?'down':'up',minLo<=2?'霜対策を':'安定')}
+    ${kpi('#16b877','対策の実施率',doneRate+'<small>%</small>',ACTIONS.length+'件中 完了','up','進行中')}`;
+  // alert banner
+  if(danger.length){
+    $('alertBanner').style.display='flex';
+    $('abTitle').textContent= minLo<=2?'❄️ 霜注意報 ＋ 強風警戒':'⛈️ 気象警戒';
+    $('abSub').textContent=`明朝の最低気温${minLo}℃・明後日は最大瞬間風速18m/sの予報。${danger.map(d=>d.f.name).join('・')} が警戒レベルです。`;
+  }
+  // temp chart
+  $('tempChart').innerHTML=tempChartSVG();
+  // activity
+  const acts=[
+    {i:'⚡',c:'#e6f4ff',t:'AI予測が完了：警戒 '+danger.length+'圃場・注意 '+caution.length+'圃場を検出',m:'5分前'},
+    {i:'❄️',c:'#fdeaea',t:'佐賀関みかん山 で防霜ファンを夜間自動運転に設定',m:'1時間前'},
+    {i:'✅',c:'#e6f8f0',t:'判田いちご農園 のべたがけ保温対策が完了',m:'今日 7:40'},
+    {i:'🌧️',c:'#e6f4ff',t:'明後日の降水確率が95%に上昇（大雨注意）',m:'今日 6:10'},
+    {i:'📡',c:'#efeaff',t:'アメダス観測データを自動取得（大分・佐賀関）',m:'今日 6:00'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${a.m}</div></div></div>`).join('');
+  // field risk bars (top by score)
+  const sorted=[...risks].sort((a,b)=>b.r.score-a.r.score).slice(0,6);
+  $('fieldRiskBars').innerHTML=sorted.map(x=>`
+    <div class="bar-row" style="grid-template-columns:120px 1fr 64px">
+      <span class="mlabel" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(x.f.name)}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0;background:${x.r.level==='danger'?'#e24a4a':x.r.level==='caution'?'#e3941f':'#16b877'}" data-w="${x.r.score}"></div></div>
+      <span class="mval">${x.r.score}</span></div>`).join('');
+  // rain bars
+  const mxR=100;
+  $('rainBars').innerHTML=FORECAST.map((d,i)=>`
+    <div class="bar-row"><span class="mlabel">${fmtD(dayDate(i))}</span>
+      <div class="bar-track"><div class="bar-fill rain" style="width:0" data-w="${d.rain}"></div></div>
+      <span class="mval">${d.rain}%</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#v-dash .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  $('navRisk').textContent=danger.length;
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ FORECAST ============ */
+function renderForecast(){
+  $('fcUpdated').textContent='更新 '+fmtDL(TODAY)+' 6:00';
+  $('fcStrip').innerHTML=FORECAST.map((d,i)=>{
+    const dd=dayDate(i);
+    const rk=d.risk==='frost'?'r':d.risk==='storm'?'r':d.risk==='rain'?'a':'g';
+    const rkt=d.risk==='frost'?'霜注意':d.risk==='storm'?'強風警戒':d.risk==='rain'?'大雨注意':'安定';
+    const cls=(d.risk==='frost'||d.risk==='storm')?'alert':d.risk==='rain'?'warn':'';
+    return `<div class="fc-day ${cls}">
+      <div class="dn">${i===0?'今日':fmtD(dd)}(${WDAY[dd.getDay()]})</div>
+      <div class="ic">${WICONS[d.w]}</div>
+      <div class="tmp"><span style="color:#e24a4a">${d.hi}°</span> / <span class="lo">${d.lo}°</span></div>
+      <div class="rn">☂ ${d.rain}%</div>
+      <div style="font-size:10px;color:var(--ink-3);margin-top:2px">風${d.wind}m</div>
+      <div class="rk ${rk}">${rkt}</div></div>`;
+  }).join('');
+  $('tempChart2').innerHTML=tempChartSVG();
+  const t=FORECAST[0];
+  $('metToday').innerHTML=`
+    <div class="drow"><span>天気</span><b>${WICONS[t.w]} 晴れ</b></div>
+    <div class="drow"><span>最高 / 最低気温</span><b>${t.hi}℃ / ${t.lo}℃</b></div>
+    <div class="drow"><span>降水確率</span><b>${t.rain}%</b></div>
+    <div class="drow"><span>最大風速</span><b>${t.wind} m/s</b></div>
+    <div class="drow"><span>湿度</span><b>52%</b></div>
+    <div class="drow"><span>日の出 / 日の入り</span><b>5:14 / 19:08</b></div>
+    <div class="drow"><span>霜のリスク</span><b style="color:var(--red)">高（放射冷却）</b></div>
+    <div class="drow"><span>観測元</span><b>気象庁アメダス（大分）</b></div>`;
+}
+
+/* ============ FIELDS ============ */
+let fieldFilter='all';
+function renderFieldChips(){
+  const opts=[['all','すべて'],['danger','警戒'],['caution','注意'],['safe','安全']];
+  $('fieldChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===fieldFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('fieldChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{fieldFilter=c.dataset.s;renderFieldChips();renderFields();});
+}
+function renderFields(){
+  const q=($('fq').value||'').toLowerCase();
+  let rows=FIELDS.map(f=>({f,r:fieldRisk(f)}))
+    .filter(x=>fieldFilter==='all'||x.r.level===fieldFilter)
+    .filter(x=>!q||(x.f.name+x.f.crop+x.f.area).toLowerCase().includes(q))
+    .sort((a,b)=>b.r.score-a.r.score);
+  $('fieldRows').innerHTML=rows.length?rows.map(x=>`<tr>
+    <td><b>${esc(x.f.name)}</b><div style="font-size:11px;color:var(--ink-3)">標高 ${x.f.elev}m ・ 担当 ${esc(x.f.staff)}</div></td>
+    <td style="color:var(--ink-2)">${esc(x.f.crop)}</td>
+    <td style="color:var(--ink-2)">${esc(x.f.area)}</td>
+    <td>${x.r.kind==='none'?'<span style="color:var(--ink-3)">—</span>':'<b>'+RISKDEF[x.r.kind]+'</b>'}</td>
+    <td><div style="display:flex;align-items:center;gap:9px"><div class="meter"><i class="${LVCLASS[x.r.level]}" style="width:${x.r.score}%"></i></div><span class="tnum" style="font-weight:800;font-size:12px">${x.r.score}</span></div></td>
+    <td>${lvBadge(x.r.level)}</td></tr>`).join('')
+    :'<tr><td colspan="6" class="empty-cell">該当する圃場がありません</td></tr>';
+}
+
+/* ============ ACTIONS ============ */
+const ACTST={todo:'未着手',doing:'対応中',done:'完了'};
+function renderActFieldSelect(){$('aField').innerHTML=FIELDS.map(f=>`<option>${esc(f.name)}</option>`).join('');}
+function renderActions(){
+  $('actCount').textContent=ACTIONS.length+'件';
+  $('actRows').innerHTML=ACTIONS.length?ACTIONS.map((a,i)=>`<tr>
+    <td><b>${esc(a.field)}</b><div style="font-size:11px;color:var(--ink-3)">${esc(a.type)}</div></td>
+    <td style="color:var(--ink-2);max-width:240px">${esc(a.body)}</td>
+    <td style="color:var(--ink-2)">${esc(a.staff)}</td>
+    <td style="color:var(--ink-2)">${fmtD(a.due)}</td>
+    <td><span class="st ${a.status}">${ACTST[a.status]}</span></td>
+    <td class="r">${a.status!=='done'?`<button class="btn green" style="padding:6px 12px" onclick="completeAct(${i})">完了</button>`:'<span style="color:var(--green);font-weight:700;font-size:12px">✓ 済</span>'}</td>
+  </tr>`).join('')
+    :'<tr><td colspan="6" class="empty-cell">登録された対策はありません</td></tr>';
+}
+window.completeAct=i=>{if(ACTIONS[i]){ACTIONS[i].status='done';renderActions();renderDash();showToast(esc(ACTIONS[i].field)+' の対策を完了にしました');}};
+$('aSave').addEventListener('click',()=>{
+  const field=$('aField').value, type=$('aType').value, body=$('aBody').value.trim(), staff=$('aStaff').value.trim();
+  if(!body){showToast('対策内容を入力してください');return;}
+  const dueV=$('aDue').value; const due=dueV?new Date(dueV+'T00:00:00'):TODAY;
+  ACTIONS.unshift({field,type,body,staff:staff||'未割当',due,status:'todo'});
+  $('aBody').value='';$('aStaff').value='';
+  renderActions();renderDash();showToast('対策を登録しました');
+});
+$('aSample').addEventListener('click',()=>{
+  $('aField').value='高崎山ぶどう園 A';$('aType').value='台風・強風';
+  $('aBody').value='被覆資材を一時撤去し、棚の脚部を補強。明後日の強風に備え誘引を点検。';
+  $('aStaff').value='川宿田';
+  const dd=dayDate(2);$('aDue').value=dd.getFullYear()+'-'+String(dd.getMonth()+1).padStart(2,'0')+'-'+String(dd.getDate()).padStart(2,'0');
+});
+
+/* ============ HISTORY ============ */
+let histFilter='all';
+function renderHistChips(){
+  const opts=[['all','すべて'],['danger','被害あり'],['caution','軽微'],['safe','回避']];
+  $('histChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===histFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('histChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{histFilter=c.dataset.s;renderHistChips();renderHistory();});
+}
+const RESLABEL={safe:'被害回避',caution:'軽微',danger:'被害あり'};
+function renderHistory(){
+  const q=($('hq').value||'').toLowerCase();
+  let rows=HIST.filter(h=>histFilter==='all'||h.result===histFilter)
+    .filter(h=>!q||(h.field+h.event+h.resp).toLowerCase().includes(q))
+    .sort((a,b)=>b.date-a.date);
+  $('histRows').innerHTML=rows.length?rows.map(h=>`<tr>
+    <td style="color:var(--ink-2)">${fmtDL(h.date).replace('年','/').replace('月','/').replace('日','')}</td>
+    <td><b>${esc(h.field)}</b></td>
+    <td>${esc(h.event)}</td>
+    <td style="color:var(--ink-2)">${esc(h.impact)}</td>
+    <td style="color:var(--ink-2)">${esc(h.resp)}</td>
+    <td><span class="st ${h.result}">${RESLABEL[h.result]}</span></td></tr>`).join('')
+    :'<tr><td colspan="6" class="empty-cell">該当する履歴がありません</td></tr>';
+}
+$('hq').addEventListener('input',renderHistory);
+$('fq').addEventListener('input',renderFields);
+
+/* ============ AI PREDICT ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 予測中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},120);
+  await new Promise(r=>setTimeout(r,1200));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // build risk findings
+  const risks=FIELDS.map(f=>({f,r:fieldRisk(f)})).filter(x=>x.r.level!=='safe').sort((a,b)=>b.r.score-a.r.score);
+  const SUG={
+    frost:'夜間に防霜ファンを自動運転。露地はべたがけ資材で保温し、夕方の散水で地温を確保。',
+    storm:'被覆資材を一時撤去して棚・支柱を補強。倒伏防止の誘引点検と排水路の確保。',
+    rain:'畝間の排水溝を増設し、低位部はポンプ排水を準備。収穫適期のものは前倒し収穫。',
+    heat:'遮光資材と換気で温度を抑制。朝夕のかん水で蒸散を補助。'
+  };
+  $('genItems').innerHTML=risks.map((x,i)=>{
+    const lvc=x.r.level==='danger'?'danger':'warn';
+    const ic=x.r.kind==='frost'?'❄️':x.r.kind==='storm'?'🌀':x.r.kind==='rain'?'🌧️':'⚠️';
+    return `<div class="gen-item ${lvc}" data-i="${i}">
+      <span class="ck" style="background:${x.r.level==='danger'?'#e24a4a':'#e3941f'};color:#fff">${ic}</span>
+      <div style="flex:1">
+        <div class="gtitle">${esc(x.f.name)} ｜ ${RISKDEF[x.r.kind]}（リスク度 ${x.r.score}）</div>
+        <div class="gmeta">${esc(x.f.crop)} ・ ${esc(x.f.area)} ・ 標高${x.f.elev}m ・ 担当 ${esc(x.f.staff)}</div>
+        <div class="gact">💡 AI対策提案：<b>${SUG[x.r.kind]||'状況を監視し、必要に応じて被覆・排水で対応。'}</b></div>
+      </div>
+      <span class="st ${x.r.level}" style="align-self:flex-start">${LV[x.r.level]}</span>
+    </div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,200));items[i].classList.add('in');}
+  $('aiSub').innerHTML=`予測完了：<b>${risks.filter(x=>x.r.level==='danger').length}圃場が警戒</b>・${risks.filter(x=>x.r.level==='caution').length}圃場が注意。対策提案を生成しました。`;
+  btn.disabled=false;btn.textContent='⚡ もう一度予測';
+  showToast(risks.length+'件のリスクと対策を生成しました');
+});
+
+/* ============ INIT ============ */
+renderActFieldSelect();renderFieldChips();renderHistChips();renderDash();
+$('navRisk').textContent=FIELDS.map(fieldRisk).filter(r=>r.level==='danger').length;
+</script>
+</body>
+</html>

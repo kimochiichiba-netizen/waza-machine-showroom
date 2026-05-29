@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜予診票マシン（オンライン問診・トリアージ）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#1c8ca8;--brand-dk:#136d83;--brand-soft:#e4f4f8;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7b61c9;--purple-soft:#efeafb;
+  --sb:#0d1b22;--sb-2:#13262f;--sb-ink:#bcd0d6;--sb-ink-2:#728893;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(28,140,168,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.nav a .badge.amb{background:var(--amber)}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn:disabled{opacity:.7;cursor:not-allowed}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:64px 1fr 66px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut / triage gauge */
+.tri-wrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.donut{width:128px;height:128px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;
+  background:conic-gradient(var(--red) 0 0);transition:background 1s ease}
+.donut .hole{width:88px;height:88px;border-radius:50%;background:var(--card);display:grid;place-items:center;text-align:center}
+.donut .hole b{font-size:24px;font-weight:900;line-height:1}
+.donut .hole span{font-size:10.5px;color:var(--ink-3);font-weight:700}
+.tri-legend{flex:1;min-width:150px;display:flex;flex-direction:column;gap:9px}
+.tri-legend .lr{display:flex;align-items:center;gap:9px;font-size:12.5px}
+.tri-legend .lr .sw{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.tri-legend .lr b{margin-left:auto;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.done{background:var(--green-soft);color:var(--green)}
+.st.checked{background:var(--brand-soft);color:var(--brand)}
+.st.waiting{background:var(--soft);color:var(--ink-3)}
+.st.urgent{background:var(--red-soft);color:var(--red)}
+.st.draft{background:var(--amber-soft);color:var(--amber)}
+/* triage level badges */
+.tg{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:8px;white-space:nowrap}
+.tg::before{content:"";width:7px;height:7px;border-radius:2px;background:currentColor}
+.tg.t1{background:var(--red-soft);color:var(--red)}
+.tg.t2{background:var(--amber-soft);color:var(--amber)}
+.tg.t3{background:var(--green-soft);color:var(--green)}
+.tg.t0{background:var(--soft);color:var(--ink-3)}
+
+/* intake form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:74px;line-height:1.6}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.fg .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.checks{display:flex;flex-wrap:wrap;gap:7px}
+.checks label{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--ink-2);
+  padding:7px 11px;border:1px solid var(--line-2);border-radius:8px;cursor:pointer;transition:all .15s;margin:0}
+.checks label:hover{border-color:var(--brand)}
+.checks input{display:none}
+.checks label.sel{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+.scale{display:flex;gap:5px}
+.scale button{flex:1;padding:8px 0;border:1px solid var(--line-2);background:var(--card);border-radius:7px;font-weight:800;font-size:13px;color:var(--ink-2);cursor:pointer;transition:all .12s}
+.scale button.sel{background:var(--brand);border-color:var(--brand);color:#fff}
+
+/* preview card (digital chart) */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:26px 28px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.pv-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px}
+.pv-title{font-size:21px;font-weight:900;letter-spacing:.16em;color:var(--brand-dk);border-bottom:3px solid var(--brand-dk);padding-bottom:5px}
+.pv-meta{text-align:right;font-size:11.5px;color:var(--ink-2)}
+.pv-meta .no{font-family:'Orbitron';color:var(--ink);font-weight:700}
+.pv-pt{font-size:18px;font-weight:900;border-bottom:1.5px solid #1a2233;display:inline-block;min-width:200px;padding-bottom:5px;margin-bottom:6px}
+.pv-sec{margin:14px 0}
+.pv-sec h4{font-size:11px;color:var(--brand-dk);font-weight:800;letter-spacing:.04em;border-left:4px solid var(--brand-dk);padding-left:8px;margin-bottom:7px}
+.pv-kv{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;font-size:12px}
+.pv-kv .k{color:var(--ink-3);font-weight:700}
+.pv-kv .v{color:#1a2233}
+.pv-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.pv-tag{font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;background:var(--soft);color:var(--ink-2)}
+.pv-tri{border-radius:8px;padding:12px 15px;margin-top:8px;display:flex;align-items:center;gap:12px}
+.pv-tri.t1{background:var(--red-soft)}.pv-tri.t2{background:var(--amber-soft)}.pv-tri.t3{background:var(--green-soft)}.pv-tri.t0{background:var(--soft)}
+.pv-tri .lv{font-weight:900;font-size:15px}
+.pv-tri.t1 .lv{color:var(--red)}.pv-tri.t2 .lv{color:var(--amber)}.pv-tri.t3 .lv{color:var(--green)}.pv-tri.t0 .lv{color:var(--ink-3)}
+
+/* AI summary stage */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--line);border-radius:9px;margin-bottom:8px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+.summary-box{background:var(--soft);border-radius:10px;padding:14px 16px;font-size:13px;line-height:1.8;color:var(--ink);margin-top:6px;white-space:pre-wrap}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto;flex-shrink:0}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* reception waiting cards */
+.rec-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:13px}
+.rec-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:15px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.rec-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px}
+.rec-card.t1::before{background:var(--red)}.rec-card.t2::before{background:var(--amber)}.rec-card.t3::before{background:var(--green)}.rec-card.t0::before{background:var(--line-2)}
+.rec-card .rn{font-family:'Orbitron';font-size:20px;font-weight:700;color:var(--ink)}
+.rec-card .rname{font-weight:800;font-size:14px;margin-top:2px}
+.rec-card .rmeta{font-size:11.5px;color:var(--ink-3);margin-top:2px}
+.rec-card .rfoot{display:flex;align-items:center;gap:8px;margin-top:11px}
+.rec-card .rwait{margin-left:auto;font-size:11.5px;color:var(--ink-2);font-weight:700}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.hint{font-size:11.5px;color:var(--ink-3);margin-bottom:14px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">予診票マシン<small>技マシン｜オンライン問診</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">📋</span>予診一覧</a>
+      <a data-v="reception"><span class="i">🏥</span>受付<span class="badge amb" id="navWaiting">0</span></a>
+      <a data-v="intake"><span class="i">✏️</span>問診</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="triage"><span class="i">🚦</span>トリアージ<span class="badge" id="navUrgent">0</span></a>
+      <a data-v="ai"><span class="i">⚡</span>AI要約</a>
+    </nav>
+    <div class="org">
+      <div class="av">大</div>
+      <div><b>大分中央クリニック</b><span>デモ環境 / 受付・看護</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。患者名・症状はすべて架空のサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">本日の予診・受付状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>時間帯別の受付件数</h3><span class="more">本日 9〜18時</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>緊急度トリアージの内訳</h3></div>
+            <div class="pb">
+              <div class="tri-wrap">
+                <div class="donut" id="donut"><div class="hole"><div><b id="donutN">0</b><span>本日 予診</span></div></div></div>
+                <div class="tri-legend" id="triLegend"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>診療科別の受付</h3></div>
+            <div class="pb"><div class="bars" id="deptBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="患者名・受付番号・主訴で検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>受付番号</th><th>患者名</th><th>診療科</th><th>主訴</th><th>緊急度</th><th>記入</th><th>状態</th><th>受付時刻</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- RECEPTION -->
+      <section class="view" id="v-reception">
+        <div class="hint">QRコードでスマホから事前記入された予診票が、来院受付と同時にここへ並びます。緊急度の高い患者ほど色が濃く・上に表示されます。</div>
+        <div class="toolbar">
+          <div class="chips" id="recChips"></div>
+          <button class="btn primary" style="margin-left:auto" onclick="go('intake')">＋ 窓口で問診を入力</button>
+        </div>
+        <div class="rec-grid" id="recGrid"></div>
+      </section>
+
+      <!-- INTAKE FORM -->
+      <section class="view" id="v-intake">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>患者名</label><input id="iName" placeholder="例：山田 太郎"></div>
+            <div class="fg"><div class="row2">
+              <div><label>年齢</label><input id="iAge" type="number" min="0" max="120" placeholder="例：54"></div>
+              <div><label>性別</label><select id="iSex"><option>男性</option><option>女性</option><option>その他</option></select></div>
+            </div></div>
+            <div class="fg"><label>診療科</label>
+              <select id="iDept"></select></div>
+            <div class="fg"><label>主訴（どうされましたか？）</label>
+              <textarea id="iChief" placeholder="例：昨日の夜から胸が締めつけられるように痛い"></textarea>
+              <div class="aihint" id="iAiHint">✨ AIが入力内容から緊急度を判定しました</div></div>
+            <div class="fg"><label>症状の程度（0=無い 〜 10=最もつらい）</label>
+              <div class="scale" id="iScale"></div></div>
+            <div class="fg"><label>あてはまる症状（複数選択可）</label>
+              <div class="checks" id="iSymptoms"></div></div>
+            <div class="fg"><label>既往歴・服薬（複数選択可）</label>
+              <div class="checks" id="iHistory"></div></div>
+            <div class="linkrow" style="margin-top:16px">
+              <button class="btn primary" id="iSubmit" style="flex:1;justify-content:center">⚡ AIで判定して受付に追加</button>
+              <button class="btn" id="iSample">サンプル</button>
+            </div>
+          </div>
+          <div>
+            <div class="paper" id="iPaper">
+              <div class="pv-top">
+                <div class="pv-title">予 診 票</div>
+                <div class="pv-meta"><div>受付番号：<span class="no" id="pNo">—</span></div><div>記入日時：<span id="pDate">—</span></div><div>担当：自動受付</div></div>
+              </div>
+              <div><span class="pv-pt" id="pPt">　様</span></div>
+              <div style="font-size:11.5px;color:var(--ink-2)">入力内容がそのまま電子カルテ用の予診票になります。</div>
+              <div class="pv-sec">
+                <h4>基本情報</h4>
+                <div class="pv-kv">
+                  <div class="k">診療科</div><div class="v" id="pDept">—</div>
+                  <div class="k">主訴</div><div class="v" id="pChief">—</div>
+                  <div class="k">症状の程度</div><div class="v" id="pPain">—</div>
+                </div>
+              </div>
+              <div class="pv-sec">
+                <h4>症状</h4>
+                <div class="pv-tags" id="pSymptoms"><span class="pv-tag" style="color:var(--ink-3)">未選択</span></div>
+              </div>
+              <div class="pv-sec">
+                <h4>既往歴・服薬</h4>
+                <div class="pv-tags" id="pHistory"><span class="pv-tag" style="color:var(--ink-3)">未選択</span></div>
+              </div>
+              <div class="pv-sec">
+                <h4>AIトリアージ判定</h4>
+                <div class="pv-tri t0" id="pTri">
+                  <div class="lv" id="pTriLv">— 入力すると自動判定</div>
+                  <div style="font-size:11.5px;color:var(--ink-2)" id="pTriMsg">主訴・症状・程度から緊急度をリアルタイムで推定します</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TRIAGE -->
+      <section class="view" id="v-triage">
+        <div class="kpis" id="triKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>緊急度の高い順に並べた本日の予診票</h3>
+            <button class="btn green" id="reTriage" style="margin-left:auto">🚦 AIで一括再トリアージ</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>緊急度</th><th>受付番号</th><th>患者名</th><th>診療科</th><th>主訴</th><th>AIの判定理由</th><th></th></tr></thead>
+              <tbody id="triRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI SUMMARY -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">問診回答からカルテ用サマリーを自動生成</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">未要約の予診票 <b id="aiCnt">0件</b> を、医師がすぐ読めるSOAP形式の要約＋緊急度トリアージにAIが変換します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで一括要約する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">1人あたり 8分</div>
+              <ul>
+                <li>🖊️ 手書き予診票を看護師が読み解く</li>
+                <li>⌨️ 電子カルテに要点を打ち直す</li>
+                <li>🤔 緊急度を経験と勘で振り分け</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 回答をSOAP形式に自動整理</li>
+                <li>📄 カルテに貼れるサマリーを生成</li>
+                <li>🚦 緊急度を基準に沿って自動判定</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ 生成されたカルテサマリー</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const DEPTS=['内科','循環器内科','整形外科','小児科','皮膚科','耳鼻咽喉科','消化器内科'];
+const PATIENTS=[
+  '山田 太郎','佐藤 花子','鈴木 一郎','田中 美咲','高橋 健','渡辺 さくら','伊藤 大輔','中村 良子',
+  '小林 翔','加藤 由美','吉田 修','山口 千夏','松本 浩','井上 恵','木村 進','林 あおい',
+  '清水 剛','森 七海','池田 学','橋本 幸子','阿部 隆','石川 麻衣','後藤 誠','岡田 桃子'
+];
+const CHIEFS=[
+  {t:'胸が締めつけられるように痛い・冷や汗',d:'循環器内科',lv:1,sym:['胸痛','息苦しい','冷や汗'],reason:'胸痛＋冷や汗は急性心疾患の可能性。即時診察推奨。'},
+  {t:'突然の激しい頭痛・吐き気',d:'内科',lv:1,sym:['頭痛','吐き気'],reason:'突然発症の激しい頭痛は危険なサインの可能性。優先診察。'},
+  {t:'呼吸が苦しく息切れがひどい',d:'内科',lv:1,sym:['息苦しい','咳'],reason:'呼吸困難は緊急性が高い。バイタル確認の上、優先。'},
+  {t:'高熱が3日続き食事がとれない',d:'内科',lv:2,sym:['発熱','倦怠感','吐き気'],reason:'高熱の遷延＋経口摂取不良。脱水リスクあり早めの診察を。'},
+  {t:'腹痛が強く下痢が止まらない',d:'消化器内科',lv:2,sym:['腹痛','下痢','吐き気'],reason:'強い腹痛＋下痢。脱水・急性腹症の除外が必要。'},
+  {t:'転倒して足首が腫れて歩けない',d:'整形外科',lv:2,sym:['痛み','腫れ'],reason:'外傷後の荷重不能。骨折の可能性ありレントゲン推奨。'},
+  {t:'子どもが熱を出してぐったりしている',d:'小児科',lv:2,sym:['発熱','倦怠感'],reason:'小児の発熱＋活気低下。重症化兆候の確認を優先。'},
+  {t:'めまいがしてふらつく',d:'内科',lv:2,sym:['めまい','倦怠感'],reason:'めまいの原因鑑別が必要。転倒注意・早めの診察。'},
+  {t:'数日前から咳と微熱が続く',d:'内科',lv:3,sym:['咳','発熱'],reason:'軽度の上気道症状。バイタル安定なら通常順で対応可。'},
+  {t:'発疹とかゆみが出てきた',d:'皮膚科',lv:3,sym:['発疹','かゆみ'],reason:'局所の皮膚症状。全身症状なく通常順で対応可。'},
+  {t:'のどの痛みと鼻水',d:'耳鼻咽喉科',lv:3,sym:['のどの痛み','鼻水'],reason:'軽症の上気道炎が疑われる。通常順で対応可。'},
+  {t:'定期の血圧の薬をもらいたい',d:'循環器内科',lv:3,sym:[],reason:'定期処方の継続。症状の訴えなく通常順。'},
+  {t:'健康診断の結果について相談',d:'内科',lv:3,sym:[],reason:'相談のみで急性症状なし。通常順で対応可。'},
+  {t:'腰の痛みが慢性的に続く',d:'整形外科',lv:3,sym:['痛み'],reason:'慢性の腰痛。神経症状なければ通常順で対応可。'},
+];
+const SYM_OPTIONS=['発熱','頭痛','胸痛','腹痛','息苦しい','咳','吐き気','下痢','めまい','倦怠感','発疹','かゆみ','のどの痛み','鼻水','痛み','腫れ','冷や汗'];
+const HIST_OPTIONS=['高血圧','糖尿病','心疾患','喘息','アレルギー','服薬あり','妊娠の可能性','特になし'];
+const TODAY=new Date();
+let SEED=20260530;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+const STATUSES=['done','done','checked','checked','waiting','urgent','checked'];
+
+/* triage meta */
+const TRI={1:{label:'レベル1 緊急',short:'緊急',color:'#e24a4a',cls:'t1'},
+  2:{label:'レベル2 準緊急',short:'準緊急',color:'#e3941f',cls:'t2'},
+  3:{label:'レベル3 通常',short:'通常',color:'#16b877',cls:'t3'},
+  0:{label:'未判定',short:'未判定',color:'#8a94a6',cls:'t0'}};
+
+let intakes=[];
+(function seed(){
+  let h=9,m=2;
+  for(let i=0;i<20;i++){
+    const c=pick(CHIEFS);
+    const pt=PATIENTS[i%PATIENTS.length];
+    const age=c.d==='小児科'?(1+Math.floor(rnd()*12)):(20+Math.floor(rnd()*65));
+    const sex=pick(['男性','女性']);
+    m+=12+Math.floor(rnd()*26);while(m>=60){m-=60;h++;}
+    const recd=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate(),h,m);
+    let st=pick(STATUSES);
+    // urgent triage rows should look urgent
+    if(c.lv===1&&rnd()>0.4)st='urgent';
+    const pain=c.lv===1?(7+Math.floor(rnd()*4)):c.lv===2?(4+Math.floor(rnd()*4)):(1+Math.floor(rnd()*4));
+    const hist=[];if(rnd()>0.55)hist.push(pick(HIST_OPTIONS.slice(0,6)));
+    intakes.push({no:'YS-'+(2600+i+1),name:pt,age,sex,dept:c.d,chief:c.t,sym:c.sym.slice(),
+      hist,pain,lv:c.lv,reason:c.reason,status:st,rec:recd,summarized:(st==='done'||st==='checked')});
+  }
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const fmtT=d=>String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+const fmtDT=d=>(d.getMonth()+1)+'月'+d.getDate()+'日 '+fmtT(d);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STLABEL={done:'要約済',checked:'確認済',waiting:'記入待ち',urgent:'要対応',draft:'下書き'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]||s}</span>`;}
+function triBadge(lv){const t=TRI[lv]||TRI[0];return `<span class="tg ${t.cls}">${t.short}</span>`;}
+function filled(i){return i.status!=='waiting';}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','本日の予診・受付状況'],list:['予診一覧','記入された予診票を管理します'],
+  reception:['受付','来院順の待ち状況。緊急度の高い患者を見逃しません'],
+  intake:['問診','入力するとリアルタイムで予診票が組み上がります'],
+  triage:['トリアージ','AIが緊急度を判定し、優先順位を提案します'],ai:['AI要約','問診回答からカルテ用サマリーを自動生成']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn primary" onclick="go(\'intake\')">＋ 問診を入力</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI要約</button><button class="btn primary" onclick="go(\'intake\')">＋ 問診を入力</button>'
+    : v==='triage'?'<button class="btn" onclick="go(\'ai\')">⚡ AI要約へ</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='reception')renderReception();
+  if(v==='triage')renderTriage();
+  if(v==='ai')renderAi();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const total=intakes.length;
+  const filledN=intakes.filter(filled).length;
+  const rate=Math.round(filledN/total*100);
+  const urgent=intakes.filter(i=>i.lv===1).length;
+  const waiting=intakes.filter(i=>i.status==='waiting'||i.status==='urgent').length;
+  $('kpis').innerHTML=`
+    ${kpi('#1c8ca8','本日の受付',total+'<small>件</small>',filledN+'件 記入済','up','前週比 +9%')}
+    ${kpi('#16b877','予診記入率',rate+'<small>%</small>','','up','QR事前記入が浸透')}
+    ${kpi('#e24a4a','要注意（緊急）',urgent+'<small>件</small>',' ',urgent?'down':'up',urgent?'優先対応中':'なし')}
+    ${kpi('#e3941f','平均待ち時間','14<small>分</small>','','up','前週比 −6分')}`;
+  // hourly bars
+  const hours=[9,10,11,12,13,14,15,16,17];
+  const counts=hours.map(h=>intakes.filter(i=>i.rec.getHours()===h).length+(h>=intakes[intakes.length-1].rec.getHours()?0:0));
+  const mx=Math.max(...counts,1);
+  $('trendBars').innerHTML=hours.map((h,i)=>`
+    <div class="bar-row"><span class="mlabel">${h}:00</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(counts[i]/mx*100)}"></div></div>
+      <span class="mval">${counts[i]}件</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // triage donut
+  const c1=intakes.filter(i=>i.lv===1).length,c2=intakes.filter(i=>i.lv===2).length,c3=intakes.filter(i=>i.lv===3).length;
+  $('donutN').textContent=total;
+  const p1=c1/total*100,p2=c2/total*100;
+  const a1=p1*3.6,a2=(p1+p2)*3.6;
+  $('donut').style.background=`conic-gradient(var(--red) 0 ${a1}deg, var(--amber) ${a1}deg ${a2}deg, var(--green) ${a2}deg 360deg)`;
+  $('triLegend').innerHTML=[
+    {sw:'var(--red)',l:'レベル1 緊急',n:c1},{sw:'var(--amber)',l:'レベル2 準緊急',n:c2},{sw:'var(--green)',l:'レベル3 通常',n:c3}
+  ].map(r=>`<div class="lr"><span class="sw" style="background:${r.sw}"></span>${r.l}<b>${r.n}件</b></div>`).join('');
+  // dept bars
+  const dc={};DEPTS.forEach(d=>dc[d]=0);intakes.forEach(i=>dc[i.dept]=(dc[i.dept]||0)+1);
+  const arr=Object.entries(dc).filter(e=>e[1]>0).sort((a,b)=>b[1]-a[1]);
+  const dmx=Math.max(...arr.map(e=>e[1]),1);
+  $('deptBars').innerHTML=arr.map(e=>`
+    <div class="bar-row"><span class="mlabel">${esc(e[0])}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0;background:linear-gradient(90deg,var(--purple),var(--brand))" data-w="${Math.round(e[1]/dmx*100)}"></div></div>
+      <span class="mval">${e[1]}件</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#deptBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // activity
+  const acts=[
+    {i:'🚦',c:'#fdeaea',t:'AIが「胸痛・冷や汗」の患者を緊急(レベル1)と判定',m:'2分前'},
+    {i:'📱',c:'#e4f4f8',t:'佐藤 花子 さんがスマホで予診票を事前記入',m:'8分前'},
+    {i:'⚡',c:'#e6f8f0',t:'AI要約で 6件のカルテサマリーを生成',m:'今日 9:42'},
+    {i:'✅',c:'#e6f8f0',t:'渡辺 さくら さんの予診票を医師が確認済に',m:'今日 9:31'},
+    {i:'🏥',c:'#efeafb',t:'本日の受付を開始しました（QR受付有効）',m:'今日 8:55'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ LIST ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['urgent','要対応'],['waiting','記入待ち'],['checked','確認済'],['done','要約済']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=intakes.filter(i=>filterStatus==='all'||i.status===filterStatus)
+    .filter(i=>!q||(i.name+i.chief+i.no+i.dept).toLowerCase().includes(q))
+    .sort((a,b)=>a.lv-b.lv||b.rec-a.rec);
+  $('listRows').innerHTML=rows.length?rows.map(i=>`<tr onclick="go('triage')">
+    <td class="mono" style="font-size:12px">${esc(i.no)}</td><td><b>${esc(i.name)}</b><div style="font-size:11px;color:var(--ink-3)">${i.age}歳 ${esc(i.sex)}</div></td>
+    <td style="color:var(--ink-2)">${esc(i.dept)}</td><td style="color:var(--ink-2);max-width:240px">${esc(i.chief)}</td>
+    <td>${triBadge(i.lv)}</td><td>${filled(i)?'<span style="color:var(--green);font-weight:700">✓ 済</span>':'<span style="color:var(--ink-3)">—</span>'}</td>
+    <td>${stBadge(i.status)}</td><td class="tnum" style="color:var(--ink-2)">${fmtT(i.rec)}</td></tr>`).join('')
+    :'<tr><td colspan="8" class="empty-cell">該当する予診票がありません</td></tr>';
+}
+$('q').addEventListener('input',renderList);
+
+/* ============ RECEPTION ============ */
+let recFilter='all';
+function renderRecChips(){
+  const opts=[['all','すべて'],['1','緊急'],['2','準緊急'],['3','通常']];
+  $('recChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===recFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('recChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{recFilter=c.dataset.s;renderRecChips();renderReception();});
+}
+function renderReception(){
+  let rows=intakes.filter(i=>i.status!=='done')
+    .filter(i=>recFilter==='all'||String(i.lv)===recFilter)
+    .sort((a,b)=>a.lv-b.lv||a.rec-b.rec);
+  const now=new Date();
+  $('recGrid').innerHTML=rows.length?rows.map((i,idx)=>{
+    const wait=Math.max(1,Math.round((now-i.rec)/60000)%60+ (i.lv*2));
+    const t=TRI[i.lv];
+    return `<div class="rec-card ${t.cls}">
+      <div class="rn">${esc(i.no.replace('YS-',''))}</div>
+      <div class="rname">${esc(i.name)} <span style="font-weight:500;color:var(--ink-3);font-size:11px">${i.age}歳 ${esc(i.sex)}</span></div>
+      <div class="rmeta">${esc(i.dept)} ・ ${esc(i.chief)}</div>
+      <div class="rfoot">${triBadge(i.lv)}${stBadge(i.status)}<span class="rwait">待ち ${wait}分</span></div>
+    </div>`;}).join('')
+    :'<div class="empty-cell" style="grid-column:1/-1">待ち患者はいません 🎉</div>';
+  $('navWaiting').textContent=intakes.filter(i=>i.status==='waiting'||i.status==='urgent').length;
+}
+
+/* ============ INTAKE FORM ============ */
+let iState={pain:null,sym:new Set(),hist:new Set()};
+function renderDeptSelect(){$('iDept').innerHTML='<option value="">選択してください</option>'+DEPTS.map(d=>`<option>${d}</option>`).join('');}
+function renderScale(){
+  $('iScale').innerHTML='';
+  for(let n=0;n<=10;n++){const b=document.createElement('button');b.textContent=n;b.onclick=()=>{iState.pain=n;renderScale();renderPaper();};
+    if(iState.pain===n)b.classList.add('sel');$('iScale').appendChild(b);}
+}
+function renderChecksUI(){
+  $('iSymptoms').innerHTML=SYM_OPTIONS.map(s=>`<label class="${iState.sym.has(s)?'sel':''}"><input type="checkbox" data-s="${esc(s)}">${esc(s)}</label>`).join('');
+  $('iHistory').innerHTML=HIST_OPTIONS.map(s=>`<label class="${iState.hist.has(s)?'sel':''}"><input type="checkbox" data-s="${esc(s)}">${esc(s)}</label>`).join('');
+  $('iSymptoms').querySelectorAll('label').forEach(l=>l.onclick=e=>{e.preventDefault();const s=l.querySelector('input').dataset.s;iState.sym.has(s)?iState.sym.delete(s):iState.sym.add(s);renderChecksUI();renderPaper();});
+  $('iHistory').querySelectorAll('label').forEach(l=>l.onclick=e=>{e.preventDefault();const s=l.querySelector('input').dataset.s;
+    if(s==='特になし'){iState.hist.clear();iState.hist.add(s);}else{iState.hist.delete('特になし');iState.hist.has(s)?iState.hist.delete(s):iState.hist.add(s);}
+    renderChecksUI();renderPaper();});
+}
+// rule-based triage estimation
+function estimateTriage(){
+  const chief=($('iChief').value||'').toLowerCase();
+  const sym=iState.sym;const pain=iState.pain;
+  const RED=['胸痛','息苦しい','冷や汗'];
+  const redWords=['胸が','締めつけ','息が','呼吸','意識','けいれん','大量','吐血','激しい頭痛','ろれつ'];
+  let lv=0,reason='';
+  if([...sym].some(s=>RED.includes(s))||redWords.some(w=>chief.includes(w))||pain>=8){
+    lv=1;reason='危険な症状のキーワード／強い痛みを検知。緊急(レベル1)として即時診察を推奨します。';
+  }else if(sym.size>=2||(pain!=null&&pain>=4)||['腹痛','発熱','めまい','腫れ','吐き気'].some(s=>sym.has(s))){
+    lv=2;reason='複数症状または中等度の訴え。準緊急(レベル2)として早めの診察を推奨します。';
+  }else if(chief||sym.size>0||pain!=null){
+    lv=3;reason='急性の危険兆候は見られません。通常(レベル3)の順番で対応可能です。';
+  }
+  return {lv,reason};
+}
+function renderPaper(){
+  const name=$('iName').value;
+  $('pPt').textContent=(name?name:'　')+' 様';
+  const age=$('iAge').value,sex=$('iSex').value;
+  $('pDept').textContent=$('iDept').value||'—';
+  $('pChief').textContent=$('iChief').value||'—';
+  $('pPain').textContent=iState.pain==null?'—':iState.pain+' / 10';
+  $('pSymptoms').innerHTML=iState.sym.size?[...iState.sym].map(s=>`<span class="pv-tag">${esc(s)}</span>`).join(''):'<span class="pv-tag" style="color:var(--ink-3)">未選択</span>';
+  $('pHistory').innerHTML=iState.hist.size?[...iState.hist].map(s=>`<span class="pv-tag">${esc(s)}</span>`).join(''):'<span class="pv-tag" style="color:var(--ink-3)">未選択</span>';
+  const tr=estimateTriage();const t=TRI[tr.lv];
+  $('pTri').className='pv-tri '+t.cls;
+  $('pTriLv').textContent=tr.lv?t.label:'— 入力すると自動判定';
+  $('pTriMsg').textContent=tr.reason||'主訴・症状・程度から緊急度をリアルタイムで推定します';
+}
+['iName','iAge','iSex','iDept'].forEach(id=>$(id).addEventListener('input',renderPaper));
+$('iChief').addEventListener('input',()=>{renderPaper();if($('iChief').value.length>4){$('iAiHint').classList.add('show');setTimeout(()=>$('iAiHint').classList.remove('show'),2000);}});
+$('iSample').addEventListener('click',()=>{
+  $('iName').value='山田 太郎';$('iAge').value=58;$('iSex').value='男性';$('iDept').value='循環器内科';
+  $('iChief').value='昨夜から胸が締めつけられるように痛く、冷や汗が出る';
+  iState.pain=8;iState.sym=new Set(['胸痛','息苦しい','冷や汗']);iState.hist=new Set(['高血圧','服薬あり']);
+  renderScale();renderChecksUI();renderPaper();
+});
+$('iSubmit').addEventListener('click',async()=>{
+  const name=$('iName').value.trim(),chief=$('iChief').value.trim();
+  if(!name||!$('iDept').value||!chief){showToast('患者名・診療科・主訴を入力してください');return;}
+  const btn=$('iSubmit');btn.textContent='⚡ AIが判定中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,800));
+  const tr=estimateTriage();const now=new Date();const no='YS-'+(2600+intakes.length+1);
+  $('pNo').textContent=no;$('pDate').textContent=fmtDT(now);
+  intakes.push({no,name,age:+$('iAge').value||0,sex:$('iSex').value,dept:$('iDept').value,chief,
+    sym:[...iState.sym],hist:[...iState.hist],pain:iState.pain,lv:tr.lv||3,reason:tr.reason,
+    status:tr.lv===1?'urgent':'checked',rec:now,summarized:false});
+  btn.textContent='⚡ AIで判定して受付に追加';btn.disabled=false;
+  showToast('予診票 '+no+' を受付に追加しました（緊急度 '+(TRI[tr.lv||3].short)+'）');
+  // reset
+  $('iName').value='';$('iAge').value='';$('iChief').value='';$('iDept').value='';
+  iState={pain:null,sym:new Set(),hist:new Set()};renderScale();renderChecksUI();renderPaper();$('pNo').textContent='—';$('pDate').textContent='—';
+  setTimeout(()=>go('reception'),700);
+});
+
+/* ============ TRIAGE ============ */
+function renderTriage(){
+  const c1=intakes.filter(i=>i.lv===1).length,c2=intakes.filter(i=>i.lv===2).length,c3=intakes.filter(i=>i.lv===3).length;
+  const avgPain=Math.round(intakes.reduce((s,i)=>s+(i.pain||0),0)/intakes.length*10)/10;
+  $('triKpis').innerHTML=`
+    ${kpi('#e24a4a','レベル1 緊急',c1+'<small>件</small>',' ',c1?'down':'up',c1?'優先診察':'なし')}
+    ${kpi('#e3941f','レベル2 準緊急',c2+'<small>件</small>',' ','warn','早めの診察')}
+    ${kpi('#16b877','レベル3 通常',c3+'<small>件</small>',' ','up','通常順')}
+    ${kpi('#1c8ca8','平均 症状スコア',avgPain+'<small>/10</small>','','up','AI自動算出')}`;
+  let rows=intakes.filter(i=>filled(i)).sort((a,b)=>a.lv-b.lv||b.pain-a.pain);
+  $('triRows').innerHTML=rows.map(i=>`<tr onclick="go('ai')">
+    <td>${triBadge(i.lv)}</td><td class="mono" style="font-size:12px">${esc(i.no)}</td>
+    <td><b>${esc(i.name)}</b><div style="font-size:11px;color:var(--ink-3)">${i.age}歳 ${esc(i.sex)}</div></td>
+    <td style="color:var(--ink-2)">${esc(i.dept)}</td><td style="color:var(--ink-2);max-width:200px">${esc(i.chief)}</td>
+    <td style="color:var(--ink-2);font-size:12px;max-width:280px">${esc(i.reason)}</td>
+    <td class="r"><button class="btn ${i.lv===1?'':'green'}" style="padding:6px 12px;${i.lv===1?'background:var(--red);border-color:var(--red);color:#fff':''}" onclick="event.stopPropagation();callPatient('${esc(i.no)}')">呼出</button></td></tr>`).join('')
+    || '<tr><td colspan="7" class="empty-cell">記入済の予診票がありません</td></tr>';
+  $('navUrgent').textContent=c1;
+}
+window.callPatient=no=>{const i=intakes.find(x=>x.no===no);if(i){i.status='done';i.summarized=true;renderTriage();showToast(i.name+' さん（'+no+'）を診察に呼び出しました');}};
+$('reTriage').addEventListener('click',async()=>{
+  const btn=$('reTriage');btn.textContent='🚦 AIが再判定中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,1000));
+  btn.textContent='🚦 AIで一括再トリアージ';btn.disabled=false;
+  renderTriage();showToast('全'+intakes.filter(filled).length+'件の緊急度をAIが再判定しました');
+});
+
+/* ============ AI SUMMARY ============ */
+function pendingSummary(){return intakes.filter(i=>filled(i)&&!i.summarized);}
+function renderAi(){
+  const n=pendingSummary().length||intakes.filter(filled).length;
+  $('aiCnt').textContent=n+'件';
+  $('genList').classList.remove('show');$('genItems').innerHTML='';
+  $('baAfterT').textContent='— ';$('baAfterList').style.opacity='.4';$('aiOrb').textContent='🤖';
+}
+function buildSummary(i){
+  const t=TRI[i.lv];
+  const S=`S（主観）：${i.name}さん（${i.age}歳・${i.sex}）。主訴「${i.chief}」。症状スコア ${i.pain==null?'未記入':i.pain+'/10'}。`;
+  const O=`O（客観）：申告症状 ${i.sym.length?i.sym.join('・'):'特記なし'}／既往・服薬 ${i.hist.length?i.hist.join('・'):'特記なし'}。`;
+  const A=`A（評価）：${i.reason}`;
+  const P=`P（計画）：緊急度【${t.label}】。${i.lv===1?'最優先で医師診察・バイタル測定を実施。':i.lv===2?'早めに診察枠を確保。経過観察を併用。':'通常の受付順で診察。'}`;
+  return S+'\n'+O+'\n'+A+'\n'+P;
+}
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 生成中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,7);},120);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);$('baAfterT').textContent='7秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  let targets=pendingSummary();if(!targets.length)targets=intakes.filter(filled);
+  targets=targets.sort((a,b)=>a.lv-b.lv).slice(0,6);
+  $('genItems').innerHTML=targets.map((i,idx)=>{
+    const t2=TRI[i.lv];
+    return `<div class="gen-item" data-i="${idx}">
+      <span class="ck">✓</span>
+      <div style="flex:1">
+        <div style="font-weight:800">${esc(i.name)} <span style="font-weight:500;color:var(--ink-3);font-size:11px">${esc(i.no)} ・ ${esc(i.dept)}</span></div>
+        <div class="summary-box">${esc(buildSummary(i))}</div>
+      </div>
+      <span class="tg ${t2.cls}" style="align-self:flex-start">${t2.short}</span>
+    </div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let k=0;k<items.length;k++){await new Promise(r=>setTimeout(r,220));items[k].classList.add('in');targets[k].summarized=true;}
+  btn.disabled=false;btn.textContent='⚡ もう一度生成';
+  showToast(items.length+'件のカルテサマリーを生成しました');
+});
+
+/* ============ INIT ============ */
+renderDeptSelect();renderScale();renderChecksUI();renderPaper();renderChips();renderRecChips();renderDash();
+$('navWaiting').textContent=intakes.filter(i=>i.status==='waiting'||i.status==='urgent').length;
+$('navUrgent').textContent=intakes.filter(i=>i.lv===1).length;
+</script>
+</body>
+</html>

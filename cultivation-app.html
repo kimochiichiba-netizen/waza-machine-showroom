@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜栽培マシン（栽培管理システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f8f3;--card:#ffffff;--soft:#eef4ec;--line:#e3ebe0;--line-2:#d3ddcf;
+  --ink:#1d2a22;--ink-2:#52614f;--ink-3:#8a9a86;
+  --brand:#2f9e57;--brand-dk:#1f7e42;--brand-soft:#e7f6ec;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--soil:#a8763e;
+  --sb:#10271a;--sb-2:#163524;--sb-ink:#c4dcc9;--sb-ink-2:#7da68a;
+  --shadow:0 1px 2px rgba(16,40,24,.04),0 4px 16px rgba(16,40,24,.05);
+  --shadow-lg:0 18px 50px rgba(16,40,24,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#7fe29a,#37e29a,#e3c864,#7fe29a);
+  display:grid;place-items:center;color:#04140a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,158,87,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.nav a .badge.amb{background:var(--amber)}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn:disabled{opacity:.7;cursor:default}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 92px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut / growth distribution */
+.dist{display:flex;flex-direction:column;gap:12px}
+.dist-row{display:flex;align-items:center;gap:10px;font-size:12.5px}
+.dist-row .sw{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.dist-row .nm{font-weight:600;color:var(--ink-2);width:88px}
+.dist-track{flex:1;height:9px;border-radius:99px;background:var(--soft);overflow:hidden}
+.dist-fill{height:100%;border-radius:99px;width:0;transition:width .9s cubic-bezier(.2,.8,.3,1)}
+.dist-row .pc{font-weight:800;width:42px;text-align:right;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px;vertical-align:middle}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.good{background:var(--green-soft);color:var(--green)}
+.st.normal{background:var(--brand-soft);color:var(--brand)}
+.st.watch{background:var(--amber-soft);color:var(--amber)}
+.st.alert{background:var(--red-soft);color:var(--red)}
+.st.rest{background:var(--soft);color:var(--ink-3)}
+.tag-pill{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:7px;background:var(--soft);color:var(--ink-2)}
+.prog{height:7px;border-radius:99px;background:var(--soft);overflow:hidden;width:90px;display:inline-block;vertical-align:middle}
+.prog>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky))}
+
+/* form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.formcard h3{font-size:14.5px;font-weight:800;margin-bottom:14px}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:64px}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.fg-2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* timeline / records */
+.recs{display:flex;flex-direction:column}
+.rec{display:flex;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}
+.rec:last-child{border-bottom:0}
+.rec .ri{width:34px;height:34px;border-radius:9px;flex-shrink:0;display:grid;place-items:center;font-size:16px;background:var(--brand-soft)}
+.rec .rt{font-weight:700;font-size:13.5px}
+.rec .rm{color:var(--ink-3);font-size:11.5px;margin-top:2px}
+.rec .rby{margin-left:auto;font-size:11px;color:var(--ink-3);text-align:right;white-space:nowrap}
+
+/* field card grid (growth) */
+.gcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.gcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow)}
+.gcard .gh{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.gcard .gh .em{width:38px;height:38px;border-radius:10px;background:var(--brand-soft);display:grid;place-items:center;font-size:19px}
+.gcard .gh b{font-size:14px;font-weight:800;display:block}
+.gcard .gh span{font-size:11.5px;color:var(--ink-3)}
+.gmetric{display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-top:1px dashed var(--line)}
+.gmetric .k{color:var(--ink-3);font-weight:600}
+.gmetric .v{font-weight:800;font-variant-numeric:tabular-nums}
+.gstage{display:flex;gap:4px;margin:11px 0 5px}
+.gstage .s{flex:1;height:6px;border-radius:99px;background:var(--soft)}
+.gstage .s.on{background:linear-gradient(90deg,var(--brand),var(--sky))}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item.alert{border-color:#f3c9c9;background:var(--red-soft)}
+.gen-item.task{border-color:#cfe9d8;background:var(--green-soft)}
+.gen-item .ck{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;font-size:13px;font-weight:900;flex-shrink:0}
+.gen-item .ck.t{background:var(--green);color:#fff}
+.gen-item .ck.a{background:var(--red);color:#fff}
+.gen-item .body{flex:1;min-width:0}
+.gen-item .body b{font-size:13px}
+.gen-item .body .sm{font-size:11.5px;color:var(--ink-2);margin-top:1px}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#7fe2a0,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* resource bars */
+.resgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:2px}
+.rescard{border:1px solid var(--line);border-radius:12px;padding:14px}
+.rescard .rn{font-weight:800;font-size:13.5px;display:flex;align-items:center;gap:8px}
+.rescard .rs{font-size:11.5px;color:var(--ink-3);margin:3px 0 9px}
+.rescard .rbar{height:9px;border-radius:99px;background:var(--soft);overflow:hidden}
+.rescard .rbar>i{display:block;height:100%;border-radius:99px}
+.rescard .rq{font-size:11.5px;margin-top:7px;font-weight:700;display:flex;justify-content:space-between}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">栽培マシン<small>技マシン｜栽培管理</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="fields"><span class="i">🌾</span>圃場一覧</a>
+      <a data-v="works"><span class="i">📝</span>作業記録</a>
+      <a data-v="growth"><span class="i">🌱</span>生育管理<span class="badge amb" id="navWatch">0</span></a>
+      <a data-v="supply"><span class="i">📦</span>資材</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI栽培アドバイス</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。圃場・生育データはサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">本日の栽培状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>作物別 収量予測（今期）</h3><span class="more">全圃場合計</span></div>
+            <div class="pb"><div class="bars" id="yieldBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>生育ステータス内訳</h3></div>
+            <div class="pb"><div class="dist" id="distRows"></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>本日の作業予定</h3><span class="more" onclick="go('works')">作業記録へ</span></div>
+            <div class="pb"><div class="recs" id="todayTasks"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FIELDS -->
+      <section class="view" id="v-fields">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="fq" placeholder="圃場名・作物・担当で検索"></div>
+          <div class="chips" id="fieldChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>圃場名</th><th>作物</th><th>面積</th><th>定植日</th><th>生育進捗</th><th class="r">収量予測</th><th>状態</th></tr></thead>
+          <tbody id="fieldRows"></tbody>
+        </table>
+      </section>
+
+      <!-- WORKS -->
+      <section class="view" id="v-works">
+        <div class="create-grid">
+          <div class="formcard">
+            <h3>作業を記録する</h3>
+            <div class="fg"><label>圃場</label><select id="wField"></select></div>
+            <div class="fg"><label>作業種別（選ぶとAIが目安時間を提案）</label>
+              <select id="wType">
+                <option value="">選択してください</option>
+                <option>水やり・かん水</option><option>施肥</option><option>防除（農薬散布）</option>
+                <option>除草</option><option>摘芯・整枝</option><option>収穫</option><option>定植・播種</option><option>土壌チェック</option>
+              </select>
+              <div class="aihint" id="wAiHint">✨ AIが標準作業時間と使用資材を自動入力しました</div>
+            </div>
+            <div class="fg-2">
+              <div class="fg" style="margin-bottom:0"><label>作業日</label><input id="wDate" type="date"></div>
+              <div class="fg" style="margin-bottom:0"><label>所要時間（分）</label><input id="wMin" type="number" min="0" placeholder="0"></div>
+            </div>
+            <div class="fg"><label>担当者</label><select id="wStaff"></select></div>
+            <div class="fg"><label>メモ</label><textarea id="wMemo" placeholder="例：葉色が薄い区画あり。次回追肥を検討。"></textarea></div>
+            <div class="linkrow">
+              <button class="btn primary" id="wSave" style="flex:1;justify-content:center">＋ 作業を記録</button>
+              <button class="btn" id="wSample">サンプル</button>
+            </div>
+          </div>
+          <div class="panel" style="align-self:start">
+            <div class="ph"><h3>作業履歴</h3>
+              <div class="chips" id="workChips" style="margin-left:auto"></div></div>
+            <div class="pb"><div class="recs" id="workRecs"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- GROWTH -->
+      <section class="view" id="v-growth">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="gq" placeholder="圃場・作物で検索"></div>
+          <div class="chips" id="growthChips"></div>
+        </div>
+        <div class="gcards" id="growthCards"></div>
+      </section>
+
+      <!-- SUPPLY -->
+      <section class="view" id="v-supply">
+        <div class="panel" style="margin-bottom:16px">
+          <div class="ph"><h3>資材在庫</h3>
+            <button class="btn green" id="reorder" style="margin-left:auto">🛒 不足分をまとめて発注</button></div>
+          <div class="pb"><div class="resgrid" id="resGrid"></div></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>資材名</th><th>区分</th><th class="r">在庫</th><th class="r">適正在庫</th><th>状態</th><th>最終入荷</th></tr></thead>
+          <tbody id="supplyRows"></tbody>
+        </table>
+      </section>
+
+      <!-- AI ADVICE -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div style="min-width:200px"><div style="font-size:16px;font-weight:900">生育データからAIが作業提案・病害アラート</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">全 <b>9圃場</b> のセンサー・生育記録をAIが解析し、今やるべき作業と病害リスクを自動で洗い出します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで解析する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">3時間20分</div>
+              <ul>
+                <li>📋 圃場ごとに記録を見比べて判断</li>
+                <li>🔬 葉の状態から病害を目視で推測</li>
+                <li>🧑‍🌾 ベテランの勘に頼った作業計画</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 全圃場の生育データを一括解析</li>
+                <li>🦠 病害リスクを早期にアラート</li>
+                <li>✅ 優先度つき作業リストを自動生成</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">🌱 AIの解析結果</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const TODAY=new Date();
+let SEED=4071;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+const fmtMD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+const fmtIso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+function dAgo(n){return new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-n);}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+
+/* ============ DATA ============ */
+const STAFF=['川宿田','佐藤','田中','鈴木'];
+const CROPS=['トマト','きゅうり','ピーマン','なす','いちご','レタス','ほうれん草','大葉'];
+const CROP_EMOJI={'トマト':'🍅','きゅうり':'🥒','ピーマン':'🫑','なす':'🍆','いちご':'🍓','レタス':'🥬','ほうれん草':'🥬','大葉':'🌿'};
+/* status: good=生育良好 / normal=順調 / watch=要観察 / alert=要対応 / rest=休耕 */
+const STLABEL={good:'生育良好',normal:'順調',watch:'要観察',alert:'要対応',rest:'休耕'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]}</span>`;}
+const STAGES=['育苗','定植','生育','開花・着果','収穫'];
+
+const FIELD_NAMES=[
+  ['第1ハウス（高設）','トマト'],['第2ハウス','きゅうり'],['第3ハウス','いちご'],
+  ['東露地A','レタス'],['東露地B','ほうれん草'],['南ハウス','ピーマン'],
+  ['西露地','なす'],['育苗ハウス','大葉'],['北露地','レタス'],
+];
+let fields=[];
+(function seedFields(){
+  const stPool=['good','good','normal','normal','watch','alert'];
+  FIELD_NAMES.forEach((f,i)=>{
+    const crop=f[1];
+    const area=(2+Math.floor(rnd()*18))*50; // m2
+    const planted=dAgo(15+Math.floor(rnd()*70));
+    const stageIdx=Math.min(4,Math.floor(rnd()*5));
+    let st=pick(stPool);
+    if(crop==='大葉')st='good';
+    const yieldKg=Math.round((area*(0.6+rnd()*1.8))/10)*10;
+    fields.push({
+      id:'F'+String(i+1).padStart(2,'0'),name:f[0],crop,area,planted,
+      stageIdx,status:st,staff:pick(STAFF),
+      yieldKg, temp:(18+rnd()*12).toFixed(1), humid:Math.round(55+rnd()*35),
+      soilMoist:Math.round(40+rnd()*45), ec:(1.0+rnd()*1.6).toFixed(1),
+      progress:Math.min(98,Math.round((stageIdx/4)*100+rnd()*12)),
+    });
+  });
+})();
+
+/* work records */
+const WORK_TYPES=['水やり・かん水','施肥','防除（農薬散布）','除草','摘芯・整枝','収穫','定植・播種','土壌チェック'];
+const WORK_EMOJI={'水やり・かん水':'💧','施肥':'🧪','防除（農薬散布）':'🛡️','除草':'🌿','摘芯・整枝':'✂️','収穫':'🧺','定植・播種':'🌱','土壌チェック':'🔬'};
+const WORK_STD={'水やり・かん水':25,'施肥':40,'防除（農薬散布）':55,'除草':70,'摘芯・整枝':50,'収穫':90,'定植・播種':80,'土壌チェック':20};
+let works=[];
+(function seedWorks(){
+  const memos=['特に異常なし','葉色やや薄い区画あり','うどんこ病の初期兆候を確認','下葉を整理','潅水量を10%増','収穫量 良好','害虫トラップ交換','EC値が高め、希釈調整'];
+  for(let i=0;i<24;i++){
+    const f=pick(fields);const t=pick(WORK_TYPES);
+    works.push({id:'W'+(1000+i),field:f.name,crop:f.crop,type:t,
+      date:dAgo(Math.floor(rnd()*18)),min:WORK_STD[t]+Math.floor(rnd()*25)-10,
+      staff:pick(STAFF),memo:rnd()>0.45?pick(memos):''});
+  }
+  works.sort((a,b)=>b.date-a.date);
+})();
+/* today tasks */
+const TODAY_TASKS=[
+  {t:'第2ハウス きゅうり｜防除',m:'うどんこ病予防・午前中に実施',i:'🛡️',c:'#fdf3e2'},
+  {t:'第1ハウス トマト｜摘芯',m:'5段目の整枝',i:'✂️',c:'#e7f6ec'},
+  {t:'第3ハウス いちご｜かん水',m:'EC1.2で200L',i:'💧',c:'#e7f6ec'},
+  {t:'東露地A レタス｜収穫',m:'L玉中心に約120玉',i:'🧺',c:'#e6f8f0'},
+  {t:'育苗ハウス｜土壌チェック',m:'pH・ECの定期測定',i:'🔬',c:'#eef4ec'},
+];
+
+/* supply / materials */
+let supply=[
+  {n:'液体肥料 グリーンA',cat:'肥料',stock:18,opt:30,unit:'本',in:dAgo(12)},
+  {n:'殺菌剤 ベジガード',cat:'農薬',stock:4,opt:15,unit:'本',in:dAgo(40)},
+  {n:'培養土 25L',cat:'培土',stock:46,opt:40,unit:'袋',in:dAgo(6)},
+  {n:'防虫ネット 1.8m',cat:'資材',stock:9,opt:20,unit:'巻',in:dAgo(25)},
+  {n:'誘引クリップ',cat:'資材',stock:1200,opt:1000,unit:'個',in:dAgo(3)},
+  {n:'潅水チューブ 50m',cat:'資材',stock:3,opt:10,unit:'巻',in:dAgo(55)},
+  {n:'カルシウム剤',cat:'肥料',stock:12,opt:12,unit:'袋',in:dAgo(9)},
+  {n:'粘着トラップ',cat:'資材',stock:7,opt:25,unit:'枚',in:dAgo(31)},
+];
+function supState(s){const r=s.stock/s.opt;return r>=0.9?'good':r>=0.5?'normal':r>=0.25?'watch':'alert';}
+
+/* ============ ROUTING ============ */
+const TITLES={
+  dash:['ダッシュボード','本日の栽培状況'],
+  fields:['圃場一覧','管理している圃場の生育状況'],
+  works:['作業記録','日々の農作業を記録・管理します'],
+  growth:['生育管理','圃場ごとの生育データと環境'],
+  supply:['資材','肥料・農薬・資材の在庫管理'],
+  ai:['AI栽培アドバイス','生育データから作業提案と病害アラートを自動生成'],
+};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='fields'?'<button class="btn primary" onclick="go(\'works\')">＋ 作業を記録</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI解析</button><button class="btn primary" onclick="go(\'works\')">＋ 作業を記録</button>'
+    : v==='growth'?'<button class="btn" onclick="go(\'ai\')">⚡ AIでチェック</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='fields')renderFields();
+  if(v==='works')renderWorks();
+  if(v==='growth')renderGrowth();
+  if(v==='supply')renderSupply();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+function renderDash(){
+  const total=fields.length;
+  const doneToday=18, planToday=23;
+  const goodN=fields.filter(f=>f.status==='good'||f.status==='normal').length;
+  const goodRate=Math.round(goodN/total*100);
+  const yieldT=fields.reduce((s,f)=>s+f.yieldKg,0);
+  $('kpis').innerHTML=`
+    ${kpi('#2f9e57','管理圃場',total+'<small>圃場</small>',fields.reduce((s,f)=>s+f.area,0).toLocaleString()+'㎡','up','稼働中')}
+    ${kpi('#0ea5b7','本日の作業完了',doneToday+'<small>/'+planToday+'</small>',Math.round(doneToday/planToday*100)+'%完了','up','順調')}
+    ${kpi('#16b877','生育良好率',goodRate+'<small>%</small>',goodN+'/'+total+'圃場','up','前週比 +6pt')}
+    ${kpi('#e3941f','収量予測（今期）',(yieldT/1000).toFixed(1)+'<small>t</small>',yieldT.toLocaleString()+'kg','warn','要観察あり')}`;
+  // yield by crop
+  const byCrop={};
+  fields.forEach(f=>{byCrop[f.crop]=(byCrop[f.crop]||0)+f.yieldKg;});
+  const entries=Object.entries(byCrop).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const mx=Math.max(...entries.map(e=>e[1]),1);
+  $('yieldBars').innerHTML=entries.map(([c,kg])=>`
+    <div class="bar-row"><span class="mlabel">${CROP_EMOJI[c]||''}${c}</span>
+      <div class="bar-track"><div class="bar-fill" data-w="${Math.round(kg/mx*100)}"></div></div>
+      <span class="mval">${kg.toLocaleString()}kg</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#yieldBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // status distribution
+  const order=['good','normal','watch','alert','rest'];
+  const colors={good:'#16b877',normal:'#2f9e57',watch:'#e3941f',alert:'#e24a4a',rest:'#8a9a86'};
+  const cnt={};order.forEach(o=>cnt[o]=fields.filter(f=>f.status===o).length);
+  $('distRows').innerHTML=order.filter(o=>cnt[o]>0).map(o=>{
+    const pc=Math.round(cnt[o]/total*100);
+    return `<div class="dist-row"><span class="sw" style="background:${colors[o]}"></span>
+      <span class="nm">${STLABEL[o]}</span>
+      <span class="dist-track"><span class="dist-fill" style="background:${colors[o]}" data-w="${pc}"></span></span>
+      <span class="pc">${cnt[o]}圃場</span></div>`;
+  }).join('');
+  setTimeout(()=>document.querySelectorAll('#distRows .dist-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // today tasks
+  $('todayTasks').innerHTML=TODAY_TASKS.map(t=>`<div class="rec">
+    <div class="ri" style="background:${t.c}">${t.i}</div>
+    <div><div class="rt">${esc(t.t)}</div><div class="rm">${esc(t.m)}</div></div></div>`).join('');
+  // activity
+  const acts=[
+    {i:'🧺',c:'#e6f8f0',t:'東露地A レタス を120玉 収穫しました',m:'30分前 ・ 川宿田'},
+    {i:'⚡',c:'#e7f6ec',t:'AI解析で病害アラート1件・作業提案5件を生成',m:'今日 8:10'},
+    {i:'🛡️',c:'#fdf3e2',t:'第2ハウス きゅうり に防除アラート（うどんこ病）',m:'今日 7:50'},
+    {i:'💧',c:'#e7f6ec',t:'第3ハウス いちご へ自動かん水を実施',m:'今日 6:00'},
+    {i:'📦',c:'#fdeaea',t:'殺菌剤 ベジガード の在庫が適正を下回りました',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+}
+
+/* ============ FIELDS ============ */
+let fFilter='all';
+function renderFieldChips(){
+  const opts=[['all','すべて'],['good','生育良好'],['normal','順調'],['watch','要観察'],['alert','要対応']];
+  $('fieldChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===fFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('fieldChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{fFilter=c.dataset.s;renderFieldChips();renderFields();});
+}
+function renderFields(){
+  const q=($('fq').value||'').toLowerCase();
+  let rows=fields.filter(f=>fFilter==='all'||f.status===fFilter)
+    .filter(f=>!q||(f.name+f.crop+f.staff+f.id).toLowerCase().includes(q));
+  $('fieldRows').innerHTML=rows.length?rows.map(f=>`<tr onclick="openField('${esc(f.id)}')">
+    <td><b>${esc(f.name)}</b><div style="font-size:11px;color:var(--ink-3)" class="mono">${esc(f.id)}</div></td>
+    <td>${CROP_EMOJI[f.crop]||''} ${esc(f.crop)}</td>
+    <td class="tnum">${f.area.toLocaleString()}㎡</td>
+    <td style="color:var(--ink-2)">${fmtMD(f.planted)}</td>
+    <td><span class="prog"><i style="width:${f.progress}%"></i></span> <span class="tnum" style="font-size:11px;color:var(--ink-3)">${f.progress}%</span></td>
+    <td class="r tnum"><b>${f.yieldKg.toLocaleString()}kg</b></td>
+    <td>${stBadge(f.status)}</td></tr>`).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する圃場がありません</td></tr>';
+}
+$('fq').addEventListener('input',renderFields);
+window.openField=id=>{const f=fields.find(x=>x.id===id);if(f){go('growth');$('gq').value=f.name;renderGrowth();}};
+
+/* ============ WORKS ============ */
+let wFilter='all';
+function renderWorkChips(){
+  const opts=[['all','すべて'],['収穫','収穫'],['防除（農薬散布）','防除'],['施肥','施肥'],['水やり・かん水','かん水']];
+  $('workChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===wFilter?'on':''}" data-s="${esc(o[0])}">${o[1]}</button>`).join('');
+  $('workChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{wFilter=c.dataset.s;renderWorkChips();renderWorkRecs();});
+}
+function renderWorkRecs(){
+  let rows=works.filter(w=>wFilter==='all'||w.type===wFilter).slice(0,40);
+  $('workRecs').innerHTML=rows.length?rows.map(w=>`<div class="rec">
+    <div class="ri">${WORK_EMOJI[w.type]||'📝'}</div>
+    <div style="min-width:0"><div class="rt">${esc(w.field)}｜${esc(w.type)}</div>
+      <div class="rm">${esc(w.crop)} ・ ${w.min}分${w.memo?' ・ '+esc(w.memo):''}</div></div>
+    <div class="rby">${fmtMD(w.date)}<br>${esc(w.staff)}</div></div>`).join('')
+    :'<div class="empty-cell">記録がありません</div>';
+}
+function renderWorkSelects(){
+  $('wField').innerHTML='<option value="">選択してください</option>'+fields.map(f=>`<option>${esc(f.name)}</option>`).join('');
+  $('wStaff').innerHTML=STAFF.map(s=>`<option>${esc(s)}</option>`).join('');
+  if(!$('wDate').value)$('wDate').value=fmtIso(TODAY);
+}
+function renderWorks(){renderWorkChips();renderWorkRecs();}
+$('wType').addEventListener('change',()=>{
+  const t=$('wType').value;if(t&&WORK_STD[t]){$('wMin').value=WORK_STD[t];$('wAiHint').classList.add('show');setTimeout(()=>$('wAiHint').classList.remove('show'),2200);}
+});
+$('wSample').addEventListener('click',()=>{
+  $('wField').value='第2ハウス';$('wType').value='防除（農薬散布）';$('wMin').value=55;
+  $('wStaff').value='田中';$('wMemo').value='うどんこ病予防。殺菌剤ベジガードを1000倍希釈で散布。';
+  $('wDate').value=fmtIso(TODAY);showToast('サンプルを入力しました');
+});
+$('wSave').addEventListener('click',()=>{
+  if(!$('wField').value||!$('wType').value){showToast('圃場と作業種別を選択してください');return;}
+  const f=fields.find(x=>x.name===$('wField').value);
+  works.unshift({id:'W'+(2000+works.length),field:$('wField').value,crop:f?f.crop:'',type:$('wType').value,
+    date:new Date($('wDate').value||fmtIso(TODAY)),min:+$('wMin').value||0,staff:$('wStaff').value,memo:$('wMemo').value});
+  $('wType').value='';$('wMin').value='';$('wMemo').value='';
+  renderWorkRecs();showToast('作業を記録しました（履歴に追加）');
+});
+
+/* ============ GROWTH ============ */
+let gFilter='all';
+function renderGrowthChips(){
+  const opts=[['all','すべて'],['good','生育良好'],['watch','要観察'],['alert','要対応']];
+  $('growthChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===gFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('growthChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{gFilter=c.dataset.s;renderGrowthChips();renderGrowthCards();});
+}
+function renderGrowthCards(){
+  const q=($('gq').value||'').toLowerCase();
+  let rows=fields.filter(f=>gFilter==='all'||f.status===gFilter)
+    .filter(f=>!q||(f.name+f.crop).toLowerCase().includes(q));
+  $('growthCards').innerHTML=rows.length?rows.map(f=>{
+    const stageDots=STAGES.map((s,i)=>`<div class="s ${i<=f.stageIdx?'on':''}" title="${esc(s)}"></div>`).join('');
+    return `<div class="gcard">
+      <div class="gh"><div class="em">${CROP_EMOJI[f.crop]||'🌱'}</div>
+        <div style="flex:1"><b>${esc(f.name)}</b><span>${esc(f.crop)} ・ ${esc(f.staff)}</span></div>${stBadge(f.status)}</div>
+      <div style="font-size:11.5px;color:var(--ink-3);margin-bottom:2px">生育ステージ：<b style="color:var(--ink)">${STAGES[f.stageIdx]}</b></div>
+      <div class="gstage">${stageDots}</div>
+      <div class="gmetric"><span class="k">🌡 気温</span><span class="v">${f.temp}℃</span></div>
+      <div class="gmetric"><span class="k">💧 湿度</span><span class="v">${f.humid}%</span></div>
+      <div class="gmetric"><span class="k">🪴 土壌水分</span><span class="v">${f.soilMoist}%</span></div>
+      <div class="gmetric"><span class="k">⚡ EC値</span><span class="v">${f.ec} mS/cm</span></div>
+      <div class="gmetric"><span class="k">📈 収量予測</span><span class="v">${f.yieldKg.toLocaleString()}kg</span></div>
+    </div>`;
+  }).join('')
+  :'<div class="empty-cell" style="grid-column:1/-1">該当する圃場がありません</div>';
+}
+function renderGrowth(){renderGrowthChips();renderGrowthCards();}
+$('gq').addEventListener('input',renderGrowthCards);
+
+/* ============ SUPPLY ============ */
+function renderSupply(){
+  $('resGrid').innerHTML=supply.map(s=>{
+    const st=supState(s);const pc=Math.min(100,Math.round(s.stock/s.opt*100));
+    const col={good:'#16b877',normal:'#2f9e57',watch:'#e3941f',alert:'#e24a4a'}[st];
+    return `<div class="rescard">
+      <div class="rn">${esc(s.n)}</div>
+      <div class="rs">${esc(s.cat)} ・ 適正 ${s.opt}${esc(s.unit)}</div>
+      <div class="rbar"><i style="width:${pc}%;background:${col}"></i></div>
+      <div class="rq"><span style="color:${col}">在庫 ${s.stock}${esc(s.unit)}</span><span style="color:var(--ink-3)">${pc}%</span></div>
+    </div>`;
+  }).join('');
+  $('supplyRows').innerHTML=supply.map(s=>{
+    const st=supState(s);
+    const stmap={good:'good',normal:'normal',watch:'watch',alert:'alert'};
+    const stlbl={good:'十分',normal:'適正',watch:'残少',alert:'要発注'};
+    return `<tr><td><b>${esc(s.n)}</b></td><td><span class="tag-pill">${esc(s.cat)}</span></td>
+      <td class="r tnum"><b>${s.stock}</b> ${esc(s.unit)}</td><td class="r tnum" style="color:var(--ink-3)">${s.opt} ${esc(s.unit)}</td>
+      <td><span class="st ${stmap[st]}">${stlbl[st]}</span></td>
+      <td style="color:var(--ink-2)">${fmtMD(s.in)}</td></tr>`;
+  }).join('');
+  const lack=supply.filter(s=>supState(s)==='alert'||supState(s)==='watch').length;
+  $('navWatch').textContent=fields.filter(f=>f.status==='watch'||f.status==='alert').length;
+  return lack;
+}
+$('reorder').addEventListener('click',async()=>{
+  const btn=$('reorder');btn.disabled=true;btn.textContent='🛒 発注処理中…';
+  await new Promise(r=>setTimeout(r,900));
+  let n=0;supply.forEach(s=>{if(supState(s)==='alert'||supState(s)==='watch'){s.stock=s.opt;s.in=new Date(TODAY);n++;}});
+  btn.disabled=false;btn.textContent='🛒 不足分をまとめて発注';
+  renderSupply();showToast(n+'件の資材を適正在庫まで自動発注しました');
+});
+
+/* ============ AI ADVICE ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 解析中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';$('genList').classList.remove('show');$('genItems').innerHTML='';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},120);
+  await new Promise(r=>setTimeout(r,1200));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  const results=[
+    {kind:'alert',title:'🦠 病害リスク：うどんこ病',sub:'第2ハウス きゅうり｜湿度82%・気温24℃が3日継続。早期防除を推奨。'},
+    {kind:'task',title:'第1ハウス トマト｜摘芯・整枝',sub:'生育ステージ「開花・着果」。5段目の整枝で着果率アップ。優先度：高'},
+    {kind:'task',title:'第3ハウス いちご｜EC調整かん水',sub:'EC値が高め。希釈倍率を上げて200Lかん水を推奨。'},
+    {kind:'alert',title:'⚠️ 土壌水分 低下',sub:'西露地 なす｜土壌水分42%。本日中のかん水が必要です。'},
+    {kind:'task',title:'東露地A レタス｜収穫適期',sub:'生育良好。L玉中心に約120玉の収穫を推奨。'},
+    {kind:'task',title:'南ハウス ピーマン｜追肥',sub:'葉色データから窒素不足の傾向。カルシウム剤＋液肥を提案。'},
+  ];
+  $('genItems').innerHTML=results.map((r,i)=>`<div class="gen-item ${r.kind}" data-i="${i}">
+    <span class="ck ${r.kind==='alert'?'a':'t'}">${r.kind==='alert'?'!':'✓'}</span>
+    <div class="body"><b>${esc(r.title)}</b><div class="sm">${esc(r.sub)}</div></div></div>`).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,170));items[i].classList.add('in');}
+  btn.disabled=false;btn.textContent='⚡ もう一度解析';
+  const alerts=results.filter(r=>r.kind==='alert').length;
+  showToast('解析完了：病害アラート'+alerts+'件・作業提案'+(results.length-alerts)+'件');
+});
+
+/* ============ INIT ============ */
+renderWorkSelects();
+renderSupply();
+renderDash();
+</script>
+</body>
+</html>

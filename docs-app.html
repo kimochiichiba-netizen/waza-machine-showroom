@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜文書管理マシン（ドキュメント管理システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;
+  --purple:#7c5cff;--purple-soft:#efeaff;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--amber);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn.purple{background:var(--purple);border-color:var(--purple);color:#fff}
+.btn.purple:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 64px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* category donut-ish list */
+.catlist{display:flex;flex-direction:column;gap:11px}
+.cat-row{display:flex;align-items:center;gap:10px;font-size:12.5px}
+.cat-row .sw{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.cat-row .nm{font-weight:600;color:var(--ink-2)}
+.cat-row .ct{margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums}
+.cat-row .pct{width:42px;text-align:right;color:var(--ink-3);font-size:11px;font-weight:700}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.approved{background:var(--green-soft);color:var(--green)}
+.st.review{background:var(--brand-soft);color:var(--brand)}
+.st.draft{background:var(--amber-soft);color:var(--amber)}
+.st.archived{background:var(--soft);color:var(--ink-3)}
+.st.unsorted{background:var(--red-soft);color:var(--red)}
+
+/* tags */
+.tags{display:flex;gap:5px;flex-wrap:wrap}
+.tag-pill{font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:99px;background:var(--purple-soft);color:var(--purple);white-space:nowrap}
+.tag-pill.g{background:var(--green-soft);color:var(--green)}
+.tag-pill.b{background:var(--brand-soft);color:var(--brand)}
+.tag-pill.a{background:var(--amber-soft);color:var(--amber)}
+
+.ftype{display:inline-flex;align-items:center;gap:7px;font-weight:700}
+.ftype .ic{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;font-size:13px;flex-shrink:0;color:#fff;font-weight:800}
+.ic-pdf{background:#e24a4a}.ic-doc{background:#2f6df0}.ic-xls{background:#16b877}.ic-img{background:#7c5cff}.ic-ppt{background:#e3941f}
+
+/* upload form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:74px;line-height:1.6}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.dropzone{border:2px dashed var(--line-2);border-radius:12px;padding:26px 18px;text-align:center;color:var(--ink-3);font-size:13px;background:var(--soft);transition:all .15s;cursor:pointer}
+.dropzone:hover{border-color:var(--brand);color:var(--brand);background:var(--brand-soft)}
+.dropzone .big{font-size:30px;margin-bottom:6px}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* doc preview card */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:24px 26px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.pv-head{display:flex;gap:14px;align-items:flex-start;border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:16px}
+.pv-head .big-ic{width:54px;height:54px;border-radius:12px;display:grid;place-items:center;font-size:22px;color:#fff;font-weight:800;flex-shrink:0}
+.pv-head .nm{font-size:16px;font-weight:900;line-height:1.3}
+.pv-head .meta{font-size:11.5px;color:var(--ink-3);margin-top:3px}
+.pv-field{display:flex;padding:9px 0;border-bottom:1px solid var(--line);font-size:12.5px}
+.pv-field:last-child{border-bottom:0}
+.pv-field .k{width:96px;color:var(--ink-3);font-weight:700;flex-shrink:0}
+.pv-field .vv{color:var(--ink);font-weight:600}
+.pv-ai{margin-top:16px;background:var(--purple-soft);border:1px solid #d8ccff;border-radius:10px;padding:13px 15px;font-size:12px}
+.pv-ai .h{font-weight:800;color:var(--purple);display:flex;align-items:center;gap:7px;margin-bottom:7px}
+
+/* version timeline */
+.vtl{position:relative;padding-left:26px}
+.vtl::before{content:"";position:absolute;left:8px;top:6px;bottom:6px;width:2px;background:var(--line)}
+.vrow{position:relative;padding:12px 0;font-size:13px}
+.vrow::before{content:"";position:absolute;left:-22px;top:17px;width:13px;height:13px;border-radius:50%;background:var(--card);border:3px solid var(--brand)}
+.vrow.old::before{border-color:var(--line-2)}
+.vrow .vh{display:flex;align-items:center;gap:9px}
+.vrow .vno{font-family:'Orbitron';font-weight:700;font-size:12px;background:var(--brand-soft);color:var(--brand);padding:2px 9px;border-radius:6px}
+.vrow.old .vno{background:var(--soft);color:var(--ink-3)}
+.vrow .vmsg{color:var(--ink-2);font-size:12px;margin-top:3px}
+.vrow .vmeta{color:var(--ink-3);font-size:11px;margin-top:2px}
+.vcur{margin-left:auto;font-size:10.5px;font-weight:800;color:var(--green);background:var(--green-soft);padding:2px 9px;border-radius:99px}
+
+/* permission */
+.perm-grid{display:grid;grid-template-columns:1fr;gap:14px}
+.role-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow)}
+.role-head{display:flex;align-items:center;gap:11px;margin-bottom:12px}
+.role-head .ri{width:36px;height:36px;border-radius:9px;display:grid;place-items:center;font-size:17px;color:#fff}
+.role-head b{font-size:14px;font-weight:800}
+.role-head span{font-size:11.5px;color:var(--ink-3)}
+.role-head .cnt{margin-left:auto;font-size:11.5px;color:var(--ink-2);font-weight:700;background:var(--soft);padding:4px 11px;border-radius:99px}
+.perm-list{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media(max-width:760px){.perm-list{grid-template-columns:repeat(2,1fr)}}
+.perm-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-2);font-weight:600;background:var(--soft);padding:8px 11px;border-radius:8px}
+.sw-toggle{width:34px;height:19px;border-radius:99px;background:var(--line-2);position:relative;flex-shrink:0;cursor:pointer;transition:background .2s}
+.sw-toggle::after{content:"";position:absolute;left:2px;top:2px;width:15px;height:15px;border-radius:50%;background:#fff;transition:left .2s}
+.sw-toggle.on{background:var(--green)}
+.sw-toggle.on::after{left:17px}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:10px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s;flex-wrap:wrap}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+.gen-item .fn{flex:1;font-weight:700;min-width:140px}
+.gen-item .arr{color:var(--ink-3)}
+
+/* before/after search demo */
+.ssplit{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px}
+@media(max-width:760px){.ssplit{grid-template-columns:1fr}}
+.scol{border-radius:12px;padding:16px 18px;border:1px solid var(--line)}
+.scol.b{background:linear-gradient(180deg,#f3f4f7,#fafbfd)}
+.scol.a{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border-color:#bdebd4}
+.scol .sh{font-size:12px;font-weight:800;margin-bottom:10px;display:inline-flex;gap:7px;align-items:center;padding:4px 10px;border-radius:7px}
+.scol.b .sh{background:#e7e9ef;color:#6b7280}
+.scol.a .sh{background:#cdeedd;color:var(--green)}
+.sres{font-size:12.5px;background:var(--card);border:1px solid var(--line);border-radius:9px;padding:10px 12px;margin-bottom:7px}
+.sres .ft{font-weight:700}
+.sres .sn{color:var(--ink-2);font-size:11.5px;margin-top:2px}
+.sres mark{background:#fff2b0;padding:0 2px;border-radius:3px;font-weight:700}
+.sempty{font-size:12.5px;color:var(--ink-3);padding:18px;text-align:center}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#7c5cff);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(124,92,255,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.hitbar{height:8px;border-radius:99px;background:var(--soft);overflow:hidden;margin-top:8px;width:100%}
+.hitbar > i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--green),var(--sky));width:0;transition:width 1.1s cubic-bezier(.2,.8,.3,1)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">文書管理マシン<small>技マシン｜ドキュメント管理</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">📁</span>文書一覧</a>
+      <a data-v="search"><span class="i">🔍</span>検索</a>
+      <a data-v="version"><span class="i">🕒</span>版管理</a>
+      <a data-v="perm"><span class="i">🔐</span>権限</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI整理<span class="badge" id="navUnsorted">0</span></a>
+      <a data-v="upload"><span class="i">⬆️</span>アップロード</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。文書・数値はすべてサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">社内文書の管理状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>月別の文書追加件数</h3><span class="more">過去6ヶ月</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>カテゴリ別の文書数</h3><span class="more" onclick="go('list')">一覧へ</span></div>
+            <div class="pb"><div class="catlist" id="catList"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>AI整理の効果</h3></div>
+            <div class="pb" id="aiEffect"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="ファイル名・カテゴリ・タグで絞り込み"></div>
+          <div class="chips" id="catChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>ファイル名</th><th>カテゴリ</th><th>タグ</th><th class="r">サイズ</th><th>更新日</th><th>状態</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- SEARCH -->
+      <section class="view" id="v-search">
+        <div class="ai-stage" style="margin-bottom:16px">
+          <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+            <div class="orb" id="searchOrb" style="width:48px;height:48px;font-size:20px">🔍</div>
+            <div style="flex:1;min-width:220px">
+              <div style="font-size:15px;font-weight:900">全文検索（AI意味検索）</div>
+              <div style="font-size:12px;color:var(--ink-3)">ファイル名だけでなく、本文・スキャンPDFの中身まで横断検索します。</div>
+            </div>
+          </div>
+          <div class="toolbar" style="margin-top:14px;margin-bottom:0">
+            <div class="search"><span class="ic">🔍</span><input id="fq" placeholder="例：介護　請求　契約書　就業規則　配送　…"></div>
+            <button class="btn purple" id="fqRun">⚡ 全文検索</button>
+          </div>
+          <div class="chips" id="sugChips" style="margin-top:12px"></div>
+        </div>
+        <div id="searchResultWrap"></div>
+      </section>
+
+      <!-- VERSION -->
+      <section class="view" id="v-version">
+        <div class="cols" style="grid-template-columns:1fr 1.4fr">
+          <div class="panel">
+            <div class="ph"><h3>版を管理する文書</h3></div>
+            <div class="pb" style="padding:8px"><div id="verDocList"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3 id="verTitle">— 文書を選択 —</h3><span class="more" id="verRestoreBtn" style="display:none">最新版を保存</span></div>
+            <div class="pb"><div class="vtl" id="verTimeline"><div class="sempty">左の一覧から文書を選ぶと、変更履歴（バージョン）が表示されます。</div></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PERMISSION -->
+      <section class="view" id="v-perm">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="permQ" placeholder="役割・メンバー名で絞り込み"></div>
+          <button class="btn primary" style="margin-left:auto" onclick="showToast('権限設定を保存しました')">💾 設定を保存</button>
+        </div>
+        <div class="perm-grid" id="permGrid"></div>
+      </section>
+
+      <!-- UPLOAD -->
+      <section class="view" id="v-upload">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="dropzone" id="dropzone">
+              <div class="big">📤</div>
+              <div><b>ファイルをドラッグ＆ドロップ</b></div>
+              <div style="font-size:11.5px;margin-top:4px">またはクリックしてサンプルファイルを選択</div>
+            </div>
+            <div style="height:14px"></div>
+            <div class="fg"><label>ファイル名</label><input id="uName" placeholder="例：2026年度 就業規則.pdf"></div>
+            <div class="fg"><label>カテゴリ（AIが自動提案）</label>
+              <select id="uCat"></select></div>
+            <div class="fg"><label>タグ（カンマ区切り・AIが自動付与）</label><input id="uTags" placeholder="例：人事, 規程, 2026年度"></div>
+            <div class="fg"><label>メモ</label><textarea id="uNote" placeholder="文書の概要を入力（任意）"></textarea></div>
+            <div class="aihint" id="uAiHint">✨ AIがファイル名からカテゴリとタグを自動提案しました</div>
+            <div class="linkrow" style="margin-top:6px">
+              <button class="btn purple" id="uSave" style="flex:1;justify-content:center">⚡ AIで整理して登録</button>
+              <button class="btn" id="uSample">サンプル</button>
+            </div>
+          </div>
+          <div>
+            <div class="paper" id="uPaper">
+              <div class="pv-head">
+                <div class="big-ic ic-pdf" id="uIco">📄</div>
+                <div><div class="nm" id="uPvName">（ファイル名）</div>
+                <div class="meta" id="uPvMeta">アップロード前のプレビュー</div></div>
+              </div>
+              <div class="pv-field"><span class="k">カテゴリ</span><span class="vv" id="uPvCat">—</span></div>
+              <div class="pv-field"><span class="k">タグ</span><span class="vv" id="uPvTags">—</span></div>
+              <div class="pv-field"><span class="k">登録者</span><span class="vv">管理者（デモ）</span></div>
+              <div class="pv-field"><span class="k">メモ</span><span class="vv" id="uPvNote">—</span></div>
+              <div class="pv-ai">
+                <div class="h">✨ AIによる自動整理プレビュー</div>
+                <div id="uPvAi" style="color:var(--ink-2)">ファイル名を入力すると、AIがカテゴリ分類・タグ付け・全文検索インデックスの作成を自動で行います。</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI ORGANIZE -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div style="flex:1;min-width:220px"><div style="font-size:16px;font-weight:900">未整理の文書をAIが自動で整理</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">未整理フォルダの <b id="aiUnsortedN">0</b>件 を、AIがカテゴリ分類・タグ付け・全文インデックス化します。</div></div>
+            <button class="btn purple" id="aiRun" style="margin-left:auto">⚡ AIで一括整理する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">3時間20分</div>
+              <ul>
+                <li>📂 1件ずつフォルダ分けを判断</li>
+                <li>🏷️ タグ・キーワードを手で付与</li>
+                <li>🔎 中身を開いて内容を確認・記録</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 内容を読み取り自動でカテゴリ分類</li>
+                <li>🏷️ 関連タグを自動付与</li>
+                <li>🔍 全文検索インデックスを自動生成</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ AIが整理した文書</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const CATS=[
+  {n:'契約・規程',c:'#2f6df0'},{n:'医療・介護記録',c:'#16b877'},{n:'請求・経理',c:'#e3941f'},
+  {n:'人事・労務',c:'#7c5cff'},{n:'仕入・配送',c:'#0ea5b7'},{n:'マニュアル',c:'#e24a4a'},
+];
+const CATBY=Object.fromEntries(CATS.map(c=>[c.n,c.c]));
+const FTYPES={pdf:{ic:'PDF',cl:'ic-pdf'},doc:{ic:'DOC',cl:'ic-doc'},xls:{ic:'XLS',cl:'ic-xls'},img:{ic:'IMG',cl:'ic-img'},ppt:{ic:'PPT',cl:'ic-ppt'}};
+const STLABEL={approved:'承認済',review:'確認中',draft:'下書き',archived:'保管',unsorted:'未整理'};
+const STATUSES=['approved','approved','review','draft','archived','approved'];
+
+// AI tag/category proposal rules by keyword
+const TAGRULES=[
+  {kw:['契約','規約','規程','約款','覚書'],cat:'契約・規程',tags:['契約','法務']},
+  {kw:['就業','給与','人事','労務','勤怠','採用','賞与'],cat:'人事・労務',tags:['人事','規程']},
+  {kw:['介護','看護','記録','カルテ','処方','診療','服薬'],cat:'医療・介護記録',tags:['医療介護','記録']},
+  {kw:['請求','見積','領収','経費','決算','仕訳','経理'],cat:'請求・経理',tags:['経理','請求']},
+  {kw:['仕入','配送','納品','在庫','発注','青果'],cat:'仕入・配送',tags:['仕入','物流']},
+  {kw:['マニュアル','手順','ガイド','運用','操作'],cat:'マニュアル',tags:['手順書','運用']},
+];
+
+const TODAY=new Date();
+let SEED=7321;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+// names per category to make realistic docs
+const NAMES={
+  '契約・規程':['業務委託契約書','秘密保持契約書(NDA)','利用規約_v2','取引基本契約書','個人情報取扱規程'],
+  '医療・介護記録':['入居者ケアプラン_4月','服薬管理記録_3月','看護日誌_テンプレート','介護記録システム運用要領','感染対策マニュアル'],
+  '請求・経理':['2026年4月 請求一覧','経費精算フロー','見積書テンプレート','月次決算チェックリスト','適格請求書_保存規程'],
+  '人事・労務':['2026年度 就業規則','給与計算手順書','勤怠管理運用ルール','採用面接シート','賞与査定基準'],
+  '仕入・配送':['青果仕入先リスト','配送ルート最適化メモ','納品書フォーマット','在庫管理表_5月','発注ガイドライン'],
+  'マニュアル':['電話応対マニュアル','レジ操作手順','店舗開店準備チェック','SNS投稿運用ガイド','クレーム対応フロー'],
+};
+const TYPEPOOL=['pdf','pdf','doc','xls','ppt','img'];
+const OWNERS=['佐藤','田中','鈴木','高橋','渡辺'];
+
+// full text snippets (for search demo)
+const SNIPPETS={
+  '契約・規程':'本契約は、甲乙間の業務委託に関する基本事項を定めるものとする。第3条 秘密保持。乙は知り得た情報を…',
+  '医療・介護記録':'入居者の食事・排泄・服薬状況を記録する。バイタル測定は1日2回。気付き事項は申し送りに記載すること。',
+  '請求・経理':'請求書は適格請求書発行事業者登録番号を記載のうえ、月末締め翌月末払いとする。振込手数料は…',
+  '人事・労務':'第10条 所定労働時間は1日8時間、週40時間とする。時間外労働は事前申請を要する。年次有給休暇は…',
+  '仕入・配送':'青果の仕入は前日18時までに発注。配送は午前便・午後便の2便。鮮度保持のため保冷車を使用すること。',
+  'マニュアル':'電話は3コール以内に取る。第一声は「お電話ありがとうございます、株式会社気持ち市場です」。担当不在時は…',
+};
+
+let docs=[];
+(function seed(){
+  let idc=1;
+  CATS.forEach(cat=>{
+    NAMES[cat.n].forEach((base,i)=>{
+      const t=pick(TYPEPOOL);
+      const size=(0.1+rnd()*8).toFixed(1);
+      const upd=new Date(TODAY.getFullYear(),TODAY.getMonth()-Math.floor(rnd()*6),1+Math.floor(rnd()*27));
+      const rule=TAGRULES.find(r=>r.cat===cat.n);
+      const tags=[...(rule?rule.tags:[]),OWNERS_TAG()].slice(0,3);
+      docs.push({
+        id:'DOC-'+String(1000+idc++),name:base+'.'+(t==='img'?'png':t),type:t,cat:cat.n,
+        tags,size:+size,upd,owner:pick(OWNERS),status:pick(STATUSES),ver:1+Math.floor(rnd()*5),
+        snippet:SNIPPETS[cat.n]
+      });
+    });
+  });
+  function OWNERS_TAG(){return pick(['重要','社外秘','2026年度','最新版','要確認','テンプレ']);}
+  // a few unsorted docs awaiting AI
+  const rawNames=['scan_20260512_001.pdf','新規取引先_メモ.docx','IMG_4821.jpg','打合せ議事録(未整理).docx','見積_山田商店.xls','研修資料_ドラフト.pptx'];
+  rawNames.forEach((nm)=>{
+    const ext=nm.split('.').pop().toLowerCase();
+    const t=ext.startsWith('jp')||ext==='png'?'img':ext.startsWith('doc')?'doc':ext.startsWith('xls')?'xls':ext.startsWith('ppt')?'ppt':'pdf';
+    docs.push({id:'DOC-'+String(1000+idc++),name:nm,type:t,cat:'未整理',tags:[],size:+(0.2+rnd()*5).toFixed(1),
+      upd:new Date(TODAY.getFullYear(),TODAY.getMonth(),1+Math.floor(rnd()*27)),owner:pick(OWNERS),status:'unsorted',ver:1,snippet:''});
+  });
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const fmtMB=n=>n.toFixed(1)+' MB';
+const fmtD=d=>d.getFullYear()+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0');
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]||esc(s)}</span>`;}
+function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function fIcon(t){const f=FTYPES[t]||FTYPES.pdf;return `<span class="ic ${f.cl}">${f.ic}</span>`;}
+function fBigIcon(t){const f=FTYPES[t]||FTYPES.pdf;return {cl:f.cl,tx:f.ic};}
+const TAGCLS=['','b','g','a'];
+function tagPills(tags){return `<div class="tags">${tags.map((t,i)=>`<span class="tag-pill ${TAGCLS[i%TAGCLS.length]}">${esc(t)}</span>`).join('')}</div>`;}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function sorted(){return docs.filter(d=>d.cat!=='未整理');}
+function unsorted(){return docs.filter(d=>d.cat==='未整理');}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','社内文書の管理状況'],list:['文書一覧','登録済みの文書を管理します'],
+  search:['検索','本文まで横断する全文検索（AI意味検索）'],version:['版管理','文書の変更履歴・バージョンを管理します'],
+  perm:['権限','役割ごとのアクセス権を管理します'],ai:['AI整理','未整理の文書をAIが自動で分類・タグ付け'],
+  upload:['アップロード','文書を登録するとAIが自動で整理します']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn" onclick="go(\'ai\')">⚡ AI整理</button><button class="btn primary" onclick="go(\'upload\')">⬆️ アップロード</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI整理</button><button class="btn primary" onclick="go(\'upload\')">⬆️ アップロード</button>'
+    : v==='search'?'<button class="btn primary" onclick="go(\'upload\')">⬆️ アップロード</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='version')renderVerList();
+  if(v==='perm')renderPerm();
+  if(v==='ai')renderAi();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const total=docs.length;
+  const tm=docs.filter(d=>thisMonth(d.upd)).length;
+  const uns=unsorted().length;
+  const hitRate=92;
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','総文書数',total+'<small>件</small>','全カテゴリ','up','整理率 '+Math.round(sorted().length/total*100)+'%')}
+    ${kpi('#16b877','今月の追加',tm+'<small>件</small>','','up','前月比 +9件')}
+    ${kpi('#0ea5b7','検索ヒット率',hitRate+'<small>%</small>','全文検索','up','+18pt（AI導入後）')}
+    ${kpi('#e3941f','要整理',uns+'<small>件</small>',' ',uns?'warn':'up',uns?'AIで一括整理可能':'なし')}`;
+  // trend (monthly added)
+  const months=[];for(let k=5;k>=0;k--){const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1);months.push(d);}
+  const counts=months.map(m=>docs.filter(d=>d.upd.getMonth()===m.getMonth()&&d.upd.getFullYear()===m.getFullYear()).length);
+  const mx=Math.max(...counts,1);
+  $('trendBars').innerHTML=months.map((m,i)=>`
+    <div class="bar-row"><span class="mlabel">${m.getMonth()+1}月</span>
+      <div class="bar-track"><div class="bar-fill" data-w="${Math.round(counts[i]/mx*100)}"></div></div>
+      <span class="mval">${counts[i]}件</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // category list
+  const catMax=Math.max(...CATS.map(c=>docs.filter(d=>d.cat===c.n).length),1);
+  $('catList').innerHTML=CATS.map(c=>{
+    const n=docs.filter(d=>d.cat===c.n).length;
+    return `<div class="cat-row"><span class="sw" style="background:${c.c}"></span><span class="nm">${esc(c.n)}</span>
+      <span class="ct">${n}件</span><span class="pct">${Math.round(n/catMax*100)}%</span></div>`;
+  }).join('');
+  // ai effect mini before/after
+  $('aiEffect').innerHTML=`
+    <div class="ba" style="grid-template-columns:1fr 50px 1fr;margin-top:0">
+      <div class="col before" style="padding:14px"><span class="ct">😓 手作業</span><div class="big" style="font-size:24px">3時間20分</div><div style="font-size:11.5px;color:var(--ink-3)">1日の文書整理</div></div>
+      <div class="arrow" style="font-size:22px">→</div>
+      <div class="col after" style="padding:14px"><span class="ct">⚡ 技マシン</span><div class="big" style="font-size:24px">約8秒</div><div style="font-size:11.5px;color:var(--ink-3)">AIが自動で整理</div></div>
+    </div>
+    <div style="margin-top:12px;font-size:12px;color:var(--ink-2);background:var(--green-soft);border:1px solid #bdebd4;border-radius:9px;padding:10px 13px">
+      ✅ 月あたり <b>約66時間</b> の文書整理・検索の手間を削減（試算）</div>`;
+  // activity
+  const acts=[
+    {i:'⚡',c:'#efeaff',t:'AI整理で 6件の文書を自動分類・タグ付け',m:'3分前'},
+    {i:'⬆️',c:'#eaf1ff',t:'「2026年度 就業規則.pdf」をアップロード',m:'1時間前'},
+    {i:'🕒',c:'#e6f8f0',t:'「取引基本契約書.pdf」を v4 に更新',m:'今日 10:22'},
+    {i:'🔐',c:'#fdf3e2',t:'「医療・介護記録」の閲覧権限を看護師チームに付与',m:'今日 9:05'},
+    {i:'🔍',c:'#e6f8f0',t:'全文検索「請求 適格」で 7件 ヒット',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?esc(sub)+' ・ ':''}${esc(d)}</div></div>`;}
+
+/* ============ LIST ============ */
+let filterCat='all';
+function renderChips(){
+  const opts=[['all','すべて'],...CATS.map(c=>[c.n,c.n]),['未整理','未整理']];
+  $('catChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterCat?'on':''}" data-c="${esc(o[0])}">${esc(o[1])}</button>`).join('');
+  $('catChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterCat=c.dataset.c;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=docs.filter(d=>filterCat==='all'||d.cat===filterCat)
+    .filter(d=>!q||(d.name+d.cat+d.tags.join('')).toLowerCase().includes(q))
+    .sort((a,b)=>b.upd-a.upd);
+  $('listRows').innerHTML=rows.length?rows.map(d=>`<tr onclick="openVersion('${esc(d.id)}')">
+    <td><span class="ftype">${fIcon(d.type)}${esc(d.name)}</span></td>
+    <td><span style="font-weight:700;color:${CATBY[d.cat]||'#8a94a6'}">${esc(d.cat)}</span></td>
+    <td>${d.tags.length?tagPills(d.tags):'<span style="color:var(--ink-3);font-size:11.5px">—</span>'}</td>
+    <td class="r tnum" style="color:var(--ink-2)">${fmtMB(d.size)}</td>
+    <td style="color:var(--ink-2)">${fmtD(d.upd)}</td>
+    <td>${stBadge(d.status)}</td></tr>`).join('')
+    :'<tr><td colspan="6" class="empty-cell">該当する文書がありません</td></tr>';
+}
+$('q').addEventListener('input',renderList);
+window.openVersion=id=>{selectVer(id);go('version');};
+
+/* ============ SEARCH (full text) ============ */
+const SUGGEST=['介護 記録','請求 適格','就業規則 残業','契約 秘密保持','青果 配送','電話 応対'];
+function renderSug(){
+  $('sugChips').innerHTML='<span style="font-size:11.5px;color:var(--ink-3);font-weight:700;align-self:center;margin-right:4px">よく検索される語：</span>'+
+    SUGGEST.map(s=>`<button class="chip" data-s="${esc(s)}">${esc(s)}</button>`).join('');
+  $('sugChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{$('fq').value=c.dataset.s;runSearch();});
+}
+function highlight(text,terms){
+  let out=esc(text);
+  terms.forEach(t=>{if(!t)return;const re=new RegExp('('+t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','g');out=out.replace(re,'<mark>$1</mark>');});
+  return out;
+}
+async function runSearch(){
+  const raw=($('fq').value||'').trim();
+  const wrap=$('searchResultWrap');
+  if(!raw){wrap.innerHTML='';showToast('検索語を入力してください');return;}
+  const terms=raw.split(/[\s　,、]+/).filter(Boolean);
+  $('searchOrb').classList.add('spin');$('searchOrb').textContent='⚡';
+  wrap.innerHTML='<div class="sempty" style="padding:30px">🔍 本文・スキャンPDFを横断検索中…</div>';
+  await new Promise(r=>setTimeout(r,650));
+  $('searchOrb').classList.remove('spin');$('searchOrb').textContent='🔍';
+  // BEFORE: filename only
+  const beforeHits=docs.filter(d=>terms.some(t=>d.name.toLowerCase().includes(t.toLowerCase())));
+  // AFTER: filename + body snippet + tags + category (AI full text)
+  const afterHits=docs.filter(d=>terms.some(t=>{
+    const tl=t.toLowerCase();
+    return d.name.toLowerCase().includes(tl)||(d.snippet||'').toLowerCase().includes(tl)||
+      d.cat.toLowerCase().includes(tl)||d.tags.join('').toLowerCase().includes(tl);
+  }));
+  const beforeHTML=beforeHits.length?beforeHits.slice(0,5).map(d=>resCard(d,terms,false)).join(''):'<div class="sempty">ファイル名に一致なし（中身は探せません）</div>';
+  const afterHTML=afterHits.length?afterHits.slice(0,6).map(d=>resCard(d,terms,true)).join(''):'<div class="sempty">該当なし</div>';
+  wrap.innerHTML=`
+    <div class="ssplit">
+      <div class="scol b">
+        <span class="sh">😓 従来：ファイル名検索のみ</span>
+        <div style="font-size:12px;color:var(--ink-3);margin-bottom:8px">ヒット <b>${beforeHits.length}件</b>（本文は検索対象外）</div>
+        ${beforeHTML}
+      </div>
+      <div class="scol a">
+        <span class="sh">⚡ 技マシン：AI全文検索</span>
+        <div style="font-size:12px;color:var(--ink-2);margin-bottom:8px">ヒット <b style="color:var(--green)">${afterHits.length}件</b>（本文・スキャンPDFの中身まで）</div>
+        ${afterHTML}
+      </div>
+    </div>`;
+  showToast(`「${raw}」で ${afterHits.length}件 ヒット（全文検索）`);
+}
+function resCard(d,terms,withSnip){
+  const snip=withSnip&&d.snippet?`<div class="sn">…${highlight(d.snippet.slice(0,64),terms)}…</div>`:'';
+  return `<div class="sres"><div class="ft">${fIcon(d.type)} ${highlight(d.name,terms)}</div>
+    <div class="sn">${esc(d.cat)} ・ ${fmtD(d.upd)} ・ ${esc(d.owner)}</div>${snip}</div>`;
+}
+$('fqRun').addEventListener('click',runSearch);
+$('fq').addEventListener('keydown',e=>{if(e.key==='Enter')runSearch();});
+
+/* ============ VERSION ============ */
+let curVer=null;
+function renderVerList(){
+  const list=sorted().filter(d=>d.ver>=2).sort((a,b)=>b.ver-a.ver).slice(0,10);
+  $('verDocList').innerHTML=list.map(d=>`<div class="act" style="padding:10px 8px;border-radius:8px;cursor:pointer;border-bottom:1px solid var(--line)" onclick="selectVer('${esc(d.id)}')">
+    <div class="ai" style="background:${CATBY[d.cat]}22;color:${CATBY[d.cat]}">${fBigIcon(d.type).tx}</div>
+    <div style="flex:1"><div class="at">${esc(d.name)}</div><div class="am">${esc(d.cat)} ・ ${d.ver}版あり</div></div>
+    <span class="vno" style="font-size:11px">v${d.ver}</span></div>`).join('');
+}
+function selectVer(id){
+  const d=docs.find(x=>x.id===id);if(!d)return;curVer=d;
+  $('verTitle').textContent=d.name;
+  $('verRestoreBtn').style.display='inline';
+  const editors=['佐藤','田中','鈴木','高橋'];
+  const msgs=['初版を作成','文言を修正・全体を整形','法務レビューの指摘を反映','最新の規程に合わせて更新','誤字脱字を修正','別紙を追加'];
+  const v=Math.max(d.ver,2);
+  let rows='';
+  for(let n=v;n>=1;n--){
+    const old=n!==v;
+    const dt=new Date(d.upd.getFullYear(),d.upd.getMonth()-(v-n),1+Math.floor(rnd()*26));
+    rows+=`<div class="vrow ${old?'old':''}">
+      <div class="vh"><span class="vno">v${n}</span>${!old?'<span class="vcur">最新版</span>':''}</div>
+      <div class="vmsg">${esc(msgs[(n-1)%msgs.length])}</div>
+      <div class="vmeta">${esc(pick(editors))} ・ ${fmtD(dt)} ・ ${(0.1+rnd()*4).toFixed(1)}MB ${old?'<a style="color:var(--brand);cursor:pointer;font-weight:700" onclick="restoreVer('+n+')">この版に戻す</a>':''}</div>
+    </div>`;
+  }
+  $('verTimeline').innerHTML=rows;
+}
+window.selectVer=selectVer;
+window.restoreVer=n=>{if(curVer){showToast('v'+n+' を「'+curVer.name+'」の最新版として復元しました（新しい版を作成）');}};
+$('verRestoreBtn').addEventListener('click',()=>{if(curVer)showToast('現在の編集内容を新しい版として保存しました');});
+
+/* ============ PERMISSION ============ */
+const ROLES=[
+  {n:'管理者',ic:'👑',c:'#7c5cff',members:'佐藤、社長',perms:{view:1,edit:1,del:1,share:1,download:1,version:1,perm:1,export:1}},
+  {n:'一般スタッフ',ic:'👤',c:'#2f6df0',members:'田中、鈴木、渡辺 ほか12名',perms:{view:1,edit:1,del:0,share:0,download:1,version:1,perm:0,export:0}},
+  {n:'看護・介護チーム',ic:'🩺',c:'#16b877',members:'高橋 ほか8名',perms:{view:1,edit:1,del:0,share:0,download:1,version:1,perm:0,export:0}},
+  {n:'外部協力（閲覧のみ）',ic:'🌐',c:'#e3941f',members:'顧問税理士、社労士',perms:{view:1,edit:0,del:0,share:0,download:0,version:0,perm:0,export:0}},
+];
+const PERMLABEL={view:'閲覧',edit:'編集',del:'削除',share:'共有',download:'ダウンロード',version:'版管理',perm:'権限変更',export:'エクスポート'};
+function renderPerm(){
+  const q=($('permQ').value||'').toLowerCase();
+  const rs=ROLES.filter(r=>!q||(r.n+r.members).toLowerCase().includes(q));
+  $('permGrid').innerHTML=rs.length?rs.map((r,ri)=>`
+    <div class="role-card">
+      <div class="role-head"><div class="ri" style="background:${r.c}">${r.ic}</div>
+        <div><b>${esc(r.n)}</b><span style="display:block">${esc(r.members)}</span></div>
+        <span class="cnt">${Object.values(r.perms).filter(Boolean).length}/8 権限</span></div>
+      <div class="perm-list">${Object.keys(PERMLABEL).map(k=>`
+        <div class="perm-item"><span class="sw-toggle ${r.perms[k]?'on':''}" data-r="${ri}" data-k="${k}"></span>${PERMLABEL[k]}</div>`).join('')}</div>
+    </div>`).join('')
+    :'<div class="empty-cell">該当する役割がありません</div>';
+  $('permGrid').querySelectorAll('.sw-toggle').forEach(sw=>sw.onclick=()=>{
+    const r=ROLES[+sw.dataset.r],k=sw.dataset.k;r.perms[k]=r.perms[k]?0:1;
+    sw.classList.toggle('on');
+    sw.closest('.role-card').querySelector('.cnt').textContent=Object.values(r.perms).filter(Boolean).length+'/8 権限';
+    showToast(r.n+'：'+PERMLABEL[k]+'を'+(r.perms[k]?'許可':'禁止')+'にしました');
+  });
+}
+$('permQ').addEventListener('input',renderPerm);
+
+/* ============ UPLOAD ============ */
+function renderCatSelect(){$('uCat').innerHTML='<option value="">AIに任せる（自動分類）</option>'+CATS.map(c=>`<option>${esc(c.n)}</option>`).join('');}
+function aiPropose(name){
+  const lower=name;
+  const rule=TAGRULES.find(r=>r.kw.some(k=>lower.includes(k)));
+  return rule?{cat:rule.cat,tags:rule.tags}:{cat:'マニュアル',tags:['その他']};
+}
+function detectType(name){
+  const ext=(name.split('.').pop()||'').toLowerCase();
+  if(['png','jpg','jpeg','gif'].includes(ext))return 'img';
+  if(['doc','docx'].includes(ext))return 'doc';
+  if(['xls','xlsx','csv'].includes(ext))return 'xls';
+  if(['ppt','pptx'].includes(ext))return 'ppt';
+  return 'pdf';
+}
+function renderUploadPaper(){
+  const name=$('uName').value.trim();
+  const t=detectType(name||'.pdf');
+  const bi=fBigIcon(t);
+  $('uIco').className='big-ic '+bi.cl;$('uIco').textContent=bi.tx;
+  $('uPvName').textContent=name||'（ファイル名）';
+  $('uPvMeta').textContent=name?(t.toUpperCase()+' ファイル ・ アップロード前のプレビュー'):'アップロード前のプレビュー';
+  const cat=$('uCat').value;
+  const tagsRaw=$('uTags').value.split(/[,、]/).map(s=>s.trim()).filter(Boolean);
+  $('uPvCat').innerHTML=cat?`<span style="color:${CATBY[cat]||'#1d2733'}">${esc(cat)}</span>`:'<span style="color:var(--ink-3)">AIが自動分類</span>';
+  $('uPvTags').innerHTML=tagsRaw.length?tagPills(tagsRaw):'<span style="color:var(--ink-3)">AIが自動付与</span>';
+  $('uPvNote').textContent=$('uNote').value.trim()||'—';
+  if(name){
+    const p=aiPropose(name);
+    $('uPvAi').innerHTML=`このファイルは <b>「${esc(p.cat)}」</b> に分類されると予測。<br>推定タグ：${p.tags.map(t=>`<span class="tag-pill b" style="display:inline-block;margin:2px 2px 0 0">${esc(t)}</span>`).join('')}<br>全文検索インデックスも自動作成されます。`;
+  }
+}
+function applyAiPropose(){
+  const name=$('uName').value.trim();if(!name)return;
+  const p=aiPropose(name);
+  if(!$('uCat').value)$('uCat').value=p.cat;
+  if(!$('uTags').value.trim())$('uTags').value=p.tags.join(', ');
+  $('uAiHint').classList.add('show');setTimeout(()=>$('uAiHint').classList.remove('show'),2200);
+  renderUploadPaper();
+}
+['uName','uCat','uTags','uNote'].forEach(id=>$(id).addEventListener('input',renderUploadPaper));
+$('uName').addEventListener('change',applyAiPropose);
+$('dropzone').addEventListener('click',()=>{
+  const samples=['2026年度 就業規則.pdf','取引基本契約書.docx','4月度 請求一覧.xlsx','介護記録テンプレート.pdf','配送ルート図.png'];
+  $('uName').value=pick(samples);applyAiPropose();
+});
+$('uSample').addEventListener('click',()=>{
+  $('uName').value='秘密保持契約書(NDA)_2026.pdf';$('uNote').value='新規取引先との締結用。法務レビュー済み。';
+  applyAiPropose();
+});
+$('uSave').addEventListener('click',async()=>{
+  const name=$('uName').value.trim();
+  if(!name){showToast('ファイル名を入力してください');return;}
+  const btn=$('uSave');btn.textContent='⚡ AIが整理中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,800));
+  const t=detectType(name);
+  let cat=$('uCat').value;let tags=$('uTags').value.split(/[,、]/).map(s=>s.trim()).filter(Boolean);
+  if(!cat){const p=aiPropose(name);cat=p.cat;if(!tags.length)tags=p.tags;}
+  docs.unshift({id:'DOC-'+String(1000+docs.length+1),name,type:t,cat,tags:tags.slice(0,3),
+    size:+(0.1+rnd()*6).toFixed(1),upd:new Date(),owner:'管理者',status:'review',ver:1,snippet:SNIPPETS[cat]||''});
+  btn.textContent='⚡ AIで整理して登録';btn.disabled=false;
+  showToast('「'+name+'」を登録しAIが自動整理しました');
+  // reset
+  ['uName','uTags','uNote'].forEach(id=>$(id).value='');$('uCat').value='';renderUploadPaper();
+  setTimeout(()=>go('list'),700);
+});
+
+/* ============ AI ORGANIZE ============ */
+function renderAi(){
+  const n=unsorted().length;
+  const un=$('aiUnsortedN');if(un)un.textContent=n;
+  $('navUnsorted').textContent=n;
+  $('aiRun').disabled=n===0;
+  if(n===0){$('aiSub').innerHTML='未整理の文書はありません 🎉 すべてAIで整理済みです。';}
+  else{$('aiSub').innerHTML=`未整理フォルダの <b>${n}件</b> を、AIがカテゴリ分類・タグ付け・全文インデックス化します。`;}
+}
+$('aiRun').addEventListener('click',async()=>{
+  const targets=unsorted();
+  if(!targets.length){showToast('未整理の文書はありません');return;}
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 整理中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,8);},120);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);$('baAfterT').textContent='約8秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // build proposals
+  const props=targets.map(d=>{
+    // simulate AI reading content: map by simple keyword / fallback random cat
+    const guess=aiPropose(d.name);
+    const cat=(d.name.match(/[ぁ-ん一-龠]/))?guess.cat:pick(CATS).n;
+    const rule=TAGRULES.find(r=>r.cat===cat);
+    const tags=(rule?rule.tags:['資料']).slice(0,2).concat([pick(['最新版','要確認','重要'])]).slice(0,3);
+    return {d,cat,tags};
+  });
+  $('genItems').innerHTML=props.map((p,i)=>`<div class="gen-item" data-i="${i}">
+    <span class="ck">✓</span>
+    <span class="fn">${fIcon(p.d.type)} ${esc(p.d.name)}</span>
+    <span class="arr">→</span>
+    <span style="font-weight:700;color:${CATBY[p.cat]}">${esc(p.cat)}</span>
+    ${tagPills(p.tags)}</div>`).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){
+    await new Promise(r=>setTimeout(r,200));items[i].classList.add('in');
+    const p=props[i];p.d.cat=p.cat;p.d.tags=p.tags;p.d.status='approved';p.d.snippet=SNIPPETS[p.cat]||'';
+  }
+  btn.textContent='⚡ もう一度整理';
+  renderAi();
+  showToast(props.length+'件の文書をAIが自動で整理しました');
+});
+
+/* ============ INIT ============ */
+renderCatSelect();renderUploadPaper();renderChips();renderSug();renderDash();
+$('navUnsorted').textContent=unsorted().length;
+</script>
+</body>
+</html>

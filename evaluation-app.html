@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜人事評価マシン（人事評価システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#6a4df0;--brand-dk:#5337cf;--brand-soft:#eee9ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;
+  --sb:#161030;--sb-2:#1f1640;--sb-ink:#cbc4e0;--sb-ink-2:#8b82a8;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#9b7dff,#5337cf,#c8a5ff,#9b7dff);
+  display:grid;place-items:center;color:#fff;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(106,77,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:88px 1fr 58px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* distribution histogram */
+.dist{display:flex;align-items:flex-end;gap:10px;height:150px;padding:6px 4px 0}
+.dist .col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:6px}
+.dist .col .bar{width:100%;max-width:42px;border-radius:8px 8px 0 0;background:linear-gradient(180deg,var(--brand),#9b7dff);min-height:4px;transition:height .9s cubic-bezier(.2,.8,.3,1);height:0}
+.dist .col .n{font-size:11px;font-weight:800;color:var(--ink-2)}
+.dist .col .g{font-size:11px;color:var(--ink-3);font-weight:700}
+
+/* radar-ish competency */
+.comp{display:flex;flex-direction:column;gap:11px}
+.comp-row{display:grid;grid-template-columns:96px 1fr 38px;align-items:center;gap:10px;font-size:12.5px}
+.comp-row .cl{color:var(--ink-2);font-weight:600}
+.comp-track{height:8px;border-radius:99px;background:var(--soft);overflow:hidden}
+.comp-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--green),#5ad9a3);width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.comp-row .cv{text-align:right;font-weight:800;color:var(--ink)}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl th.c,table.tbl td.c{text-align:center}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.done{background:var(--green-soft);color:var(--green)}
+.st.review{background:var(--brand-soft);color:var(--brand)}
+.st.draft{background:var(--amber-soft);color:var(--amber)}
+.st.todo{background:var(--soft);color:var(--ink-3)}
+.st.alert{background:var(--red-soft);color:var(--red)}
+/* rating pill */
+.rate{display:inline-flex;align-items:center;font-size:12px;font-weight:900;padding:3px 9px;border-radius:7px;font-family:'Orbitron'}
+.rate.s{background:#efe9ff;color:#5337cf}
+.rate.a{background:var(--green-soft);color:var(--green)}
+.rate.b{background:var(--brand-soft);color:var(--brand)}
+.rate.c{background:var(--amber-soft);color:var(--amber)}
+.rate.d{background:var(--red-soft);color:var(--red)}
+/* score bar inline */
+.scbar{display:inline-block;width:74px;height:7px;border-radius:99px;background:var(--soft);overflow:hidden;vertical-align:middle}
+.scbar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky))}
+
+/* goal progress */
+.goal-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+@media(max-width:860px){.goal-grid{grid-template-columns:1fr}}
+.goalcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
+.goalcard .gt{font-size:13.5px;font-weight:800;display:flex;align-items:center;gap:8px}
+.goalcard .gm{font-size:11.5px;color:var(--ink-3);margin:3px 0 12px}
+.goalcard .gp{height:9px;border-radius:99px;background:var(--soft);overflow:hidden}
+.goalcard .gp i{display:block;height:100%;border-radius:99px;transition:width 1s cubic-bezier(.2,.8,.3,1);width:0}
+.goalcard .gf{display:flex;justify-content:space-between;align-items:center;margin-top:9px;font-size:12px}
+.goalcard .gf b{font-family:'Orbitron';font-size:16px}
+
+/* create / input form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:74px;line-height:1.6}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+/* competency slider rows */
+.crit-head{display:grid;grid-template-columns:1fr 150px 44px;gap:9px;font-size:11px;color:var(--ink-3);font-weight:700;padding:0 2px 6px}
+.crit-row{display:grid;grid-template-columns:1fr 150px 44px;gap:9px;margin-bottom:9px;align-items:center}
+.crit-row .cn{font-size:12.5px;font-weight:600;color:var(--ink-2)}
+.crit-row input[type=range]{width:100%;accent-color:var(--brand)}
+.crit-row .cval{text-align:center;font-weight:900;font-family:'Orbitron';font-size:14px;color:var(--brand)}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* evaluation sheet preview */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:30px 32px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.pv-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}
+.pv-title{font-size:23px;font-weight:900;letter-spacing:.2em;color:var(--brand-dk);border-bottom:3px solid var(--brand-dk);padding-bottom:5px}
+.pv-meta{text-align:right;font-size:11.5px;color:var(--ink-2)}
+.pv-meta .no{font-family:'Orbitron';color:var(--ink);font-weight:700}
+.pv-emp{font-size:18px;font-weight:900;border-bottom:1.5px solid #1a2233;display:inline-block;min-width:200px;padding-bottom:5px;margin-bottom:4px}
+.pv-total{background:var(--soft);border-left:5px solid var(--brand-dk);border-radius:6px;padding:13px 18px;margin:16px 0;display:flex;justify-content:space-between;align-items:center}
+.pv-total .a{font-family:'Orbitron';font-size:23px;font-weight:700;color:var(--brand-dk)}
+table.pv{width:100%;border-collapse:collapse;margin-bottom:14px}
+table.pv th{background:var(--brand-dk);color:#fff;font-size:11px;padding:8px 11px;text-align:left}
+table.pv th.r,table.pv td.r{text-align:right}
+table.pv td{padding:8px 11px;border-bottom:1px solid var(--line);font-size:12px}
+.pv-comment{background:#fafbfd;border:1px dashed var(--line-2);border-radius:8px;padding:13px 15px;font-size:12px;line-height:1.8;color:var(--ink-2);white-space:pre-wrap;min-height:60px}
+.pv-comment .lab{font-size:11px;font-weight:800;color:var(--brand);display:block;margin-bottom:5px}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:flex-start;gap:11px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;margin-bottom:9px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0;margin-top:2px}
+.gen-item .gtext{flex:1}
+.gen-item .gtext b{font-size:13px}
+.gen-item .gtext p{font-size:12px;color:var(--ink-2);margin-top:3px;line-height:1.7}
+
+/* before/after distribution */
+.ba2{display:grid;grid-template-columns:1fr 60px 1fr;gap:0;align-items:center;margin-top:8px}
+@media(max-width:760px){.ba2{grid-template-columns:1fr;gap:14px}}
+.ba2 .arrow{display:grid;place-items:center;font-size:24px;color:var(--brand)}
+@media(max-width:760px){.ba2 .arrow{transform:rotate(90deg)}}
+.minihist{display:flex;align-items:flex-end;gap:7px;height:96px;padding:8px 12px;border-radius:12px}
+.minihist.b{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.minihist.a{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.minihist .c{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px}
+.minihist .c .bb{width:100%;max-width:26px;border-radius:5px 5px 0 0;min-height:3px;transition:height .9s cubic-bezier(.2,.8,.3,1);height:0}
+.minihist.b .c .bb{background:#aeb6c8}
+.minihist.a .c .bb{background:linear-gradient(180deg,var(--green),#5ad9a3)}
+.minihist .c .g{font-size:9.5px;color:var(--ink-3);font-weight:700}
+.ba-cap{font-size:12px;font-weight:800;margin-bottom:8px;display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:7px}
+.ba-cap.b{background:#e7e9ef;color:#6b7280}
+.ba-cap.a{background:#cdeedd;color:var(--green)}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#9b7dff,#6a4df0);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(106,77,240,.4)}50%{box-shadow:0 0 40px rgba(155,125,255,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.sec-title{font-size:14px;font-weight:800;margin:4px 0 12px;display:flex;align-items:center;gap:8px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">人事評価マシン<small>技マシン｜人事評価</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">📋</span>評価一覧</a>
+      <a data-v="goal"><span class="i">🎯</span>目標管理</a>
+      <a data-v="input"><span class="i">✏️</span>評価入力</a>
+      <a data-v="agg"><span class="i">📈</span>集計</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI支援</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 人事部</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。社員・評価データはすべてサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">2026年度 上期 評価サイクルの状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>評価点の分布</h3><span class="more">全社員</span></div>
+            <div class="pb">
+              <div class="dist" id="distChart"></div>
+              <div style="font-size:11px;color:var(--ink-3);text-align:center;margin-top:8px">評価点レンジ（5段階×20点）／ 人数</div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>部署別 評価進捗</h3><span class="more">完了率</span></div>
+            <div class="pb"><div class="bars" id="deptBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>全社 平均コンピテンシー</h3></div>
+            <div class="pb"><div class="comp" id="compChart"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="氏名・部署・評価者で検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>社員</th><th>部署</th><th>役職</th><th>評価者</th><th class="c">評価点</th><th class="c">ランク</th><th>状態</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- GOALS -->
+      <section class="view" id="v-goal">
+        <div class="kpis" id="goalKpis"></div>
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="gq" placeholder="社員名・目標で検索"></div>
+          <button class="btn primary" style="margin-left:auto" onclick="go('input')">＋ 評価入力へ</button>
+        </div>
+        <div class="goal-grid" id="goalGrid"></div>
+      </section>
+
+      <!-- INPUT -->
+      <section class="view" id="v-input">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>評価対象の社員</label>
+              <select id="iEmp"></select></div>
+            <div class="fg"><label>評価サイクル</label>
+              <select id="iCycle"><option>2026年度 上期</option><option>2026年度 下期</option><option>2025年度 下期</option></select></div>
+            <div class="sec-title" style="margin-top:6px">📊 コンピテンシー評価（1〜5段階）</div>
+            <div class="crit-head"><div>評価項目</div><div style="text-align:center">スコア</div><div></div></div>
+            <div id="iCrits"></div>
+            <div class="fg" style="margin-top:14px"><label>本人の実績・行動記録（AIがこれを読んでコメント案を作ります）</label>
+              <textarea id="iAchieve" placeholder="例：新規顧客5社を開拓し売上前年比120%達成。後輩2名の育成を担当しOJTを完遂。月次レポートの自動化を提案・導入し残業を月10時間削減。"></textarea></div>
+            <div class="linkrow" style="margin-top:6px">
+              <button class="btn primary" id="iAiComment" style="flex:1;justify-content:center">⚡ AIで評価コメントを作成</button>
+              <button class="btn" id="iSample">サンプル</button>
+            </div>
+            <div class="aihint" id="iAiHint">✨ AIが実績から評価コメントを生成しました</div>
+            <div class="linkrow" style="margin-top:12px">
+              <button class="btn green" id="iSave" style="flex:1;justify-content:center">✓ この評価を確定して提出</button>
+            </div>
+          </div>
+          <div>
+            <div class="paper" id="iPaper">
+              <div class="pv-top">
+                <div class="pv-title">人 事 評 価 表</div>
+                <div class="pv-meta"><div>評価ID：<span class="no" id="pNo">—</span></div><div>サイクル：<span id="pCycle">2026年度 上期</span></div><div>評価日：<span id="pDate">—</span></div></div>
+              </div>
+              <div><span class="pv-emp" id="pEmp">　氏名</span></div>
+              <div style="font-size:11.5px;color:var(--ink-2)" id="pMeta">部署 ／ 役職 ／ 評価者</div>
+              <div class="pv-total"><span style="font-weight:700">総合評価点 ／ ランク</span><span class="a"><span id="pScore">0</span><span style="font-size:14px"> 点</span> <span id="pRankBadge"></span></span></div>
+              <table class="pv"><thead><tr><th>評価項目</th><th class="r" style="width:70px">スコア</th><th class="r" style="width:90px">換算点</th></tr></thead><tbody id="pRows"></tbody></table>
+              <div class="pv-comment"><span class="lab">⚡ AI評価コメント案</span><span id="pComment">右の「実績」を入力し、AIボタンを押すとここにコメント案が表示されます。</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AGGREGATE -->
+      <section class="view" id="v-agg">
+        <div class="kpis" id="aggKpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>ランク分布（相対評価）</h3><span class="more">S/A/B/C/D</span></div>
+            <div class="pb"><div class="bars" id="rankBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>部署別 平均点</h3></div>
+            <div class="pb"><div class="bars" id="deptAvgBars"></div></div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:16px">
+          <div class="ph"><h3>評価者別 評価点の傾向（甘辛チェック）</h3>
+            <button class="btn" id="biasCheck" style="margin-left:auto">⚡ AIで甘辛を分析</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>評価者</th><th class="c">担当人数</th><th class="c">平均点</th><th>傾向</th><th>AIコメント</th></tr></thead>
+              <tbody id="biasRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI SUPPORT -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage" style="margin-bottom:18px">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">実績データから評価コメント案を一括生成</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">提出済みの実績記録 <b>24名分</b> から、評価者向けのコメント案をAIが自動で作成します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで一括生成する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">1人 約25分</div>
+              <ul>
+                <li>📑 実績シートを1人ずつ読み込む</li>
+                <li>⌨️ 評価コメントを手書きで起案</li>
+                <li>🔁 表現のばらつきを上司が手直し</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 実績を自動で読み取り要約</li>
+                <li>📝 評価項目に沿ったコメント案を生成</li>
+                <li>✨ 表現・トーンを全社で統一</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ 生成された評価コメント案</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb2" style="background:radial-gradient(circle at 35% 30%,#5ad9a3,#16b877)">📊</div>
+            <div><div style="font-size:16px;font-weight:900">評価分布のAI最適化（Before / After）</div>
+            <div style="font-size:12.5px;color:var(--ink-3)">評価が中央（B）に偏りがちな分布を、実績の裏付けに基づきAIが適正なメリハリある分布に補正提案します。</div></div>
+            <button class="btn green" id="aiDist" style="margin-left:auto">⚡ 分布を分析・最適化</button>
+          </div>
+          <div class="ba2" style="margin-top:14px">
+            <div>
+              <span class="ba-cap b">📉 補正前（現状の分布）</span>
+              <div class="minihist b" id="histBefore"></div>
+            </div>
+            <div class="arrow">→</div>
+            <div>
+              <span class="ba-cap a">📈 AI補正後（適正分布の提案）</span>
+              <div class="minihist a" id="histAfter"></div>
+            </div>
+          </div>
+          <div id="distNote" style="display:none;margin-top:16px;border-top:1px solid var(--line);padding-top:14px;font-size:12.5px;color:var(--ink-2);line-height:1.8"></div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const DEPTS=['営業部','介護事業部','青果事業部','管理部','システム開発部'];
+const CRITS=['業績・成果','専門スキル','協調性','主体性','リーダーシップ'];
+const RATERS=['山下 部長','井上 課長','森田 課長','大塚 部長'];
+
+// deterministic RNG
+let SEED=4242;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+const FN=['佐藤','鈴木','高橋','田中','渡辺','伊藤','中村','小林','加藤','吉田','山本','松本','井上','木村','林','清水','森','池田','橋本','石川','後藤','岡田','長谷川','村上'];
+const GN=['翔太','美咲','大輔','由香','健一','彩花','拓也','麻衣','直樹','千夏','涼介','美穂','遥','悠真','結衣','陽介','奈々','和也','沙織','駿','理沙','亮','里奈','颯太','美月'];
+const POS=['一般','一般','一般','主任','主任','係長','課長代理','マネージャー'];
+const STATUSES=['done','done','review','draft','todo','done','review','done'];
+
+// generate employees + evaluations
+const EMP=[];
+(function seed(){
+  for(let i=0;i<24;i++){
+    const name=pick(FN)+' '+(GN[i]||pick(GN));
+    const dept=DEPTS[i%DEPTS.length];
+    const pos=pick(POS);
+    const rater=pick(RATERS);
+    // competency scores 1-5
+    const scores=CRITS.map(()=>2+Math.floor(rnd()*4)); // 2..5
+    const total=scores.reduce((s,v)=>s+v*4,0); // each 4..20 → max 100
+    let status=pick(STATUSES);
+    // goals
+    const goalSet=[
+      {t:'担当領域の数値目標達成',w:40,prog:40+Math.floor(rnd()*65)},
+      {t:'業務改善・効率化の推進',w:30,prog:30+Math.floor(rnd()*75)},
+      {t:'後輩育成・チーム貢献',w:30,prog:25+Math.floor(rnd()*80)},
+    ];
+    EMP.push({id:'EV-2026'+String(101+i),name,dept,pos,rater,scores,total,status,
+      achieve:'', comment:'', goals:goalSet});
+  }
+})();
+function clampScore(t){return Math.max(0,Math.min(100,t));}
+function rankOf(t){t=clampScore(t);if(t>=90)return'S';if(t>=78)return'A';if(t>=62)return'B';if(t>=48)return'C';return'D';}
+const RANKCLS={S:'s',A:'a',B:'b',C:'c',D:'d'};
+
+const TODAY=new Date(2026,4,30);
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+const STLABEL={done:'評価完了',review:'承認待ち',draft:'下書き',todo:'未着手',alert:'要面談'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]}</span>`;}
+function rankBadge(t){const r=rankOf(t);return `<span class="rate ${RANKCLS[r]}">${r}</span>`;}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+// flag low scorers as 要面談 (needs interview) for "要面談" KPI
+function needsInterview(e){return e.total<55||e.status==='alert';}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','2026年度 上期 評価サイクルの状況'],list:['評価一覧','社員ごとの評価ステータスを管理します'],
+  goal:['目標管理','社員の目標と達成度を管理します'],input:['評価入力','スコアと実績を入力するとAIがコメント案を作成します'],
+  agg:['集計','部署・ランク・評価者の集計を確認します'],ai:['AI支援','実績からコメント案・分布分析を自動化します']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn primary" onclick="go(\'input\')">＋ 評価を入力</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI支援</button><button class="btn primary" onclick="go(\'input\')">＋ 評価を入力</button>'
+    : v==='agg'?'<button class="btn" onclick="go(\'ai\')">⚡ AIで分布最適化</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='goal')renderGoals();
+  if(v==='agg')renderAgg();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const done=EMP.filter(e=>e.status==='done').length;
+  const rate=Math.round(done/EMP.length*100);
+  const avg=Math.round(EMP.reduce((s,e)=>s+e.total,0)/EMP.length);
+  const goalAch=Math.round(EMP.reduce((s,e)=>s+e.goals.reduce((a,g)=>a+g.prog*g.w/100,0)/100,0)/EMP.length*100);
+  const interview=EMP.filter(needsInterview).length;
+  $('kpis').innerHTML=`
+    ${kpi('#6a4df0','評価完了率',rate+'<small>%</small>',done+'/'+EMP.length+'名','up','期限内ペース')}
+    ${kpi('#0ea5b7','平均評価点',avg+'<small> 点</small>','100点満点','up','前期比 +2.4')}
+    ${kpi('#16b877','目標達成率',goalAch+'<small>%</small>','全社平均','up','順調')}
+    ${kpi('#e24a4a','要面談',interview+'<small>名</small>','低評価フォロー','warn',interview?'要フォロー':'なし')}`;
+  // distribution histogram (score buckets)
+  const buckets=[['~49',0,49],['50-61',50,61],['62-77',62,77],['78-89',78,89],['90~',90,100]];
+  const counts=buckets.map(b=>EMP.filter(e=>e.total>=b[1]&&e.total<=b[2]).length);
+  const mx=Math.max(...counts,1);
+  $('distChart').innerHTML=buckets.map((b,i)=>`<div class="col"><div class="n">${counts[i]}</div>
+    <div class="bar" data-h="${Math.round(counts[i]/mx*100)}"></div><div class="g">${b[0]}</div></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#distChart .bar').forEach(b=>b.style.height=b.dataset.h+'%'),60);
+  // dept progress (completion rate per dept)
+  $('deptBars').innerHTML=DEPTS.map(d=>{
+    const list=EMP.filter(e=>e.dept===d);const dn=list.filter(e=>e.status==='done').length;
+    const pct=list.length?Math.round(dn/list.length*100):0;
+    return `<div class="bar-row"><span class="mlabel">${d}</span>
+      <div class="bar-track"><div class="bar-fill" data-w="${pct}"></div></div>
+      <span class="mval">${pct}%</span></div>`;
+  }).join('');
+  setTimeout(()=>document.querySelectorAll('#deptBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // competency averages
+  $('compChart').innerHTML=CRITS.map((c,i)=>{
+    const avgc=EMP.reduce((s,e)=>s+e.scores[i],0)/EMP.length;
+    const pct=Math.round(avgc/5*100);
+    return `<div class="comp-row"><span class="cl">${c}</span>
+      <div class="comp-track"><div class="comp-fill" data-w="${pct}"></div></div>
+      <span class="cv">${avgc.toFixed(1)}</span></div>`;
+  }).join('');
+  setTimeout(()=>document.querySelectorAll('#compChart .comp-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // activity
+  const acts=[
+    {i:'✅',c:'#e6f8f0',t:'井上 課長 が 3名分の評価を確定しました',m:'5分前'},
+    {i:'⚡',c:'#eee9ff',t:'AI支援で 24名分のコメント案を生成（充足率100%）',m:'1時間前'},
+    {i:'📊',c:'#eee9ff',t:'評価分布のAI最適化を実行（B偏重を是正）',m:'今日 10:20'},
+    {i:'⚠️',c:'#fdeaea',t:'青果事業部に 要面談 該当者がいます',m:'今日 9:05'},
+    {i:'🎯',c:'#e6f8f0',t:'営業部の上期目標 達成率が 92% に到達',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${a.m}</div></div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ LIST ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['done','評価完了'],['review','承認待ち'],['draft','下書き'],['todo','未着手']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=EMP.filter(e=>filterStatus==='all'||e.status===filterStatus)
+    .filter(e=>!q||(e.name+e.dept+e.rater+e.pos).toLowerCase().includes(q))
+    .sort((a,b)=>b.total-a.total);
+  $('listRows').innerHTML=rows.length?rows.map(e=>`<tr onclick="openInput('${esc(e.id)}')">
+    <td><b>${esc(e.name)}</b><div style="font-size:11px;color:var(--ink-3)" class="mono">${esc(e.id)}</div></td>
+    <td style="color:var(--ink-2)">${esc(e.dept)}</td><td style="color:var(--ink-2)">${esc(e.pos)}</td>
+    <td style="color:var(--ink-2)">${esc(e.rater)}</td>
+    <td class="c"><span class="scbar"><i style="width:${clampScore(e.total)}%"></i></span> <b class="tnum">${e.total}</b></td>
+    <td class="c">${rankBadge(e.total)}</td><td>${stBadge(needsInterview(e)&&e.status==='done'?'alert':e.status)}</td></tr>`).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する社員がいません</td></tr>';
+}
+window.openInput=id=>{const e=EMP.find(x=>x.id===id);if(e){loadEmpToForm(e);go('input');}};
+
+/* ============ GOALS ============ */
+function renderGoals(){
+  const gq=($('gq').value||'').toLowerCase();
+  // KPIs
+  const all=EMP.flatMap(e=>e.goals);
+  const avgAch=Math.round(all.reduce((s,g)=>s+Math.min(g.prog,100),0)/all.length);
+  const over=all.filter(g=>g.prog>=100).length;
+  const risk=EMP.filter(e=>e.goals.reduce((a,g)=>a+Math.min(g.prog,100)*g.w/100,0)<55).length;
+  $('goalKpis').innerHTML=`
+    ${kpi('#16b877','目標 平均達成率',avgAch+'<small>%</small>',all.length+'件の目標','up','上期ペース')}
+    ${kpi('#6a4df0','達成済み目標',over+'<small>件</small>','100%到達','up','+8件')}
+    ${kpi('#0ea5b7','目標設定 社員数',EMP.length+'<small>名</small>','全社員','up','設定率100%')}
+    ${kpi('#e3941f','達成リスク',risk+'<small>名</small>','要支援','warn',risk?'フォロー推奨':'なし')}`;
+  const list=EMP.filter(e=>!gq||(e.name+e.dept).toLowerCase().includes(gq)||e.goals.some(g=>g.t.toLowerCase().includes(gq)));
+  $('goalGrid').innerHTML=list.length?list.map(e=>{
+    const ach=Math.round(e.goals.reduce((a,g)=>a+Math.min(g.prog,100)*g.w/100,0));
+    const col=ach>=80?'var(--green)':ach>=55?'var(--brand)':'var(--amber)';
+    return `<div class="goalcard">
+      <div class="gt">🎯 ${esc(e.name)} <span style="font-size:11px;font-weight:600;color:var(--ink-3)">${esc(e.dept)}</span></div>
+      <div class="gm">${esc(e.id)} ／ 重み付き達成率 <b style="color:${col}">${ach}%</b></div>
+      ${e.goals.map(g=>`<div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+          <span style="color:var(--ink-2);font-weight:600">${esc(g.t)} <span style="color:var(--ink-3)">(重み${g.w}%)</span></span>
+          <b class="tnum" style="color:${g.prog>=100?'var(--green)':'var(--ink)'}">${Math.min(g.prog,100)}%</b></div>
+        <div class="gp"><i data-w="${Math.min(g.prog,100)}" style="background:${g.prog>=100?'var(--green)':'linear-gradient(90deg,var(--brand),var(--sky))'}"></i></div>
+      </div>`).join('')}
+    </div>`;
+  }).join('')
+    :'<div class="empty-cell" style="grid-column:1/-1">該当する社員がいません</div>';
+  setTimeout(()=>document.querySelectorAll('#goalGrid .gp i').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+}
+let gqBound=false;
+function bindGoalSearch(){if(gqBound)return;gqBound=true;$('gq').addEventListener('input',renderGoals);}
+
+/* ============ INPUT ============ */
+let curEmp=null;
+function renderEmpSelect(){
+  $('iEmp').innerHTML='<option value="">選択してください</option>'+EMP.map(e=>`<option value="${e.id}">${esc(e.name)}（${esc(e.dept)}）</option>`).join('');
+}
+let critScores=CRITS.map(()=>3);
+function renderCrits(){
+  $('iCrits').innerHTML=CRITS.map((c,i)=>`<div class="crit-row" data-i="${i}">
+    <span class="cn">${c}</span>
+    <input type="range" min="1" max="5" step="1" value="${critScores[i]}" class="cr">
+    <span class="cval">${critScores[i]}</span></div>`).join('');
+  $('iCrits').querySelectorAll('.crit-row').forEach(row=>{
+    const i=+row.dataset.i;const r=row.querySelector('.cr'),v=row.querySelector('.cval');
+    r.oninput=()=>{critScores[i]=+r.value;v.textContent=r.value;renderSheet();};
+  });
+}
+function loadEmpToForm(e){
+  curEmp=e;
+  renderEmpSelect();
+  $('iEmp').value=e.id;
+  critScores=e.scores.slice();
+  $('iAchieve').value=e.achieve||'';
+  renderCrits();renderSheet();
+  $('pComment').textContent=e.comment||'右の「実績」を入力し、AIボタンを押すとここにコメント案が表示されます。';
+}
+function renderSheet(){
+  const e=EMP.find(x=>x.id===$('iEmp').value);
+  $('pCycle').textContent=$('iCycle').value;
+  if(e){
+    $('pEmp').textContent=e.name;
+    $('pMeta').textContent=`${e.dept} ／ ${e.pos} ／ 評価者：${e.rater}`;
+  }else{$('pEmp').textContent='　氏名';$('pMeta').textContent='部署 ／ 役職 ／ 評価者';}
+  const total=critScores.reduce((s,v)=>s+v*4,0);
+  $('pScore').textContent=total;
+  $('pRankBadge').innerHTML=rankBadge(total);
+  $('pRows').innerHTML=CRITS.map((c,i)=>`<tr><td>${esc(c)}</td><td class="r tnum">${critScores[i]} / 5</td><td class="r tnum">${critScores[i]*4} 点</td></tr>`).join('')
+    +`<tr style="font-weight:800;background:var(--soft)"><td>合計</td><td class="r"></td><td class="r tnum">${total} 点</td></tr>`;
+}
+$('iEmp').addEventListener('change',()=>{const e=EMP.find(x=>x.id===$('iEmp').value);if(e){critScores=e.scores.slice();$('iAchieve').value=e.achieve||'';renderCrits();$('pComment').textContent=e.comment||'右の「実績」を入力し、AIボタンを押すとここにコメント案が表示されます。';}renderSheet();});
+$('iCycle').addEventListener('change',renderSheet);
+$('iSample').addEventListener('click',()=>{
+  const e=EMP.find(x=>x.id==='EV-2026101')||EMP[0];
+  $('iEmp').value=e.id;critScores=[5,4,4,5,3];renderCrits();
+  $('iAchieve').value='新規顧客5社を開拓し、担当売上は前年比120%を達成。月次レポート作成をAIで自動化する改善提案を主導し、チーム全体の残業を月10時間削減。後輩2名のOJTを担当し、独り立ちまで伴走した。';
+  renderSheet();showToast('サンプルデータを読み込みました');
+});
+$('iAchieve').addEventListener('input',()=>{}); // live, no-op (comment via AI button)
+$('iAiComment').addEventListener('click',async()=>{
+  const ach=$('iAchieve').value.trim();
+  if(!$('iEmp').value){showToast('評価対象の社員を選択してください');return;}
+  if(!ach){showToast('実績・行動記録を入力してください');return;}
+  const btn=$('iAiComment');btn.textContent='⚡ AIが作成中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,900));
+  const e=EMP.find(x=>x.id===$('iEmp').value);
+  const total=critScores.reduce((s,v)=>s+v*4,0);const rank=rankOf(total);
+  const top=CRITS[critScores.indexOf(Math.max(...critScores))];
+  const low=CRITS[critScores.indexOf(Math.min(...critScores))];
+  // build a structured comment from achievements + scores (AI-flavored)
+  const comment=
+`【総評】総合${total}点（ランク${rank}）。今期は特に「${top}」で高い発揮が見られました。\n`+
+`【強み】${ach.length>60?ach.slice(0,58)+'…':ach} という実績は、当社の評価基準において明確な成果として高く評価できます。\n`+
+`【伸びしろ】「${low}」については次期の重点育成テーマとし、具体的な行動目標へ落とし込むことを推奨します。\n`+
+`【次期への期待】上記の強みを後進へ波及させ、チーム全体の底上げに貢献することを期待します。`;
+  $('pComment').textContent=comment;
+  if(e){e.comment=comment;e.achieve=ach;}
+  btn.textContent='⚡ AIで評価コメントを作成';btn.disabled=false;
+  $('iAiHint').classList.add('show');setTimeout(()=>$('iAiHint').classList.remove('show'),2200);
+  showToast('AIが評価コメント案を生成しました');
+});
+$('iSave').addEventListener('click',()=>{
+  if(!$('iEmp').value){showToast('評価対象の社員を選択してください');return;}
+  const e=EMP.find(x=>x.id===$('iEmp').value);
+  e.scores=critScores.slice();e.total=critScores.reduce((s,v)=>s+v*4,0);e.status='review';
+  e.achieve=$('iAchieve').value;
+  $('pNo').textContent=e.id;$('pDate').textContent=fmtDL(TODAY);
+  showToast(e.name+' の評価を提出しました（承認待ち）');
+  setTimeout(()=>go('list'),700);
+});
+
+/* ============ AGGREGATE ============ */
+function renderAgg(){
+  const avg=Math.round(EMP.reduce((s,e)=>s+e.total,0)/EMP.length);
+  const sCnt=EMP.filter(e=>rankOf(e.total)==='S').length;
+  const std=(()=>{const m=EMP.reduce((s,e)=>s+e.total,0)/EMP.length;return Math.round(Math.sqrt(EMP.reduce((s,e)=>s+(e.total-m)**2,0)/EMP.length));})();
+  $('aggKpis').innerHTML=`
+    ${kpi('#6a4df0','全社 平均点',avg+'<small> 点</small>',EMP.length+'名','up','前期比 +2.4')}
+    ${kpi('#0ea5b7','S評価',sCnt+'<small>名</small>','トップ層','up','+1名')}
+    ${kpi('#16b877','評価バラつき',std+'<small> σ</small>','標準偏差','up','適正範囲')}
+    ${kpi('#e3941f','要再評価',EMP.filter(e=>e.status==='review').length+'<small>件</small>','承認待ち','warn','確認')}`;
+  // rank bars
+  const ranks=['S','A','B','C','D'];
+  const rc=ranks.map(r=>EMP.filter(e=>rankOf(e.total)===r).length);
+  const rmx=Math.max(...rc,1);
+  $('rankBars').innerHTML=ranks.map((r,i)=>`<div class="bar-row"><span class="mlabel">${r} ランク</span>
+    <div class="bar-track"><div class="bar-fill" data-w="${Math.round(rc[i]/rmx*100)}"></div></div>
+    <span class="mval">${rc[i]}名</span></div>`).join('');
+  // dept avg
+  const davg=DEPTS.map(d=>{const l=EMP.filter(e=>e.dept===d);return l.length?Math.round(l.reduce((s,e)=>s+e.total,0)/l.length):0;});
+  const dmx=Math.max(...davg,1);
+  $('deptAvgBars').innerHTML=DEPTS.map((d,i)=>`<div class="bar-row"><span class="mlabel">${d}</span>
+    <div class="bar-track"><div class="bar-fill" data-w="${Math.round(davg[i]/dmx*100)}"></div></div>
+    <span class="mval">${davg[i]}点</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#rankBars .bar-fill,#deptAvgBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // bias table
+  $('biasRows').innerHTML=RATERS.map(r=>{
+    const l=EMP.filter(e=>e.rater===r);if(!l.length)return'';
+    const a=Math.round(l.reduce((s,e)=>s+e.total,0)/l.length);
+    const tend=a>=75?['甘め','alert']:a<=58?['辛め','review']:['標準','done'];
+    return `<tr><td><b>${esc(r)}</b></td><td class="c tnum">${l.length}名</td><td class="c tnum"><b>${a}点</b></td>
+      <td>${stBadge(tend[1])}</td><td style="color:var(--ink-3)" class="bias-cmt">—</td></tr>`;
+  }).join('');
+}
+$('biasCheck').addEventListener('click',async()=>{
+  const btn=$('biasCheck');btn.textContent='⚡ 分析中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,900));
+  const cells=$('biasRows').querySelectorAll('.bias-cmt');
+  const msgs=['基準よりやや高め。S/A集中に注意','概ね全社平均と整合的','低めの傾向。過小評価がないか確認','部署特性を考慮すれば妥当'];
+  cells.forEach((c,i)=>{c.textContent=msgs[i%msgs.length];c.style.color='var(--ink-2)';});
+  btn.textContent='⚡ AIで甘辛を分析';btn.disabled=false;
+  showToast('評価者ごとの甘辛をAIが分析しました');
+});
+
+/* ============ AI SUPPORT — bulk comment ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 生成中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},110);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);$('baAfterT').textContent='1人 約4秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  const targets=EMP.slice(0,6);
+  const templates=[
+    e=>`総合${e.total}点。担当領域で安定した成果。協調性が高くチームの潤滑油として機能。次期はリーダーシップ発揮が期待される。`,
+    e=>`総合${e.total}点。主体的な業務改善提案が光った。専門スキルをさらに磨くことで一段上の成果が見込める。`,
+    e=>`総合${e.total}点。目標達成に向け粘り強く取り組んだ。報連相の精度を高めると評価がさらに伸びる。`,
+    e=>`総合${e.total}点。後輩育成への貢献が顕著。自身の数値目標との両立を意識すると総合力が向上する。`,
+    e=>`総合${e.total}点。専門性が高く周囲からの信頼が厚い。横断的な巻き込みに挑戦すると成長余地大。`,
+    e=>`総合${e.total}点。着実に役割を遂行。新規領域への主体的なチャレンジを次期テーマに推奨。`,
+  ];
+  $('genItems').innerHTML=targets.map((e,i)=>
+    `<div class="gen-item" data-i="${i}"><span class="ck">✓</span>
+      <div class="gtext"><b>${esc(e.name)}</b> <span style="color:var(--ink-3);font-size:11px">${esc(e.dept)} ／ ${rankOf(e.total)}ランク</span>
+      <p>${esc(templates[i](e))}</p></div></div>`).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,200));items[i].classList.add('in');
+    targets[i].comment=templates[i](targets[i]);}
+  btn.disabled=false;btn.textContent='⚡ もう一度生成';
+  showToast(items.length+'名分の評価コメント案を生成しました');
+});
+
+/* ============ AI SUPPORT — distribution before/after ============ */
+const LABELS5=['D','C','B','A','S'];
+function drawHist(elId,arr,maxRef){
+  const mx=Math.max(...arr,maxRef,1);
+  $(elId).innerHTML=arr.map((v,i)=>`<div class="c"><div class="bb" data-h="${Math.round(v/mx*100)}"></div><div class="g">${LABELS5[i]}</div></div>`).join('');
+  setTimeout(()=>$(elId).querySelectorAll('.bb').forEach(b=>b.style.height=b.dataset.h+'%'),60);
+}
+function currentDist(){return ['D','C','B','A','S'].map(r=>EMP.filter(e=>rankOf(e.total)===r).length);}
+function initHist(){const cur=currentDist();drawHist('histBefore',cur,Math.max(...cur));drawHist('histAfter',[0,0,0,0,0],Math.max(...cur));}
+$('aiDist').addEventListener('click',async()=>{
+  const btn=$('aiDist');btn.disabled=true;btn.textContent='⚡ 分析中…';
+  $('aiOrb2').classList.add('spin');
+  const before=currentDist();
+  await new Promise(r=>setTimeout(r,1000));
+  // AI "optimized" target distribution (rough normal-ish curve, same N)
+  const N=EMP.reduce((s,e)=>s+1,0);
+  const ideal=[0.10,0.20,0.40,0.20,0.10]; // D,C,B,A,S
+  let after=ideal.map(p=>Math.round(p*N));
+  // fix rounding so sum==N
+  let diff=N-after.reduce((s,v)=>s+v,0);after[2]+=diff;
+  const mxRef=Math.max(...before,...after);
+  drawHist('histBefore',before,mxRef);drawHist('histAfter',after,mxRef);
+  $('aiOrb2').classList.remove('spin');btn.disabled=false;btn.textContent='⚡ 再分析';
+  $('distNote').style.display='block';
+  $('distNote').innerHTML=`<b style="color:var(--brand)">AI分析コメント：</b> 現状は B ランクに <b>${before[2]}名</b> が集中し、評価のメリハリが弱い状態です。`+
+    `実績データの裏付けを基準に再配分すると、S:${after[4]}・A:${after[3]}・B:${after[2]}・C:${after[1]}・D:${after[0]} 名が適正分布として提案されます。`+
+    `<br>※ なぜ補正するか：中央集中は処遇差が付かず、優秀層のモチベーション低下と低評価層の課題見逃しにつながるためです（評価の納得性を高める目的）。`;
+  showToast('評価分布のAI最適化案を生成しました');
+});
+
+/* ============ INIT ============ */
+renderEmpSelect();renderCrits();renderSheet();renderChips();renderDash();bindGoalSearch();initHist();
+$('q').addEventListener('input',renderList);
+</script>
+</body>
+</html>

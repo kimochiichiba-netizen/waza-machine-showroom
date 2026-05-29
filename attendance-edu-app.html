@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜出欠管理マシン（出欠・連絡・集計システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7b5be6;--purple-soft:#efeafe;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn.sm{padding:6px 12px;font-size:12px}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel.mt{margin-top:16px}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:78px 1fr 64px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-fill.warn{background:linear-gradient(90deg,var(--amber),#f0b04b)}
+.bar-fill.red{background:linear-gradient(90deg,var(--red),#f07878)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut */
+.donut-wrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.donut{width:140px;height:140px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;position:relative;background:var(--soft)}
+.donut .hole{width:90px;height:90px;border-radius:50%;background:var(--card);display:grid;place-items:center;text-align:center}
+.donut .hole .pct{font-size:24px;font-weight:900;line-height:1;color:var(--green)}
+.donut .hole .lb{font-size:10px;color:var(--ink-3);font-weight:700;margin-top:2px}
+.legend{display:flex;flex-direction:column;gap:9px;font-size:12.5px}
+.legend .lg{display:flex;align-items:center;gap:9px}
+.legend .lg .sw{width:12px;height:12px;border-radius:4px}
+.legend .lg b{font-variant-numeric:tabular-nums}
+.legend .lg .n{color:var(--ink-2);margin-left:auto;font-weight:700}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.selbox{padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13px;font-weight:700;color:var(--ink-2);background:var(--card)}
+.selbox:focus{outline:none;border-color:var(--brand)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl th.c,table.tbl td.c{text-align:center}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.avatar{width:30px;height:30px;border-radius:50%;display:inline-grid;place-items:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0}
+.stu{display:flex;align-items:center;gap:10px}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.present{background:var(--green-soft);color:var(--green)}
+.st.late{background:var(--amber-soft);color:var(--amber)}
+.st.absent{background:var(--red-soft);color:var(--red)}
+.st.leave{background:var(--brand-soft);color:var(--brand)}
+.st.early{background:var(--purple-soft);color:var(--purple)}
+.st.none{background:var(--soft);color:var(--ink-3)}
+.tag-cls{display:inline-block;font-size:11px;font-weight:800;padding:3px 9px;border-radius:7px;background:var(--soft);color:var(--ink-2)}
+
+/* segmented status buttons in table */
+.segbtn{display:inline-flex;gap:4px}
+.segbtn button{border:1px solid var(--line-2);background:var(--card);color:var(--ink-3);font-size:11px;font-weight:800;padding:4px 9px;border-radius:7px;cursor:pointer;transition:all .12s}
+.segbtn button:hover{border-color:var(--brand)}
+.segbtn button.on.present{background:var(--green-soft);border-color:var(--green);color:var(--green)}
+.segbtn button.on.absent{background:var(--red-soft);border-color:var(--red);color:var(--red)}
+.segbtn button.on.late{background:var(--amber-soft);border-color:var(--amber);color:var(--amber)}
+
+/* class grid cards */
+.clsgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:980px){.clsgrid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.clsgrid{grid-template-columns:1fr}}
+.clscard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow);cursor:pointer;transition:all .15s}
+.clscard:hover{border-color:var(--brand);transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.clscard .top{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.clscard .ico{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;font-size:18px;font-weight:900;color:#fff}
+.clscard .nm{font-size:15px;font-weight:900}
+.clscard .tc{font-size:11.5px;color:var(--ink-3)}
+.clscard .rate{font-family:'Orbitron';font-size:26px;font-weight:700;color:var(--ink)}
+.clscard .mini{display:flex;gap:8px;margin-top:10px;font-size:11px}
+.clscard .mini span{font-weight:800}
+.miniprog{height:8px;border-radius:99px;background:var(--soft);overflow:hidden;margin-top:10px;display:flex}
+.miniprog i{height:100%}
+
+/* contact / form */
+.contact-grid{display:grid;grid-template-columns:minmax(300px,380px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.contact-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:84px;line-height:1.6}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+.contact-feed{display:flex;flex-direction:column;gap:0}
+.cmsg{display:flex;gap:11px;padding:13px 0;border-bottom:1px solid var(--line)}
+.cmsg:last-child{border-bottom:0}
+.cmsg .av{width:34px;height:34px;border-radius:9px;flex-shrink:0;display:grid;place-items:center;font-size:14px;font-weight:800;color:#fff}
+.cmsg .body{flex:1;min-width:0}
+.cmsg .hd{display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:3px}
+.cmsg .hd b{font-size:13px}
+.cmsg .hd .t{color:var(--ink-3);font-size:11px;margin-left:auto}
+.cmsg .tx{font-size:13px;color:var(--ink);background:var(--soft);border-radius:10px;padding:9px 12px}
+.cmsg.out .tx{background:var(--brand-soft)}
+.reason-chip{display:inline-block;font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:6px;background:var(--soft);color:var(--ink-2);margin-right:5px}
+
+/* alert cards */
+.alert-list{display:flex;flex-direction:column;gap:12px}
+.alert{display:flex;gap:14px;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--amber);border-radius:12px;padding:16px;box-shadow:var(--shadow)}
+.alert.high{border-left-color:var(--red)}
+.alert.mid{border-left-color:var(--amber)}
+.alert.low{border-left-color:var(--brand)}
+.alert .ic{width:40px;height:40px;border-radius:10px;flex-shrink:0;display:grid;place-items:center;font-size:18px}
+.alert.high .ic{background:var(--red-soft)}.alert.mid .ic{background:var(--amber-soft)}.alert.low .ic{background:var(--brand-soft)}
+.alert .body{flex:1;min-width:0}
+.alert .body .t{font-weight:800;font-size:14px}
+.alert .body .m{font-size:12.5px;color:var(--ink-2);margin-top:3px}
+.alert .body .tags{margin-top:8px}
+.alert .lv{font-size:10.5px;font-weight:900;padding:3px 9px;border-radius:7px;align-self:flex-start;white-space:nowrap}
+.alert.high .lv{background:var(--red-soft);color:var(--red)}
+.alert.mid .lv{background:var(--amber-soft);color:var(--amber)}
+.alert.low .lv{background:var(--brand-soft);color:var(--brand)}
+
+/* AI generate / before-after */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* preview box for generated message */
+.preview-box{background:#fff;border:1px solid var(--line);border-radius:10px;padding:18px 20px;box-shadow:var(--shadow);font-size:13px;color:#1a2233;line-height:1.7;margin-top:14px;display:none}
+.preview-box.show{display:block;animation:fade .4s}
+.preview-box .pv-h{font-size:11px;font-weight:800;color:var(--green);letter-spacing:.05em;margin-bottom:8px}
+.preview-box .pv-line{padding:7px 0;border-bottom:1px dashed var(--line)}
+.preview-box .pv-line:last-child{border-bottom:0}
+.preview-box .pv-name{font-weight:800}
+.preview-box .pv-text{color:var(--ink-2);margin-top:2px}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.subtle{color:var(--ink-3);font-size:12px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">出欠管理マシン<small>技マシン｜出欠・連絡・集計</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">📋</span>出欠一覧</a>
+      <a data-v="cls"><span class="i">🏫</span>クラス別</a>
+      <a data-v="contact"><span class="i">✉️</span>連絡<span class="badge" id="navContact">0</span></a>
+      <a data-v="report"><span class="i">📈</span>集計</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI自動処理</a>
+      <a data-v="alert"><span class="i">🔔</span>AIアラート<span class="badge" id="navAlert">0</span></a>
+    </nav>
+    <div class="org">
+      <div class="av">大</div>
+      <div><b>大分みらい学園</b><span>デモ環境 / 教員管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。児童・生徒名や出欠データはすべてサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">本日の出欠状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>クラス別 出席率（本日）</h3><span class="more">全6クラス</span></div>
+            <div class="pb"><div class="bars" id="clsBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>本日の出欠内訳</h3></div>
+            <div class="pb">
+              <div class="donut-wrap">
+                <div class="donut" id="donut"><div class="hole"><div class="pct" id="donutPct">0%</div><div class="lb">出席率</div></div></div>
+                <div class="legend" id="donutLegend"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>出席率の推移（過去7日）</h3><span class="more">学園全体</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="児童・生徒名 / 出席番号で検索"></div>
+          <select class="selbox" id="clsFilter"></select>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>出席番号</th><th>氏名</th><th>クラス</th><th>状態</th><th>事由</th><th>連絡時刻</th><th class="c">出欠を変更</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+        <div style="margin-top:14px;display:flex;gap:9px"><button class="btn green" id="saveAtt">✅ 出欠を保存</button><button class="btn" id="allPresent">全員「出席」にする</button></div>
+      </section>
+
+      <!-- CLASS -->
+      <section class="view" id="v-cls">
+        <div class="clsgrid" id="clsCards"></div>
+        <div class="panel mt">
+          <div class="ph"><h3 id="clsDetailTitle">クラスを選ぶと名簿が表示されます</h3></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>出席番号</th><th>氏名</th><th>状態</th><th>事由</th><th class="r">月間出席率</th></tr></thead>
+              <tbody id="clsDetailRows"><tr><td colspan="5" class="empty-cell">上のクラスカードをクリックしてください</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- CONTACT -->
+      <section class="view" id="v-contact">
+        <div class="contact-grid">
+          <div class="formcard">
+            <div style="font-size:14px;font-weight:900;margin-bottom:14px">保護者へ連絡を送る</div>
+            <div class="fg"><label>宛先（児童・生徒）</label><select id="ctStudent"></select></div>
+            <div class="fg"><label>種別</label><select id="ctType">
+              <option value="欠席確認">欠席確認</option>
+              <option value="遅刻のお知らせ">遅刻のお知らせ</option>
+              <option value="体調のお伺い">体調のお伺い</option>
+              <option value="連続欠席のご相談">連続欠席のご相談</option>
+            </select></div>
+            <div class="fg"><label>本文（AIが下書きを提案）</label><textarea id="ctBody" placeholder="種別を選ぶとAIが文面を提案します"></textarea>
+              <div class="aihint" id="ctAiHint">✨ AIが状況に合わせた文面を下書きしました</div></div>
+            <div class="linkrow">
+              <button class="btn primary" id="ctSend" style="flex:1;justify-content:center">✉️ 送信する</button>
+              <button class="btn" id="ctDraft">✨ AI下書き</button>
+            </div>
+            <div class="subtle" style="margin-top:10px">※ デモのため実際の送信は行われません。連絡履歴に追加されます。</div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>連絡履歴</h3><span class="more" id="ctCount">0件</span></div>
+            <div class="pb"><div class="contact-feed" id="ctFeed"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- REPORT -->
+      <section class="view" id="v-report">
+        <div class="kpis" id="repKpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>クラス別 月間出席率</h3><span class="more">2026年5月</span></div>
+            <div class="pb"><div class="bars" id="repClsBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>欠席事由の内訳（今月）</h3></div>
+            <div class="pb"><div class="bars" id="reasonBars"></div></div>
+          </div>
+        </div>
+        <div class="panel mt">
+          <div class="ph"><h3>欠席が多い児童・生徒（今月）</h3>
+            <button class="btn sm" id="exportCsv" style="margin-left:auto">📥 CSVで出力</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>氏名</th><th>クラス</th><th class="c">欠席</th><th class="c">遅刻</th><th class="r">出席率</th><th>傾向</th></tr></thead>
+              <tbody id="repRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI AUTO -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div style="flex:1;min-width:220px"><div style="font-size:16px;font-weight:900">出欠データを集計し、欠席傾向アラート・保護者連絡まで自動化</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">本日の出欠 <b>156名分</b> をAIが集計し、要注意の児童・生徒を抽出して保護者連絡の下書きまで自動で作成します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで一括処理する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">1時間50分</div>
+              <ul>
+                <li>📝 各クラスの出欠を手集計</li>
+                <li>📒 欠席が続く子を名簿で目視チェック</li>
+                <li>📞 保護者へ1件ずつ電話・連絡帳記入</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 全クラスの出欠を自動集計</li>
+                <li>🔔 欠席傾向をAIが検知しアラート化</li>
+                <li>✉️ 保護者連絡の文面まで自動下書き</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ AIが抽出した要対応の児童・生徒</div>
+            <div id="genItems"></div>
+          </div>
+          <div class="preview-box" id="previewBox">
+            <div class="pv-h">✉️ AIが自動生成した保護者連絡の下書き（Before：手作業 → After：自動）</div>
+            <div id="previewItems"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ALERT -->
+      <section class="view" id="v-alert">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+          <div class="subtle">AIが出欠データを分析し、見守りが必要な児童・生徒を自動で検知しています。</div>
+          <button class="btn primary sm" id="reanalyze" style="margin-left:auto">⚡ 再分析する</button>
+        </div>
+        <div class="alert-list" id="alertList"></div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const CLASSES=[
+  {id:'1A',name:'1年A組',teacher:'山口 美咲',color:'#2f6df0'},
+  {id:'1B',name:'1年B組',teacher:'中村 健太',color:'#16b877'},
+  {id:'2A',name:'2年A組',teacher:'小林 由香',color:'#e3941f'},
+  {id:'2B',name:'2年B組',teacher:'渡辺 大輔',color:'#0ea5b7'},
+  {id:'3A',name:'3年A組',teacher:'伊藤 さやか',color:'#7b5be6'},
+  {id:'3B',name:'3年B組',teacher:'加藤 翔太',color:'#e24a4a'},
+];
+const SURNAMES=['佐藤','鈴木','高橋','田中','渡辺','伊藤','山本','中村','小林','加藤','吉田','山田','佐々木','松本','井上','木村','林','清水','森','池田'];
+const GIVEN=['陽翔','蓮','湊','大翔','悠真','結愛','陽菜','凜','咲良','芽依','大和','颯太','美咲','葵','楓','悠斗','心春','莉子','奏太','結菜','悠人','陽子','直樹','美羽'];
+const REASONS=['発熱','腹痛','体調不良','通院','家庭の都合','頭痛','咳','インフルエンザ','寝坊','その他'];
+
+/* seeded RNG for reproducible demo data */
+let SEED=20260530;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+const TODAY=new Date(2026,4,30); // 2026-05-30
+
+/* status: present / late / absent / leave(早退) / none(未連絡) */
+const STATUSES_W=['present','present','present','present','present','present','present','late','absent','leave'];
+
+/* build students */
+let students=[];
+let sid=1;
+CLASSES.forEach(c=>{
+  const n=24+Math.floor(rnd()*4); // 24-27 per class
+  for(let i=1;i<=n;i++){
+    const name=pick(SURNAMES)+' '+pick(GIVEN);
+    let st=pick(STATUSES_W);
+    const reason=(st==='absent'||st==='late'||st==='leave')?pick(REASONS):'';
+    const time=(st==='absent'||st==='late'||st==='leave')?(7+Math.floor(rnd()*2))+':'+String(Math.floor(rnd()*6))+''+Math.floor(rnd()*10):'';
+    // month stats
+    const mAbsent=Math.floor(rnd()*rnd()*8);
+    const mLate=Math.floor(rnd()*rnd()*5);
+    const mTotal=20;
+    const mRate=Math.round((mTotal-mAbsent-mLate*0.3)/mTotal*100);
+    students.push({id:sid++,no:i,name,cls:c.id,status:st,reason,time,mAbsent,mLate,mRate:Math.max(40,Math.min(100,mRate)),guardian:name.split(' ')[0]+' 様'});
+  }
+});
+const TOTAL=students.length;
+
+/* contact history seed */
+let contacts=[
+  {dir:'in',name:'井上 結愛',cls:'2A',type:'欠席連絡',body:'本日、発熱のためお休みします。よろしくお願いします。',time:'今日 7:42'},
+  {dir:'out',name:'森 蓮',cls:'1B',type:'体調のお伺い',body:'昨日は早退され心配しております。お加減いかがでしょうか。無理なさらずご静養ください。',time:'今日 8:05'},
+  {dir:'in',name:'松本 楓',cls:'3A',type:'遅刻連絡',body:'通院のため2時間目から登校します。',time:'今日 7:58'},
+];
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STLABEL={present:'出席',late:'遅刻',absent:'欠席',leave:'早退',none:'未連絡'};
+const stBadge=s=>`<span class="st ${s}">${STLABEL[s]}</span>`;
+const clsName=id=>{const c=CLASSES.find(x=>x.id===id);return c?c.name:id;};
+const clsColor=id=>{const c=CLASSES.find(x=>x.id===id);return c?c.color:'#2f6df0';};
+const AVCOLORS=['#2f6df0','#16b877','#e3941f','#0ea5b7','#7b5be6','#e24a4a','#1f57cf'];
+const avColor=name=>AVCOLORS[name.charCodeAt(0)%AVCOLORS.length];
+const initial=name=>esc(name.replace(/\s/g,'').slice(0,1));
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+const cnt=st=>students.filter(s=>s.status===st).length;
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','本日の出欠状況（2026年5月30日）'],list:['出欠一覧','本日の出欠を確認・修正します'],
+  cls:['クラス別','クラスごとの出席状況'],contact:['連絡','保護者との連絡を管理します'],
+  report:['集計','出欠の集計とレポート'],ai:['AI自動処理','出欠集計・欠席傾向アラート・保護者連絡を自動化'],alert:['AIアラート','見守りが必要な児童・生徒の自動検知']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI自動処理</button><button class="btn primary" onclick="go(\'list\')">📋 出欠をつける</button>'
+    : v==='list'?'<button class="btn" onclick="go(\'contact\')">✉️ 連絡</button>'
+    : v==='alert'?'<button class="btn" onclick="go(\'contact\')">✉️ 連絡する</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='cls')renderClsCards();
+  if(v==='contact')renderContact();
+  if(v==='report')renderReport();
+  if(v==='alert')renderAlerts();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+function classRate(id){const ss=students.filter(s=>s.cls===id);const present=ss.filter(s=>s.status==='present'||s.status==='late'||s.status==='leave').length;return ss.length?Math.round(present/ss.length*100):0;}
+function renderDash(){
+  const present=cnt('present'),late=cnt('late'),absent=cnt('absent'),leave=cnt('leave');
+  const attended=present+late+leave;
+  const rate=Math.round(attended/TOTAL*100);
+  const watch=students.filter(s=>s.mAbsent>=3).length;
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','本日 出席',attended+'<small> / '+TOTAL+'名</small>',present+'名 正常出席','up','登校済み')}
+    ${kpi('#16b877','出席率',rate+'<small>%</small>','','up','前週比 +1.2pt')}
+    ${kpi('#e3941f','欠席・遅刻連絡',(absent+late)+'<small>件</small>',absent+'欠席 / '+late+'遅刻','warn','本日受信')}
+    ${kpi('#e24a4a','要注意（見守り）',watch+'<small>名</small>',' ',watch?'down':'up',watch?'AIが検知':'なし')}`;
+  // class bars
+  $('clsBars').innerHTML=CLASSES.map(c=>{const r=classRate(c.id);const cl=r>=95?'':r>=88?'warn':'red';
+    return `<div class="bar-row"><span class="mlabel">${esc(c.name)}</span>
+      <div class="bar-track"><div class="bar-fill ${cl}" style="width:0" data-w="${r}"></div></div>
+      <span class="mval">${r}%</span></div>`;}).join('');
+  setTimeout(()=>document.querySelectorAll('#clsBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // donut
+  $('donutPct').textContent=rate+'%';
+  const segs=[['#16b877',present,'出席'],['#e3941f',late,'遅刻'],['#7b5be6',leave,'早退'],['#e24a4a',absent,'欠席']];
+  let acc=0;const stops=segs.map(s=>{const from=acc/TOTAL*360;acc+=s[1];const to=acc/TOTAL*360;return `${s[0]} ${from}deg ${to}deg`;}).join(',');
+  $('donut').style.background=`conic-gradient(${stops})`;
+  $('donutLegend').innerHTML=segs.map(s=>`<div class="lg"><span class="sw" style="background:${s[0]}"></span>${s[2]}<b class="n">${s[1]}名</b></div>`).join('');
+  // trend (7 days)
+  const days=['5/24','5/25','5/26','5/27','5/28','5/29','5/30'];
+  const trend=[96,94,97,95,93,96,rate];
+  const mx=100;
+  $('trendBars').innerHTML=days.map((d,i)=>`<div class="bar-row"><span class="mlabel">${d}</span>
+    <div class="bar-track"><div class="bar-fill ${trend[i]>=95?'':'warn'}" style="width:0" data-w="${trend[i]}"></div></div>
+    <span class="mval">${trend[i]}%</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // activity
+  const acts=[
+    {i:'✉️',c:'#eaf1ff',t:'井上 結愛 さんの保護者から欠席連絡（発熱）',m:'7分前'},
+    {i:'⚡',c:'#e6f8f0',t:'AIが本日の出欠 156名分を自動集計しました',m:'今日 8:30'},
+    {i:'🔔',c:'#fdeaea',t:'森 蓮 さんが3日連続欠席 — 見守りアラート',m:'今日 8:31'},
+    {i:'✅',c:'#e6f8f0',t:'1年A組 の出欠が確定しました（担任：山口）',m:'今日 8:25'},
+    {i:'📋',c:'#eaf1ff',t:'2年B組 の出欠が確定しました（担任：渡辺）',m:'今日 8:22'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${a.m}</div></div></div>`).join('');
+}
+
+/* ============ LIST ============ */
+let filterStatus='all',filterCls='all';
+function renderClsFilter(){
+  $('clsFilter').innerHTML='<option value="all">全クラス</option>'+CLASSES.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  $('clsFilter').onchange=()=>{filterCls=$('clsFilter').value;renderList();};
+}
+function renderChips(){
+  const opts=[['all','すべて'],['present','出席'],['late','遅刻'],['absent','欠席'],['leave','早退']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=students.filter(s=>filterStatus==='all'||s.status===filterStatus)
+    .filter(s=>filterCls==='all'||s.cls===filterCls)
+    .filter(s=>!q||(s.name+s.no+clsName(s.cls)).toLowerCase().includes(q));
+  $('listRows').innerHTML=rows.length?rows.map(s=>`<tr>
+    <td class="mono" style="font-size:12px">${s.no}</td>
+    <td><div class="stu"><span class="avatar" style="background:${avColor(s.name)}">${initial(s.name)}</span><b>${esc(s.name)}</b></div></td>
+    <td><span class="tag-cls">${esc(clsName(s.cls))}</span></td>
+    <td>${stBadge(s.status)}</td>
+    <td style="color:var(--ink-2)">${s.reason?esc(s.reason):'—'}</td>
+    <td style="color:var(--ink-2)" class="tnum">${s.time?esc(s.time):'—'}</td>
+    <td class="c"><div class="segbtn" data-id="${s.id}">
+      <button class="present ${s.status==='present'?'on':''}" data-st="present">出席</button>
+      <button class="late ${s.status==='late'?'on':''}" data-st="late">遅刻</button>
+      <button class="absent ${s.status==='absent'?'on':''}" data-st="absent">欠席</button>
+    </div></td></tr>`).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する児童・生徒がいません</td></tr>';
+  $('listRows').querySelectorAll('.segbtn').forEach(seg=>{
+    const id=+seg.dataset.id;
+    seg.querySelectorAll('button').forEach(b=>b.onclick=e=>{e.stopPropagation();
+      const s=students.find(x=>x.id===id);if(!s)return;
+      s.status=b.dataset.st;
+      if(s.status==='present'){s.reason='';s.time='';}
+      else if(!s.reason){s.reason=pick(REASONS);s.time='8:1'+Math.floor(rnd()*9);}
+      renderList();
+    });
+  });
+}
+$('q').addEventListener('input',renderList);
+$('saveAtt').addEventListener('click',()=>{$('navContact').textContent=contacts.length;showToast('本日の出欠を保存しました（'+TOTAL+'名）');});
+$('allPresent').addEventListener('click',()=>{students.forEach(s=>{s.status='present';s.reason='';s.time='';});renderList();showToast('全員を「出席」にしました');});
+
+/* ============ CLASS ============ */
+let selectedCls=null;
+function renderClsCards(){
+  $('clsCards').innerHTML=CLASSES.map(c=>{
+    const ss=students.filter(s=>s.cls===c.id);
+    const present=ss.filter(s=>s.status==='present').length;
+    const late=ss.filter(s=>s.status==='late').length;
+    const leave=ss.filter(s=>s.status==='leave').length;
+    const absent=ss.filter(s=>s.status==='absent').length;
+    const rate=classRate(c.id);
+    const seg=[['#16b877',present],['#e3941f',late],['#7b5be6',leave],['#e24a4a',absent]];
+    const prog=seg.map(s=>`<i style="background:${s[0]};width:${s[1]/ss.length*100}%"></i>`).join('');
+    return `<div class="clscard" data-cls="${c.id}">
+      <div class="top"><div class="ico" style="background:${c.color}">${c.id}</div>
+        <div><div class="nm">${esc(c.name)}</div><div class="tc">担任：${esc(c.teacher)}・${ss.length}名</div></div></div>
+      <div class="rate">${rate}<small style="font-size:14px;color:var(--ink-3)">%</small></div>
+      <div class="tc">本日の出席率</div>
+      <div class="miniprog">${prog}</div>
+      <div class="mini"><span style="color:var(--green)">出席${present}</span><span style="color:var(--amber)">遅刻${late}</span><span style="color:var(--purple)">早退${leave}</span><span style="color:var(--red)">欠席${absent}</span></div>
+    </div>`;
+  }).join('');
+  $('clsCards').querySelectorAll('.clscard').forEach(card=>card.onclick=()=>{selectedCls=card.dataset.cls;renderClsDetail();});
+  if(selectedCls)renderClsDetail();
+}
+function renderClsDetail(){
+  const c=CLASSES.find(x=>x.id===selectedCls);if(!c)return;
+  $('clsDetailTitle').textContent=c.name+' の名簿（担任：'+c.teacher+'）';
+  const ss=students.filter(s=>s.cls===c.id).sort((a,b)=>a.no-b.no);
+  $('clsDetailRows').innerHTML=ss.map(s=>`<tr>
+    <td class="mono" style="font-size:12px">${s.no}</td>
+    <td><div class="stu"><span class="avatar" style="background:${avColor(s.name)}">${initial(s.name)}</span><b>${esc(s.name)}</b></div></td>
+    <td>${stBadge(s.status)}</td>
+    <td style="color:var(--ink-2)">${s.reason?esc(s.reason):'—'}</td>
+    <td class="r tnum" style="font-weight:700;color:${s.mRate>=90?'var(--green)':s.mRate>=80?'var(--amber)':'var(--red)'}">${s.mRate}%</td></tr>`).join('');
+}
+
+/* ============ CONTACT ============ */
+const DRAFTS={
+  '欠席確認':n=>`${n}の保護者様\n\nいつもお世話になっております。本日${n}さんがご欠席とのこと、承知いたしました。お大事になさってください。ご回復をお待ちしております。`,
+  '遅刻のお知らせ':n=>`${n}の保護者様\n\n本日${n}さんが遅れて登校される旨、承知いたしました。お気をつけてお越しください。`,
+  '体調のお伺い':n=>`${n}の保護者様\n\nいつもお世話になっております。${n}さんのお加減はいかがでしょうか。無理なさらず、ご静養ください。ご登校お待ちしております。`,
+  '連続欠席のご相談':n=>`${n}の保護者様\n\nお世話になっております。${n}さんのご様子について少しご相談させていただけますでしょうか。ご都合のよいお時間に一度お電話いただけますと幸いです。`,
+};
+function renderStudentSelect(){$('ctStudent').innerHTML=students.map(s=>`<option value="${s.id}">${esc(s.name)}（${esc(clsName(s.cls))}）</option>`).join('');}
+function aiDraft(){
+  const s=students.find(x=>x.id===+$('ctStudent').value);if(!s)return;
+  const type=$('ctType').value;
+  $('ctBody').value=DRAFTS[type](s.name);
+  $('ctAiHint').classList.add('show');setTimeout(()=>$('ctAiHint').classList.remove('show'),2000);
+}
+function renderContact(){
+  $('ctFeed').innerHTML=contacts.slice().reverse().map(m=>`
+    <div class="cmsg ${m.dir==='out'?'out':''}">
+      <div class="av" style="background:${m.dir==='out'?'#2f6df0':avColor(m.name)}">${m.dir==='out'?'校':initial(m.name)}</div>
+      <div class="body"><div class="hd"><b>${m.dir==='out'?'学園 → '+esc(m.name):esc(m.name)+' 保護者'}</b>
+        <span class="reason-chip">${esc(m.type)}</span><span class="t">${esc(m.time)}</span></div>
+        <div class="tx">${esc(m.body).replace(/\n/g,'<br>')}</div></div></div>`).join('')
+    || '<div class="empty-cell">連絡履歴はまだありません</div>';
+  $('ctCount').textContent=contacts.length+'件';
+  $('navContact').textContent=contacts.filter(c=>c.dir==='in').length;
+}
+$('ctType').addEventListener('change',aiDraft);
+$('ctStudent').addEventListener('change',()=>{if($('ctBody').value)aiDraft();});
+$('ctDraft').addEventListener('click',aiDraft);
+$('ctSend').addEventListener('click',async()=>{
+  const s=students.find(x=>x.id===+$('ctStudent').value);
+  const body=$('ctBody').value.trim();
+  if(!s){showToast('宛先を選んでください');return;}
+  if(!body){showToast('本文を入力するか、AI下書きを押してください');return;}
+  const btn=$('ctSend');btn.disabled=true;btn.textContent='✉️ 送信中…';
+  await new Promise(r=>setTimeout(r,700));
+  const now=new Date();
+  contacts.push({dir:'out',name:s.name,cls:s.cls,type:$('ctType').value,body,time:'今日 '+now.getHours()+':'+String(now.getMinutes()).padStart(2,'0')});
+  btn.disabled=false;btn.textContent='✉️ 送信する';
+  $('ctBody').value='';
+  renderContact();showToast(s.name+' さんの保護者へ連絡しました');
+});
+
+/* ============ REPORT ============ */
+function renderReport(){
+  const totAbsent=students.reduce((a,s)=>a+s.mAbsent,0);
+  const totLate=students.reduce((a,s)=>a+s.mLate,0);
+  const avgRate=Math.round(students.reduce((a,s)=>a+s.mRate,0)/students.length);
+  const watch=students.filter(s=>s.mAbsent>=3).length;
+  $('repKpis').innerHTML=`
+    ${kpi('#2f6df0','月間 平均出席率',avgRate+'<small>%</small>','','up','前月比 +0.8pt')}
+    ${kpi('#e24a4a','延べ欠席日数',totAbsent+'<small>日</small>',TOTAL+'名合計','warn','今月')}
+    ${kpi('#e3941f','延べ遅刻回数',totLate+'<small>回</small>','','warn','今月')}
+    ${kpi('#7b5be6','見守り対象',watch+'<small>名</small>','欠席3日以上','down','要フォロー')}`;
+  // class month rate
+  $('repClsBars').innerHTML=CLASSES.map(c=>{
+    const ss=students.filter(s=>s.cls===c.id);const r=Math.round(ss.reduce((a,s)=>a+s.mRate,0)/ss.length);
+    const cl=r>=92?'':r>=85?'warn':'red';
+    return `<div class="bar-row"><span class="mlabel">${esc(c.name)}</span>
+      <div class="bar-track"><div class="bar-fill ${cl}" style="width:0" data-w="${r}"></div></div>
+      <span class="mval">${r}%</span></div>`;}).join('');
+  setTimeout(()=>document.querySelectorAll('#repClsBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // reason breakdown (deterministic synthetic)
+  const reasonData=[['発熱・体調不良',38],['通院',16],['家庭の都合',12],['インフル等感染症',9],['その他',7]];
+  const rmx=Math.max(...reasonData.map(r=>r[1]));
+  $('reasonBars').innerHTML=reasonData.map(r=>`<div class="bar-row" style="grid-template-columns:120px 1fr 48px">
+    <span class="mlabel">${r[0]}</span>
+    <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(r[1]/rmx*100)}"></div></div>
+    <span class="mval">${r[1]}件</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#reasonBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // top absent students
+  const top=students.slice().sort((a,b)=>(b.mAbsent*2+b.mLate)-(a.mAbsent*2+a.mLate)).slice(0,8);
+  $('repRows').innerHTML=top.map(s=>{
+    const trend=s.mAbsent>=4?'<span class="st absent">増加傾向</span>':s.mAbsent>=2?'<span class="st late">やや多い</span>':'<span class="st present">安定</span>';
+    return `<tr><td><div class="stu"><span class="avatar" style="background:${avColor(s.name)}">${initial(s.name)}</span><b>${esc(s.name)}</b></div></td>
+      <td><span class="tag-cls">${esc(clsName(s.cls))}</span></td>
+      <td class="c tnum" style="font-weight:800;color:var(--red)">${s.mAbsent}</td>
+      <td class="c tnum" style="font-weight:800;color:var(--amber)">${s.mLate}</td>
+      <td class="r tnum" style="font-weight:700">${s.mRate}%</td><td>${trend}</td></tr>`;
+  }).join('');
+}
+$('exportCsv').addEventListener('click',()=>showToast('集計CSVを出力しました（demo_attendance_202605.csv）'));
+
+/* ============ AI AUTO PROCESS ============ */
+function watchTargets(){return students.filter(s=>s.mAbsent>=3).sort((a,b)=>b.mAbsent-a.mAbsent).slice(0,5);}
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 処理中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  $('genList').classList.remove('show');$('previewBox').classList.remove('show');
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,6);},120);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);$('baAfterT').textContent='6秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  const targets=watchTargets();
+  $('genItems').innerHTML=targets.map((s,i)=>`<div class="gen-item" data-i="${i}">
+    <span class="ck">✓</span><span class="avatar" style="background:${avColor(s.name)}">${initial(s.name)}</span>
+    <b style="flex:1">${esc(s.name)}</b><span style="color:var(--ink-3);font-size:12px">${esc(clsName(s.cls))}</span>
+    <span class="st absent">今月欠席${s.mAbsent}日</span></div>`).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,180));items[i].classList.add('in');}
+  // generated contact drafts
+  await new Promise(r=>setTimeout(r,250));
+  $('previewItems').innerHTML=targets.map(s=>`<div class="pv-line">
+    <div class="pv-name">${esc(s.name)} さん 保護者宛（${esc(clsName(s.cls))}）</div>
+    <div class="pv-text">${esc(DRAFTS['連続欠席のご相談'](s.name).replace(/\n+/g,' '))}</div></div>`).join('');
+  $('previewBox').classList.add('show');
+  btn.disabled=false;btn.textContent='⚡ もう一度処理する';
+  showToast('集計・'+targets.length+'件のアラート抽出・連絡下書きを自動生成しました');
+});
+
+/* ============ ALERTS ============ */
+function buildAlerts(){
+  const list=[];
+  students.filter(s=>s.mAbsent>=4).slice(0,3).forEach(s=>list.push({lv:'high',ic:'🚨',label:'高',
+    t:`${s.name} さん（${clsName(s.cls)}）— 欠席が増加`,
+    m:`今月の欠席が ${s.mAbsent}日 に達しています。連続・断続的な欠席の傾向があり、早めの保護者連絡と見守りを推奨します。`,
+    tags:['欠席'+s.mAbsent+'日','見守り推奨','連絡未実施']}));
+  students.filter(s=>s.mAbsent===3).slice(0,2).forEach(s=>list.push({lv:'mid',ic:'⚠️',label:'中',
+    t:`${s.name} さん（${clsName(s.cls)}）— 要観察`,
+    m:`今月の欠席が ${s.mAbsent}日。先月より増加傾向です。体調や様子の確認をおすすめします。`,
+    tags:['欠席'+s.mAbsent+'日','体調確認']}));
+  students.filter(s=>s.mLate>=3).slice(0,2).forEach(s=>list.push({lv:'mid',ic:'🕗',label:'中',
+    t:`${s.name} さん（${clsName(s.cls)}）— 遅刻が多め`,
+    m:`今月の遅刻が ${s.mLate}回。生活リズムの確認や保護者との情報共有を推奨します。`,
+    tags:['遅刻'+s.mLate+'回','生活リズム']}));
+  // class-level alert
+  CLASSES.forEach(c=>{const r=classRate(c.id);if(r<88)list.push({lv:'low',ic:'🏫',label:'低',
+    t:`${c.name} — 本日の出席率がやや低め`,
+    m:`本日の出席率が ${r}% です。欠席連絡の内容を確認し、必要に応じてフォローしてください。`,
+    tags:['出席率'+r+'%','担任：'+c.teacher]});});
+  return list;
+}
+function renderAlerts(){
+  const list=buildAlerts();
+  $('navAlert').textContent=list.filter(a=>a.lv==='high').length;
+  $('alertList').innerHTML=list.length?list.map(a=>`<div class="alert ${a.lv}">
+    <div class="ic">${a.ic}</div>
+    <div class="body"><div class="t">${esc(a.t)}</div><div class="m">${esc(a.m)}</div>
+      <div class="tags">${a.tags.map(t=>`<span class="reason-chip">${esc(t)}</span>`).join('')}</div></div>
+    <span class="lv">${a.label}</span></div>`).join('')
+    :'<div class="empty-cell">現在、見守りが必要なアラートはありません 🎉</div>';
+}
+$('reanalyze').addEventListener('click',async()=>{
+  const btn=$('reanalyze');btn.disabled=true;btn.textContent='⚡ 分析中…';
+  $('alertList').innerHTML='<div class="empty-cell">AIが出欠データを分析しています…</div>';
+  await new Promise(r=>setTimeout(r,900));
+  btn.disabled=false;btn.textContent='⚡ 再分析する';
+  renderAlerts();showToast('出欠データを再分析しました');
+});
+
+/* ============ INIT ============ */
+renderClsFilter();renderChips();renderStudentSelect();renderDash();
+$('navContact').textContent=contacts.filter(c=>c.dir==='in').length;
+$('navAlert').textContent=buildAlerts().filter(a=>a.lv==='high').length;
+</script>
+</body>
+</html>

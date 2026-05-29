@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜期限管理マシン（期限・案件管理システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cf0;--purple-soft:#efe9fe;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-fill.warn{background:linear-gradient(90deg,var(--amber),#f3b54f)}
+.bar-fill.red{background:linear-gradient(90deg,var(--red),#f07878)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut */
+.donut-wrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.donut{--p:0;width:128px;height:128px;border-radius:50%;flex-shrink:0;
+  background:conic-gradient(var(--green) calc(var(--p)*1%),var(--soft) 0);
+  display:grid;place-items:center;transition:background 1s ease}
+.donut .hole{width:92px;height:92px;border-radius:50%;background:var(--card);display:grid;place-items:center;text-align:center}
+.donut .hole b{font-size:26px;font-weight:900;line-height:1}
+.donut .hole span{font-size:10.5px;color:var(--ink-3);font-weight:700}
+.legend{display:flex;flex-direction:column;gap:9px;font-size:12.5px}
+.legend .lg{display:flex;align-items:center;gap:9px}
+.legend .lg .sw{width:11px;height:11px;border-radius:3px}
+.legend .lg b{margin-left:auto;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px;white-space:nowrap}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.done{background:var(--green-soft);color:var(--green)}
+.st.prog{background:var(--brand-soft);color:var(--brand)}
+.st.todo{background:var(--soft);color:var(--ink-3)}
+.st.over{background:var(--red-soft);color:var(--red)}
+.st.soon{background:var(--amber-soft);color:var(--amber)}
+
+/* days-left pill */
+.dleft{font-weight:800;font-size:12px;font-variant-numeric:tabular-nums}
+.dleft.over{color:var(--red)}
+.dleft.soon{color:var(--amber)}
+.dleft.ok{color:var(--ink-2)}
+
+/* create form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,400px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:88px;line-height:1.7}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.fg .hint{font-size:11px;color:var(--ink-3);margin-top:5px}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* paper / detail preview */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:26px 28px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.pv-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px}
+.pv-title{font-size:18px;font-weight:900;letter-spacing:.08em;color:var(--brand-dk);border-bottom:3px solid var(--brand-dk);padding-bottom:5px}
+.pv-meta{text-align:right;font-size:11.5px;color:var(--ink-2)}
+.pv-meta .no{font-family:'Orbitron';color:var(--ink);font-weight:700}
+.pv-cust{font-size:17px;font-weight:900;border-bottom:1.5px solid #1a2233;display:inline-block;min-width:200px;padding-bottom:5px;margin-bottom:8px}
+.tl{margin-top:10px;border-left:2px solid var(--line);padding-left:0}
+.tl-item{position:relative;padding:0 0 16px 22px}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{content:"";position:absolute;left:-7px;top:3px;width:12px;height:12px;border-radius:50%;background:var(--card);border:2px solid var(--line-2)}
+.tl-item.is-over::before{border-color:var(--red);background:var(--red)}
+.tl-item.is-soon::before{border-color:var(--amber);background:var(--amber)}
+.tl-item.is-done::before{border-color:var(--green);background:var(--green)}
+.tl-item .td{font-size:11px;color:var(--ink-3);font-weight:700}
+.tl-item .tt{font-weight:700;font-size:13px}
+.tl-item .tx{font-size:11.5px;color:var(--ink-2)}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ai-input{width:100%;padding:13px 14px;border:1px solid var(--line-2);border-radius:10px;font-family:inherit;font-size:13px;background:var(--soft);resize:vertical;min-height:120px;line-height:1.8}
+.ai-input:focus{outline:none;border-color:var(--brand);background:var(--card)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+.gen-item .gd{margin-left:auto;font-size:11px;color:var(--ink-3);font-weight:700;white-space:nowrap}
+
+/* reminder before/after card */
+.rem-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}
+@media(max-width:760px){.rem-grid{grid-template-columns:1fr}}
+.rem-card{border-radius:12px;padding:16px;font-size:12.5px}
+.rem-card.bf{background:#f3f4f7;border:1px solid var(--line)}
+.rem-card.af{background:var(--green-soft);border:1px solid #bdebd4}
+.rem-card h4{font-size:12px;font-weight:800;margin-bottom:10px;display:inline-flex;gap:6px;align-items:center;padding:4px 10px;border-radius:6px}
+.rem-card.bf h4{background:#e7e9ef;color:#6b7280}
+.rem-card.af h4{background:#cdeedd;color:var(--green)}
+.rem-msg{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:11px 13px;font-size:12px;line-height:1.7;white-space:pre-wrap;color:var(--ink-2)}
+.rem-card.bf .rem-msg{color:var(--ink-3)}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto;flex-shrink:0}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* calendar */
+.cal{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.cal-head{display:flex;align-items:center;gap:12px;padding:15px 18px;border-bottom:1px solid var(--line)}
+.cal-head h3{font-size:15px;font-weight:900}
+.cal-head .nav-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);cursor:pointer;font-weight:800;color:var(--ink-2)}
+.cal-head .nav-btn:hover{border-color:var(--brand);color:var(--brand)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr)}
+.cal-dow{padding:9px 0;text-align:center;font-size:11px;font-weight:800;color:var(--ink-3);border-bottom:1px solid var(--line);background:var(--soft)}
+.cal-dow.sun{color:var(--red)}.cal-dow.sat{color:var(--brand)}
+.cal-cell{min-height:96px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:6px 7px;font-size:12px;position:relative}
+.cal-cell:nth-child(7n){border-right:0}
+.cal-cell.other{background:#fafbfd;color:var(--ink-3)}
+.cal-cell .dn{font-weight:800;font-size:12px;color:var(--ink-2)}
+.cal-cell.today .dn{background:var(--brand);color:#fff;width:22px;height:22px;border-radius:50%;display:grid;place-items:center}
+.cal-ev{margin-top:3px;font-size:10.5px;font-weight:700;padding:2px 6px;border-radius:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.cal-ev.over{background:var(--red-soft);color:var(--red)}
+.cal-ev.soon{background:var(--amber-soft);color:var(--amber)}
+.cal-ev.ok{background:var(--brand-soft);color:var(--brand)}
+.cal-ev.done{background:var(--green-soft);color:var(--green)}
+
+/* alert rows */
+.alert-row{display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:var(--card);box-shadow:var(--shadow)}
+.alert-row .ab{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;font-size:19px;flex-shrink:0}
+.alert-row .ab.over{background:var(--red-soft)}
+.alert-row .ab.soon{background:var(--amber-soft)}
+.alert-row .info{flex:1;min-width:0}
+.alert-row .info b{font-size:13.5px}
+.alert-row .info .meta{font-size:11.5px;color:var(--ink-3)}
+.alert-row .acts2{display:flex;gap:7px;flex-shrink:0}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.secti{font-size:13px;font-weight:800;color:var(--ink-2);margin:6px 0 12px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">期限管理マシン<small>技マシン｜期限・案件管理</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">⏰</span>期限一覧</a>
+      <a data-v="case"><span class="i">📁</span>案件別</a>
+      <a data-v="alert"><span class="i">🔔</span>アラート<span class="badge" id="navAlert">0</span></a>
+      <a data-v="cal"><span class="i">🗓️</span>カレンダー</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI期限管理</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>きもち総合事務所</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。案件・期限はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">今月の期限・案件の状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>今後14日間の期限件数</h3><span class="more" onclick="go('cal')">カレンダーで見る</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>進捗の内訳</h3></div>
+            <div class="pb">
+              <div class="donut-wrap">
+                <div class="donut" id="donut"><div class="hole"><b id="donutPct">0%</b><span>完了率</span></div></div>
+                <div class="legend" id="donutLegend"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>直近の対応が必要な期限</h3><span class="more" onclick="go('list')">期限一覧へ</span></div>
+            <div class="pb" style="padding:0">
+              <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+                <thead><tr><th>期限</th><th>案件</th><th>タスク</th><th class="r">残り</th><th>状態</th></tr></thead>
+                <tbody id="dashUpcoming"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="案件名・依頼者・タスクで検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>期限日</th><th class="r">残り日数</th><th>タスク</th><th>案件 / 依頼者</th><th>区分</th><th>担当</th><th>状態</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- CASE -->
+      <section class="view" id="v-case">
+        <div class="create-grid">
+          <div>
+            <div class="toolbar" style="margin-bottom:12px">
+              <div class="search"><span class="ic">🔍</span><input id="caseQ" placeholder="案件・依頼者で検索"></div>
+            </div>
+            <table class="tbl">
+              <thead><tr><th>案件 / 依頼者</th><th>区分</th><th class="r">期限</th><th>状態</th></tr></thead>
+              <tbody id="caseRows"></tbody>
+            </table>
+            <div class="formcard" style="margin-top:16px">
+              <div class="secti">＋ 新しい案件・タスクを登録</div>
+              <div class="fg"><label>案件名 / 依頼者</label><input id="nCase" placeholder="例：株式会社○○ 法人決算"></div>
+              <div class="fg"><label>タスク</label><input id="nTask" placeholder="例：確定申告書の提出"></div>
+              <div class="fg"><label>期限日</label><input id="nDue" type="date"></div>
+              <div class="fg"><label>担当</label>
+                <select id="nStaff"></select></div>
+              <button class="btn primary" id="nAdd" style="width:100%;justify-content:center">＋ タスクを登録</button>
+            </div>
+          </div>
+          <div>
+            <div class="paper" id="casePaper">
+              <div class="pv-top">
+                <div class="pv-title">案 件 カ ル テ</div>
+                <div class="pv-meta"><div>案件番号：<span class="no" id="cpNo">—</span></div><div>区分：<span id="cpType">—</span></div></div>
+              </div>
+              <div><span class="pv-cust" id="cpName">案件を選択してください</span></div>
+              <div style="font-size:11.5px;color:var(--ink-2)" id="cpStaff">担当：—</div>
+              <div class="secti" style="margin-top:18px;margin-bottom:6px">📋 期限タイムライン</div>
+              <div class="tl" id="cpTimeline"><div style="color:var(--ink-3);font-size:12px;padding:8px 0 0 8px">左の一覧から案件を選ぶと、期限が時系列で表示されます。</div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ALERT -->
+      <section class="view" id="v-alert">
+        <div class="kpis" id="alertKpis"></div>
+        <div class="secti">🔴 期限超過（至急対応）</div>
+        <div id="alertOver"></div>
+        <div class="secti" style="margin-top:22px">🟡 期限が近い（3日以内）</div>
+        <div id="alertSoon"></div>
+      </section>
+
+      <!-- CALENDAR -->
+      <section class="view" id="v-cal">
+        <div class="cal">
+          <div class="cal-head">
+            <button class="nav-btn" id="calPrev">‹</button>
+            <h3 id="calTitle">—</h3>
+            <button class="nav-btn" id="calNext">›</button>
+            <button class="btn" id="calToday" style="margin-left:auto;padding:7px 13px">今日</button>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+        </div>
+        <div style="display:flex;gap:14px;margin-top:14px;flex-wrap:wrap;font-size:12px;color:var(--ink-2)">
+          <span><span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:var(--red-soft);border:1px solid var(--red);vertical-align:-1px"></span> 期限超過</span>
+          <span><span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:var(--amber-soft);border:1px solid var(--amber);vertical-align:-1px"></span> 期限間近</span>
+          <span><span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:var(--brand-soft);border:1px solid var(--brand);vertical-align:-1px"></span> 予定</span>
+          <span><span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:var(--green-soft);border:1px solid var(--green);vertical-align:-1px"></span> 完了</span>
+        </div>
+      </section>
+
+      <!-- AI -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">案件メモから期限を自動で抽出・登録</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">受任メモや契約書の文章を貼り付けると、AIが「いつ・何を・いつまでに」を読み取り、期限とリマインドを自動で組み立てます。</div></div>
+          </div>
+
+          <div class="secti">📝 案件メモ（このまま実行できます）</div>
+          <textarea class="ai-input" id="aiText">【受任メモ】株式会社みらい商事 様（法人）／決算月3月。
+・法人税・地方税の確定申告は決算日から2か月以内（5/31期限）。
+・消費税の確定申告も同じく5/31まで。
+・年末調整の書類回収は12月上旬まで。
+・社会保険の算定基礎届は7/10まで提出。
+担当は山田。顧問先ランクA。</textarea>
+
+          <div style="display:flex;gap:9px;margin-top:12px;flex-wrap:wrap">
+            <button class="btn primary" id="aiRun">⚡ AIで期限を抽出・登録する</button>
+            <button class="btn" id="aiSample2">別のメモ例を入れる</button>
+          </div>
+
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">45分 / 件</div>
+              <ul>
+                <li>📖 契約書・メモを読み込み期限を拾い出す</li>
+                <li>📅 1件ずつ手帳・Excel・カレンダーに転記</li>
+                <li>🔔 リマインド日を逆算して個別に設定</li>
+                <li>😱 転記ミス・拾い漏れで期限切れの不安</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 メモから期限を自動で読み取り</li>
+                <li>📅 期限・リマインドを一括で自動登録</li>
+                <li>✉️ 期限前の通知文面まで自動作成</li>
+                <li>✅ 拾い漏れゼロで安心</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ 抽出・登録された期限</div>
+            <div id="genItems"></div>
+          </div>
+
+          <div class="gen-list" id="remBlock">
+            <div style="font-size:13px;font-weight:800;margin-bottom:4px">✉️ AIが作成したリマインド文面（Before / After）</div>
+            <div style="font-size:11.5px;color:var(--ink-3);margin-bottom:6px">期限が近づくと、依頼者へ自動でこの文面を送ります。</div>
+            <div class="rem-grid">
+              <div class="rem-card bf">
+                <h4>😓 これまで（手書き・思い出した時だけ）</h4>
+                <div class="rem-msg">（記録なし）
+担当者が気づいた時だけ電話。
+言った言わないのトラブルや、
+連絡忘れによる期限切れのリスク。</div>
+              </div>
+              <div class="rem-card af">
+                <h4>⚡ 技マシンの自動リマインド</h4>
+                <div class="rem-msg" id="remMsg">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const STAFF=['山田','佐藤','田中','鈴木'];
+const CASES=[
+  {no:'CS-1001',name:'株式会社みらい商事 法人決算',client:'株式会社みらい商事',type:'法人税務',staff:'山田'},
+  {no:'CS-1002',name:'大分中央クリニック 個人確定申告',client:'院長 中村様',type:'所得税',staff:'佐藤'},
+  {no:'CS-1003',name:'つくし介護センター 設立登記',client:'つくし介護センター',type:'登記',staff:'田中'},
+  {no:'CS-1004',name:'豊後おおいた青果 相続手続',client:'川宿田様',type:'相続',staff:'鈴木'},
+  {no:'CS-1005',name:'別府温泉ホテル組合 就業規則',client:'別府温泉ホテル組合',type:'労務',staff:'山田'},
+  {no:'CS-1006',name:'大分海鮮市場 許認可更新',client:'大分海鮮市場',type:'許認可',staff:'田中'},
+  {no:'CS-1007',name:'みらい歯科医院 社保算定',client:'みらい歯科医院',type:'社会保険',staff:'佐藤'},
+  {no:'CS-1008',name:'都町商店会 補助金申請',client:'都町商店会',type:'補助金',staff:'鈴木'},
+];
+const TASK_TPL=[
+  '確定申告書の提出','消費税申告書の提出','法定調書合計表の提出','償却資産申告',
+  '登記申請書の提出','遺産分割協議書の作成','相続税申告','就業規則の届出',
+  '社会保険算定基礎届','許認可の更新申請','補助金 交付申請','年末調整 書類回収',
+  '議事録の作成','契約書のリーガルチェック','給与支払報告書の提出',
+];
+
+const TODAY=new Date();
+const dayMS=86400000;
+function addDays(d,n){return new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);}
+function daysLeft(d){return Math.round((new Date(d.getFullYear(),d.getMonth(),d.getDate())-new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()))/dayMS);}
+
+let SEED=4242;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+let tasks=[];
+let TID=0;
+(function seed(){
+  // offsets relative to today to guarantee a mix of overdue / soon / future / done
+  const offsets=[-9,-5,-2,-1,0,1,2,3,5,7,9,12,14,18,21,25,30,38,-12,4,6,11,16,20];
+  for(let i=0;i<24;i++){
+    const c=pick(CASES);
+    const due=addDays(TODAY,offsets[i]);
+    const dl=daysLeft(due);
+    let status;
+    if(rnd()<0.32 && dl<5) status='done';
+    else if(dl<0) status='over';
+    else if(dl<=3) status='soon';
+    else status=(rnd()<0.45?'prog':'todo');
+    tasks.push({id:++TID,no:c.no,task:pick(TASK_TPL),caseName:c.name,client:c.client,type:c.type,staff:c.staff,due,status});
+  }
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const fmtD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+const fmtSlash=d=>d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate();
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STLABEL={done:'完了',prog:'対応中',todo:'未着手',over:'期限超過',soon:'期限間近'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]}</span>`;}
+// live status: recompute over/soon for non-done tasks based on date
+function liveStatus(t){
+  if(t.status==='done') return 'done';
+  const dl=daysLeft(t.due);
+  if(dl<0) return 'over';
+  if(dl<=3) return 'soon';
+  return t.status==='prog'?'prog':'todo';
+}
+function dleftLabel(t){
+  if(t.status==='done') return '<span class="dleft ok">—</span>';
+  const dl=daysLeft(t.due);
+  if(dl<0) return `<span class="dleft over">${-dl}日超過</span>`;
+  if(dl===0) return `<span class="dleft over">本日</span>`;
+  if(dl<=3) return `<span class="dleft soon">あと${dl}日</span>`;
+  return `<span class="dleft ok">あと${dl}日</span>`;
+}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function isThisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','今月の期限・案件の状況'],list:['期限一覧','すべての期限を管理します'],
+  case:['案件別','案件ごとの期限をまとめて確認します'],alert:['アラート','対応が必要な期限を集約します'],
+  cal:['カレンダー','期限を月単位で見渡します'],ai:['AI期限管理','メモから期限を自動で抽出・登録します']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = (v==='list'||v==='dash')?'<button class="btn" onclick="go(\'ai\')">⚡ AIで期限抽出</button><button class="btn primary" onclick="go(\'case\')">＋ 案件登録</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='case')renderCaseList();
+  if(v==='alert')renderAlert();
+  if(v==='cal')renderCal();
+  refreshBadges();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+function refreshBadges(){
+  const need=tasks.filter(t=>{const s=liveStatus(t);return s==='over'||s==='soon';}).length;
+  $('navAlert').textContent=need;
+}
+
+/* ============ DASHBOARD ============ */
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+function renderDash(){
+  const tm=tasks.filter(t=>isThisMonth(t.due));
+  const over=tasks.filter(t=>liveStatus(t)==='over');
+  const soon=tasks.filter(t=>liveStatus(t)==='soon');
+  const need=over.length+soon.length;
+  const done=tasks.filter(t=>t.status==='done').length;
+  const rate=Math.round(done/tasks.length*100);
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','今月の期限',tm.length+'<small>件</small>',done+'件完了','up','前月比 +3件')}
+    ${kpi('#e3941f','要対応',need+'<small>件</small>',soon.length+'件が間近','warn','早めの着手を')}
+    ${kpi('#e24a4a','期限超過',over.length+'<small>件</small>',' ',over.length?'down':'up',over.length?'至急対応':'遅延なし')}
+    ${kpi('#16b877','完了率',rate+'<small>%</small>',done+'/'+tasks.length+'件','up','+5pt')}`;
+
+  // upcoming 14 days bar (count per day grouped by 2-day buckets, simpler: next 7 days)
+  const buckets=[];for(let k=0;k<7;k++){const d=addDays(TODAY,k);buckets.push({d,n:0,over:0});}
+  tasks.forEach(t=>{const dl=daysLeft(t.due);if(t.status!=='done'&&dl>=0&&dl<7)buckets[dl].n++;});
+  const mx=Math.max(...buckets.map(b=>b.n),1);
+  $('trendBars').innerHTML=buckets.map((b,i)=>{
+    const cls=i===0?'red':(i<=3?'warn':'');
+    const lbl=i===0?'本日':fmtD(b.d);
+    return `<div class="bar-row"><span class="mlabel">${lbl}</span>
+      <div class="bar-track"><div class="bar-fill ${cls}" style="width:0" data-w="${Math.round(b.n/mx*100)}"></div></div>
+      <span class="mval">${b.n}件</span></div>`;}).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+
+  // donut
+  const c={done:0,prog:0,todo:0,soon:0,over:0};
+  tasks.forEach(t=>{c[liveStatus(t)]++;});
+  const pct=rate;
+  $('donutPct').textContent=pct+'%';
+  setTimeout(()=>$('donut').style.setProperty('--p',pct),80);
+  const lg=[['完了',c.done,'var(--green)'],['対応中',c.prog,'var(--brand)'],['未着手',c.todo,'var(--ink-3)'],['期限間近',c.soon,'var(--amber)'],['期限超過',c.over,'var(--red)']];
+  $('donutLegend').innerHTML=lg.map(x=>`<div class="lg"><span class="sw" style="background:${x[2]}"></span>${x[0]}<b>${x[1]}件</b></div>`).join('');
+
+  // upcoming table
+  const up=tasks.filter(t=>t.status!=='done').sort((a,b)=>a.due-b.due).slice(0,6);
+  $('dashUpcoming').innerHTML=up.map(t=>{const s=liveStatus(t);return `<tr onclick="openCase('${esc(t.no)}')">
+    <td style="color:var(--ink-2)" class="tnum">${fmtSlash(t.due)}</td><td><b>${esc(shortCase(t.caseName))}</b></td>
+    <td style="color:var(--ink-2)">${esc(t.task)}</td><td class="r">${dleftLabel(t)}</td><td>${stBadge(s)}</td></tr>`;}).join('')
+    || '<tr><td colspan="5" class="empty-cell">未対応の期限はありません 🎉</td></tr>';
+
+  // activity
+  const acts=[
+    {i:'🤖',c:'#e6f8f0',t:'AIが「みらい商事」のメモから4件の期限を抽出',m:'たった今'},
+    {i:'✉️',c:'#eaf1ff',t:'みらい歯科医院 へ算定基礎届のリマインドを自動送信',m:'1時間前'},
+    {i:'✅',c:'#e6f8f0',t:'佐藤 が「個人確定申告」を完了にしました',m:'今日 10:22'},
+    {i:'⚠️',c:'#fdeaea',t:'豊後おおいた青果 相続手続の期限が超過しています',m:'今日 8:30'},
+    {i:'📁',c:'#efe9fe',t:'新規案件「都町商店会 補助金申請」を登録',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+}
+function shortCase(n){return n.length>16?n.slice(0,15)+'…':n;}
+
+/* ============ LIST ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['over','期限超過'],['soon','期限間近'],['prog','対応中'],['todo','未着手'],['done','完了']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=tasks.map(t=>({t,s:liveStatus(t)}))
+    .filter(o=>filterStatus==='all'||o.s===filterStatus)
+    .filter(o=>!q||(o.t.caseName+o.t.client+o.t.task+o.t.no).toLowerCase().includes(q))
+    .sort((a,b)=>a.t.due-b.t.due);
+  $('listRows').innerHTML=rows.length?rows.map(o=>{const t=o.t;return `<tr onclick="openCase('${esc(t.no)}')">
+    <td class="tnum" style="color:var(--ink-2)">${fmtSlash(t.due)}</td>
+    <td class="r">${dleftLabel(t)}</td>
+    <td><b>${esc(t.task)}</b></td>
+    <td style="color:var(--ink-2)">${esc(t.caseName)}<div style="font-size:11px;color:var(--ink-3)">${esc(t.client)}</div></td>
+    <td><span class="st todo" style="background:var(--soft);color:var(--ink-2)">${esc(t.type)}</span></td>
+    <td style="color:var(--ink-2)">${esc(t.staff)}</td>
+    <td onclick="event.stopPropagation();cycleStatus(${t.id})" title="クリックで状態を進める">${stBadge(o.s)}</td></tr>`;}).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する期限がありません</td></tr>';
+}
+$('q').addEventListener('input',renderList);
+window.cycleStatus=id=>{
+  const t=tasks.find(x=>x.id===id);if(!t)return;
+  if(t.status==='done'){t.status='todo';}
+  else if(t.status==='todo'){t.status='prog';}
+  else {t.status='done';showToast('「'+t.task+'」を完了にしました');}
+  renderList();refreshBadges();
+};
+
+/* ============ CASE ============ */
+let caseFilterQ='';
+function renderCaseList(){
+  const q=caseFilterQ.toLowerCase();
+  const rows=CASES.filter(c=>!q||(c.name+c.client+c.type).toLowerCase().includes(q));
+  $('caseRows').innerHTML=rows.map(c=>{
+    const ts=tasks.filter(t=>t.no===c.no);
+    const open=ts.filter(t=>t.status!=='done');
+    const hasOver=ts.some(t=>liveStatus(t)==='over');
+    const hasSoon=ts.some(t=>liveStatus(t)==='soon');
+    const s=hasOver?'over':hasSoon?'soon':(open.length?'prog':'done');
+    return `<tr onclick="openCase('${esc(c.no)}')"><td><b>${esc(c.name)}</b><div style="font-size:11px;color:var(--ink-3)">${esc(c.client)}</div></td>
+      <td><span class="st todo" style="background:var(--soft);color:var(--ink-2)">${esc(c.type)}</span></td>
+      <td class="r tnum" style="color:var(--ink-2)">${open.length}件</td>
+      <td>${stBadge(s)}</td></tr>`;
+  }).join('') || '<tr><td colspan="4" class="empty-cell">該当する案件がありません</td></tr>';
+}
+$('caseQ').addEventListener('input',e=>{caseFilterQ=e.target.value;renderCaseList();});
+window.openCase=no=>{
+  go('case');
+  const c=CASES.find(x=>x.no===no);if(!c)return;
+  $('cpNo').textContent=c.no;$('cpType').textContent=c.type;$('cpName').textContent=c.name;$('cpStaff').textContent='依頼者：'+c.client+'　／　担当：'+c.staff;
+  const ts=tasks.filter(t=>t.no===no).sort((a,b)=>a.due-b.due);
+  $('cpTimeline').innerHTML=ts.length?ts.map(t=>{
+    const s=liveStatus(t);
+    const cls=s==='over'?'is-over':s==='soon'?'is-soon':s==='done'?'is-done':'';
+    return `<div class="tl-item ${cls}"><div class="td">${fmtDL(t.due)}　${STLABEL[s]}</div>
+      <div class="tt">${esc(t.task)}</div><div class="tx">${dleftLabelText(t)}・担当 ${esc(t.staff)}</div></div>`;
+  }).join(''):'<div style="color:var(--ink-3);font-size:12px;padding:8px 0 0 8px">この案件に期限はありません。</div>';
+};
+function dleftLabelText(t){
+  if(t.status==='done')return '完了済み';
+  const dl=daysLeft(t.due);
+  if(dl<0)return (-dl)+'日 超過';if(dl===0)return '本日が期限';if(dl<=3)return 'あと'+dl+'日';return 'あと'+dl+'日';
+}
+// register new task
+function renderStaffSelect(){$('nStaff').innerHTML=STAFF.map(s=>`<option>${s}</option>`).join('');}
+$('nAdd').addEventListener('click',()=>{
+  const name=$('nCase').value.trim();const task=$('nTask').value.trim();const dv=$('nDue').value;
+  if(!name||!task||!dv){showToast('案件名・タスク・期限日を入力してください');return;}
+  // find or create case
+  let c=CASES.find(x=>x.name===name);
+  if(!c){c={no:'CS-'+(1000+CASES.length+1),name,client:name,type:'その他',staff:$('nStaff').value};CASES.push(c);}
+  const due=new Date(dv+'T00:00:00');
+  tasks.push({id:++TID,no:c.no,task,caseName:c.name,client:c.client,type:c.type,staff:$('nStaff').value,due,status:'todo'});
+  $('nCase').value='';$('nTask').value='';$('nDue').value='';
+  renderCaseList();refreshBadges();
+  showToast('「'+task+'」を登録しました（リマインドも自動設定）');
+  openCase(c.no);
+});
+
+/* ============ ALERT ============ */
+function renderAlert(){
+  const over=tasks.filter(t=>liveStatus(t)==='over').sort((a,b)=>a.due-b.due);
+  const soon=tasks.filter(t=>liveStatus(t)==='soon').sort((a,b)=>a.due-b.due);
+  const done7=tasks.filter(t=>t.status==='done').length;
+  $('alertKpis').innerHTML=`
+    ${kpi('#e24a4a','期限超過',over.length+'<small>件</small>',' ','down',over.length?'至急対応が必要':'なし')}
+    ${kpi('#e3941f','3日以内',soon.length+'<small>件</small>',' ','warn','早めの着手を')}
+    ${kpi('#2f6df0','リマインド送信',soon.length+'<small>件</small>','自動送信予約','up','本日分')}
+    ${kpi('#16b877','今月完了',done7+'<small>件</small>','','up','順調')}`;
+  $('alertOver').innerHTML=over.length?over.map(t=>alertRow(t,'over')).join(''):'<div class="empty-cell" style="background:var(--card);border:1px solid var(--line);border-radius:12px">期限超過はありません 🎉</div>';
+  $('alertSoon').innerHTML=soon.length?soon.map(t=>alertRow(t,'soon')).join(''):'<div class="empty-cell" style="background:var(--card);border:1px solid var(--line);border-radius:12px">期限間近の案件はありません</div>';
+}
+function alertRow(t,kind){
+  return `<div class="alert-row">
+    <div class="ab ${kind}">${kind==='over'?'🔴':'🟡'}</div>
+    <div class="info"><b>${esc(t.task)}</b>　${dleftLabel(t)}
+      <div class="meta">${esc(t.caseName)} ／ ${esc(t.client)} ・ 期限 ${fmtDL(t.due)} ・ 担当 ${esc(t.staff)}</div></div>
+    <div class="acts2">
+      <button class="btn" style="padding:7px 12px" onclick="remindOne(${t.id})">✉️ リマインド</button>
+      <button class="btn green" style="padding:7px 12px" onclick="doneOne(${t.id})">完了</button>
+    </div></div>`;
+}
+window.remindOne=id=>{const t=tasks.find(x=>x.id===id);if(t)showToast(esc(t.client)+' へ「'+esc(t.task)+'」のリマインドを送信しました');};
+window.doneOne=id=>{const t=tasks.find(x=>x.id===id);if(t){t.status='done';renderAlert();refreshBadges();showToast('「'+esc(t.task)+'」を完了にしました');}};
+
+/* ============ CALENDAR ============ */
+let calY=TODAY.getFullYear(),calM=TODAY.getMonth();
+function renderCal(){
+  $('calTitle').textContent=calY+'年'+(calM+1)+'月';
+  const first=new Date(calY,calM,1);
+  const startDow=first.getDay();
+  const daysInMonth=new Date(calY,calM+1,0).getDate();
+  const prevDays=new Date(calY,calM,0).getDate();
+  const dows=['日','月','火','水','木','金','土'];
+  let html=dows.map((d,i)=>`<div class="cal-dow ${i===0?'sun':i===6?'sat':''}">${d}</div>`).join('');
+  const cells=[];
+  for(let i=0;i<startDow;i++)cells.push({d:prevDays-startDow+1+i,other:true});
+  for(let d=1;d<=daysInMonth;d++)cells.push({d,other:false});
+  while(cells.length%7!==0)cells.push({d:cells.length-startDow-daysInMonth+1,other:true});
+  cells.forEach((c,idx)=>{
+    const isToday=!c.other&&c.d===TODAY.getDate()&&calM===TODAY.getMonth()&&calY===TODAY.getFullYear();
+    let evs='';
+    if(!c.other){
+      const dayTasks=tasks.filter(t=>t.due.getFullYear()===calY&&t.due.getMonth()===calM&&t.due.getDate()===c.d);
+      evs=dayTasks.slice(0,3).map(t=>{const s=liveStatus(t);const cls=s==='over'?'over':s==='soon'?'soon':s==='done'?'done':'ok';
+        return `<div class="cal-ev ${cls}" onclick="event.stopPropagation();openCase('${esc(t.no)}')" title="${esc(t.task)}（${esc(t.caseName)}）">${esc(t.task)}</div>`;}).join('');
+      if(dayTasks.length>3)evs+=`<div style="font-size:10px;color:var(--ink-3);font-weight:700;margin-top:2px">他${dayTasks.length-3}件</div>`;
+    }
+    html+=`<div class="cal-cell ${c.other?'other':''} ${isToday?'today':''}"><div class="dn">${c.d}</div>${evs}</div>`;
+  });
+  $('calGrid').innerHTML=html;
+}
+$('calPrev').onclick=()=>{calM--;if(calM<0){calM=11;calY--;}renderCal();};
+$('calNext').onclick=()=>{calM++;if(calM>11){calM=0;calY++;}renderCal();};
+$('calToday').onclick=()=>{calY=TODAY.getFullYear();calM=TODAY.getMonth();renderCal();};
+
+/* ============ AI ============ */
+const SAMPLE_TEXTS=[
+`【受任メモ】株式会社みらい商事 様（法人）／決算月3月。
+・法人税・地方税の確定申告は決算日から2か月以内（5/31期限）。
+・消費税の確定申告も同じく5/31まで。
+・年末調整の書類回収は12月上旬まで。
+・社会保険の算定基礎届は7/10まで提出。
+担当は山田。顧問先ランクA。`,
+`【相談メモ】川宿田様 相続の件。
+・被相続人の死亡が3/15。相続税の申告・納付は10か月以内（翌1/15が期限）。
+・遺産分割協議書の作成を6月末までに。
+・準確定申告は死亡から4か月以内（7/15まで）。
+・名義変更（不動産）は協議書完成後すぐ着手。
+担当は鈴木。`,
+];
+let sampleIdx=0;
+$('aiSample2').addEventListener('click',()=>{
+  sampleIdx=(sampleIdx+1)%SAMPLE_TEXTS.length;
+  $('aiText').value=SAMPLE_TEXTS[sampleIdx];
+  $('genList').classList.remove('show');$('remBlock').classList.remove('show');
+  showToast('別のメモ例を読み込みました');
+});
+
+// naive extractor: pull lines containing a deadline-ish keyword, assign a near-future date
+function extractDeadlines(text){
+  const lines=text.split(/\n/).map(s=>s.trim()).filter(Boolean);
+  const kw=/(期限|まで|以内|提出|申告|届|登記|作成|更新|回収|納付|チェック|協議書)/;
+  const found=[];
+  const offsets=[2,5,9,14,20,28,35];
+  let oi=0;
+  for(const ln of lines){
+    if(/^[【\[]/.test(ln)) continue;
+    if(!kw.test(ln)) continue;
+    // strip leading bullet
+    let task=ln.replace(/^[・\-\*・]\s*/,'');
+    // try to shorten to the action phrase
+    task=task.replace(/。.*$/,'').replace(/（.*?）/g,'').trim();
+    if(task.length>30)task=task.slice(0,29)+'…';
+    const due=addDays(TODAY,offsets[oi%offsets.length]);oi++;
+    found.push({task,due});
+    if(found.length>=6)break;
+  }
+  if(!found.length){found.push({task:'期限の確認（メモを精査）',due:addDays(TODAY,5)});}
+  return found;
+}
+
+$('aiRun').addEventListener('click',async()=>{
+  const text=$('aiText').value||'';
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 解析中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  $('genList').classList.remove('show');$('remBlock').classList.remove('show');
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,8);},120);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);$('baAfterT').textContent='6秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+
+  // figure out a case name from first 【...】 or first line
+  const m=text.match(/】\s*([^\n／\/。、]+)/);
+  const caseName=(m?m[1]:'AI抽出案件').trim().slice(0,24);
+  const staff=(text.match(/担当は?\s*([一-龥ぁ-んァ-ヶ]{1,4})/)||[])[1]||pick(STAFF);
+  let c=CASES.find(x=>x.name===caseName||x.client===caseName);
+  if(!c){c={no:'CS-'+(1000+CASES.length+1),name:caseName,client:caseName,type:'AI抽出',staff};CASES.push(c);}
+
+  const found=extractDeadlines(text);
+  $('genItems').innerHTML=found.map((f,i)=>`<div class="gen-item" data-i="${i}">
+    <span class="ck">✓</span><b style="flex:1">${esc(f.task)}</b>
+    <span style="color:var(--ink-3);font-size:11.5px">${fmtDL(f.due)}</span>
+    <span class="gd">あと${daysLeft(f.due)}日</span></div>`).join('');
+  $('genList').classList.add('show');
+
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){
+    await new Promise(r=>setTimeout(r,170));
+    items[i].classList.add('in');
+    const f=found[i];
+    tasks.push({id:++TID,no:c.no,task:f.task,caseName:c.name,client:c.client,type:c.type,staff,due:f.due,status:'todo'});
+  }
+
+  // reminder before/after
+  const next=found.slice().sort((a,b)=>a.due-b.due)[0];
+  $('remMsg').textContent=
+`件名：【${c.name}】「${next.task}」期限のお知らせ
+
+${c.client} 様
+
+いつもお世話になっております。きもち総合事務所です。
+下記の期限が ${daysLeft(next.due)}日後（${fmtDL(next.due)}）に迫っております。
+
+　・対応事項：${next.task}
+　・担当：${staff}
+
+ご不明点がございましたらお気軽にご連絡ください。
+※このメールは技マシンが自動送信しています。`;
+  $('remBlock').classList.add('show');
+
+  btn.disabled=false;btn.textContent='⚡ もう一度抽出する';
+  refreshBadges();
+  showToast(found.length+'件の期限を抽出・登録しました');
+});
+
+/* ============ INIT ============ */
+renderStaffSelect();
+renderChips();
+renderDash();
+refreshBadges();
+</script>
+</body>
+</html>

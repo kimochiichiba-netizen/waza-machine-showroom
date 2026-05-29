@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜IT資産管理マシン（IT資産・ライセンス管理システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7a5af5;--purple-soft:#efebff;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.nav a .badge.amber{background:var(--amber)}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:74px 1fr 70px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-fill.g{background:linear-gradient(90deg,var(--green),#5ad6a0)}
+.bar-fill.a{background:linear-gradient(90deg,var(--amber),#f0b75a)}
+.bar-fill.p{background:linear-gradient(90deg,var(--purple),#a48bff)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut */
+.donut-wrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.donut{flex-shrink:0}
+.legend{display:flex;flex-direction:column;gap:9px;font-size:12.5px}
+.legend .lg{display:flex;align-items:center;gap:9px}
+.legend .lg .sw{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.legend .lg b{margin-left:auto;font-variant-numeric:tabular-nums;padding-left:14px}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.active{background:var(--green-soft);color:var(--green)}
+.st.lent{background:var(--brand-soft);color:var(--brand)}
+.st.stock{background:var(--soft);color:var(--ink-3)}
+.st.repair{background:var(--amber-soft);color:var(--amber)}
+.st.retired{background:var(--red-soft);color:var(--red)}
+.st.expiring{background:var(--amber-soft);color:var(--amber)}
+.st.expired{background:var(--red-soft);color:var(--red)}
+.st.ok{background:var(--green-soft);color:var(--green)}
+.cat{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:7px;background:var(--soft);color:var(--ink-2)}
+
+/* create form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,440px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--brand)}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* asset preview card */
+.paper{background:#fff;border:1px solid var(--line);border-radius:12px;padding:24px 26px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.pv-head{display:flex;align-items:center;gap:14px;border-bottom:2px solid var(--line);padding-bottom:16px;margin-bottom:16px}
+.pv-icon{width:54px;height:54px;border-radius:13px;background:var(--brand-soft);display:grid;place-items:center;font-size:26px;flex-shrink:0}
+.pv-name{font-size:17px;font-weight:900;line-height:1.3}
+.pv-tag{font-family:'Orbitron';font-size:12px;color:var(--brand-dk);font-weight:700;margin-top:3px}
+.pv-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px 18px}
+.pv-grid .row{display:flex;flex-direction:column;gap:2px;padding:8px 0;border-bottom:1px solid var(--line)}
+.pv-grid .row .k{font-size:11px;color:var(--ink-3);font-weight:700}
+.pv-grid .row .vv{font-size:13.5px;font-weight:700;color:var(--ink)}
+.pv-qr{margin-top:16px;display:flex;align-items:center;gap:13px;background:var(--soft);border-radius:10px;padding:12px 14px}
+.pv-qr .q{width:52px;height:52px;border-radius:8px;background:repeating-conic-gradient(#1a2233 0% 25%,#fff 0% 50%) 50%/12px 12px;flex-shrink:0;border:3px solid #fff;box-shadow:inset 0 0 0 1px var(--line-2)}
+.pv-qr .t b{display:block;font-size:12.5px}
+.pv-qr .t span{font-size:11px;color:var(--ink-3)}
+
+/* AI generate / before-after */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+.gen-item .ck.warn{background:var(--amber)}
+.gen-item .ck.danger{background:var(--red)}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+
+/* progress bar (license usage) */
+.pbar{height:7px;border-radius:99px;background:var(--soft);overflow:hidden;min-width:90px}
+.pbar > span{display:block;height:100%;border-radius:99px;background:var(--brand)}
+.pbar.warn > span{background:var(--amber)}
+.pbar.danger > span{background:var(--red)}
+
+/* days pill */
+.days{font-weight:800;font-variant-numeric:tabular-nums}
+.days.soon{color:var(--amber)}.days.over{color:var(--red)}.days.ok{color:var(--ink-2)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">IT資産管理マシン<small>技マシン｜IT資産・ライセンス</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="assets"><span class="i">💻</span>資産一覧</a>
+      <a data-v="lend"><span class="i">🔄</span>貸出管理</a>
+      <a data-v="license"><span class="i">🔑</span>ライセンス</a>
+      <a data-v="renew"><span class="i">📅</span>更新管理<span class="badge amber" id="navRenew">0</span></a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI棚卸</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 情シス管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。資産・ライセンスはサンプルデータです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">IT資産の稼働状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>カテゴリ別 資産台数</h3><span class="more">全社</span></div>
+            <div class="pb"><div class="bars" id="catBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>稼働ステータスの内訳</h3></div>
+            <div class="pb"><div class="donut-wrap"><canvas class="donut" id="donut" width="150" height="150"></canvas><div class="legend" id="donutLegend"></div></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>更新期限が近いライセンス</h3><span class="more" onclick="go('renew')">更新管理へ</span></div>
+            <div class="pb" style="padding:0">
+              <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+                <thead><tr><th>ライセンス / 契約</th><th>期限</th><th class="r">残り</th></tr></thead>
+                <tbody id="dashRenew"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ASSETS -->
+      <section class="view" id="v-assets">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="資産名・管理番号・利用者で検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>管理番号</th><th>資産名</th><th>カテゴリ</th><th>利用者 / 設置場所</th><th>取得日</th><th class="r">取得価額</th><th>状態</th></tr></thead>
+          <tbody id="assetRows"></tbody>
+        </table>
+      </section>
+
+      <!-- LEND -->
+      <section class="view" id="v-lend">
+        <div class="create-grid">
+          <div class="formcard">
+            <div style="font-size:14px;font-weight:800;margin-bottom:14px">📤 貸出を登録</div>
+            <div class="fg"><label>貸出する資産</label>
+              <select id="lAsset"></select></div>
+            <div class="fg two">
+              <div><label>貸出先（利用者）</label><input id="lUser" placeholder="例：山田 太郎"></div>
+              <div><label>部署</label>
+                <select id="lDept"><option>情報システム部</option><option>総務部</option><option>営業部</option><option>経理部</option><option>製造部</option><option>医療事務</option></select></div>
+            </div>
+            <div class="fg two">
+              <div><label>貸出日</label><input id="lFrom" type="date"></div>
+              <div><label>返却予定日</label><input id="lTo" type="date"></div>
+            </div>
+            <div class="aihint" id="lHint">✨ AIが過去の貸出履歴から返却予定日を提案しました</div>
+            <div class="linkrow" style="margin-top:16px">
+              <button class="btn primary" id="lSubmit" style="flex:1;justify-content:center">📤 貸出を登録する</button>
+              <button class="btn" id="lSample">サンプル</button>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>貸出中の資産</h3><span class="more" id="lendCount"></span></div>
+            <div class="pb" style="padding:0">
+              <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+                <thead><tr><th>管理番号</th><th>資産名</th><th>貸出先</th><th>返却予定</th><th class="r">残り</th><th></th></tr></thead>
+                <tbody id="lendRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LICENSE -->
+      <section class="view" id="v-license">
+        <div class="kpis" id="licKpis"></div>
+        <table class="tbl">
+          <thead><tr><th>ソフトウェア / SaaS</th><th>ベンダー</th><th>ライセンス形態</th><th>消化状況</th><th class="r">年間コスト</th><th>状態</th></tr></thead>
+          <tbody id="licRows"></tbody>
+        </table>
+      </section>
+
+      <!-- RENEW -->
+      <section class="view" id="v-renew">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="rq" placeholder="契約名・ベンダーで検索"></div>
+          <div class="chips" id="renewChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>契約 / ライセンス</th><th>ベンダー</th><th>種別</th><th>更新期限</th><th class="r">残り日数</th><th class="r">年間コスト</th><th>状態</th></tr></thead>
+          <tbody id="renewRows"></tbody>
+        </table>
+      </section>
+
+      <!-- AI INVENTORY -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">AIが全社の資産を自動で棚卸・点検</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">登録済みの資産 <b id="aiAssetN">0</b>件 と ライセンス契約 <b id="aiLicN">0</b>件 をAIが照合し、棚卸・更新期限アラートを自動生成します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AI棚卸を実行する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">1日（8時間）</div>
+              <ul>
+                <li>📋 Excel台帳と現物を1台ずつ突き合わせ</li>
+                <li>🔎 ライセンス証書を探して期限を手で確認</li>
+                <li>📨 更新漏れ・遊休資産を目視でチェック</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 全資産を自動照合・差分を即検出</li>
+                <li>📅 ライセンス期限を自動でアラート化</li>
+                <li>💡 遊休資産・コスト削減案まで提示</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ AI棚卸レポート</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const TODAY=new Date(2026,4,30); // 2026-05-30
+function fmtD(d){return d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate();}
+function fmtDJ(d){return d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';}
+function daysUntil(d){return Math.round((d-TODAY)/86400000);}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+let SEED=4242;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+/* ============ DATA ============ */
+const CATS={
+  pc:{label:'PC',icon:'💻'},nb:{label:'ノートPC',icon:'💻'},mon:{label:'モニター',icon:'🖥️'},
+  phone:{label:'スマホ',icon:'📱'},tablet:{label:'タブレット',icon:'📲'},nw:{label:'ネットワーク',icon:'📡'},
+  srv:{label:'サーバー',icon:'🗄️'},print:{label:'複合機',icon:'🖨️'},soft:{label:'ソフトウェア',icon:'🧩'}
+};
+const ST_ASSET={active:'稼働中',lent:'貸出中',stock:'在庫',repair:'修理中',retired:'廃棄'};
+const USERS=['山田 太郎','佐藤 花子','鈴木 一郎','田中 美咲','高橋 健','渡辺 由美','中村 大輔','小林 彩','加藤 翔','吉田 麻衣',null,null,null];
+const DEPTS=['情報システム部','総務部','営業部','経理部','製造部','医療事務','在庫'];
+const PLACES=['本社3F 情シス','本社2F 総務','本社1F 受付','大分支店','別府営業所','データセンター','倉庫'];
+const MODELS=[
+  {n:'Lenovo ThinkPad X1',c:'nb',p:198000},{n:'Dell Latitude 5540',c:'nb',p:148000},
+  {n:'HP ProDesk 600 G9',c:'pc',p:128000},{n:'Apple MacBook Air M3',c:'nb',p:164800},
+  {n:'Dell U2723QE 27型',c:'mon',p:78000},{n:'EIZO FlexScan 24型',c:'mon',p:52000},
+  {n:'iPhone 15',c:'phone',p:124800},{n:'Galaxy A55',c:'phone',p:64000},
+  {n:'iPad 第10世代',c:'tablet',p:68800},{n:'Surface Pro 9',c:'tablet',p:142800},
+  {n:'YAMAHA RTX1300 ルーター',c:'nw',p:98000},{n:'Cisco Catalyst スイッチ',c:'nw',p:156000},
+  {n:'Dell PowerEdge T550',c:'srv',p:480000},{n:'富士通 PRIMERGY TX1320',c:'srv',p:320000},
+  {n:'Canon imageRUNNER 複合機',c:'print',p:280000},{n:'EPSON 業務用プリンタ',c:'print',p:96000}
+];
+
+let assets=[];
+(function seedAssets(){
+  const stPool=['active','active','active','active','lent','lent','stock','repair','active','active'];
+  for(let i=0;i<46;i++){
+    const m=pick(MODELS);
+    let st=pick(stPool);
+    const user=(st==='stock')?null:(st==='repair'?pick(USERS.filter(u=>u)):pick(USERS));
+    const place=(st==='stock')?'倉庫':pick(PLACES);
+    const aq=new Date(2021+Math.floor(rnd()*5),Math.floor(rnd()*12),1+Math.floor(rnd()*27));
+    assets.push({
+      no:'A-'+String(1001+i),name:m.n,cat:m.c,price:m.p,
+      user:(st==='stock')?null:user,dept:(st==='stock')?'在庫':pick(DEPTS),place,
+      acq:aq,status:st,
+      sn:'SN'+(100000+Math.floor(rnd()*899999))
+    });
+  }
+  // explicit lent records with return dates
+  assets.filter(a=>a.status==='lent').forEach(a=>{
+    const from=new Date(TODAY.getFullYear(),TODAY.getMonth()-Math.floor(rnd()*2),1+Math.floor(rnd()*20));
+    const due=new Date(from.getFullYear(),from.getMonth()+1,from.getDate()+Math.floor(rnd()*20));
+    a.lendFrom=from;a.lendTo=due;
+    if(!a.user)a.user=pick(USERS.filter(u=>u));
+  });
+})();
+
+// licenses / contracts
+let licenses=[
+  {name:'Microsoft 365 Business',vendor:'Microsoft',type:'サブスク',seats:50,used:43,cost:1080000,renew:new Date(2026,5,15)},
+  {name:'Adobe Creative Cloud',vendor:'Adobe',type:'サブスク',seats:8,used:8,cost:864000,renew:new Date(2026,5,2)},
+  {name:'ウイルスバスター ビジネス',vendor:'トレンドマイクロ',type:'年間ライセンス',seats:60,used:46,cost:312000,renew:new Date(2026,6,10)},
+  {name:'kintone スタンダード',vendor:'サイボウズ',type:'サブスク',seats:40,used:31,cost:720000,renew:new Date(2026,8,1)},
+  {name:'Zoom ビジネス',vendor:'Zoom',type:'サブスク',seats:20,used:12,cost:480000,renew:new Date(2026,11,20)},
+  {name:'AutoCAD LT',vendor:'Autodesk',type:'年間ライセンス',seats:5,used:5,cost:340000,renew:new Date(2026,5,25)},
+  {name:'freee 会計 プロ',vendor:'freee',type:'サブスク',seats:6,used:4,cost:235000,renew:new Date(2027,2,1)},
+  {name:'Slack プロ',vendor:'Salesforce',type:'サブスク',seats:55,used:50,cost:660000,renew:new Date(2026,7,8)},
+  {name:'Windows Server CAL',vendor:'Microsoft',type:'買い切り',seats:60,used:52,cost:0,renew:new Date(2026,4,28)},
+  {name:'ESET Protect',vendor:'ESET',type:'年間ライセンス',seats:30,used:22,cost:198000,renew:new Date(2027,0,15)}
+];
+function licStatus(l){const d=daysUntil(l.renew);if(d<0)return 'expired';if(d<=45)return 'expiring';return 'ok';}
+const LICST_LABEL={ok:'契約中',expiring:'更新間近',expired:'期限切れ'};
+
+/* ============ ROUTING ============ */
+const TITLES={
+  dash:['ダッシュボード','IT資産の稼働状況（2026年5月時点）'],
+  assets:['資産一覧','全社のIT資産を一元管理します'],
+  lend:['貸出管理','資産の貸出・返却を記録します'],
+  license:['ライセンス管理','ソフトウェア・SaaSの契約を管理します'],
+  renew:['更新管理','契約・ライセンスの更新期限を管理します'],
+  ai:['AI棚卸','AIが資産とライセンスを自動で点検します']
+};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='assets'?'<button class="btn" onclick="go(\'lend\')">📤 貸出登録</button><button class="btn primary" onclick="go(\'ai\')">⚡ AI棚卸</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'renew\')">📅 更新管理</button><button class="btn primary" onclick="go(\'ai\')">⚡ AI棚卸</button>'
+    : v==='license'?'<button class="btn primary" onclick="go(\'renew\')">📅 更新期限を見る</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='assets')renderAssets();
+  if(v==='lend')renderLend();
+  if(v==='license')renderLic();
+  if(v==='renew')renderRenew();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ KPI helper ============ */
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const total=assets.length;
+  const running=assets.filter(a=>a.status==='active'||a.status==='lent').length;
+  const rate=Math.round(running/total*100);
+  const renewSoon=licenses.filter(l=>{const d=daysUntil(l.renew);return d>=0&&d<=45;}).length;
+  const expired=licenses.filter(l=>daysUntil(l.renew)<0).length;
+  const licCost=licenses.reduce((s,l)=>s+l.cost,0);
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','管理資産',total+'<small>台</small>',CountCats()+'カテゴリ','up','前月比 +3台')}
+    ${kpi('#16b877','稼働率',rate+'<small>%</small>',running+'台 稼働','up','遊休 '+assets.filter(a=>a.status==='stock').length+'台')}
+    ${kpi('#e3941f','更新期限',renewSoon+'<small>件</small>',expired?expired+'件 超過':'45日以内','warn',expired?'至急対応':'要確認')}
+    ${kpi('#7a5af5','年間ライセンス費',yen(licCost),'','up','最適化余地あり')}`;
+
+  // category bars
+  const counts={};assets.forEach(a=>{counts[a.cat]=(counts[a.cat]||0)+1;});
+  const entries=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  const mx=Math.max(...entries.map(e=>e[1]),1);
+  const palette=['','g','a','p','','g','a','p',''];
+  $('catBars').innerHTML=entries.map((e,i)=>`
+    <div class="bar-row"><span class="mlabel">${CATS[e[0]].icon} ${CATS[e[0]].label}</span>
+      <div class="bar-track"><div class="bar-fill ${palette[i%palette.length]}" style="width:0" data-w="${Math.round(e[1]/mx*100)}"></div></div>
+      <span class="mval">${e[1]}台</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#catBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+
+  // donut (status)
+  const stCounts={};assets.forEach(a=>{stCounts[a.status]=(stCounts[a.status]||0)+1;});
+  const stColors={active:'#16b877',lent:'#2f6df0',stock:'#8a94a6',repair:'#e3941f',retired:'#e24a4a'};
+  const stData=Object.keys(ST_ASSET).filter(k=>stCounts[k]).map(k=>({k,v:stCounts[k],c:stColors[k]}));
+  drawDonut(stData,total);
+  $('donutLegend').innerHTML=stData.map(d=>`<div class="lg"><span class="sw" style="background:${d.c}"></span>${ST_ASSET[d.k]}<b>${d.v}台</b></div>`).join('');
+
+  // renew table
+  const soon=licenses.slice().sort((a,b)=>a.renew-b.renew).slice(0,5);
+  $('dashRenew').innerHTML=soon.map(l=>{const d=daysUntil(l.renew);const cls=d<0?'over':(d<=45?'soon':'ok');
+    return `<tr onclick="go('renew')"><td><b>${esc(l.name)}</b><div style="font-size:11px;color:var(--ink-3)">${esc(l.vendor)}</div></td>
+      <td style="color:var(--ink-2)">${fmtD(l.renew)}</td><td class="r"><span class="days ${cls}">${d<0?'超過 '+(-d)+'日':d+'日'}</span></td></tr>`;}).join('');
+
+  // activity
+  const acts=[
+    {i:'⚡',c:'#e6f8f0',t:'AI棚卸を実行（差分2件・更新間近4件を検出）',m:'今日 9:02'},
+    {i:'📤',c:'#eaf1ff',t:'A-1042 Lenovo ThinkPad X1 を 山田 太郎 へ貸出',m:'1時間前'},
+    {i:'⚠️',c:'#fdf3e2',t:'Adobe Creative Cloud の更新期限が近づいています',m:'今日 8:30'},
+    {i:'📥',c:'#e6f8f0',t:'A-1009 iPad 第10世代 が返却されました',m:'昨日'},
+    {i:'🔑',c:'#efebff',t:'kintone のライセンスを 35→40 に増席',m:'2日前'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+}
+function CountCats(){const s=new Set(assets.map(a=>a.cat));return s.size;}
+function drawDonut(data,total){
+  const cv=$('donut');if(!cv||!cv.getContext)return;const ctx=cv.getContext('2d');
+  ctx.clearRect(0,0,150,150);const cx=75,cy=75,r=62,rin=40;let a0=-Math.PI/2;
+  const sum=data.reduce((s,d)=>s+d.v,0)||1;
+  data.forEach(d=>{const a1=a0+d.v/sum*Math.PI*2;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,a0,a1);ctx.closePath();ctx.fillStyle=d.c;ctx.fill();a0=a1;});
+  ctx.beginPath();ctx.arc(cx,cy,rin,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
+  ctx.fillStyle='#1d2733';ctx.font='900 26px Orbitron, sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(total,cx,cy-6);
+  ctx.fillStyle='#8a94a6';ctx.font='700 11px sans-serif';ctx.fillText('台 合計',cx,cy+14);
+}
+
+/* ============ ASSETS ============ */
+let filterAsset='all';
+function renderChips(){
+  const opts=[['all','すべて'],['active','稼働中'],['lent','貸出中'],['stock','在庫'],['repair','修理中']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterAsset?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterAsset=c.dataset.s;renderChips();renderAssets();});
+}
+function renderAssets(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=assets.filter(a=>filterAsset==='all'||a.status===filterAsset)
+    .filter(a=>!q||((a.name+a.no+(a.user||'')+(a.place||''))).toLowerCase().includes(q))
+    .sort((a,b)=>a.no.localeCompare(b.no));
+  $('assetRows').innerHTML=rows.length?rows.map(a=>`<tr>
+    <td class="mono" style="font-size:12px">${esc(a.no)}</td>
+    <td><b>${esc(a.name)}</b><div style="font-size:11px;color:var(--ink-3)" class="mono">${esc(a.sn)}</div></td>
+    <td><span class="cat">${CATS[a.cat].icon} ${CATS[a.cat].label}</span></td>
+    <td>${a.user?'<b>'+esc(a.user)+'</b>':'<span style="color:var(--ink-3)">—</span>'}<div style="font-size:11px;color:var(--ink-3)">${esc(a.place)}</div></td>
+    <td style="color:var(--ink-2)">${fmtD(a.acq)}</td>
+    <td class="r tnum">${yen(a.price)}</td>
+    <td><span class="st ${a.status}">${ST_ASSET[a.status]}</span></td></tr>`).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する資産がありません</td></tr>';
+}
+$('q').addEventListener('input',renderAssets);
+
+/* ============ LEND ============ */
+function renderLendSelect(){
+  const avail=assets.filter(a=>a.status==='active'||a.status==='stock');
+  $('lAsset').innerHTML='<option value="">選択してください</option>'+avail.map(a=>`<option value="${esc(a.no)}">${esc(a.no)} ｜ ${esc(a.name)}</option>`).join('');
+}
+function renderLend(){
+  renderLendSelect();
+  const lent=assets.filter(a=>a.status==='lent').sort((a,b)=>a.lendTo-b.lendTo);
+  $('lendCount').textContent=lent.length+'件 貸出中';
+  $('lendRows').innerHTML=lent.length?lent.map(a=>{const d=daysUntil(a.lendTo);const cls=d<0?'over':(d<=7?'soon':'ok');
+    return `<tr>
+      <td class="mono" style="font-size:12px">${esc(a.no)}</td><td><b>${esc(a.name)}</b></td>
+      <td>${esc(a.user)}<div style="font-size:11px;color:var(--ink-3)">${esc(a.dept)}</div></td>
+      <td style="color:var(--ink-2)">${fmtD(a.lendTo)}</td>
+      <td class="r"><span class="days ${cls}">${d<0?'超過 '+(-d)+'日':d+'日'}</span></td>
+      <td class="r"><button class="btn green" style="padding:6px 12px" onclick="returnAsset('${esc(a.no)}')">返却</button></td></tr>`;}).join('')
+    :'<tr><td colspan="6" class="empty-cell">貸出中の資産はありません</td></tr>';
+}
+window.returnAsset=no=>{const a=assets.find(x=>x.no===no);if(a){a.status='active';delete a.lendTo;delete a.lendFrom;renderLend();updateBadges();showToast(no+' を返却済みにしました');}};
+$('lAsset').addEventListener('change',()=>{
+  if($('lAsset').value){
+    const from=new Date(TODAY);const to=new Date(TODAY);to.setMonth(to.getMonth()+1);
+    $('lFrom').value=from.toISOString().slice(0,10);
+    $('lTo').value=to.toISOString().slice(0,10);
+    $('lHint').classList.add('show');setTimeout(()=>$('lHint').classList.remove('show'),2200);
+  }
+});
+$('lSample').addEventListener('click',()=>{
+  const avail=assets.filter(a=>a.status==='active'||a.status==='stock');
+  if(avail.length){$('lAsset').value=avail[0].no;}
+  $('lUser').value='山田 太郎';$('lDept').value='営業部';
+  const from=new Date(TODAY);const to=new Date(TODAY);to.setMonth(to.getMonth()+1);
+  $('lFrom').value=from.toISOString().slice(0,10);$('lTo').value=to.toISOString().slice(0,10);
+});
+$('lSubmit').addEventListener('click',()=>{
+  const no=$('lAsset').value,user=$('lUser').value.trim();
+  if(!no||!user){showToast('貸出する資産と貸出先を入力してください');return;}
+  const a=assets.find(x=>x.no===no);if(!a)return;
+  a.status='lent';a.user=user;a.dept=$('lDept').value;
+  a.lendFrom=$('lFrom').value?new Date($('lFrom').value):new Date(TODAY);
+  a.lendTo=$('lTo').value?new Date($('lTo').value):new Date(TODAY.getFullYear(),TODAY.getMonth()+1,TODAY.getDate());
+  $('lUser').value='';
+  renderLend();updateBadges();
+  showToast(esc(a.name)+' を '+esc(user)+' へ貸出登録しました');
+});
+
+/* ============ LICENSE ============ */
+function renderLic(){
+  const totalSeats=licenses.reduce((s,l)=>s+l.seats,0);
+  const usedSeats=licenses.reduce((s,l)=>s+l.used,0);
+  const cost=licenses.reduce((s,l)=>s+l.cost,0);
+  const overUsed=licenses.filter(l=>l.used/l.seats>=0.95).length;
+  const idle=licenses.reduce((s,l)=>s+(l.seats-l.used),0);
+  $('licKpis').innerHTML=`
+    ${kpi('#7a5af5','契約ライセンス',licenses.length+'<small>件</small>',totalSeats+'席','up','SaaS含む')}
+    ${kpi('#2f6df0','席消化率',Math.round(usedSeats/totalSeats*100)+'<small>%</small>',usedSeats+'/'+totalSeats+'席','up','適正')}
+    ${kpi('#e3941f','残席（遊休）',idle+'<small>席</small>',overUsed?overUsed+'件 ほぼ満席':'','warn','見直し余地')}
+    ${kpi('#16b877','年間ライセンス費',yen(cost),'','up','可視化済み')}`;
+  $('licRows').innerHTML=licenses.slice().sort((a,b)=>b.used/b.seats-a.used/a.seats).map(l=>{
+    const ratio=Math.round(l.used/l.seats*100);const cls=ratio>=95?'danger':(ratio>=80?'warn':'');
+    const st=licStatus(l);
+    return `<tr>
+      <td><b>${esc(l.name)}</b></td><td style="color:var(--ink-2)">${esc(l.vendor)}</td>
+      <td><span class="cat">${esc(l.type)}</span></td>
+      <td><div style="display:flex;align-items:center;gap:10px"><div class="pbar ${cls}"><span style="width:${ratio}%"></span></div><span class="tnum" style="font-size:12px;font-weight:700">${l.used}/${l.seats}</span></div></td>
+      <td class="r tnum">${l.cost?yen(l.cost):'—'}</td>
+      <td><span class="st ${st==='ok'?'ok':st}">${LICST_LABEL[st]}</span></td></tr>`;}).join('');
+}
+
+/* ============ RENEW ============ */
+let filterRenew='all';
+function renderRenewChips(){
+  const opts=[['all','すべて'],['expiring','更新間近'],['expired','期限切れ'],['ok','契約中']];
+  $('renewChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterRenew?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('renewChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterRenew=c.dataset.s;renderRenewChips();renderRenew();});
+}
+function renderRenew(){
+  const q=($('rq').value||'').toLowerCase();
+  let rows=licenses.slice()
+    .filter(l=>filterRenew==='all'||licStatus(l)===filterRenew)
+    .filter(l=>!q||((l.name+l.vendor)).toLowerCase().includes(q))
+    .sort((a,b)=>a.renew-b.renew);
+  $('renewRows').innerHTML=rows.length?rows.map(l=>{const d=daysUntil(l.renew);const st=licStatus(l);const cls=d<0?'over':(d<=45?'soon':'ok');
+    return `<tr>
+      <td><b>${esc(l.name)}</b></td><td style="color:var(--ink-2)">${esc(l.vendor)}</td>
+      <td><span class="cat">${esc(l.type)}</span></td>
+      <td style="color:var(--ink-2)">${fmtDJ(l.renew)}</td>
+      <td class="r"><span class="days ${cls}">${d<0?'超過 '+(-d)+'日':d+'日'}</span></td>
+      <td class="r tnum">${l.cost?yen(l.cost):'—'}</td>
+      <td><span class="st ${st==='ok'?'ok':st}">${LICST_LABEL[st]}</span></td></tr>`;}).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する契約がありません</td></tr>';
+}
+$('rq').addEventListener('input',renderRenew);
+
+/* ============ AI INVENTORY ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 棚卸中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},110);
+  await new Promise(r=>setTimeout(r,1200));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+
+  // build report findings (data-driven)
+  const stock=assets.filter(a=>a.status==='stock');
+  const repair=assets.filter(a=>a.status==='repair');
+  const overdueLent=assets.filter(a=>a.status==='lent'&&daysUntil(a.lendTo)<0);
+  const expiring=licenses.filter(l=>{const d=daysUntil(l.renew);return d>=0&&d<=45;});
+  const expired=licenses.filter(l=>daysUntil(l.renew)<0);
+  const nearFull=licenses.filter(l=>l.used/l.seats>=0.95);
+  const idleSeats=licenses.filter(l=>l.seats-l.used>=5);
+
+  const findings=[];
+  findings.push({type:'ok',t:`資産 ${assets.length}台 を現物照合 — 台帳との差分 ${overdueLent.length?overdueLent.length+'件':'0件'}`,d:'棚卸完了'});
+  if(expired.length)findings.push({type:'danger',t:`⚠️ 期限切れライセンス ${expired.length}件：${expired.map(l=>l.name).join('、')}`,d:'至急 更新要'});
+  if(expiring.length)findings.push({type:'warn',t:`📅 45日以内に更新 ${expiring.length}件：${expiring.map(l=>l.name).slice(0,3).join('、')}${expiring.length>3?' ほか':''}`,d:'更新準備'});
+  if(overdueLent.length)findings.push({type:'warn',t:`📤 返却予定を過ぎた貸出 ${overdueLent.length}件：${overdueLent.map(a=>a.no+'('+a.user+')').slice(0,3).join('、')}`,d:'督促推奨'});
+  if(nearFull.length)findings.push({type:'warn',t:`🔑 残席わずか ${nearFull.length}件：${nearFull.map(l=>l.name).join('、')}（増席検討）`,d:'増席検討'});
+  const idleAssetN=stock.length;
+  if(idleAssetN)findings.push({type:'ok',t:`💡 遊休資産 ${idleAssetN}台 を在庫として検出（再割当でコスト削減）`,d:'最適化案'});
+  if(idleSeats.length){const totalIdle=idleSeats.reduce((s,l)=>s+(l.seats-l.used),0);const saveable=Math.round(idleSeats.reduce((s,l)=>s+(l.seats-l.used)*(l.cost/l.seats||0),0));
+    findings.push({type:'ok',t:`💰 余剰ライセンス ${totalIdle}席 を整理すると 年間 約${yen(saveable)} 削減見込み`,d:'コスト削減'});}
+  if(repair.length)findings.push({type:'warn',t:`🔧 修理中の資産 ${repair.length}台 — 代替機の手配状況を確認`,d:'要対応'});
+
+  $('genItems').innerHTML=findings.map((f,i)=>{
+    const ck=f.type==='danger'?'<span class="ck danger">!</span>':(f.type==='warn'?'<span class="ck warn">!</span>':'<span class="ck">✓</span>');
+    return `<div class="gen-item" data-i="${i}">${ck}<b style="flex:1">${esc(f.t)}</b><span style="color:var(--ink-3);font-size:12px;white-space:nowrap">${esc(f.d)}</span></div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,160));items[i].classList.add('in');}
+  btn.disabled=false;btn.textContent='⚡ もう一度棚卸する';
+  showToast('AI棚卸が完了しました（'+findings.length+'件の点検結果）');
+});
+
+/* ============ BADGES / INIT ============ */
+function updateBadges(){
+  const renewSoon=licenses.filter(l=>{const d=daysUntil(l.renew);return d<=45;}).length;
+  $('navRenew').textContent=renewSoon;
+}
+$('aiAssetN').textContent=assets.length;
+$('aiLicN').textContent=licenses.length;
+renderChips();renderRenewChips();updateBadges();renderDash();
+</script>
+</body>
+</html>
