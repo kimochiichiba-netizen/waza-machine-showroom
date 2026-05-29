@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜請求マシン（請求管理システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.paid{background:var(--green-soft);color:var(--green)}
+.st.sent{background:var(--brand-soft);color:var(--brand)}
+.st.unsent{background:var(--soft);color:var(--ink-3)}
+.st.overdue{background:var(--red-soft);color:var(--red)}
+.st.draft{background:var(--amber-soft);color:var(--amber)}
+
+/* create form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,400px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--brand)}
+.line-head{display:grid;grid-template-columns:1fr 50px 86px 28px;gap:7px;font-size:11px;color:var(--ink-3);font-weight:700;padding:0 2px 6px}
+.line-row{display:grid;grid-template-columns:1fr 50px 86px 28px;gap:7px;margin-bottom:7px;align-items:center}
+.line-row input{padding:8px 9px;font-size:12.5px;border:1px solid var(--line-2);border-radius:8px;font-family:inherit}
+.line-row .x{border:1px solid var(--line-2);background:var(--red-soft);color:var(--red);border-radius:7px;cursor:pointer;height:30px}
+.addline{width:100%;margin-top:3px;padding:9px;border:1px dashed var(--line-2);background:transparent;border-radius:8px;color:var(--brand);font-weight:700;font-size:12.5px;cursor:pointer}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* paper preview */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:34px 36px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.pv-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px}
+.pv-title{font-size:25px;font-weight:900;letter-spacing:.26em;color:var(--brand-dk);border-bottom:3px solid var(--brand-dk);padding-bottom:5px}
+.pv-meta{text-align:right;font-size:11.5px;color:var(--ink-2)}
+.pv-meta .no{font-family:'Orbitron';color:var(--ink);font-weight:700}
+.pv-cust{font-size:19px;font-weight:900;border-bottom:1.5px solid #1a2233;display:inline-block;min-width:220px;padding-bottom:5px;margin-bottom:8px}
+.pv-total{background:var(--soft);border-left:5px solid var(--brand-dk);border-radius:6px;padding:13px 18px;margin:18px 0;display:flex;justify-content:space-between;align-items:center}
+.pv-total .a{font-family:'Orbitron';font-size:23px;font-weight:700;color:var(--brand-dk)}
+table.pv{width:100%;border-collapse:collapse;margin-bottom:14px}
+table.pv th{background:var(--brand-dk);color:#fff;font-size:11px;padding:8px 11px;text-align:left}
+table.pv th.r,table.pv td.r{text-align:right}
+table.pv td{padding:8px 11px;border-bottom:1px solid var(--line);font-size:12px}
+.pv-sums{margin-left:auto;width:240px}
+.pv-sums .r{display:flex;justify-content:space-between;padding:6px 10px;font-size:12px;color:var(--ink-2)}
+.pv-sums .r.g{background:var(--brand-dk);color:#fff;border-radius:6px;margin-top:5px;padding:9px 10px;font-weight:800}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">請求マシン<small>技マシン｜請求管理</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">📄</span>請求書一覧</a>
+      <a data-v="create"><span class="i">✏️</span>請求書作成</a>
+      <a data-v="pay"><span class="i">💰</span>入金管理<span class="badge" id="navUnpaid">0</span></a>
+      <a data-v="cust"><span class="i">🏢</span>取引先</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI一括生成</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="./">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。数値・取引先はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">2026年5月の請求状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>月次の請求額推移</h3><span class="more">過去6ヶ月</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="取引先・件名・番号で検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>請求書番号</th><th>取引先</th><th>件名</th><th class="r">金額(税込)</th><th>発行日</th><th>支払期限</th><th>状態</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- CREATE -->
+      <section class="view" id="v-create">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>取引先</label>
+              <select id="cCust"></select></div>
+            <div class="fg"><label>件名</label><input id="cSubject" placeholder="例：5月分 ご請求"></div>
+            <label style="font-size:12px;font-weight:700;color:var(--ink-2)">明細（品名を選ぶとAIが単価提案）</label>
+            <div class="line-head" style="margin-top:7px"><div>品名</div><div>数量</div><div>単価</div><div></div></div>
+            <div id="cLines"></div>
+            <button class="addline" id="cAdd">＋ 明細を追加</button>
+            <div class="aihint" id="cAiHint">✨ AIが相場の単価を自動入力しました</div>
+            <div class="linkrow" style="margin-top:16px">
+              <button class="btn primary" id="cIssue" style="flex:1;justify-content:center">⚡ AIで仕上げて発行</button>
+              <button class="btn" id="cSample">サンプル</button>
+            </div>
+          </div>
+          <div>
+            <div class="paper" id="cPaper">
+              <div class="pv-top">
+                <div class="pv-title">請　求　書</div>
+                <div class="pv-meta"><div>番号：<span class="no" id="pNo">—</span></div><div>発行日：<span id="pDate">—</span></div><div>支払期限：<span id="pDue">—</span></div></div>
+              </div>
+              <div><span class="pv-cust" id="pCust">　御中</span></div>
+              <div style="font-size:11.5px;color:var(--ink-2)">下記の通りご請求申し上げます。</div>
+              <div class="pv-total"><span style="font-weight:700">ご請求金額（税込）</span><span class="a" id="pGrand">¥0</span></div>
+              <table class="pv"><thead><tr><th>品名</th><th class="r" style="width:50px">数量</th><th class="r" style="width:90px">単価</th><th class="r" style="width:100px">金額</th></tr></thead><tbody id="pRows"></tbody></table>
+              <div class="pv-sums">
+                <div class="r"><span>小計</span><span id="pSub">¥0</span></div>
+                <div class="r"><span>消費税(10%)</span><span id="pTax">¥0</span></div>
+                <div class="r g"><span>合計</span><span id="pGrand2">¥0</span></div>
+              </div>
+              <div style="margin-top:18px;font-size:11px;color:var(--ink-2);border-top:1px solid var(--line);padding-top:12px">
+                お振込先：大分銀行 都町支店（普通）1234567 カ）キモチイチバ ／ ※振込手数料は御社にてご負担願います。
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PAYMENT -->
+      <section class="view" id="v-pay">
+        <div class="kpis" id="payKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>未収・入金待ちの請求書</h3>
+            <button class="btn green" id="autoMatch" style="margin-left:auto">🔗 銀行データで自動消込</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>請求書番号</th><th>取引先</th><th class="r">金額</th><th>支払期限</th><th>状態</th><th></th></tr></thead>
+              <tbody id="payRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- CUSTOMERS -->
+      <section class="view" id="v-cust">
+        <table class="tbl">
+          <thead><tr><th>取引先</th><th>区分</th><th class="r">今月請求</th><th class="r">累計取引</th><th>担当</th></tr></thead>
+          <tbody id="custRows"></tbody>
+        </table>
+      </section>
+
+      <!-- AI BULK -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">納品データから請求書を一括生成</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">今月の納品データ <b>18件</b> から、取引先ごとの請求書をAIが自動で作成します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで一括生成する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">2時間40分</div>
+              <ul>
+                <li>📑 取引先別に納品書を集計</li>
+                <li>⌨️ 請求書に1件ずつ手入力</li>
+                <li>📨 PDF化して個別にメール送信</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 納品データを自動集計</li>
+                <li>📄 取引先別に請求書を一括生成</li>
+                <li>✉️ 送付準備まで自動</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ 生成された請求書</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const CUSTOMERS=[
+  {name:'大分中央クリニック',type:'医療',staff:'佐藤'},
+  {name:'さくら総合病院',type:'医療',staff:'佐藤'},
+  {name:'つくし介護センター',type:'介護',staff:'田中'},
+  {name:'豊後おおいた青果',type:'青果卸',staff:'鈴木'},
+  {name:'都町商店会',type:'小売',staff:'鈴木'},
+  {name:'別府温泉ホテル組合',type:'宿泊',staff:'高橋'},
+  {name:'大分海鮮市場',type:'飲食',staff:'高橋'},
+  {name:'みらい歯科医院',type:'医療',staff:'田中'},
+];
+const ITEMS=[
+  {n:'青果定期便（Lボックス）',p:9800},{n:'業務用野菜セット',p:12000},{n:'AI業務自動化 月額利用料',p:50000},
+  {n:'AI業務自動化 初期設定',p:200000},{n:'介護記録システム 月額',p:38000},{n:'ホームページ保守（月額）',p:15000},
+  {n:'配送サービス（1便）',p:800},{n:'コンサルティング（1時間）',p:15000},{n:'シフト管理システム 月額',p:28000},
+];
+const TODAY=new Date();
+function ym(d){return (d.getMonth()+1)}
+// seed invoices
+let SEED=2025;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+const STATUSES=['paid','paid','sent','overdue','unsent','sent','paid'];
+let invoices=[];
+(function seed(){
+  const subs=['月額 ご請求','定期便 ご請求','初期導入費 ご請求','保守費 ご請求','スポット作業 ご請求'];
+  for(let i=0;i<22;i++){
+    const c=pick(CUSTOMERS);
+    const nItems=1+Math.floor(rnd()*3);
+    const lines=[];let sub=0;
+    for(let j=0;j<nItems;j++){const it=pick(ITEMS);const qty=1+Math.floor(rnd()*3);lines.push({n:it.n,q:qty,p:it.p});sub+=qty*it.p;}
+    const tax=Math.round(sub*0.1);
+    const dM=1+Math.floor(rnd()*5); // month offset back
+    const issue=new Date(TODAY.getFullYear(),TODAY.getMonth()-Math.floor(rnd()*3),1+Math.floor(rnd()*26));
+    const due=new Date(issue.getFullYear(),issue.getMonth()+1,0);
+    let stt=pick(STATUSES);
+    if(stt==='overdue'&&due>TODAY)stt='sent';
+    invoices.push({no:'INV-'+(2026000+i+1),cust:c.name,subject:pick(subs),lines,sub,tax,grand:sub+tax,issue,due,status:stt});
+  }
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+const fmtD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STLABEL={paid:'入金済',sent:'送付済',unsent:'未送付',overdue:'期限超過',draft:'下書き'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]}</span>`;}
+function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','2026年'+ym(TODAY)+'月の請求状況'],list:['請求書一覧','発行した請求書を管理します'],
+  create:['請求書作成','入力するとリアルタイムで請求書が組み上がります'],pay:['入金管理','入金待ち・未収を管理します'],
+  cust:['取引先','取引先ごとの請求状況'],ai:['AI一括生成','納品データから請求書を自動で作ります']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn primary" onclick="go(\'create\')">＋ 新規作成</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI一括生成</button><button class="btn primary" onclick="go(\'create\')">＋ 新規作成</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='pay')renderPay();
+  if(v==='cust')renderCust();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const tm=invoices.filter(i=>thisMonth(i.issue));
+  const tmSum=tm.reduce((s,i)=>s+i.grand,0);
+  const paid=invoices.filter(i=>i.status==='paid').reduce((s,i)=>s+i.grand,0);
+  const unpaid=invoices.filter(i=>i.status!=='paid').reduce((s,i)=>s+i.grand,0);
+  const overdue=invoices.filter(i=>i.status==='overdue').length;
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','今月の請求額',yen(tmSum),tm.length+'件 発行','up','前月比 +12%')}
+    ${kpi('#16b877','入金済',yen(paid),'','up','回収順調')}
+    ${kpi('#e3941f','未収金',yen(unpaid),invoices.filter(i=>i.status!=='paid').length+'件','warn','要フォロー')}
+    ${kpi('#e24a4a','期限超過',overdue+'件',' ',overdue?'down':'up',overdue?'至急対応':'なし')}`;
+  // trend
+  const months=[];for(let k=5;k>=0;k--){const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1);months.push(d);}
+  const sums=months.map(m=>invoices.filter(i=>i.issue.getMonth()===m.getMonth()&&i.issue.getFullYear()===m.getFullYear()).reduce((s,i)=>s+i.grand,0));
+  const mx=Math.max(...sums,1);
+  $('trendBars').innerHTML=months.map((m,i)=>`
+    <div class="bar-row"><span class="mlabel">${m.getMonth()+1}月</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(sums[i]/mx*100)}"></div></div>
+      <span class="mval">${yen(sums[i])}</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // activity
+  const acts=[
+    {i:'💰',c:'#e6f8f0',t:'大分中央クリニック より入金（¥250,000）',m:'2分前'},
+    {i:'📄',c:'#eaf1ff',t:'INV-2026012 を発行しました',m:'1時間前'},
+    {i:'⚡',c:'#e6f8f0',t:'AI一括生成で 8件の請求書を作成（充足率100%）',m:'今日 9:14'},
+    {i:'⚠️',c:'#fdeaea',t:'つくし介護センター の支払期限が近づいています',m:'今日 8:30'},
+    {i:'✉️',c:'#eaf1ff',t:'別府温泉ホテル組合 へ請求書を送付',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${a.t}</div><div class="am">${a.m}</div></div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ LIST ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['paid','入金済'],['sent','送付済'],['unsent','未送付'],['overdue','期限超過']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=invoices.filter(i=>filterStatus==='all'||i.status===filterStatus)
+    .filter(i=>!q||(i.cust+i.subject+i.no).toLowerCase().includes(q))
+    .sort((a,b)=>b.issue-a.issue);
+  $('listRows').innerHTML=rows.length?rows.map(i=>`<tr>
+    <td class="mono" style="font-size:12px">${esc(i.no)}</td><td><b>${esc(i.cust)}</b></td><td style="color:var(--ink-2)">${esc(i.subject)}</td>
+    <td class="r tnum"><b>${yen(i.grand)}</b></td><td style="color:var(--ink-2)">${fmtDL(i.issue).replace('年','/').replace('月','/').replace('日','')}</td>
+    <td style="color:var(--ink-2)">${fmtDL(i.due).replace('年','/').replace('月','/').replace('日','')}</td><td>${stBadge(i.status)}</td></tr>`).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する請求書がありません</td></tr>';
+}
+$('q').addEventListener('input',renderList);
+
+/* ============ PAYMENT ============ */
+function renderPay(){
+  const unpaid=invoices.filter(i=>i.status!=='paid');
+  const sumU=unpaid.reduce((s,i)=>s+i.grand,0);
+  const od=unpaid.filter(i=>i.status==='overdue');
+  $('payKpis').innerHTML=`
+    ${kpi('#e3941f','未収金 合計',yen(sumU),unpaid.length+'件','warn','回収待ち')}
+    ${kpi('#e24a4a','期限超過',od.length+'件',yen(od.reduce((s,i)=>s+i.grand,0)),'down','至急')}
+    ${kpi('#16b877','今月入金済',yen(invoices.filter(i=>i.status==='paid'&&thisMonth(i.issue)).reduce((s,i)=>s+i.grand,0)),'','up','順調')}
+    ${kpi('#2f6df0','回収率',Math.round(invoices.filter(i=>i.status==='paid').length/invoices.length*100)+'<small>%</small>','','up','+5pt')}`;
+  $('payRows').innerHTML=unpaid.sort((a,b)=>a.due-b.due).map(i=>`<tr>
+    <td class="mono" style="font-size:12px">${esc(i.no)}</td><td><b>${esc(i.cust)}</b></td><td class="r tnum"><b>${yen(i.grand)}</b></td>
+    <td style="color:var(--ink-2)">${fmtDL(i.due).replace('年','/').replace('月','/').replace('日','')}</td><td>${stBadge(i.status)}</td>
+    <td class="r"><button class="btn green" style="padding:6px 12px" onclick="markPaid('${esc(i.no)}')">消込</button></td></tr>`).join('')
+    || '<tr><td colspan="6" class="empty-cell">未収はありません 🎉</td></tr>';
+  $('navUnpaid').textContent=unpaid.length;
+}
+window.markPaid=no=>{const i=invoices.find(x=>x.no===no);if(i){i.status='paid';renderPay();showToast(no+' を入金済にしました');}};
+$('autoMatch').addEventListener('click',async()=>{
+  const btn=$('autoMatch');btn.textContent='🔗 照合中…';btn.disabled=true;
+  const unpaid=invoices.filter(i=>i.status!=='paid');
+  await new Promise(r=>setTimeout(r,900));
+  let n=0;unpaid.forEach(i=>{if(rnd()>0.4){i.status='paid';n++;}});
+  btn.textContent='🔗 銀行データで自動消込';btn.disabled=false;
+  renderPay();showToast('銀行データと照合し '+n+'件を自動で消込しました');
+});
+
+/* ============ CUSTOMERS ============ */
+function renderCust(){
+  $('custRows').innerHTML=CUSTOMERS.map(c=>{
+    const inv=invoices.filter(i=>i.cust===c.name);
+    const tm=inv.filter(i=>thisMonth(i.issue)).reduce((s,i)=>s+i.grand,0);
+    const all=inv.reduce((s,i)=>s+i.grand,0);
+    return `<tr><td><b>${c.name}</b></td><td><span class="st sent" style="background:var(--soft);color:var(--ink-2)">${c.type}</span></td>
+      <td class="r tnum">${yen(tm)}</td><td class="r tnum" style="color:var(--ink-2)">${yen(all)}</td><td style="color:var(--ink-2)">${c.staff}</td></tr>`;
+  }).join('');
+}
+
+/* ============ CREATE ============ */
+let cLines=[{n:'',q:1,p:''},{n:'',q:1,p:''}];
+function renderCustSelect(){$('cCust').innerHTML='<option value="">選択してください</option>'+CUSTOMERS.map(c=>`<option>${c.name}</option>`).join('');}
+function renderLines(){
+  $('cLines').innerHTML=cLines.map((l,i)=>`<div class="line-row" data-i="${i}">
+    <input class="ln" list="cItemList" placeholder="品名" value="${(l.n||'').replace(/"/g,'&quot;')}">
+    <input class="lq" type="number" min="0" value="${l.q}">
+    <input class="lp" type="number" min="0" placeholder="0" value="${l.p}">
+    <button class="x">✕</button></div>`).join('');
+  $('cLines').querySelectorAll('.line-row').forEach(row=>{
+    const i=+row.dataset.i;
+    const ln=row.querySelector('.ln'),lq=row.querySelector('.lq'),lp=row.querySelector('.lp');
+    ln.oninput=()=>{cLines[i].n=ln.value;const h=ITEMS.find(x=>x.n===ln.value);if(h&&!cLines[i].p){cLines[i].p=h.p;lp.value=h.p;$('cAiHint').classList.add('show');setTimeout(()=>$('cAiHint').classList.remove('show'),2000);}renderPaper();};
+    lq.oninput=()=>{cLines[i].q=+lq.value||0;renderPaper();};
+    lp.oninput=()=>{cLines[i].p=+lp.value||0;renderPaper();};
+    row.querySelector('.x').onclick=()=>{cLines.splice(i,1);if(!cLines.length)cLines.push({n:'',q:1,p:''});renderLines();renderPaper();};
+  });
+}
+function renderPaper(){
+  $('pCust').textContent=($('cCust').value||'')+(($('cCust').value)?'　御中':'　御中');
+  const valid=cLines.filter(l=>l.n||+l.p>0);
+  $('pRows').innerHTML=valid.length?valid.map(l=>`<tr><td>${esc(l.n)||'（品名）'}</td><td class="r">${+l.q||0}</td><td class="r">${yen(+l.p||0)}</td><td class="r">${yen((+l.q||0)*(+l.p||0))}</td></tr>`).join('')
+    :'<tr><td colspan="4" style="text-align:center;color:#aab2c4;padding:14px">← 明細を入力してください</td></tr>';
+  const sub=valid.reduce((s,l)=>s+(+l.q||0)*(+l.p||0),0);const tax=Math.round(sub*0.1);
+  $('pSub').textContent=yen(sub);$('pTax').textContent=yen(tax);$('pGrand').textContent=yen(sub+tax);$('pGrand2').textContent=yen(sub+tax);
+}
+$('cCust').addEventListener('change',renderPaper);
+$('cSubject').addEventListener('input',renderPaper);
+$('cAdd').addEventListener('click',()=>{cLines.push({n:'',q:1,p:''});renderLines();renderPaper();});
+$('cSample').addEventListener('click',()=>{
+  $('cCust').value='つくし介護センター';$('cSubject').value='5月分 ご請求';
+  cLines=[{n:'介護記録システム 月額',q:1,p:38000},{n:'AI業務自動化 月額利用料',q:1,p:50000}];
+  renderLines();renderPaper();
+});
+$('cIssue').addEventListener('click',async()=>{
+  const valid=cLines.filter(l=>l.n||+l.p>0);
+  if(!$('cCust').value||!valid.length){showToast('取引先と明細を入力してください');return;}
+  const btn=$('cIssue');btn.textContent='⚡ AIが仕上げ中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,800));
+  const now=new Date();const no='INV-'+(2026000+invoices.length+1);
+  $('pNo').textContent=no;$('pDate').textContent=fmtDL(now);
+  const due=new Date(now.getFullYear(),now.getMonth()+2,0);$('pDue').textContent=fmtDL(due);
+  const sub=valid.reduce((s,l)=>s+(+l.q||0)*(+l.p||0),0);const tax=Math.round(sub*0.1);
+  invoices.push({no,cust:$('cCust').value,subject:$('cSubject').value||'ご請求',lines:valid.map(l=>({n:l.n,q:+l.q,p:+l.p})),sub,tax,grand:sub+tax,issue:now,due,status:'sent'});
+  btn.textContent='⚡ AIで仕上げて発行';btn.disabled=false;
+  showToast('請求書 '+no+' を発行しました（一覧に追加）');
+  setTimeout(()=>go('list'),700);
+});
+
+/* ============ AI BULK ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 生成中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,8);},120);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);$('baAfterT').textContent='8秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // generate 6 invoices
+  const targets=CUSTOMERS.slice(0,6);
+  $('genItems').innerHTML=targets.map((c,i)=>{
+    const amt=(30000+Math.floor(rnd()*180000));
+    return `<div class="gen-item" data-i="${i}"><span class="ck">✓</span><b style="flex:1">${c.name}</b><span style="color:var(--ink-3);font-size:12px">${c.type}</span><span class="tnum" style="font-weight:800">${yen(amt)}</span></div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,180));items[i].classList.add('in');
+    const c=targets[i];const amt=30000+Math.floor(rnd()*180000);const tax=Math.round(amt*0.1);const now=new Date();
+    invoices.push({no:'INV-'+(2026000+invoices.length+1),cust:c.name,subject:'納品分 ご請求',lines:[{n:'納品商品一式',q:1,p:amt}],sub:amt,tax,grand:amt+tax,issue:now,due:new Date(now.getFullYear(),now.getMonth()+2,0),status:'sent'});
+  }
+  btn.disabled=false;btn.textContent='⚡ もう一度生成';
+  showToast(items.length+'件の請求書を一括生成しました');
+});
+
+/* ============ INIT ============ */
+document.getElementById('cItemList')||(()=>{const dl=document.createElement('datalist');dl.id='cItemList';dl.innerHTML=ITEMS.map(i=>`<option value="${i.n}">`).join('');document.body.appendChild(dl);})();
+renderCustSelect();renderLines();renderPaper();renderChips();renderDash();
+$('navUnpaid').textContent=invoices.filter(i=>i.status!=='paid').length;
+</script>
+</body>
+</html>
