@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜請求書づくり（実働デモ）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#070b16;--bg-2:#0c1224;--panel:#121a30;--panel-2:#0e1528;
+  --ink:#eef2fb;--ink-2:#aeb8d4;--ink-3:#6b7798;
+  --line:rgba(255,255,255,.08);--line-2:rgba(255,255,255,.14);
+  --gold:#e3b864;--cyan:#4fd1e6;--emerald:#37e29a;--emerald-dk:#16b97b;--rose:#ff6b81;
+  --navy-glow:rgba(79,209,230,.16);
+  /* paper */
+  --paper:#ffffff;--paper-ink:#1a2233;--paper-ink-2:#5a657d;--paper-line:#e2e7f0;--paper-accent:#1d3a6e;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.65;font-feature-settings:"palt" 1;min-height:100vh}
+body::before{content:"";position:fixed;inset:0;z-index:-1;
+  background:radial-gradient(900px 600px at 15% -10%,rgba(79,209,230,.12),transparent 60%),
+  radial-gradient(800px 700px at 95% 0%,rgba(227,184,100,.09),transparent 55%),var(--bg)}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+
+/* header */
+header{display:flex;align-items:center;gap:14px;padding:16px 26px;border-bottom:1px solid var(--line);
+  background:rgba(7,11,22,.7);backdrop-filter:blur(14px);position:sticky;top:0;z-index:50}
+.brand{display:flex;align-items:center;gap:11px;font-weight:900;font-size:15px}
+.brand .logo{width:34px;height:34px;border-radius:9px;background:conic-gradient(from 220deg,var(--cyan),var(--emerald),var(--gold),var(--cyan));
+  display:grid;place-items:center;color:#04101a;font-family:'Orbitron';font-weight:800;font-size:16px;box-shadow:0 0 20px var(--navy-glow)}
+.brand small{display:block;font-size:9px;letter-spacing:.18em;color:var(--ink-3);font-weight:500}
+header .back{margin-left:auto;color:var(--ink-2);text-decoration:none;font-size:13px;padding:8px 14px;border-radius:8px;border:1px solid var(--line-2);transition:all .2s}
+header .back:hover{color:var(--ink);border-color:var(--cyan)}
+
+/* intro strip */
+.intro{text-align:center;padding:26px 20px 6px}
+.intro .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 15px;border-radius:99px;border:1px solid var(--line-2);
+  background:rgba(255,255,255,.03);font-size:11.5px;letter-spacing:.1em;color:var(--cyan);font-weight:700;margin-bottom:14px}
+.intro .pill .dot{width:7px;height:7px;border-radius:50%;background:var(--emerald);box-shadow:0 0 9px var(--emerald);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.intro h1{font-size:clamp(22px,3.6vw,32px);font-weight:900;letter-spacing:-.01em}
+.intro h1 .g{background:linear-gradient(110deg,var(--cyan),var(--emerald) 60%,var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+.intro p{color:var(--ink-2);font-size:14px;margin-top:8px}
+.intro p b{color:var(--ink)}
+
+/* layout */
+.work{max-width:1320px;margin:0 auto;padding:24px 26px 70px;display:grid;grid-template-columns:minmax(360px,440px) 1fr;gap:26px;align-items:start}
+@media(max-width:980px){.work{grid-template-columns:1fr}}
+
+/* form panel */
+.panel{background:linear-gradient(180deg,var(--panel),var(--panel-2));border:1px solid var(--line);border-radius:18px;padding:22px;position:sticky;top:84px}
+@media(max-width:980px){.panel{position:static}}
+.panel h2{font-size:15px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;gap:9px}
+.panel h2 .n{width:24px;height:24px;border-radius:7px;background:rgba(79,209,230,.14);color:var(--cyan);display:grid;place-items:center;font-size:13px;font-weight:800}
+.panel .hint{font-size:12px;color:var(--ink-3);margin-bottom:18px}
+.fg{margin-bottom:15px}
+.fg label{display:block;font-size:12px;color:var(--ink-2);font-weight:700;margin-bottom:6px}
+.fg input,.fg textarea{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line-2);border-radius:9px;
+  padding:11px 13px;color:var(--ink);font-family:inherit;font-size:14px;transition:all .2s}
+.fg input:focus,.fg textarea:focus{outline:none;border-color:var(--cyan);background:rgba(79,209,230,.06)}
+.fg input::placeholder{color:var(--ink-3)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* line items */
+.items-head{display:grid;grid-template-columns:1fr 64px 92px 30px;gap:8px;font-size:11px;color:var(--ink-3);font-weight:700;padding:0 2px 7px}
+.item-row{display:grid;grid-template-columns:1fr 64px 92px 30px;gap:8px;margin-bottom:8px;align-items:center}
+.item-row input{padding:9px 10px;font-size:13px}
+.item-row .del{width:30px;height:30px;border-radius:8px;border:1px solid var(--line-2);background:rgba(255,107,129,.08);
+  color:var(--rose);cursor:pointer;font-size:15px;display:grid;place-items:center;transition:all .2s}
+.item-row .del:hover{background:var(--rose);color:#fff}
+.add-row{width:100%;margin-top:4px;padding:10px;border-radius:9px;border:1px dashed var(--line-2);background:transparent;
+  color:var(--cyan);cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;transition:all .2s}
+.add-row:hover{background:rgba(79,209,230,.06);border-color:var(--cyan)}
+.ai-sug{font-size:11px;color:var(--emerald);margin-top:3px;display:flex;align-items:center;gap:5px;opacity:0;height:0;transition:opacity .3s}
+.ai-sug.show{opacity:1;height:auto;margin-top:5px}
+
+/* buttons */
+.actions{display:flex;flex-direction:column;gap:10px;margin-top:20px;padding-top:18px;border-top:1px solid var(--line)}
+.btn{padding:14px;border-radius:11px;border:0;cursor:pointer;font-family:inherit;font-weight:800;font-size:14.5px;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-ai{background:linear-gradient(135deg,var(--gold),#c69a45);color:#1a1205;box-shadow:0 10px 26px rgba(227,184,100,.28)}
+.btn-ai:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(227,184,100,.4)}
+.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn-sub{background:rgba(255,255,255,.05);border:1px solid var(--line-2);color:var(--ink)}
+.btn-sub:hover{background:rgba(255,255,255,.1)}
+.btn-print{background:linear-gradient(135deg,var(--emerald),var(--emerald-dk));color:#03130c}
+.btn-print:hover{filter:brightness(1.07)}
+
+/* ===== PREVIEW (paper) ===== */
+.preview-wrap{position:relative}
+.preview-bar{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.preview-bar .lbl{font-size:12.5px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:8px}
+.preview-bar .live{font-size:11px;color:var(--emerald);font-weight:700;display:flex;align-items:center;gap:6px}
+.preview-bar .live .dot{width:7px;height:7px;border-radius:50%;background:var(--emerald);box-shadow:0 0 8px var(--emerald);animation:pulse 1.4s infinite}
+
+#paper{background:var(--paper);color:var(--paper-ink);border-radius:8px;padding:46px 46px 40px;
+  box-shadow:0 30px 70px rgba(0,0,0,.5);font-size:13px;line-height:1.7;position:relative;overflow:hidden;
+  transition:opacity .4s}
+#paper.gen{animation:genFlash .8s}
+@keyframes genFlash{0%{opacity:.3;transform:scale(.99)}100%{opacity:1;transform:none}}
+.iv-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:30px}
+.iv-title{font-size:30px;font-weight:900;letter-spacing:.28em;color:var(--paper-accent);border-bottom:3px solid var(--paper-accent);padding-bottom:6px}
+.iv-meta{text-align:right;font-size:12px;color:var(--paper-ink-2)}
+.iv-meta .no{font-family:'Orbitron';font-weight:700;color:var(--paper-ink);font-size:13px}
+.iv-parties{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;gap:30px}
+.iv-to{flex:1}
+.iv-to .cust{font-size:21px;font-weight:900;color:var(--paper-ink);border-bottom:1.5px solid var(--paper-ink);padding-bottom:6px;display:inline-block;min-width:240px}
+.iv-to .lead{font-size:12px;color:var(--paper-ink-2);margin-top:14px}
+.iv-from{text-align:right;font-size:12px;color:var(--paper-ink-2);position:relative;min-width:210px}
+.iv-from .co{font-size:14px;font-weight:800;color:var(--paper-ink);margin-bottom:3px}
+.iv-from .seal{position:absolute;right:-6px;top:-8px;width:52px;height:52px;border:2px solid #c0392b;border-radius:50%;
+  color:#c0392b;display:grid;place-items:center;font-size:9px;font-weight:800;line-height:1.15;transform:rotate(-12deg);opacity:.82}
+.iv-total-box{background:#f3f6fb;border:1px solid var(--paper-line);border-left:5px solid var(--paper-accent);border-radius:6px;
+  padding:14px 20px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center}
+.iv-total-box .t{font-size:13px;font-weight:700;color:var(--paper-ink)}
+.iv-total-box .a{font-family:'Orbitron';font-size:26px;font-weight:800;color:var(--paper-accent)}
+table.iv{width:100%;border-collapse:collapse;margin-bottom:18px}
+table.iv th{background:var(--paper-accent);color:#fff;font-size:11.5px;font-weight:700;padding:9px 12px;text-align:left}
+table.iv th.r,table.iv td.r{text-align:right}
+table.iv th.c,table.iv td.c{text-align:center}
+table.iv td{padding:9px 12px;border-bottom:1px solid var(--paper-line);font-size:12.5px;color:var(--paper-ink)}
+table.iv tr.empty td{color:#aab2c4;text-align:center;padding:18px}
+table.iv td .num{font-variant-numeric:tabular-nums}
+.iv-sums{margin-left:auto;width:260px}
+.iv-sums .row{display:flex;justify-content:space-between;padding:7px 12px;font-size:12.5px;color:var(--paper-ink-2)}
+.iv-sums .row .v{font-variant-numeric:tabular-nums;color:var(--paper-ink);font-weight:600}
+.iv-sums .row.grand{background:var(--paper-accent);color:#fff;border-radius:6px;margin-top:6px;padding:11px 12px}
+.iv-sums .row.grand .l{font-weight:800;font-size:13px}
+.iv-sums .row.grand .v{color:#fff;font-family:'Orbitron';font-weight:800;font-size:16px}
+.iv-foot{margin-top:26px;border-top:1px solid var(--paper-line);padding-top:16px;display:flex;gap:30px;justify-content:space-between}
+.iv-bank{font-size:11.5px;color:var(--paper-ink-2)}
+.iv-bank b{color:var(--paper-ink)}
+.iv-bank .h{font-weight:800;color:var(--paper-ink);margin-bottom:5px;font-size:12px}
+.iv-note{font-size:11px;color:var(--paper-ink-2);max-width:280px}
+.demo-stamp{position:absolute;right:30px;bottom:24px;font-size:10px;color:#c9d0dc;letter-spacing:.1em}
+
+/* AI overlay */
+.ai-overlay{position:absolute;inset:0;background:rgba(8,14,26,.72);backdrop-filter:blur(3px);
+  display:none;align-items:center;justify-content:center;flex-direction:column;gap:18px;border-radius:8px;z-index:10}
+.ai-overlay.on{display:flex;animation:fadeIn .25s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.ai-orb{width:74px;height:74px;border-radius:50%;background:radial-gradient(circle at 35% 30%,var(--cyan),var(--emerald-dk));
+  display:grid;place-items:center;font-size:30px;animation:spin 1s linear infinite,glow 1.2s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 28px 4px rgba(55,226,154,.4)}50%{box-shadow:0 0 46px 12px rgba(79,209,230,.5)}}
+.ai-overlay .txt{color:#fff;font-weight:700;font-size:14px}
+
+/* toast */
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);background:var(--panel);
+  border:1px solid var(--emerald);color:var(--ink);padding:14px 22px;border-radius:12px;font-weight:700;font-size:14px;
+  box-shadow:0 14px 40px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:all .35s;z-index:100;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--emerald);color:#03130c;display:grid;place-items:center;font-weight:900}
+
+/* print */
+@media print{
+  body::before{display:none}
+  header,.intro,.panel,.preview-bar,.demo-stamp,.ai-overlay{display:none!important}
+  body{background:#fff}
+  .work{display:block;padding:0;max-width:none}
+  .preview-wrap{position:static}
+  #paper{box-shadow:none;border-radius:0;padding:14mm;font-size:12px}
+  @page{size:A4;margin:0}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand"><div class="logo">技</div><div>技マシン<small>請求書づくり 実働デモ</small></div></div>
+  <a class="back" href="./">← ショールームに戻る</a>
+</header>
+
+<div class="intro">
+  <div class="pill"><span class="dot"></span>本当に動きます — 入力すると右の請求書がその場で変わります</div>
+  <h1>品名と金額を入れるだけ。<span class="g">請求書が一瞬で完成。</span></h1>
+  <p>下の欄に入力すると、右の請求書が<b>リアルタイムで組み上がります</b>。「PDFで保存」で本物の請求書として印刷できます。</p>
+</div>
+
+<div class="work">
+  <!-- ===== INPUT ===== -->
+  <div class="panel">
+    <h2><span class="n">1</span>請求先</h2>
+    <div class="hint">送る相手の会社名を入れてください</div>
+    <div class="fg"><label>請求先の会社名</label><input id="cust" placeholder="例：株式会社〇〇商店" value=""></div>
+
+    <h2 style="margin-top:6px"><span class="n">2</span>請求する内容</h2>
+    <div class="hint">品名を入れると、AIが相場の単価を提案します</div>
+    <div class="items-head"><div>品名</div><div>数量</div><div>単価(円)</div><div></div></div>
+    <div id="items"></div>
+    <button class="add-row" id="addRow">＋ 明細を追加する</button>
+
+    <h2 style="margin-top:20px"><span class="n">3</span>差出人（自社）</h2>
+    <div class="fg"><label>自社名</label><input id="from" value="株式会社気持ち市場"></div>
+    <div class="two">
+      <div class="fg"><label>消費税率(%)</label><input id="tax" type="number" value="10" min="0" max="20"></div>
+      <div class="fg"><label>支払期限</label><input id="due" placeholder="（自動で翌月末）" value=""></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-ai" id="genBtn">⚡ AIで請求書を仕上げる</button>
+      <div class="btn-row">
+        <button class="btn btn-sub" id="sampleBtn">サンプルを入れる</button>
+        <button class="btn btn-sub" id="resetBtn">最初から</button>
+      </div>
+      <button class="btn btn-print" id="printBtn">📄 PDFで保存・印刷する</button>
+    </div>
+  </div>
+
+  <!-- ===== PREVIEW ===== -->
+  <div class="preview-wrap">
+    <div class="preview-bar">
+      <span class="lbl">📄 請求書プレビュー</span>
+      <span class="live" style="margin-left:auto"><span class="dot"></span>入力に合わせて自動更新</span>
+    </div>
+    <div id="paper">
+      <div class="ai-overlay" id="aiOverlay">
+        <div class="ai-orb">🤖</div>
+        <div class="txt" id="aiTxt">AIが請求書を作成中…</div>
+      </div>
+      <div class="iv-top">
+        <div class="iv-title">請　求　書</div>
+        <div class="iv-meta">
+          <div>請求書番号：<span class="no" id="pvNo">—</span></div>
+          <div>発行日：<span id="pvDate">—</span></div>
+          <div>支払期限：<span id="pvDue">—</span></div>
+        </div>
+      </div>
+      <div class="iv-parties">
+        <div class="iv-to">
+          <div class="cust" id="pvCust">　</div>
+          <div class="lead">下記の通りご請求申し上げます。</div>
+        </div>
+        <div class="iv-from">
+          <div class="seal" id="pvSeal">気持<br>市場</div>
+          <div class="co" id="pvFrom">株式会社気持ち市場</div>
+          <div>〒870-0034 大分県大分市都町</div>
+          <div>TEL: 097-000-0000</div>
+        </div>
+      </div>
+      <div class="iv-total-box">
+        <div class="t">ご請求金額（税込）</div>
+        <div class="a" id="pvGrand">¥0</div>
+      </div>
+      <table class="iv">
+        <thead><tr><th>品名</th><th class="c" style="width:60px">数量</th><th class="r" style="width:100px">単価</th><th class="r" style="width:110px">金額</th></tr></thead>
+        <tbody id="pvRows"></tbody>
+      </table>
+      <div class="iv-sums">
+        <div class="row"><span class="l">小計</span><span class="v" id="pvSub">¥0</span></div>
+        <div class="row"><span class="l" id="pvTaxL">消費税(10%)</span><span class="v" id="pvTax">¥0</span></div>
+        <div class="row grand"><span class="l">合計</span><span class="v" id="pvGrand2">¥0</span></div>
+      </div>
+      <div class="iv-foot">
+        <div class="iv-bank">
+          <div class="h">お振込先</div>
+          <div>大分銀行 都町支店（普通）1234567</div>
+          <div>カ）キモチイチバ</div>
+          <div style="margin-top:6px">※ お振込手数料は御社にてご負担願います。</div>
+        </div>
+        <div class="iv-note">備考：<br><span id="pvNote">本デモは入力内容をその場で請求書化しています。</span></div>
+      </div>
+      <div class="demo-stamp">※ デモ画面（技マシン）— 振込先・住所はサンプルです</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg">請求書を作成しました</span></div>
+
+<!-- datalist for AI item suggestions -->
+<datalist id="itemList"></datalist>
+
+<script>
+/* ---- AI 品目辞書（品名→相場単価） ---- */
+const CATALOG=[
+  {name:'青果配送（1便）',price:800},
+  {name:'野菜定期便（Sボックス）',price:4800},
+  {name:'野菜定期便（Lボックス）',price:9800},
+  {name:'業務用野菜セット',price:12000},
+  {name:'ホームページ制作',price:300000},
+  {name:'ホームページ保守（月額）',price:15000},
+  {name:'AI業務自動化 初期設定',price:200000},
+  {name:'AI業務自動化 月額利用料',price:50000},
+  {name:'シフト管理システム 導入',price:180000},
+  {name:'介護記録システム 月額',price:38000},
+  {name:'コンサルティング（1時間）',price:15000},
+  {name:'デザイン制作（1点）',price:30000},
+  {name:'撮影（半日）',price:50000},
+  {name:'運送・配送（1件）',price:3500},
+];
+const datalist=document.getElementById('itemList');
+datalist.innerHTML=CATALOG.map(c=>`<option value="${c.name}">`).join('');
+
+/* ---- state ---- */
+let items=[];
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+
+function blankRow(){return {name:'',qty:1,price:''};}
+
+function renderItems(){
+  const box=$('items');
+  box.innerHTML=items.map((it,i)=>`
+    <div class="item-row" data-i="${i}">
+      <div>
+        <input class="i-name" list="itemList" placeholder="品名（例：青果配送）" value="${esc(it.name)}">
+        <div class="ai-sug" data-sug="${i}">✨ AI提案：単価を自動入力しました</div>
+      </div>
+      <input class="i-qty" type="number" min="0" value="${it.qty}">
+      <input class="i-price" type="number" min="0" placeholder="0" value="${it.price}">
+      <button class="del" title="削除">✕</button>
+    </div>`).join('');
+  box.querySelectorAll('.item-row').forEach(row=>{
+    const i=+row.dataset.i;
+    const nameEl=row.querySelector('.i-name');
+    const qtyEl=row.querySelector('.i-qty');
+    const priceEl=row.querySelector('.i-price');
+    nameEl.addEventListener('input',()=>{
+      items[i].name=nameEl.value;
+      // AI suggest price
+      const hit=CATALOG.find(c=>c.name===nameEl.value);
+      if(hit && (!items[i].price||items[i].price==='')){
+        items[i].price=hit.price;priceEl.value=hit.price;
+        const sug=row.querySelector('[data-sug]');sug.classList.add('show');
+        setTimeout(()=>sug.classList.remove('show'),2200);
+      }
+      render();
+    });
+    qtyEl.addEventListener('input',()=>{items[i].qty=+qtyEl.value||0;render();});
+    priceEl.addEventListener('input',()=>{items[i].price=+priceEl.value||0;render();});
+    row.querySelector('.del').addEventListener('click',()=>{items.splice(i,1);if(!items.length)items.push(blankRow());renderItems();render();});
+  });
+}
+function esc(s){return String(s).replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+
+/* ---- preview render ---- */
+function render(){
+  const taxRate=(+$('tax').value||0)/100;
+  const cust=$('cust').value.trim();
+  $('pvCust').textContent=cust?cust+'　御中':'　御中';
+  $('pvFrom').textContent=$('from').value.trim()||'　';
+  // seal from company name (first 2 chars-ish)
+  const fn=$('from').value.replace(/株式会社|有限会社|\s/g,'');
+  $('pvSeal').innerHTML=(fn.slice(0,2)||'印')+'<br>'+(fn.slice(2,4)||'　');
+
+  const valid=items.filter(it=>it.name.trim()!=='' || (+it.price>0));
+  const rowsEl=$('pvRows');
+  if(valid.length===0){
+    rowsEl.innerHTML='<tr class="empty"><td colspan="4">← 左で品名と金額を入力してください</td></tr>';
+  }else{
+    rowsEl.innerHTML=valid.map(it=>{
+      const amt=(+it.qty||0)*(+it.price||0);
+      return `<tr><td>${esc(it.name)||'（品名未入力）'}</td><td class="c"><span class="num">${(+it.qty||0)}</span></td><td class="r"><span class="num">${yen(+it.price||0)}</span></td><td class="r"><span class="num">${yen(amt)}</span></td></tr>`;
+    }).join('');
+  }
+  const sub=valid.reduce((s,it)=>s+(+it.qty||0)*(+it.price||0),0);
+  const tax=sub*taxRate;
+  const grand=sub+tax;
+  $('pvSub').textContent=yen(sub);
+  $('pvTaxL').textContent='消費税('+Math.round(taxRate*100)+'%)';
+  $('pvTax').textContent=yen(tax);
+  $('pvGrand').textContent=yen(grand);
+  $('pvGrand2').textContent=yen(grand);
+}
+
+/* ---- dates / number ---- */
+function fmtDate(d){return d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';}
+function setDates(){
+  const now=new Date();
+  $('pvDate').textContent=fmtDate(now);
+  // due = end of next month unless user typed
+  const due=$('due').value.trim();
+  if(due){$('pvDue').textContent=due;}
+  else{const e=new Date(now.getFullYear(),now.getMonth()+2,0);$('pvDue').textContent=fmtDate(e);}
+}
+function genNo(){
+  const now=new Date();
+  const p=n=>String(n).padStart(2,'0');
+  return 'INV-'+now.getFullYear()+p(now.getMonth()+1)+p(now.getDate())+'-'+p(Math.floor((now.getHours()*60+now.getMinutes())%100));
+}
+
+/* ---- AI finalize animation ---- */
+function showToast(msg){$('toastMsg').textContent=msg;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+async function finalize(){
+  const steps=['入力内容を読み取り中…','金額と消費税を計算中…','請求書番号を採番中…','体裁を整えています…'];
+  $('aiOverlay').classList.add('on');
+  for(const s of steps){$('aiTxt').textContent=s;await new Promise(r=>setTimeout(r,420));}
+  $('pvNo').textContent=genNo();
+  setDates();
+  $('aiOverlay').classList.remove('on');
+  const paper=$('paper');paper.classList.remove('gen');void paper.offsetWidth;paper.classList.add('gen');
+  render();
+  showToast('請求書が完成しました！PDFで保存できます');
+}
+
+/* ---- sample ---- */
+function loadSample(){
+  $('cust').value='大分中央クリニック';
+  $('from').value='株式会社気持ち市場';
+  $('tax').value='10';$('due').value='';
+  items=[
+    {name:'AI業務自動化 初期設定',qty:1,price:200000},
+    {name:'AI業務自動化 月額利用料',qty:1,price:50000},
+    {name:'介護記録システム 月額',qty:1,price:38000},
+  ];
+  renderItems();setDates();$('pvNo').textContent=genNo();render();
+}
+function reset(){
+  $('cust').value='';$('from').value='株式会社気持ち市場';$('tax').value='10';$('due').value='';
+  items=[blankRow(),blankRow()];renderItems();$('pvNo').textContent='—';$('pvDate').textContent='—';$('pvDue').textContent='—';render();
+}
+
+/* ---- events ---- */
+$('addRow').addEventListener('click',()=>{items.push(blankRow());renderItems();render();});
+['cust','from','tax','due'].forEach(id=>$(id).addEventListener('input',()=>{render();if(id==='due'||id==='tax')setDates();}));
+$('genBtn').addEventListener('click',finalize);
+$('sampleBtn').addEventListener('click',loadSample);
+$('resetBtn').addEventListener('click',reset);
+$('printBtn').addEventListener('click',()=>{if($('pvNo').textContent==='—'){$('pvNo').textContent=genNo();setDates();}render();window.print();});
+
+/* ---- init ---- */
+items=[blankRow(),blankRow()];
+renderItems();
+setDates();
+render();
+</script>
+</body>
+</html>
