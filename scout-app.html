@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜採用スカウトマシン（AI採用支援システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cf0;--purple-soft:#efeaff;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.nav a .badge.g{background:var(--green)}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:62px 1fr 60px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-fill.g{background:linear-gradient(90deg,var(--green),#3fd99b)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* funnel */
+.funnel{display:flex;flex-direction:column;gap:9px}
+.fn-row{display:flex;align-items:center;gap:11px}
+.fn-bar{height:38px;border-radius:9px;display:flex;align-items:center;padding:0 14px;color:#fff;font-weight:800;font-size:13px;transition:width 1s cubic-bezier(.2,.8,.3,1);white-space:nowrap;overflow:hidden}
+.fn-meta{font-size:12px;color:var(--ink-2);font-weight:600;white-space:nowrap}
+.fn-meta b{color:var(--ink)}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl th.c,table.tbl td.c{text-align:center}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.who{display:flex;align-items:center;gap:10px}
+.who .av{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px}
+.who .nm b{display:block;font-size:13px}
+.who .nm span{display:block;color:var(--ink-3);font-size:11px}
+
+/* match score */
+.match{display:inline-flex;align-items:center;gap:8px}
+.match .ring{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:900;color:#fff}
+.match .num{font-weight:900;font-variant-numeric:tabular-nums}
+
+/* status badge */
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.replied{background:var(--green-soft);color:var(--green)}
+.st.sent{background:var(--brand-soft);color:var(--brand)}
+.st.new{background:var(--purple-soft);color:var(--purple)}
+.st.interview{background:var(--amber-soft);color:var(--amber)}
+.st.declined{background:var(--red-soft);color:var(--red)}
+.st.hired{background:#dff5ec;color:#0e8f5c}
+.tag-pill{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:6px;background:var(--soft);color:var(--ink-2);margin:1px 3px 1px 0}
+
+/* compose form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:84px;line-height:1.65}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.tone-row{display:flex;gap:7px}
+.tone-row .chip{flex:1;text-align:center}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* preview message card */
+.msgcard{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
+.msg-head{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:11px;background:var(--soft)}
+.msg-head .av{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800}
+.msg-head .ti b{font-size:14px}
+.msg-head .ti span{font-size:11.5px;color:var(--ink-3)}
+.msg-subj{padding:13px 18px 6px;font-weight:800;font-size:14.5px}
+.msg-body{padding:4px 18px 18px;font-size:13px;color:#28323f;white-space:pre-wrap;line-height:1.85;min-height:200px}
+.msg-foot{padding:13px 18px;border-top:1px solid var(--line);display:flex;align-items:center;gap:9px}
+.msg-foot .meta{font-size:11px;color:var(--ink-3);margin-left:auto}
+
+/* settings cards */
+.set-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+@media(max-width:860px){.set-grid{grid-template-columns:1fr}}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+
+/* before/after scout text compare */
+.txtcompare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px;display:none}
+.txtcompare.show{display:grid;animation:fade .4s}
+@media(max-width:760px){.txtcompare{grid-template-columns:1fr}}
+.txtbox{border:1px solid var(--line);border-radius:11px;padding:15px 16px;font-size:12.5px;line-height:1.8}
+.txtbox.bad{background:#fafbfd}
+.txtbox.good{background:var(--green-soft);border-color:#bdebd4}
+.txtbox .lbl{font-size:11.5px;font-weight:800;margin-bottom:9px;display:inline-block;padding:4px 10px;border-radius:7px}
+.txtbox.bad .lbl{background:#e7e9ef;color:#6b7280}
+.txtbox.good .lbl{background:#cdeedd;color:var(--green)}
+.txtbox .body{color:#33404f;white-space:pre-wrap}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0;flex-shrink:0}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* condition builder for AI discover */
+.cond{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:14px}
+@media(max-width:640px){.cond{grid-template-columns:1fr}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.section-note{font-size:12px;color:var(--ink-3);margin-bottom:14px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">採用スカウトマシン<small>技マシン｜AI採用支援</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">👥</span>候補者一覧</a>
+      <a data-v="compose"><span class="i">✉️</span>スカウト送信</a>
+      <a data-v="settings"><span class="i">⚙️</span>条件設定</a>
+      <a data-v="analytics"><span class="i">📈</span>反応分析</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="discover"><span class="i">⚡</span>AI人材発見<span class="badge g" id="navNew">0</span></a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 採用担当</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="./">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。候補者・数値はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">採用活動の状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>採用ファネル（今月）</h3><span class="more">スカウト→採用</span></div>
+            <div class="pb"><div class="funnel" id="funnel"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>職種別 返信率</h3><span class="more">過去30日</span></div>
+            <div class="pb"><div class="bars" id="roleBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>曜日別 開封率</h3><span class="more">送信タイミング最適化</span></div>
+            <div class="pb"><div class="bars" id="dowBars"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CANDIDATE LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="候補者名・職種・スキルで検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>候補者</th><th>応募職種</th><th class="c">マッチ度</th><th>主なスキル</th><th>ステータス</th><th></th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- COMPOSE / SEND SCOUT -->
+      <section class="view" id="v-compose">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>送信先の候補者</label>
+              <select id="sCand"></select></div>
+            <div class="fg"><label>募集職種</label>
+              <select id="sRole"></select></div>
+            <div class="fg"><label>文章のトーン（AIが文面を最適化）</label>
+              <div class="tone-row" id="toneRow">
+                <button class="chip on" data-t="丁寧">丁寧</button>
+                <button class="chip" data-t="親しみ">親しみ</button>
+                <button class="chip" data-t="情熱">情熱</button>
+              </div>
+            </div>
+            <div class="fg"><label>強調したい魅力（任意）</label>
+              <input id="sAppeal" placeholder="例：マニュアル不要のシステム、夜勤なし"></div>
+            <div class="aihint" id="sAiHint">✨ AIが候補者の経歴に合わせて文面を生成しました</div>
+            <div class="linkrow" style="margin-top:8px">
+              <button class="btn primary" id="sGen" style="flex:1;justify-content:center">⚡ AIで文面を生成</button>
+              <button class="btn" id="sSample">サンプル</button>
+            </div>
+            <button class="btn green" id="sSend" style="width:100%;justify-content:center;margin-top:9px">✉️ このスカウトを送信</button>
+          </div>
+          <div>
+            <div class="msgcard" id="sCard">
+              <div class="msg-head">
+                <div class="av" id="mAv" style="background:var(--ink-3)">?</div>
+                <div class="ti"><b id="mTo">候補者を選択してください</b><br><span id="mMeta">—</span></div>
+              </div>
+              <div class="msg-subj" id="mSubj">件名：—</div>
+              <div class="msg-body" id="mBody">左の項目を入力し「AIで文面を生成」を押すと、候補者の経歴に合わせたスカウト文面がここに表示されます。</div>
+              <div class="msg-foot">
+                <span class="tag-pill" id="mTone">トーン：丁寧</span>
+                <span class="meta" id="mLen">0 文字</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SETTINGS / CONDITIONS -->
+      <section class="view" id="v-settings">
+        <div class="section-note">募集職種ごとの採用条件を設定します。AI人材発見・スカウト文生成は、ここの条件をもとに動きます。</div>
+        <div class="set-grid" id="roleCards"></div>
+        <div class="panel" style="margin-top:16px">
+          <div class="ph"><h3>スカウト送信の自動ルール</h3></div>
+          <div class="pb">
+            <div class="bars">
+              <div class="bar-row" style="grid-template-columns:1fr auto"><span class="mlabel">マッチ度 85% 以上は自動で下書き作成</span><span class="st replied">ON</span></div>
+              <div class="bar-row" style="grid-template-columns:1fr auto"><span class="mlabel">送信は火・水・木の 8:00 / 19:00 に最適化</span><span class="st replied">ON</span></div>
+              <div class="bar-row" style="grid-template-columns:1fr auto"><span class="mlabel">3日間未開封なら丁寧なフォロー文を自動下書き</span><span class="st replied">ON</span></div>
+              <div class="bar-row" style="grid-template-columns:1fr auto"><span class="mlabel">辞退・既応募の候補者は自動で送信対象から除外</span><span class="st replied">ON</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ANALYTICS -->
+      <section class="view" id="v-analytics">
+        <div class="kpis" id="anKpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>トーン別 返信率</h3><span class="more">A/Bテスト</span></div>
+            <div class="pb"><div class="bars" id="toneBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>反応の内訳</h3></div>
+            <div class="pb"><div class="bars" id="reactBars"></div></div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:16px">
+          <div class="ph"><h3>媒体・経路別の成果</h3></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>経路</th><th class="r">送信数</th><th class="r">開封率</th><th class="r">返信率</th><th class="r">面接化</th></tr></thead>
+              <tbody id="srcRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI DISCOVER -->
+      <section class="view" id="v-discover">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div style="flex:1"><div style="font-size:16px;font-weight:900">条件から、ぴったりの人材をAIが発見</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">登録条件をもとに、人材データベースから候補者を抽出し、スカウト文面まで自動で作成します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで人材を発見</button>
+          </div>
+
+          <div class="cond">
+            <div class="fg" style="margin:0"><label>募集職種</label>
+              <select id="dRole"></select></div>
+            <div class="fg" style="margin:0"><label>勤務地</label>
+              <select id="dArea"><option>大分市内</option><option>大分県内</option><option>リモート可</option></select></div>
+            <div class="fg" style="margin:0"><label>必須スキル・資格</label>
+              <input id="dSkill" value="介護福祉士 / 実務経験3年以上"></div>
+            <div class="fg" style="margin:0"><label>最低マッチ度</label>
+              <select id="dMin"><option>70% 以上</option><option selected>80% 以上</option><option>90% 以上</option></select></div>
+          </div>
+
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">1日 約4時間</div>
+              <ul>
+                <li>🔎 媒体を1人ずつ目視で検索・選別</li>
+                <li>⌨️ スカウト文を1通ずつ手書き</li>
+                <li>📨 送信先を表計算で管理・追跡</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 条件に合う人材を自動で抽出・スコア化</li>
+                <li>📝 一人ひとりに最適化した文面を自動生成</li>
+                <li>📤 送信タイミングまで自動で最適化</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- before/after scout text -->
+          <div class="txtcompare" id="txtCompare">
+            <div class="txtbox bad">
+              <span class="lbl">😓 ありがちなテンプレ文</span>
+              <div class="body">○○様
+
+はじめまして。弊社の求人にご興味はありませんか。経験を活かせる職場です。ぜひ一度ご応募ください。
+ご連絡お待ちしております。</div>
+            </div>
+            <div class="txtbox good">
+              <span class="lbl">⚡ AIが経歴から生成した文</span>
+              <div class="body" id="txtAfter">—</div>
+            </div>
+          </div>
+
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ 発見した候補者（スカウト下書きを自動作成済み）</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const ROLES=[
+  {n:'介護スタッフ（正社員）',cat:'介護',sal:'月給23〜28万円',emp:24,desc:'夜勤あり・資格手当あり。マニュアル不要のシフト管理システム導入済み。'},
+  {n:'看護師（日勤常勤）',cat:'医療',sal:'月給30〜38万円',emp:8,desc:'残業ほぼなし・電子カルテ完備。教育体制充実。'},
+  {n:'医療事務（パート）',cat:'医療',sal:'時給1,050円〜',emp:6,desc:'未経験可・週3日〜OK。レセプト自動化で負担軽減。'},
+  {n:'青果スタッフ（配送・仕分け）',cat:'青果',sal:'月給21〜25万円',emp:12,desc:'地域密着の青果卸。AIで配送ルート最適化済み。'},
+  {n:'ルート営業（食品ルート）',cat:'青果',sal:'月給25〜32万円',emp:5,desc:'病院・施設向け野菜卸の既存ルート。インセンティブあり。'},
+  {n:'ケアマネジャー',cat:'介護',sal:'月給28〜34万円',emp:4,desc:'居宅介護支援。残業少なめ・記録AI入力対応。'},
+];
+const STATUSES=['new','sent','replied','interview','declined','hired'];
+const STLABEL={new:'新規',sent:'送付済',replied:'返信あり',interview:'面接調整',declined:'辞退',hired:'採用'};
+const STSEQ={new:0,sent:1,replied:2,interview:3,hired:4,declined:1};
+const SURNAMES=['佐藤','田中','鈴木','高橋','渡辺','伊藤','山本','中村','小林','加藤','吉田','山田','佐々木','松本','井上','木村','林','清水','工藤','後藤'];
+const GIVEN=['美咲','陽介','彩花','大輔','千尋','拓真','由美','健太','麻衣','翔','奈々','悠斗','里奈','直樹','沙織','亮太','瑞穂','和也','optical','遥'];
+const FEMALE=['美咲','彩花','千尋','由美','麻衣','奈々','里奈','沙織','瑞穂','遥'];
+const SKILLBANK={
+  '介護':['介護福祉士','実務者研修','喀痰吸引','認知症ケア','送迎運転','レク企画','看取り経験'],
+  '医療':['正看護師','准看護師','病棟経験','外来経験','電子カルテ','採血','医療事務2級','レセプト'],
+  '青果':['普通自動車免許','フォークリフト','在庫管理','早朝勤務可','ルート配送','接客経験','légumes目利き'],
+};
+const AREAS=['大分市','別府市','由布市','大分市(中心部)','大分市(郊外)','臼杵市'];
+
+const TODAY=new Date();
+let SEED=7919;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+function pickN(a,n){const c=[...a];const o=[];while(o.length<n&&c.length){o.push(c.splice(Math.floor(rnd()*c.length),1)[0]);}return o;}
+
+/* avatar color from name */
+const AVCOLORS=['#2f6df0','#16b877','#e3941f','#7c5cf0','#0ea5b7','#e24a4a','#d6457f','#3b8f4f'];
+function avColor(s){let h=0;for(const ch of String(s))h=(h*31+ch.charCodeAt(0))&0xffff;return AVCOLORS[h%AVCOLORS.length];}
+
+/* seed candidates */
+let candidates=[];
+(function seed(){
+  for(let i=0;i<26;i++){
+    const sn=pick(SURNAMES);let gn=pick(GIVEN);if(gn==='optical')gn='優子';
+    const name=sn+' '+gn;
+    const role=pick(ROLES);
+    const bank=SKILLBANK[role.cat]||SKILLBANK['介護'];
+    let skills=pickN(bank,2+Math.floor(rnd()*2)).map(s=>s==='légumes目利き'?'野菜の目利き':s);
+    const match=58+Math.floor(rnd()*42); // 58-99
+    let stt=pick(STATUSES);
+    if(match<70&&(stt==='interview'||stt==='hired'))stt='sent';
+    const exp=1+Math.floor(rnd()*18);
+    const area=pick(AREAS);
+    const age=22+Math.floor(rnd()*34);
+    candidates.push({id:'C-'+(1001+i),name,sn,gn,role:role.n,cat:role.cat,skills,match,status:stt,exp,area,age,
+      female:FEMALE.includes(gn)});
+  }
+  candidates.sort((a,b)=>b.match-a.match);
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pct=n=>n+'%';
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function matchColor(m){return m>=85?'var(--green)':m>=72?'var(--brand)':m>=60?'var(--amber)':'var(--ink-3)';}
+function initials(name){const sn=name.split(' ')[0]||name;return sn.slice(0,1);}
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]||s}</span>`;}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','採用活動の状況（今月）'],list:['候補者一覧','スカウト対象の候補者を管理します'],
+  compose:['スカウト送信','AIが候補者ごとに最適な文面を生成します'],settings:['条件設定','募集職種ごとの採用条件を管理します'],
+  analytics:['反応分析','スカウトの開封・返信・面接化を可視化'],discover:['AI人材発見','条件に合う人材をAIが自動で発見します']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn" onclick="go(\'discover\')">⚡ AI人材発見</button><button class="btn primary" onclick="go(\'compose\')">✉️ スカウト送信</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'discover\')">⚡ AI人材発見</button><button class="btn primary" onclick="go(\'compose\')">✉️ スカウト送信</button>'
+    : v==='analytics'?'<button class="btn" onclick="go(\'compose\')">✉️ スカウト送信</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='settings')renderSettings();
+  if(v==='analytics')renderAnalytics();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const total=candidates.length;
+  const sentLike=candidates.filter(c=>c.status!=='new');
+  const replied=candidates.filter(c=>['replied','interview','hired'].includes(c.status));
+  const interview=candidates.filter(c=>['interview','hired'].includes(c.status));
+  const replyRate=sentLike.length?Math.round(replied.length/sentLike.length*100):0;
+  const intvRate=sentLike.length?Math.round(interview.length/sentLike.length*100):0;
+  $('kpis').innerHTML=`
+    ${kpi('#7c5cf0','候補者数',total+'<small>名</small>',candidates.filter(c=>c.status==='new').length+'名 新規','up','+9名 今週')}
+    ${kpi('#2f6df0','返信率',replyRate+'<small>%</small>',replied.length+'名 返信','up','業界平均の約2.3倍')}
+    ${kpi('#e3941f','面接化率',intvRate+'<small>%</small>',interview.length+'名 面接調整','up','+6pt 前月比')}
+    ${kpi('#16b877','削減した作業時間','38<small>時間/月</small>','','up','AIが自動化')}`;
+
+  // funnel
+  const fSent=sentLike.length, fOpen=Math.round(sentLike.length*0.78), fReply=replied.length, fIntv=interview.length, fHire=candidates.filter(c=>c.status==='hired').length;
+  const fdata=[
+    {l:'スカウト送信',v:fSent,c:'var(--purple)'},
+    {l:'開封',v:fOpen,c:'var(--brand)'},
+    {l:'返信',v:fReply,c:'var(--sky)'},
+    {l:'面接調整',v:fIntv,c:'var(--amber)'},
+    {l:'採用',v:fHire,c:'var(--green)'},
+  ];
+  const fmx=Math.max(...fdata.map(d=>d.v),1);
+  $('funnel').innerHTML=fdata.map(d=>`<div class="fn-row">
+    <div class="fn-bar" style="width:0;background:${d.c}" data-w="${Math.max(d.v/fmx*100,12)}">${esc(d.l)}</div>
+    <div class="fn-meta"><b>${d.v}</b>名</div></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#funnel .fn-bar').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+
+  // activity
+  const acts=[
+    {i:'💬',c:'#e6f8f0',t:'佐藤 美咲 さん（介護スタッフ）からスカウトに返信',m:'12分前'},
+    {i:'⚡',c:'#efeaff',t:'AI人材発見で 6名 を抽出・スカウト下書きを自動作成',m:'1時間前'},
+    {i:'📅',c:'#fdf3e2',t:'渡辺 大輔 さんの面接を 6/3(火) 14:00 で調整',m:'今日 9:40'},
+    {i:'✉️',c:'#eaf1ff',t:'看護師ポジションへ 8件のスカウトを一括送信',m:'今日 8:00'},
+    {i:'🎉',c:'#dff5ec',t:'青果スタッフで 1名 の採用が決定',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+
+  // role reply bars
+  const roleStats=ROLES.map(r=>{
+    const cs=candidates.filter(c=>c.role===r.n&&c.status!=='new');
+    const rep=candidates.filter(c=>c.role===r.n&&['replied','interview','hired'].includes(c.status));
+    return {l:r.n.replace(/（.*）/,''),rate:cs.length?Math.round(rep.length/cs.length*100):0};
+  }).filter(s=>s.rate>=0).slice(0,5);
+  const rmx=Math.max(...roleStats.map(s=>s.rate),1);
+  $('roleBars').innerHTML=roleStats.map(s=>`<div class="bar-row" style="grid-template-columns:120px 1fr 48px">
+    <span class="mlabel">${esc(s.l)}</span>
+    <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(s.rate/rmx*100)}"></div></div>
+    <span class="mval">${s.rate}%</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#roleBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),80);
+
+  // day-of-week open rate
+  const dow=[['月',62],['火',81],['水',79],['木',74],['金',58],['土',49],['日',45]];
+  const dmx=Math.max(...dow.map(d=>d[1]));
+  $('dowBars').innerHTML=dow.map(d=>`<div class="bar-row" style="grid-template-columns:36px 1fr 48px">
+    <span class="mlabel">${d[0]}</span>
+    <div class="bar-track"><div class="bar-fill g" style="width:0" data-w="${Math.round(d[1]/dmx*100)}"></div></div>
+    <span class="mval">${d[1]}%</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#dowBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),80);
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ CANDIDATE LIST ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['new','新規'],['sent','送付済'],['replied','返信あり'],['interview','面接調整'],['hired','採用'],['declined','辞退']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${esc(o[1])}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=candidates.filter(c=>filterStatus==='all'||c.status===filterStatus)
+    .filter(c=>!q||(c.name+c.role+c.skills.join('')+c.area).toLowerCase().includes(q));
+  $('listRows').innerHTML=rows.length?rows.map(c=>`<tr onclick="composeFor('${esc(c.id)}')">
+    <td><div class="who"><div class="av" style="background:${avColor(c.name)}">${esc(initials(c.name))}</div>
+      <div class="nm"><b>${esc(c.name)}</b><span>${esc(c.area)}・${c.age}歳・経験${c.exp}年</span></div></div></td>
+    <td>${esc(c.role)}</td>
+    <td class="c"><span class="match"><span class="ring" style="background:${matchColor(c.match)}">${c.match}</span></span></td>
+    <td>${c.skills.map(s=>`<span class="tag-pill">${esc(s)}</span>`).join('')}</td>
+    <td>${stBadge(c.status)}</td>
+    <td class="r"><button class="btn" style="padding:6px 12px" onclick="event.stopPropagation();composeFor('${esc(c.id)}')">✉️ スカウト</button></td></tr>`).join('')
+    :'<tr><td colspan="6" class="empty-cell">該当する候補者がいません</td></tr>';
+}
+$('q').addEventListener('input',renderList);
+window.composeFor=id=>{const c=candidates.find(x=>x.id===id);if(!c)return;go('compose');$('sCand').value=c.id;$('sRole').value=c.role;onComposeChange();showToast(c.name+' さんへのスカウトを準備しました');};
+
+/* ============ SETTINGS ============ */
+function renderSettings(){
+  $('roleCards').innerHTML=ROLES.map(r=>`<div class="formcard">
+    <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px">
+      <span class="tag-pill" style="background:var(--brand-soft);color:var(--brand)">${esc(r.cat)}</span>
+      <b style="font-size:14.5px">${esc(r.n)}</b>
+    </div>
+    <div style="font-size:12.5px;color:var(--ink-2);margin-bottom:10px">${esc(r.desc)}</div>
+    <div class="bars">
+      <div class="bar-row" style="grid-template-columns:80px 1fr"><span class="mlabel">給与</span><span style="font-weight:700">${esc(r.sal)}</span></div>
+      <div class="bar-row" style="grid-template-columns:80px 1fr"><span class="mlabel">候補者</span><span style="font-weight:700">${r.emp}名 マッチ</span></div>
+    </div>
+    <button class="btn primary" style="width:100%;justify-content:center;margin-top:12px" onclick="discoverFor('${esc(r.n)}')">⚡ この条件でAI発見</button>
+  </div>`).join('');
+}
+window.discoverFor=role=>{go('discover');$('dRole').value=role;showToast('「'+role+'」の条件をAI人材発見にセットしました');};
+
+/* ============ ANALYTICS ============ */
+function renderAnalytics(){
+  const sentLike=candidates.filter(c=>c.status!=='new');
+  const replied=candidates.filter(c=>['replied','interview','hired'].includes(c.status));
+  $('anKpis').innerHTML=`
+    ${kpi('#7c5cf0','送信総数',sentLike.length+'<small>通</small>','','up','今月')}
+    ${kpi('#2f6df0','平均開封率','78<small>%</small>','','up','+11pt')}
+    ${kpi('#16b877','平均返信率',(sentLike.length?Math.round(replied.length/sentLike.length*100):0)+'<small>%</small>','','up','好調')}
+    ${kpi('#e3941f','返信までの平均','6.4<small>時間</small>','','up','短縮')}`;
+  // tone A/B
+  const tone=[['情熱トーン',41],['親しみトーン',36],['丁寧トーン',29]];
+  const tmx=Math.max(...tone.map(t=>t[1]));
+  $('toneBars').innerHTML=tone.map(t=>`<div class="bar-row" style="grid-template-columns:110px 1fr 48px">
+    <span class="mlabel">${esc(t[0])}</span>
+    <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(t[1]/tmx*100)}"></div></div>
+    <span class="mval">${t[1]}%</span></div>`).join('');
+  // reaction breakdown
+  const react=[
+    ['返信あり',replied.length,'var(--green)'],
+    ['開封・未返信',Math.max(Math.round(sentLike.length*0.78)-replied.length,0),'var(--brand)'],
+    ['未開封',Math.max(sentLike.length-Math.round(sentLike.length*0.78),0),'var(--ink-3)'],
+    ['辞退',candidates.filter(c=>c.status==='declined').length,'var(--red)'],
+  ];
+  const remx=Math.max(...react.map(r=>r[1]),1);
+  $('reactBars').innerHTML=react.map(r=>`<div class="bar-row" style="grid-template-columns:110px 1fr 48px">
+    <span class="mlabel">${esc(r[0])}</span>
+    <div class="bar-track"><div class="bar-fill" style="width:0;background:${r[2]}" data-w="${Math.round(r[1]/remx*100)}"></div></div>
+    <span class="mval">${r[1]}名</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#v-analytics .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),80);
+  // source rows
+  const src=[
+    ['人材データベース（AI発見）',86,'82%','39%','21%'],
+    ['ハローワーク連携',42,'71%','24%','12%'],
+    ['自社サイト応募',18,'90%','—','33%'],
+    ['紹介・リファラル',7,'100%','—','57%'],
+  ];
+  $('srcRows').innerHTML=src.map(s=>`<tr>
+    <td><b>${esc(s[0])}</b></td><td class="r tnum">${s[1]}</td><td class="r tnum">${esc(s[2])}</td>
+    <td class="r tnum" style="color:var(--green);font-weight:800">${esc(s[3])}</td><td class="r tnum">${esc(s[4])}</td></tr>`).join('');
+}
+
+/* ============ COMPOSE ============ */
+let composeTone='丁寧';
+function renderCandSelect(){
+  $('sCand').innerHTML='<option value="">選択してください</option>'+candidates.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}（${esc(c.role)}・マッチ${c.match}%）</option>`).join('');
+}
+function renderRoleSelects(){
+  const opt=ROLES.map(r=>`<option value="${esc(r.n)}">${esc(r.n)}</option>`).join('');
+  $('sRole').innerHTML=opt;$('dRole').innerHTML=opt;
+}
+$('toneRow').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
+  composeTone=c.dataset.t;$('toneRow').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===c));
+  $('mTone').textContent='トーン：'+composeTone;
+});
+function buildScout(c,role,tone,appeal){
+  const r=ROLES.find(x=>x.n===role)||{};
+  const honor=c.female?'さん':'さん';
+  const skillTxt=c.skills.slice(0,2).join('・');
+  const greet={'丁寧':'突然のご連絡を失礼いたします。','親しみ':'はじめまして、採用担当の高橋です。','情熱':'どうしてもお伝えしたく、ご連絡しました。'}[tone];
+  const close={'丁寧':'ご検討のほど、何卒よろしくお願い申し上げます。','親しみ':'少しでも気になったら、気軽にお返事くださいね。','情熱':'ぜひ一度、あなたの話を聞かせてください。お待ちしています！'}[tone];
+  const appealLine=appeal?`\n当院（社）では「${appeal}」を大切にしています。`:'';
+  const body=`${c.sn} ${c.gn} ${honor}
+
+${greet}
+株式会社気持ち市場 採用担当です。
+
+${c.area}で${c.exp}年のご経験、そして「${skillTxt}」のスキルを拝見し、ぜひ当社の「${role}」のポジションでお力をお借りしたくご連絡しました。${appealLine}
+
+${r.sal?'■ 給与：'+r.sal+'\n':''}${r.desc?'■ 特徴：'+r.desc+'\n':''}
+${close}`;
+  const subj=`【${role}】${c.sn}${honor}のご経験を拝見しご連絡しました`;
+  return {subj,body};
+}
+function onComposeChange(){
+  const c=candidates.find(x=>x.id===$('sCand').value);
+  if(!c){$('mTo').textContent='候補者を選択してください';$('mMeta').textContent='—';$('mAv').textContent='?';$('mAv').style.background='var(--ink-3)';$('mSubj').textContent='件名：—';$('mBody').textContent='左の項目を入力し「AIで文面を生成」を押すと、候補者の経歴に合わせたスカウト文面がここに表示されます。';$('mLen').textContent='0 文字';return;}
+  $('mTo').textContent=c.name+' さん';
+  $('mMeta').textContent=`${c.area}・${c.age}歳・経験${c.exp}年・マッチ${c.match}%`;
+  $('mAv').textContent=initials(c.name);$('mAv').style.background=avColor(c.name);
+}
+$('sCand').addEventListener('change',onComposeChange);
+$('sSample').addEventListener('click',()=>{
+  const c=candidates.find(x=>x.match>=80&&x.cat==='介護')||candidates[0];
+  $('sCand').value=c.id;$('sRole').value=c.role;$('sAppeal').value='マニュアル不要のシステムで現場の負担を軽減';
+  onComposeChange();
+});
+$('sGen').addEventListener('click',async()=>{
+  const c=candidates.find(x=>x.id===$('sCand').value);
+  if(!c){showToast('送信先の候補者を選んでください');return;}
+  const btn=$('sGen');btn.disabled=true;btn.textContent='⚡ AIが文面を生成中…';
+  await new Promise(r=>setTimeout(r,800));
+  const {subj,body}=buildScout(c,$('sRole').value,composeTone,$('sAppeal').value.trim());
+  $('mSubj').textContent='件名：'+subj;
+  $('mBody').textContent=body;
+  $('mLen').textContent=body.length+' 文字';
+  $('mTone').textContent='トーン：'+composeTone;
+  $('sAiHint').classList.add('show');setTimeout(()=>$('sAiHint').classList.remove('show'),2200);
+  btn.disabled=false;btn.textContent='⚡ AIで文面を生成';
+});
+$('sSend').addEventListener('click',()=>{
+  const c=candidates.find(x=>x.id===$('sCand').value);
+  if(!c){showToast('送信先の候補者を選んでください');return;}
+  if($('mBody').textContent.length<60){showToast('先に「AIで文面を生成」を押してください');return;}
+  if(c.status==='new')c.status='sent';
+  showToast(c.name+' さんへスカウトを送信しました');
+  $('navNew').textContent=candidates.filter(x=>x.status==='new').length;
+  setTimeout(()=>go('list'),700);
+});
+
+/* ============ AI DISCOVER ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 探索中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent=Math.min(s,9)+'秒';},120);
+  await new Promise(r=>setTimeout(r,1200));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+
+  const role=$('dRole').value;
+  const minTxt=$('dMin').value;const minMatch=parseInt(minTxt,10)||80;
+
+  // pick matching candidates (existing new + generate fresh)
+  let found=candidates.filter(c=>c.role===role&&c.match>=minMatch&&c.status==='new').slice(0,3);
+  const need=6-found.length;
+  const fresh=[];
+  for(let i=0;i<need;i++){
+    const sn=pick(SURNAMES);let gn=pick(GIVEN);if(gn==='optical')gn='優子';
+    const r=ROLES.find(x=>x.n===role)||ROLES[0];
+    const bank=SKILLBANK[r.cat]||SKILLBANK['介護'];
+    let skills=pickN(bank,2+Math.floor(rnd()*2)).map(s=>s==='légumes目利き'?'野菜の目利き':s);
+    const match=minMatch+Math.floor(rnd()*(100-minMatch));
+    const nc={id:'C-'+(2001+candidates.length+i),name:sn+' '+gn,sn,gn,role:r.n,cat:r.cat,skills,match:Math.min(match,99),
+      status:'new',exp:2+Math.floor(rnd()*16),area:pick(AREAS),age:23+Math.floor(rnd()*32),female:FEMALE.includes(gn)};
+    fresh.push(nc);candidates.push(nc);
+  }
+  const targets=[...found,...fresh].sort((a,b)=>b.match-a.match);
+
+  // before/after sample scout text from top candidate
+  const top=targets[0];
+  if(top){const {body}=buildScout(top,role,'親しみ','');$('txtAfter').textContent=body;}
+  $('txtCompare').classList.add('show');
+
+  $('genItems').innerHTML=targets.map((c,i)=>`<div class="gen-item" data-i="${i}">
+    <span class="ck">✓</span>
+    <div class="av" style="width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:12px;background:${avColor(c.name)};flex-shrink:0">${esc(initials(c.name))}</div>
+    <b style="flex:1">${esc(c.name)}</b>
+    <span class="tag-pill">${esc(c.skills[0]||'')}</span>
+    <span style="color:var(--ink-3);font-size:12px">経験${c.exp}年</span>
+    <span class="ring" style="width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:900;color:#fff;background:${matchColor(c.match)}">${c.match}</span>
+  </div>`).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,170));items[i].classList.add('in');}
+
+  $('navNew').textContent=candidates.filter(c=>c.status==='new').length;
+  renderCandSelect();
+  btn.disabled=false;btn.textContent='⚡ もう一度発見';
+  showToast(targets.length+'名を発見し、スカウト下書きを自動作成しました');
+});
+
+/* ============ INIT ============ */
+renderCandSelect();renderRoleSelects();renderChips();renderDash();onComposeChange();
+$('navNew').textContent=candidates.filter(c=>c.status==='new').length;
+</script>
+</body>
+</html>

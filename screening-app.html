@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜応募選考マシン（採用選考システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cf0;--purple-soft:#efeaff;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.nav a .badge.g{background:var(--green)}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn.sm{padding:6px 12px;font-size:12px}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:64px 1fr 60px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* funnel */
+.funnel{display:flex;flex-direction:column;gap:9px}
+.fn-row{display:flex;align-items:center;gap:11px;font-size:12.5px}
+.fn-bar{flex:1;height:34px;border-radius:9px;display:flex;align-items:center;padding:0 12px;color:#fff;font-weight:800;font-size:13px;
+  transition:width 1s cubic-bezier(.2,.8,.3,1);overflow:hidden;white-space:nowrap}
+.fn-row .fn-pct{width:54px;text-align:right;font-weight:700;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.fn-row .fn-lab{width:80px;color:var(--ink-2);font-weight:600}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl th.c,table.tbl td.c{text-align:center}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.pass{background:var(--green-soft);color:var(--green)}
+.st.screen{background:var(--brand-soft);color:var(--brand)}
+.st.interview{background:var(--purple-soft);color:var(--purple)}
+.st.new{background:var(--soft);color:var(--ink-3)}
+.st.reject{background:var(--red-soft);color:var(--red)}
+.st.offer{background:var(--amber-soft);color:var(--amber)}
+
+/* score chip */
+.scorechip{display:inline-flex;align-items:center;gap:7px;font-weight:800;font-variant-numeric:tabular-nums}
+.scorebar{width:46px;height:6px;border-radius:99px;background:var(--soft);overflow:hidden}
+.scorebar i{display:block;height:100%;border-radius:99px}
+.av-ini{width:30px;height:30px;border-radius:8px;display:inline-grid;place-items:center;color:#fff;font-weight:800;font-size:12px;flex-shrink:0}
+
+/* avatar row */
+.who{display:flex;align-items:center;gap:10px}
+.who .nm{font-weight:700}.who .age{font-size:11px;color:var(--ink-3)}
+
+/* create / form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:120px;line-height:1.7}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.fg .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* candidate sheet (preview) */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:26px 28px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.sheet-top{display:flex;align-items:center;gap:14px;border-bottom:2px solid var(--brand-dk);padding-bottom:14px;margin-bottom:16px}
+.sheet-top .big-av{width:54px;height:54px;border-radius:12px;display:grid;place-items:center;color:#fff;font-weight:900;font-size:22px}
+.sheet-top .nm{font-size:19px;font-weight:900}
+.sheet-top .meta{font-size:11.5px;color:var(--ink-2)}
+.sheet-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;margin-bottom:16px}
+.sf{font-size:12px}
+.sf .k{color:var(--ink-3);font-weight:700;font-size:10.5px;letter-spacing:.04em;margin-bottom:2px}
+.sf .v{font-weight:700}
+.sheet-sec{font-size:12.5px;font-weight:800;color:var(--brand-dk);border-left:4px solid var(--brand-dk);padding-left:9px;margin:16px 0 9px}
+.match-list{display:flex;flex-direction:column;gap:7px}
+.match-row{display:flex;align-items:center;gap:9px;font-size:12px}
+.match-row .ck{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:900;color:#fff;flex-shrink:0}
+.match-row .ck.ok{background:var(--green)}.match-row .ck.ng{background:var(--ink-3)}
+.scorebox{background:var(--soft);border-left:5px solid var(--brand-dk);border-radius:6px;padding:13px 18px;margin:8px 0 4px;display:flex;justify-content:space-between;align-items:center}
+.scorebox .a{font-family:'Orbitron';font-size:26px;font-weight:700;color:var(--brand-dk)}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag-s{background:var(--brand-soft);color:var(--brand-dk);font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px}
+
+/* interview board (kanban) */
+.kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+@media(max-width:980px){.kanban{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.kanban{grid-template-columns:1fr}}
+.kcol{background:var(--soft);border:1px solid var(--line);border-radius:13px;padding:12px;min-height:120px}
+.kcol .kh{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:800;margin-bottom:11px;padding:0 2px}
+.kcol .kh .cnt{margin-left:auto;background:var(--card);border:1px solid var(--line-2);color:var(--ink-2);font-size:11px;font-weight:800;padding:1px 8px;border-radius:99px}
+.kcard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:11px;margin-bottom:9px;box-shadow:var(--shadow);cursor:pointer;transition:all .15s}
+.kcard:hover{border-color:var(--brand);transform:translateY(-1px)}
+.kcard .knm{font-weight:800;font-size:13px;display:flex;align-items:center;gap:8px}
+.kcard .kjob{font-size:11px;color:var(--ink-3);margin:3px 0 7px}
+.kcard .kfoot{display:flex;align-items:center;gap:8px;font-size:11px}
+
+/* evaluation */
+.eval-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:860px){.eval-grid{grid-template-columns:1fr}}
+.evalcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.eval-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line)}
+.eval-row:last-child{border-bottom:0}
+.eval-row .el{font-size:13px;font-weight:700}
+.eval-row .ed{font-size:11px;color:var(--ink-3)}
+.stars{display:flex;gap:3px}
+.star{font-size:20px;cursor:pointer;color:var(--line-2);transition:color .12s;user-select:none}
+.star.on{color:var(--amber)}
+.gauge{position:relative;width:150px;height:150px;margin:0 auto}
+.gauge svg{transform:rotate(-90deg)}
+.gauge .gtxt{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.gauge .gtxt .gn{font-family:'Orbitron';font-size:34px;font-weight:700;line-height:1}
+.gauge .gtxt .gl{font-size:11px;color:var(--ink-3);font-weight:700}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900}
+.gen-item .gsc{margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* invite preview */
+.invite{background:#fff;border:1px solid var(--line);border-radius:10px;padding:20px 22px;font-size:13px;line-height:1.85;color:#1a2233;box-shadow:var(--shadow);white-space:pre-wrap;display:none}
+.invite.show{display:block;animation:fade .4s}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.muted{color:var(--ink-2)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">応募選考マシン<small>技マシン｜採用選考</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">🧑‍💼</span>応募一覧<span class="badge" id="navNew">0</span></a>
+      <a data-v="screen"><span class="i">📄</span>書類選考</a>
+      <a data-v="interview"><span class="i">🗓️</span>面接管理</a>
+      <a data-v="eval"><span class="i">⭐</span>評価</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI自動採点<span class="badge g">NEW</span></a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 採用担当</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="./">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。応募者・スコアはサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">2026年5月の採用選考状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>選考ファネル（応募〜内定）</h3><span class="more">今月</span></div>
+            <div class="pb"><div class="funnel" id="funnel"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>職種別の応募数</h3><span class="more">今月</span></div>
+            <div class="pb"><div class="bars" id="jobBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>AI採点スコアの分布</h3></div>
+            <div class="pb"><div class="bars" id="scoreBars"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="応募者名・職種で検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>応募者</th><th>応募職種</th><th class="c">AI採点</th><th>応募日</th><th>状態</th><th class="r"></th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- SCREENING -->
+      <section class="view" id="v-screen">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>応募者を選ぶ</label><select id="sCand"></select></div>
+            <div class="fg"><label>応募職種</label><select id="sJob"></select></div>
+            <div class="fg"><label>履歴書・職務経歴（貼り付け）</label>
+              <textarea id="sResume" placeholder="ここに履歴書テキストを貼り付けてください…"></textarea>
+              <div class="aihint" id="sHint">✨ AIが履歴書を読み取り、項目を自動で構造化しました</div>
+            </div>
+            <div class="linkrow" style="margin-top:4px">
+              <button class="btn primary" id="sParse" style="flex:1;justify-content:center">⚡ AIで読み取り＆採点</button>
+              <button class="btn" id="sSample">サンプル</button>
+            </div>
+          </div>
+          <div>
+            <div class="paper" id="sSheet">
+              <div class="sheet-top">
+                <div class="big-av" id="shAv" style="background:#cfd6e4">？</div>
+                <div><div class="nm" id="shName">応募者を選んでください</div>
+                <div class="meta" id="shMeta">履歴書を読み取ると、ここに整理されたプロフィールが表示されます</div></div>
+              </div>
+              <div class="sheet-grid" id="shGrid"></div>
+              <div class="sheet-sec">📋 募集条件とのマッチ</div>
+              <div class="match-list" id="shMatch"><div class="muted" style="font-size:12px">— 未採点 —</div></div>
+              <div class="sheet-sec">🤖 AI採点スコア</div>
+              <div class="scorebox"><span style="font-weight:700">総合適性スコア</span><span class="a" id="shScore">—</span></div>
+              <div style="font-size:11.5px;color:var(--ink-2);margin-top:8px" id="shComment">履歴書を読み取ると、AIが募集条件との合致度を採点します。</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- INTERVIEW -->
+      <section class="view" id="v-interview">
+        <div class="toolbar">
+          <div style="font-size:13px;color:var(--ink-2);font-weight:600">カードをクリックすると次の選考ステップへ進みます（デモ）</div>
+          <button class="btn" id="ivReset" style="margin-left:auto">↺ 並びをリセット</button>
+        </div>
+        <div class="kanban" id="kanban"></div>
+      </section>
+
+      <!-- EVALUATION -->
+      <section class="view" id="v-eval">
+        <div class="eval-grid">
+          <div class="evalcard">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+              <div class="big-av" id="evAv" style="width:46px;height:46px;border-radius:11px;background:#2f6df0">？</div>
+              <div><div style="font-size:16px;font-weight:900" id="evName">—</div>
+              <div style="font-size:12px;color:var(--ink-3)" id="evJob">—</div></div>
+              <select id="evSel" style="margin-left:auto;padding:8px 10px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13px"></select>
+            </div>
+            <div style="font-size:12px;color:var(--ink-2);margin:10px 0 4px;font-weight:700">面接官の評価（星で入力）</div>
+            <div id="evalRows"></div>
+            <div class="fg" style="margin-top:14px"><label>所見・コメント</label>
+              <textarea id="evComment" style="min-height:80px" placeholder="面接での所見を入力…"></textarea></div>
+            <button class="btn primary" id="evSave" style="width:100%;justify-content:center">評価を保存する</button>
+          </div>
+          <div class="evalcard" style="display:flex;flex-direction:column;align-items:center;justify-content:flex-start">
+            <div style="font-size:13px;font-weight:800;margin-bottom:14px;align-self:flex-start">総合評価</div>
+            <div class="gauge">
+              <svg width="150" height="150" viewBox="0 0 150 150">
+                <circle cx="75" cy="75" r="62" fill="none" stroke="#eef1f7" stroke-width="14"></circle>
+                <circle id="gaugeArc" cx="75" cy="75" r="62" fill="none" stroke="#2f6df0" stroke-width="14" stroke-linecap="round"
+                  stroke-dasharray="389.5" stroke-dashoffset="389.5" style="transition:stroke-dashoffset .8s,stroke .3s"></circle>
+              </svg>
+              <div class="gtxt"><div><div class="gn" id="gaugeNum">0</div><div class="gl">/ 100</div></div></div>
+            </div>
+            <div id="evJudge" style="margin-top:18px;font-size:14px;font-weight:800">—</div>
+            <div style="margin-top:18px;width:100%;border-top:1px solid var(--line);padding-top:14px">
+              <div style="font-size:12px;font-weight:800;margin-bottom:10px">AIの参考意見</div>
+              <div id="evAi" style="font-size:12.5px;color:var(--ink-2);line-height:1.8">面接官の評価を入力すると、AIが採用判断の参考意見を表示します。</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI AUTO SCORE -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">履歴書を読み取り、募集条件で自動採点</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">未処理の応募 <b id="aiCnt">8</b>件 の履歴書を、AIが構造化→条件マッチ→採点→面接案内まで一気に処理します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで一括採点する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">1時間50分</div>
+              <ul>
+                <li>📑 履歴書を1枚ずつ目視で確認</li>
+                <li>✍️ 募集条件と照らして手で評価</li>
+                <li>📨 通過者へ面接案内を個別作成・送信</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 履歴書を自動で項目に構造化</li>
+                <li>📊 募集条件と照合してスコアリング</li>
+                <li>✉️ 通過者への面接案内文まで自動生成</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ AI採点の結果（スコア順）</div>
+            <div id="genItems"></div>
+            <div class="invite" id="invite"></div>
+            <div id="genFoot" style="display:none;margin-top:14px;text-align:right">
+              <button class="btn" onclick="go('list')">応募一覧で確認する →</button>
+              <button class="btn primary" id="aiInvite">通過者へ面接案内を送信（デモ）</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const TODAY=new Date(2026,4,30); // 2026-05-30
+const JOBS=[
+  '介護スタッフ（つくし介護センター）',
+  '看護助手（大分中央クリニック）',
+  '青果仕分けスタッフ（豊後おおいた青果）',
+  '配送ドライバー（気持ち市場）',
+  '医療事務（みらい歯科医院）',
+  'ケアマネージャー（さくら総合病院）',
+];
+const JOB_REQ={
+  // 募集条件（マッチ判定用キーワード）
+  '介護スタッフ（つくし介護センター）':['介護経験','介護初任者研修以上','夜勤可','普通自動車免許'],
+  '看護助手（大分中央クリニック）':['医療・介護経験','体力に自信','土日勤務可','コミュニケーション'],
+  '青果仕分けスタッフ（豊後おおいた青果）':['早朝勤務可','立ち作業','倉庫・物流経験','普通自動車免許'],
+  '配送ドライバー（気持ち市場）':['普通自動車免許','配送経験','地理に明るい','早朝勤務可'],
+  '医療事務（みらい歯科医院）':['PC基本操作','受付・接客経験','医療事務資格','土曜勤務可'],
+  'ケアマネージャー（さくら総合病院）':['介護支援専門員','介護経験5年以上','PC基本操作','普通自動車免許'],
+};
+const AV_COLORS=['#2f6df0','#16b877','#e3941f','#7c5cf0','#0ea5b7','#e24a4a','#e0568f'];
+
+let SEED=4242;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+function ini(name){return name.replace(/\s.*/,'').slice(0,1);}
+
+const LAST=['佐藤','田中','鈴木','高橋','渡辺','伊藤','山本','中村','小林','加藤','吉田','後藤','川宿田','池永','野田'];
+const FIRST_M=['健太','大輔','翔','拓也','直樹','亮','和也','誠','涼介','悠斗'];
+const FIRST_F=['美咲','彩花','由香','奈々','千尋','志保','陽子','麻衣','咲良','百合'];
+const SKILLS=['介護経験','介護初任者研修','介護福祉士','介護支援専門員','夜勤可','普通自動車免許','医療事務資格','PC基本操作','受付・接客経験','配送経験','倉庫・物流経験','早朝勤務可','土日勤務可','体力に自信','コミュニケーション','地理に明るい','立ち作業'];
+
+const STATUS_FLOW=['new','screen','interview','offer'];
+const STLABEL={new:'新規応募',screen:'書類選考中',interview:'面接調整',pass:'書類通過',offer:'内定',reject:'不採用'};
+
+let candidates=[];
+(function seed(){
+  for(let i=0;i<24;i++){
+    const female=rnd()>0.5;
+    const name=pick(LAST)+' '+(female?pick(FIRST_F):pick(FIRST_M));
+    const age=22+Math.floor(rnd()*38);
+    const job=pick(JOBS);
+    // pick 2-5 skills, biased to include some requirements
+    const req=JOB_REQ[job];
+    const skills=[];
+    req.forEach(r=>{ if(rnd()>0.45){ const m=SKILLS.find(s=>r.includes(s)||s.includes(r.replace(/以上|可|（.*）/g,'').slice(0,4))); skills.push(m||r); } });
+    while(skills.length<2+Math.floor(rnd()*3)){const s=pick(SKILLS);if(!skills.includes(s))skills.push(s);}
+    // score from match
+    const matched=req.filter(r=>skills.some(s=>r.includes(s)||s.includes(r.replace(/以上|可|（.*）/g,'').slice(0,3)))).length;
+    let score=Math.round(40+matched/req.length*45+rnd()*15);
+    score=Math.max(38,Math.min(98,score));
+    const exp=Math.floor(rnd()*16);
+    const daysAgo=Math.floor(rnd()*26);
+    const applied=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-daysAgo);
+    let status=pick(['new','new','screen','screen','interview','pass','offer','reject']);
+    if(score>=80&&status==='reject')status='interview';
+    if(score<50&&(status==='offer'))status='screen';
+    candidates.push({id:i+1,name,age,female,job,skills,score,exp,applied,status,
+      addr:pick(['大分市都町','大分市中央町','大分市東大道','別府市北浜','由布市挾間町','大分市光吉','大分市横塚']),
+      eval:null,evalComment:''});
+  }
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const fmtDL=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtDLL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]||s}</span>`;}
+function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function scoreColor(s){return s>=80?'var(--green)':s>=60?'var(--brand)':s>=45?'var(--amber)':'var(--red)';}
+function avColor(id){return AV_COLORS[id%AV_COLORS.length];}
+function scoreChip(c){return `<span class="scorechip"><span class="scorebar"><i style="width:${c.score}%;background:${scoreColor(c.score)}"></i></span><span style="color:${scoreColor(c.score)}">${c.score}</span></span>`;}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','2026年'+(TODAY.getMonth()+1)+'月の採用選考状況'],list:['応募一覧','応募者を一覧で管理します'],
+  screen:['書類選考','履歴書を読み取り、募集条件で採点します'],interview:['面接管理','選考ステップごとに応募者を管理します'],
+  eval:['評価','面接の評価を入力・集計します'],ai:['AI自動採点','履歴書から自動で採点・面接案内まで作ります']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn" onclick="go(\'ai\')">⚡ AI自動採点</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI自動採点</button><button class="btn primary" onclick="go(\'list\')">🧑‍💼 応募一覧</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='interview')renderKanban();
+  if(v==='eval')renderEval();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const tm=candidates.filter(c=>thisMonth(c.applied));
+  const total=tm.length;
+  const passing=candidates.filter(c=>['screen','interview','pass','offer'].includes(c.status)).length;
+  const passRate=Math.round(candidates.filter(c=>['interview','pass','offer'].includes(c.status)).length/candidates.length*100);
+  const ivCnt=candidates.filter(c=>c.status==='interview').length;
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','今月の応募数',total+'<small>件</small>','全'+candidates.length+'件','up','前月比 +18%')}
+    ${kpi('#16b877','選考通過率',passRate+'<small>%</small>','','up','+6pt')}
+    ${kpi('#7c5cf0','面接設定',ivCnt+'<small>件</small>','調整中','warn','要日程調整')}
+    ${kpi('#e3941f','平均処理時間','8<small>秒</small>','1件あたり','up','手作業比 -99%')}`;
+  // funnel
+  const stages=[
+    {l:'応募',k:['new','screen','interview','pass','offer','reject'],c:'#2f6df0'},
+    {l:'書類選考',k:['screen','interview','pass','offer'],c:'#0ea5b7'},
+    {l:'面接',k:['interview','pass','offer'],c:'#7c5cf0'},
+    {l:'内定',k:['offer'],c:'#16b877'},
+  ];
+  const base=candidates.length;
+  $('funnel').innerHTML=stages.map(s=>{
+    const n=candidates.filter(c=>s.k.includes(c.status)).length;
+    const pct=Math.round(n/base*100);
+    return `<div class="fn-row"><span class="fn-lab">${s.l}</span>
+      <div class="fn-bar" style="width:0;background:${s.c}" data-w="${Math.max(pct,18)}">${n}名</div>
+      <span class="fn-pct">${pct}%</span></div>`;
+  }).join('');
+  setTimeout(()=>document.querySelectorAll('#funnel .fn-bar').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // job bars
+  const byJob=JOBS.map(j=>({j,n:candidates.filter(c=>c.job===j).length}));
+  const mxJob=Math.max(...byJob.map(x=>x.n),1);
+  $('jobBars').innerHTML=byJob.map(x=>`<div class="bar-row"><span class="mlabel">${esc(x.j.replace(/（.*/,''))}</span>
+    <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(x.n/mxJob*100)}"></div></div>
+    <span class="mval">${x.n}名</span></div>`).join('');
+  // score distribution
+  const buckets=[['80〜100点',c=>c.score>=80,'var(--green)'],['60〜79点',c=>c.score>=60&&c.score<80,'var(--brand)'],['45〜59点',c=>c.score>=45&&c.score<60,'var(--amber)'],['44点以下',c=>c.score<45,'var(--red)']];
+  const mxB=Math.max(...buckets.map(b=>candidates.filter(b[1]).length),1);
+  $('scoreBars').innerHTML=buckets.map(b=>{const n=candidates.filter(b[1]).length;
+    return `<div class="bar-row"><span class="mlabel">${b[0]}</span>
+    <div class="bar-track"><div class="bar-fill" style="width:0;background:${b[2]}" data-w="${Math.round(n/mxB*100)}"></div></div>
+    <span class="mval">${n}名</span></div>`;}).join('');
+  setTimeout(()=>document.querySelectorAll('#jobBars .bar-fill,#scoreBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),80);
+  // activity
+  const acts=[
+    {i:'⚡',c:'#e6f8f0',t:'AI自動採点で 8件の履歴書を採点（平均72点）',m:'5分前'},
+    {i:'⭐',c:'#fdf3e2',t:'佐藤 美咲 さんの一次面接 評価を保存',m:'1時間前'},
+    {i:'✉️',c:'#eaf1ff',t:'高橋 健太 さんへ面接案内を送付',m:'今日 10:20'},
+    {i:'📄',c:'#efeaff',t:'青果仕分けスタッフ に新規応募が3件',m:'今日 9:05'},
+    {i:'✅',c:'#e6f8f0',t:'田中 由香 さんを内定に変更',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${a.m}</div></div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ LIST ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['new','新規応募'],['screen','書類選考中'],['interview','面接調整'],['pass','書類通過'],['offer','内定'],['reject','不採用']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=candidates.filter(c=>filterStatus==='all'||c.status===filterStatus)
+    .filter(c=>!q||(c.name+c.job).toLowerCase().includes(q))
+    .sort((a,b)=>b.score-a.score);
+  $('listRows').innerHTML=rows.length?rows.map(c=>`<tr onclick="openScreen(${c.id})">
+    <td><div class="who"><span class="av-ini" style="background:${avColor(c.id)}">${esc(ini(c.name))}</span>
+      <div><div class="nm">${esc(c.name)}</div><div class="age">${c.age}歳・経験${c.exp}年</div></div></div></td>
+    <td class="muted">${esc(c.job.replace(/（.*/,''))}</td>
+    <td class="c">${scoreChip(c)}</td>
+    <td class="muted">${fmtDL(c.applied)}</td>
+    <td>${stBadge(c.status)}</td>
+    <td class="r"><button class="btn sm" onclick="event.stopPropagation();openScreen(${c.id})">詳細</button></td></tr>`).join('')
+    :'<tr><td colspan="6" class="empty-cell">該当する応募者がいません</td></tr>';
+  $('navNew').textContent=candidates.filter(c=>c.status==='new').length;
+}
+$('q').addEventListener('input',renderList);
+window.openScreen=id=>{const c=candidates.find(x=>x.id===id);if(!c)return;go('screen');$('sCand').value=String(id);loadCandidateSheet(c,true);};
+
+/* ============ SCREENING ============ */
+function fillScreenSelects(){
+  $('sCand').innerHTML='<option value="">応募者を選択…</option>'+candidates.map(c=>`<option value="${c.id}">${esc(c.name)}（${esc(c.job.replace(/（.*/,''))}）</option>`).join('');
+  $('sJob').innerHTML=JOBS.map(j=>`<option>${esc(j)}</option>`).join('');
+}
+const SAMPLE_RESUME=`氏名：佐藤 美咲（28歳）
+住所：大分市都町
+職務経歴：
+・特別養護老人ホームにて介護スタッフとして4年勤務
+・夜勤を含むシフト勤務に対応
+・介護初任者研修 修了、普通自動車免許 保有
+志望動機：地域の高齢者を支える仕事に長く携わりたいです。`;
+function loadCandidateSheet(c,structured){
+  if(!c)return;
+  $('shAv').textContent=ini(c.name);$('shAv').style.background=avColor(c.id);
+  $('shName').textContent=c.name;
+  $('shMeta').textContent=`${c.age}歳 ・ ${c.female?'女性':'男性'} ・ ${c.addr} ・ 経験${c.exp}年`;
+  $('shGrid').innerHTML=[
+    ['応募職種',c.job.replace(/（.*/,'')],['希望勤務地',c.addr],
+    ['実務経験',c.exp+'年'],['応募日',fmtDLL(c.applied)],
+  ].map(x=>`<div class="sf"><div class="k">${x[0]}</div><div class="v">${esc(x[1])}</div></div>`).join('');
+  $('sJob').value=c.job;
+  if(structured){
+    scoreCandidate(c,false);
+  }
+}
+function scoreCandidate(c,toast){
+  const job=$('sJob').value;const req=JOB_REQ[job]||[];
+  const matched=req.map(r=>({r,ok:c.skills.some(s=>r.includes(s)||s.includes(r.replace(/以上|可|（.*）/g,'').slice(0,3)))}));
+  $('shMatch').innerHTML=matched.map(m=>`<div class="match-row"><span class="ck ${m.ok?'ok':'ng'}">${m.ok?'✓':'×'}</span><span>${esc(m.r)}</span></div>`).join('')
+    +`<div style="margin-top:10px"><div class="k" style="font-size:10.5px;color:var(--ink-3);font-weight:700;margin-bottom:5px">読み取ったスキル・資格</div><div class="tags">${c.skills.map(s=>`<span class="tag-s">${esc(s)}</span>`).join('')}</div></div>`;
+  const okN=matched.filter(m=>m.ok).length;
+  const sc=Math.max(38,Math.min(98,Math.round(40+okN/Math.max(req.length,1)*45+(c.exp/16)*15)));
+  c.score=sc;
+  $('shScore').textContent=sc+'点';$('shScore').style.color=scoreColor(sc);
+  const verdict=sc>=80?'募集条件をよく満たしています。面接を強くおすすめします。':sc>=60?'概ね条件を満たしています。面接で詳細を確認しましょう。':sc>=45?'一部条件が不足しています。要検討です。':'募集条件との合致度が低めです。';
+  $('shComment').textContent=`条件${req.length}項目中 ${okN}項目に合致。${verdict}`;
+  if(toast)showToast(c.name+' を採点しました（'+sc+'点）');
+}
+$('sCand').addEventListener('change',()=>{const c=candidates.find(x=>x.id===+$('sCand').value);if(c){$('sResume').value='';loadCandidateSheet(c,false);
+  $('shMatch').innerHTML='<div class="muted" style="font-size:12px">履歴書を貼り付けて「AIで読み取り＆採点」を押してください</div>';
+  $('shScore').textContent='—';$('shScore').style.color='var(--brand-dk)';$('shComment').textContent='履歴書を読み取ると、AIが募集条件との合致度を採点します。';}});
+$('sJob').addEventListener('change',()=>{const c=candidates.find(x=>x.id===+$('sCand').value);if(c&&$('shScore').textContent!=='—')scoreCandidate(c,false);});
+$('sSample').addEventListener('click',()=>{
+  const c=candidates.find(x=>x.name.indexOf('美咲')>=0)||candidates[0];
+  $('sCand').value=String(c.id);$('sResume').value=SAMPLE_RESUME;loadCandidateSheet(c,false);
+  $('shMatch').innerHTML='<div class="muted" style="font-size:12px">「AIで読み取り＆採点」を押してください</div>';
+  $('shScore').textContent='—';showToast('サンプルの履歴書を読み込みました');
+});
+$('sParse').addEventListener('click',async()=>{
+  const c=candidates.find(x=>x.id===+$('sCand').value);
+  if(!c){showToast('応募者を選んでください');return;}
+  if(!$('sResume').value.trim()){showToast('履歴書テキストを貼り付けてください');return;}
+  const btn=$('sParse');btn.textContent='⚡ AIが読み取り中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,800));
+  $('sHint').classList.add('show');setTimeout(()=>$('sHint').classList.remove('show'),2200);
+  loadCandidateSheet(c,false);scoreCandidate(c,true);
+  btn.textContent='⚡ AIで読み取り＆採点';btn.disabled=false;
+});
+
+/* ============ INTERVIEW KANBAN ============ */
+const KCOLS=[['new','新規応募','#2f6df0'],['screen','書類選考中','#0ea5b7'],['interview','面接調整','#7c5cf0'],['offer','内定','#16b877']];
+function renderKanban(){
+  $('kanban').innerHTML=KCOLS.map(col=>{
+    const list=candidates.filter(c=>c.status===col[0]).sort((a,b)=>b.score-a.score);
+    return `<div class="kcol"><div class="kh"><span style="color:${col[2]}">●</span>${col[1]}<span class="cnt">${list.length}</span></div>
+      ${list.map(c=>`<div class="kcard" onclick="advance(${c.id})">
+        <div class="knm"><span class="av-ini" style="background:${avColor(c.id)};width:24px;height:24px;font-size:11px">${esc(ini(c.name))}</span>${esc(c.name)}</div>
+        <div class="kjob">${esc(c.job.replace(/（.*/,''))}・${c.age}歳</div>
+        <div class="kfoot">${scoreChip(c)}<span style="margin-left:auto;color:var(--ink-3)">${fmtDL(c.applied)}</span></div></div>`).join('')||'<div style="font-size:11.5px;color:var(--ink-3);text-align:center;padding:14px 0">なし</div>'}
+      </div>`;
+  }).join('');
+}
+window.advance=id=>{
+  const c=candidates.find(x=>x.id===id);if(!c)return;
+  const cur=['new','screen','interview','offer'].indexOf(c.status);
+  if(cur<0){showToast(c.name+' はこの列では進められません');return;}
+  if(cur>=3){showToast(c.name+' は既に内定です 🎉');return;}
+  c.status=['new','screen','interview','offer'][cur+1];
+  renderKanban();showToast(c.name+' を「'+STLABEL[c.status]+'」に進めました');
+  $('navNew').textContent=candidates.filter(x=>x.status==='new').length;
+};
+$('ivReset').addEventListener('click',()=>{seedReset();renderKanban();showToast('選考ステップをリセットしました');});
+let _initialStatus=candidates.map(c=>c.status);
+function seedReset(){candidates.forEach((c,i)=>c.status=_initialStatus[i]);}
+
+/* ============ EVALUATION ============ */
+const EVAL_AXES=[['意欲・志望度','長く働く意欲が感じられるか'],['経験・スキル','業務に必要な経験があるか'],['人柄・協調性','チームに馴染めそうか'],['コミュニケーション','利用者・患者対応に問題ないか'],['勤務条件の一致','シフト・勤務地が合うか']];
+let evalTarget=null;let evalScores=[0,0,0,0,0];
+function fillEvalSelect(){
+  const cands=candidates.filter(c=>['interview','pass','offer'].includes(c.status));
+  $('evSel').innerHTML=cands.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  if(cands.length){loadEval(cands[0].id);}
+}
+function loadEval(id){
+  const c=candidates.find(x=>x.id===id);if(!c)return;evalTarget=c;
+  $('evSel').value=String(id);
+  $('evName').textContent=c.name;$('evJob').textContent=c.job.replace(/（.*/,'')+' ・ '+c.age+'歳 ・ 経験'+c.exp+'年';
+  $('evAv').textContent=ini(c.name);$('evAv').style.background=avColor(c.id);
+  evalScores=c.eval?c.eval.slice():[Math.min(5,Math.round(c.score/20)),Math.min(5,Math.round(c.exp/3.2)),3,3,3];
+  $('evComment').value=c.evalComment||'';
+  renderEvalRows();computeEval();
+}
+function renderEval(){fillEvalSelect();}
+function renderEvalRows(){
+  $('evalRows').innerHTML=EVAL_AXES.map((ax,ai)=>`<div class="eval-row">
+    <div><div class="el">${ax[0]}</div><div class="ed">${ax[1]}</div></div>
+    <div class="stars" data-ax="${ai}">${[1,2,3,4,5].map(n=>`<span class="star ${n<=evalScores[ai]?'on':''}" data-n="${n}">★</span>`).join('')}</div></div>`).join('');
+  $('evalRows').querySelectorAll('.stars').forEach(row=>{
+    const ax=+row.dataset.ax;
+    row.querySelectorAll('.star').forEach(st=>st.onclick=()=>{evalScores[ax]=+st.dataset.n;renderEvalRows();computeEval();});
+  });
+}
+function computeEval(){
+  const sum=evalScores.reduce((a,b)=>a+b,0);const total=Math.round(sum/25*100);
+  const C=2*Math.PI*62;
+  $('gaugeArc').style.strokeDashoffset=String(C*(1-total/100));
+  $('gaugeArc').style.stroke=scoreColor(total);
+  $('gaugeNum').textContent=total;
+  const judge=total>=80?'🟢 採用推奨':total>=60?'🟡 要検討':'🔴 見送り';
+  $('evJudge').textContent=judge;$('evJudge').style.color=scoreColor(total);
+  const lowest=EVAL_AXES[evalScores.indexOf(Math.min(...evalScores))][0];
+  const highest=EVAL_AXES[evalScores.indexOf(Math.max(...evalScores))][0];
+  $('evAi').textContent=total>=80
+    ?`総合${total}点。特に「${highest}」が高評価です。即戦力として採用をおすすめします。`
+    :total>=60
+    ?`総合${total}点。「${highest}」は良好ですが「${lowest}」に懸念があります。二次面接で確認すると安心です。`
+    :`総合${total}点。「${lowest}」を中心に条件との差があります。他候補との比較を推奨します。`;
+}
+$('evSel').addEventListener('change',()=>loadEval(+$('evSel').value));
+$('evSave').addEventListener('click',()=>{
+  if(!evalTarget){showToast('対象がいません');return;}
+  evalTarget.eval=evalScores.slice();evalTarget.evalComment=$('evComment').value;
+  showToast(evalTarget.name+' の評価を保存しました');
+});
+
+/* ============ AI AUTO SCORE ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 採点中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  $('genList').classList.remove('show');$('genFoot').style.display='none';$('invite').classList.remove('show');
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,8);},120);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);$('baAfterT').textContent='8秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // pick 8 "unprocessed" (new) candidates, else lowest scored
+  let targets=candidates.filter(c=>c.status==='new').slice(0,8);
+  if(targets.length<8)targets=targets.concat(candidates.filter(c=>c.status!=='new').slice(0,8-targets.length));
+  targets.sort((a,b)=>b.score-a.score);
+  $('genItems').innerHTML=targets.map((c,i)=>`<div class="gen-item" data-i="${i}">
+    <span class="ck">✓</span><span class="av-ini" style="background:${avColor(c.id)};width:24px;height:24px;font-size:11px">${esc(ini(c.name))}</span>
+    <b style="flex:1">${esc(c.name)}</b><span style="color:var(--ink-3);font-size:11.5px">${esc(c.job.replace(/（.*/,''))}</span>
+    <span class="gsc" style="color:${scoreColor(c.score)}">${c.score}点</span>
+    <span style="width:62px;text-align:right">${stBadge(c.score>=65?'pass':c.score>=45?'screen':'reject')}</span></div>`).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,150));items[i].classList.add('in');
+    const c=targets[i];if(c.status==='new')c.status=c.score>=65?'screen':c.score>=45?'screen':'reject';
+  }
+  $('genFoot').style.display='block';
+  btn.disabled=false;btn.textContent='⚡ もう一度採点';
+  $('navNew').textContent=candidates.filter(c=>c.status==='new').length;
+  showToast(items.length+'件の履歴書をAIが採点しました');
+  window._aiTargets=targets;
+});
+$('aiInvite').addEventListener('click',()=>{
+  const targets=window._aiTargets||[];
+  const pass=targets.filter(c=>c.score>=65);
+  if(!pass.length){showToast('書類通過者がいません');return;}
+  const top=pass[0];
+  const inv=`${top.name} 様
+
+この度は株式会社気持ち市場「${top.job}」へご応募いただき、誠にありがとうございます。
+書類選考の結果、ぜひ一度お会いしてお話を伺いたく、面接のご案内を差し上げます。
+
+■ 面接候補日
+　・6月3日(火) 10:00〜　／　6月4日(水) 14:00〜　／　6月6日(金) 10:00〜
+■ 場所：大分市都町（弊社オフィス）／ オンライン面接も可能です
+■ 所要時間：約30分
+
+ご都合のよい日時を本メールへの返信にてお知らせください。
+当日お会いできますことを、社員一同楽しみにしております。
+
+株式会社気持ち市場 採用担当`;
+  $('invite').textContent=inv;$('invite').classList.add('show');
+  pass.forEach(c=>{if(c.status==='screen')c.status='interview';});
+  showToast('通過者 '+pass.length+'名へ面接案内を作成しました（デモ）');
+});
+
+/* ============ INIT ============ */
+fillScreenSelects();renderChips();renderDash();
+$('navNew').textContent=candidates.filter(c=>c.status==='new').length;
+</script>
+</body>
+</html>

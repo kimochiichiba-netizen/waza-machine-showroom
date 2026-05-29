@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜在庫アラートマシン（在庫管理システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.nav a .badge.amber{background:var(--amber)}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn.amber{background:var(--amber);border-color:var(--amber);color:#fff}
+.btn.amber:hover{filter:brightness(1.06);color:#fff}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:88px 1fr 64px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-fill.amber{background:linear-gradient(90deg,var(--amber),#f4b54a)}
+.bar-fill.red{background:linear-gradient(90deg,var(--red),#f07b7b)}
+.bar-fill.green{background:linear-gradient(90deg,var(--green),#46d49a)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl th.c,table.tbl td.c{text-align:center}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.ok{background:var(--green-soft);color:var(--green)}
+.st.reorder{background:var(--amber-soft);color:var(--amber)}
+.st.out{background:var(--red-soft);color:var(--red)}
+.st.over{background:var(--brand-soft);color:var(--brand)}
+.st.plain{background:var(--soft);color:var(--ink-2)}
+
+/* po status */
+.st.po-draft{background:var(--amber-soft);color:var(--amber)}
+.st.po-sent{background:var(--brand-soft);color:var(--brand)}
+.st.po-received{background:var(--green-soft);color:var(--green)}
+
+/* stock bar inline */
+.sbar{width:120px;height:8px;border-radius:99px;background:var(--soft);overflow:hidden;display:inline-block;vertical-align:middle}
+.sbar i{display:block;height:100%;border-radius:99px}
+
+/* create / order form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,400px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--brand)}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* paper / PO preview */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:34px 36px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.pv-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px}
+.pv-title{font-size:25px;font-weight:900;letter-spacing:.26em;color:var(--brand-dk);border-bottom:3px solid var(--brand-dk);padding-bottom:5px}
+.pv-meta{text-align:right;font-size:11.5px;color:var(--ink-2)}
+.pv-meta .no{font-family:'Orbitron';color:var(--ink);font-weight:700}
+.pv-cust{font-size:19px;font-weight:900;border-bottom:1.5px solid #1a2233;display:inline-block;min-width:220px;padding-bottom:5px;margin-bottom:8px}
+.pv-total{background:var(--soft);border-left:5px solid var(--brand-dk);border-radius:6px;padding:13px 18px;margin:18px 0;display:flex;justify-content:space-between;align-items:center}
+.pv-total .a{font-family:'Orbitron';font-size:23px;font-weight:700;color:var(--brand-dk)}
+table.pv{width:100%;border-collapse:collapse;margin-bottom:14px}
+table.pv th{background:var(--brand-dk);color:#fff;font-size:11px;padding:8px 11px;text-align:left}
+table.pv th.r,table.pv td.r{text-align:right}
+table.pv td{padding:8px 11px;border-bottom:1px solid var(--line);font-size:12px}
+.pv-sums{margin-left:auto;width:240px}
+.pv-sums .r{display:flex;justify-content:space-between;padding:6px 10px;font-size:12px;color:var(--ink-2)}
+.pv-sums .r.g{background:var(--brand-dk);color:#fff;border-radius:6px;margin-top:5px;padding:9px 10px;font-weight:800}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* alert cards */
+.alert-list{display:flex;flex-direction:column;gap:11px}
+.alert-card{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--amber);border-radius:12px;padding:15px 18px;box-shadow:var(--shadow);display:flex;align-items:center;gap:14px}
+.alert-card.crit{border-left-color:var(--red)}
+.alert-card .aic{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;font-size:20px;flex-shrink:0;background:var(--amber-soft)}
+.alert-card.crit .aic{background:var(--red-soft)}
+.alert-card .at{font-weight:800;font-size:14px}
+.alert-card .am{font-size:12px;color:var(--ink-2);margin-top:2px}
+.alert-card .aa{margin-left:auto;display:flex;gap:8px;flex-shrink:0}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.donut{width:130px;height:130px;border-radius:50%;display:grid;place-items:center;margin:0 auto}
+.donut .inner{width:92px;height:92px;border-radius:50%;background:var(--card);display:grid;place-items:center;text-align:center}
+.donut .inner b{font-size:24px;font-weight:900;line-height:1}
+.donut .inner span{font-size:10.5px;color:var(--ink-3);font-weight:700}
+.legend{display:flex;flex-direction:column;gap:8px;font-size:12.5px;margin-top:6px}
+.legend .lg{display:flex;align-items:center;gap:8px}
+.legend .lg .sw{width:11px;height:11px;border-radius:3px}
+.legend .lg b{margin-left:auto;font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">在庫アラートマシン<small>技マシン｜在庫管理</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="stock"><span class="i">📦</span>在庫一覧</a>
+      <a data-v="po"><span class="i">📝</span>発注管理</a>
+      <a data-v="alert"><span class="i">🔔</span>アラート<span class="badge" id="navAlert">0</span></a>
+      <a data-v="supplier"><span class="i">🏭</span>仕入先</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI自動発注</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="./">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。数値・商品はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">在庫の状況をひと目で確認</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>発注点に近い商品 TOP6</h3><span class="more" onclick="go('stock')">在庫一覧へ</span></div>
+            <div class="pb"><div class="bars" id="lowBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>在庫状態の内訳</h3></div>
+            <div class="pb" style="display:flex;align-items:center;gap:18px">
+              <div class="donut" id="donut"></div>
+              <div class="legend" id="legend" style="flex:1"></div>
+            </div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:16px">
+          <div class="ph"><h3>最近のアクティビティ</h3></div>
+          <div class="pb"><div class="acts" id="acts"></div></div>
+        </div>
+      </section>
+
+      <!-- STOCK LIST -->
+      <section class="view" id="v-stock">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="商品名・カテゴリ・仕入先で検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>商品名</th><th>カテゴリ</th><th class="r">在庫数</th><th class="r">発注点</th><th>在庫水準</th><th>状態</th><th class="c">操作</th></tr></thead>
+          <tbody id="stockRows"></tbody>
+        </table>
+      </section>
+
+      <!-- PURCHASE ORDERS -->
+      <section class="view" id="v-po">
+        <div class="create-grid">
+          <div class="formcard">
+            <div style="font-size:14px;font-weight:800;margin-bottom:13px">📝 発注書を作成</div>
+            <div class="fg"><label>仕入先</label>
+              <select id="oSupplier"></select></div>
+            <div class="fg"><label>商品</label>
+              <select id="oItem"></select></div>
+            <div class="fg"><label>発注数量</label><input id="oQty" type="number" min="1" value="0"></div>
+            <div class="aihint" id="oAiHint">✨ AIが発注点と消費ペースから推奨数量を自動入力しました</div>
+            <div class="linkrow" style="margin-top:16px">
+              <button class="btn primary" id="oCreate" style="flex:1;justify-content:center">⚡ AIで仕上げて発注書発行</button>
+              <button class="btn" id="oSample">推奨補充</button>
+            </div>
+          </div>
+          <div>
+            <div class="paper" id="oPaper">
+              <div class="pv-top">
+                <div class="pv-title">発　注　書</div>
+                <div class="pv-meta"><div>番号：<span class="no" id="poNo">—</span></div><div>発注日：<span id="poDate">—</span></div><div>納品希望：<span id="poDue">—</span></div></div>
+              </div>
+              <div><span class="pv-cust" id="poSup">　御中</span></div>
+              <div style="font-size:11.5px;color:var(--ink-2)">下記の通り発注いたします。</div>
+              <div class="pv-total"><span style="font-weight:700">発注金額（税込）</span><span class="a" id="poGrand">¥0</span></div>
+              <table class="pv"><thead><tr><th>品名</th><th class="r" style="width:50px">数量</th><th class="r" style="width:90px">単価</th><th class="r" style="width:100px">金額</th></tr></thead><tbody id="poRows"></tbody></table>
+              <div class="pv-sums">
+                <div class="r"><span>小計</span><span id="poSub">¥0</span></div>
+                <div class="r"><span>消費税(10%)</span><span id="poTax">¥0</span></div>
+                <div class="r g"><span>合計</span><span id="poGrand2">¥0</span></div>
+              </div>
+              <div style="margin-top:18px;font-size:11px;color:var(--ink-2);border-top:1px solid var(--line);padding-top:12px">
+                発注元：株式会社気持ち市場（大分市都町）／ 担当：購買部 ／ ※納期はご相談ください。
+              </div>
+            </div>
+            <div class="panel" style="margin-top:16px">
+              <div class="ph"><h3>発注履歴</h3><span class="more" id="poCount"></span></div>
+              <div class="pb" style="padding:0">
+                <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+                  <thead><tr><th>発注番号</th><th>仕入先</th><th>商品</th><th class="r">数量</th><th class="r">金額</th><th>状態</th></tr></thead>
+                  <tbody id="poHistory"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ALERTS -->
+      <section class="view" id="v-alert">
+        <div class="kpis" id="alertKpis"></div>
+        <div class="toolbar" style="margin-top:4px">
+          <div style="font-size:14px;font-weight:800">対応が必要なアラート</div>
+          <button class="btn green" id="resolveAll" style="margin-left:auto">⚡ 全件まとめて発注書を作成</button>
+        </div>
+        <div class="alert-list" id="alertList"></div>
+      </section>
+
+      <!-- SUPPLIERS -->
+      <section class="view" id="v-supplier">
+        <table class="tbl">
+          <thead><tr><th>仕入先</th><th>区分</th><th>取扱品目</th><th class="r">納品リードタイム</th><th class="r">今月発注額</th><th>担当</th></tr></thead>
+          <tbody id="supplierRows"></tbody>
+        </table>
+      </section>
+
+      <!-- AI AUTO ORDER -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">在庫を監視して発注書を自動作成</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">発注点を割り込んだ商品 <b id="aiCount">0件</b> を検知。仕入先ごとにまとめてAIが発注書の下書きを作ります。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで自動発注する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">1時間50分</div>
+              <ul>
+                <li>👀 全商品の在庫を目視でチェック</li>
+                <li>🧮 発注点と消費ペースから数量を計算</li>
+                <li>📝 仕入先ごとに発注書を手入力・FAX送信</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 在庫を24時間自動監視</li>
+                <li>📊 発注点割れを検知して数量を自動計算</li>
+                <li>📄 仕入先別に発注書を一括下書き</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ 作成された発注書（下書き）</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const SUPPLIERS=[
+  {name:'豊後おおいた青果市場',type:'青果卸',lead:1,staff:'鈴木'},
+  {name:'大分中央食品卸',type:'食品卸',lead:2,staff:'田中'},
+  {name:'九州フレッシュファーム',type:'生産者直送',lead:2,staff:'鈴木'},
+  {name:'メディカル資材おおいた',type:'医療資材',lead:3,staff:'佐藤'},
+  {name:'別府日用品サプライ',type:'日用品卸',lead:2,staff:'高橋'},
+  {name:'大分パッケージ商会',type:'資材・梱包',lead:4,staff:'高橋'},
+];
+/* item: name, cat, stock, reorder(発注点), max(適正上限), unit(単価), supplier */
+const ITEMS=[
+  {n:'トマト（大分産・1箱）',cat:'青果',stock:48,reorder:30,max:120,unit:1200,sup:'豊後おおいた青果市場'},
+  {n:'きゅうり（1ケース）',cat:'青果',stock:12,reorder:25,max:90,unit:900,sup:'豊後おおいた青果市場'},
+  {n:'大分白ねぎ（1束）',cat:'青果',stock:0,reorder:40,max:150,unit:180,sup:'九州フレッシュファーム'},
+  {n:'シャインマスカット（1房）',cat:'青果',stock:8,reorder:20,max:60,unit:1800,sup:'九州フレッシュファーム'},
+  {n:'じゃがいも（10kg袋）',cat:'青果',stock:64,reorder:30,max:100,unit:1600,sup:'豊後おおいた青果市場'},
+  {n:'にんじん（5kg袋）',cat:'青果',stock:18,reorder:25,max:80,unit:1100,sup:'九州フレッシュファーム'},
+  {n:'レタス（1ケース）',cat:'青果',stock:5,reorder:20,max:70,unit:850,sup:'豊後おおいた青果市場'},
+  {n:'カット野菜ミックス（業務用1kg）',cat:'加工食品',stock:22,reorder:30,max:120,unit:680,sup:'大分中央食品卸'},
+  {n:'冷凍うどん（5食入）',cat:'加工食品',stock:140,reorder:60,max:300,unit:420,sup:'大分中央食品卸'},
+  {n:'介護用とろみ調整食品（1kg）',cat:'介護食',stock:9,reorder:15,max:50,unit:2400,sup:'メディカル資材おおいた'},
+  {n:'濃厚流動食（200ml×24本）',cat:'介護食',stock:6,reorder:20,max:80,unit:3600,sup:'メディカル資材おおいた'},
+  {n:'使い捨て手袋（ニトリル・100枚）',cat:'医療資材',stock:14,reorder:40,max:200,unit:780,sup:'メディカル資材おおいた'},
+  {n:'アルコール消毒液（5L）',cat:'医療資材',stock:0,reorder:12,max:48,unit:2200,sup:'メディカル資材おおいた'},
+  {n:'紙おむつ（大人用Lサイズ・1袋）',cat:'介護用品',stock:33,reorder:30,max:120,unit:1400,sup:'別府日用品サプライ'},
+  {n:'清拭タオル（業務用100枚）',cat:'介護用品',stock:7,reorder:15,max:60,unit:980,sup:'別府日用品サプライ'},
+  {n:'弁当容器（仕切付・500個）',cat:'資材',stock:210,reorder:80,max:500,unit:3500,sup:'大分パッケージ商会'},
+  {n:'保冷袋（Lサイズ・100枚）',cat:'資材',stock:16,reorder:30,max:120,unit:1200,sup:'大分パッケージ商会'},
+  {n:'割り箸（業務用1000膳）',cat:'資材',stock:95,reorder:40,max:200,unit:1500,sup:'別府日用品サプライ'},
+];
+const TODAY=new Date();
+let SEED=2026;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+/* purchase order history (seed) */
+let pos=[];
+(function seedPo(){
+  const base=[
+    {sup:'豊後おおいた青果市場',item:'トマト（大分産・1箱）',qty:60,unit:1200,st:'po-received'},
+    {sup:'大分中央食品卸',item:'冷凍うどん（5食入）',qty:120,unit:420,st:'po-received'},
+    {sup:'メディカル資材おおいた',item:'使い捨て手袋（ニトリル・100枚）',qty:80,unit:780,st:'po-sent'},
+    {sup:'別府日用品サプライ',item:'紙おむつ（大人用Lサイズ・1袋）',qty:50,unit:1400,st:'po-received'},
+    {sup:'九州フレッシュファーム',item:'にんじん（5kg袋）',qty:40,unit:1100,st:'po-sent'},
+  ];
+  base.forEach((b,i)=>{
+    const sub=b.qty*b.unit;const tax=Math.round(sub*0.1);
+    pos.push({no:'PO-'+(2026100+i+1),sup:b.sup,item:b.item,qty:b.qty,unit:b.unit,sub,tax,grand:sub+tax,status:b.st,date:new Date(TODAY.getFullYear(),TODAY.getMonth(),3+i*4)});
+  });
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+const fmtS=d=>(d.getFullYear())+'/'+(d.getMonth()+1)+'/'+d.getDate();
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* 在庫状態判定 */
+function stateOf(it){
+  if(it.stock<=0)return 'out';
+  if(it.stock<it.reorder)return 'reorder';
+  if(it.stock>it.max)return 'over';
+  return 'ok';
+}
+const STLABEL={ok:'適正',reorder:'要発注',out:'欠品',over:'過剰'};
+function stBadge(s){return '<span class="st '+s+'">'+STLABEL[s]+'</span>';}
+const POLABEL={'po-draft':'下書き','po-sent':'発注済','po-received':'納品済'};
+function poBadge(s){return '<span class="st '+s+'">'+POLABEL[s]+'</span>';}
+/* 推奨発注数：適正上限まで補充（最低でも発注点を超える） */
+function recommendQty(it){const q=Math.max(it.max-it.stock,it.reorder-it.stock+10);return Math.max(q,1);}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function barColor(it){const s=stateOf(it);return s==='out'?'red':s==='reorder'?'amber':s==='over'?'':'green';}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','在庫の状況をひと目で確認'],stock:['在庫一覧','全商品の在庫を管理します'],
+  po:['発注管理','発注書の作成・発注履歴'],alert:['アラート','発注点割れ・欠品の通知'],
+  supplier:['仕入先','仕入先ごとの取引状況'],ai:['AI自動発注','在庫を監視して発注書を自動作成']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='stock'?'<button class="btn primary" onclick="go(\'po\')">＋ 発注書を作成</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI自動発注</button><button class="btn primary" onclick="go(\'stock\')">📦 在庫一覧</button>'
+    : v==='alert'?'<button class="btn primary" onclick="go(\'ai\')">⚡ AI自動発注で一括対応</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='stock')renderStock();
+  if(v==='po')renderPo();
+  if(v==='alert')renderAlert();
+  if(v==='supplier')renderSupplier();
+  if(v==='ai')renderAi();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+function lowCount(){return ITEMS.filter(i=>stateOf(i)==='reorder').length;}
+function outCount(){return ITEMS.filter(i=>stateOf(i)==='out').length;}
+function alertItems(){return ITEMS.filter(i=>{const s=stateOf(i);return s==='reorder'||s==='out';})
+  .sort((a,b)=>(stateOf(a)==='out'?0:1)-(stateOf(b)==='out'?0:1));}
+function updateBadges(){
+  const n=alertItems().length;
+  $('navAlert').textContent=n;
+  $('navAlert').classList.toggle('amber',outCount()===0&&n>0);
+  $('navAlert').style.display=n?'inline-block':'none';
+}
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const totalStock=ITEMS.reduce((s,i)=>s+i.stock,0);
+  const low=lowCount();const out=outCount();
+  const autoAmt=alertItems().reduce((s,i)=>s+recommendQty(i)*i.unit,0);
+  $('kpis').innerHTML=
+    kpi('#2f6df0','総在庫数',totalStock.toLocaleString()+'<small> 点</small>',ITEMS.length+'品目','up','棚卸し済')+
+    kpi('#e3941f','発注点割れ',low+'<small> 品目</small>','','warn',low?'要発注あり':'問題なし')+
+    kpi('#e24a4a','欠品',out+'<small> 品目</small>','',out?'down':'up',out?'至急対応':'欠品ゼロ ✓')+
+    kpi('#16b877','AI推奨 自動発注額',yen(autoAmt),alertItems().length+'件分','up','補充見込み');
+  /* low stock bars (発注点に対する在庫率が低い順 TOP6) */
+  const ranked=[...ITEMS].sort((a,b)=>(a.stock/a.reorder)-(b.stock/b.reorder)).slice(0,6);
+  $('lowBars').innerHTML=ranked.map(it=>{
+    const ratio=Math.min(Math.round(it.stock/it.reorder*100),100);
+    return '<div class="bar-row"><span class="mlabel">'+esc(it.n.replace(/（.*$/,''))+'</span>'+
+      '<div class="bar-track"><div class="bar-fill '+barColor(it)+'" style="width:0" data-w="'+ratio+'"></div></div>'+
+      '<span class="mval">'+it.stock+'/'+it.reorder+'</span></div>';
+  }).join('');
+  setTimeout(()=>document.querySelectorAll('#lowBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  /* donut breakdown */
+  const cnt={ok:0,reorder:0,out:0,over:0};ITEMS.forEach(i=>cnt[stateOf(i)]++);
+  const tot=ITEMS.length;
+  const segs=[['ok','#16b877','適正'],['reorder','#e3941f','要発注'],['out','#e24a4a','欠品'],['over','#2f6df0','過剰']];
+  let acc=0;const stops=segs.map(s=>{const from=acc/tot*360;acc+=cnt[s[0]];const to=acc/tot*360;return s[1]+' '+from+'deg '+to+'deg';}).join(',');
+  $('donut').style.background='conic-gradient('+stops+')';
+  $('donut').innerHTML='<div class="inner"><b>'+tot+'</b><span>品目</span></div>';
+  $('legend').innerHTML=segs.map(s=>'<div class="lg"><span class="sw" style="background:'+s[1]+'"></span>'+s[2]+'<b>'+cnt[s[0]]+' 品目</b></div>').join('');
+  /* activity */
+  const acts=[
+    {i:'🔔',c:'#fdeaea',t:'アルコール消毒液（5L）が欠品しました',m:'5分前'},
+    {i:'⚡',c:'#e6f8f0',t:'AI自動発注で 4件の発注書を下書き作成',m:'今日 8:40'},
+    {i:'📦',c:'#eaf1ff',t:'豊後おおいた青果市場 から トマト60箱 を納品',m:'今日 7:15'},
+    {i:'⚠️',c:'#fdf3e2',t:'きゅうり（1ケース）が発注点を割り込みました',m:'昨日 18:02'},
+    {i:'📝',c:'#eaf1ff',t:'PO-2026105 を九州フレッシュファームへ発注',m:'昨日 14:30'},
+  ];
+  $('acts').innerHTML=acts.map(a=>'<div class="act"><div class="ai" style="background:'+a.c+'">'+a.i+'</div><div><div class="at">'+esc(a.t)+'</div><div class="am">'+a.m+'</div></div></div>').join('');
+}
+function kpi(color,l,v,sub,cls,d){return '<div class="kpi"><div class="l"><span class="dot" style="background:'+color+'"></span>'+l+'</div>'+
+  '<div class="v tnum">'+v+'</div><div class="d '+cls+'">'+(sub?sub+' ・ ':'')+d+'</div></div>';}
+
+/* ============ STOCK LIST ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['ok','適正'],['reorder','要発注'],['out','欠品'],['over','過剰']];
+  $('statusChips').innerHTML=opts.map(o=>'<button class="chip '+(o[0]===filterStatus?'on':'')+'" data-s="'+o[0]+'">'+o[1]+'</button>').join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderStock();});
+}
+function renderStock(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=ITEMS.filter(i=>filterStatus==='all'||stateOf(i)===filterStatus)
+    .filter(i=>!q||(i.n+i.cat+i.sup).toLowerCase().includes(q))
+    .sort((a,b)=>(a.stock/a.reorder)-(b.stock/b.reorder));
+  $('stockRows').innerHTML=rows.length?rows.map(it=>{
+    const s=stateOf(it);
+    const ratio=Math.min(Math.round(it.stock/it.max*100),100);
+    const col=s==='out'?'var(--red)':s==='reorder'?'var(--amber)':s==='over'?'var(--brand)':'var(--green)';
+    const rec=recommendQty(it);
+    const btn=(s==='reorder'||s==='out')
+      ? '<button class="btn amber" style="padding:6px 12px" onclick="quickOrder(\''+esc(it.n)+'\')">発注</button>'
+      : '<button class="btn" style="padding:6px 12px" onclick="quickOrder(\''+esc(it.n)+'\')">補充</button>';
+    return '<tr>'+
+      '<td><b>'+esc(it.n)+'</b><div style="font-size:11px;color:var(--ink-3)">'+esc(it.sup)+'</div></td>'+
+      '<td><span class="st plain">'+esc(it.cat)+'</span></td>'+
+      '<td class="r tnum"><b>'+it.stock+'</b></td>'+
+      '<td class="r tnum" style="color:var(--ink-2)">'+it.reorder+'</td>'+
+      '<td><span class="sbar"><i style="width:'+ratio+'%;background:'+col+'"></i></span></td>'+
+      '<td>'+stBadge(s)+'</td>'+
+      '<td class="c">'+btn+'</td></tr>';
+  }).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する商品がありません</td></tr>';
+}
+$('q').addEventListener('input',renderStock);
+window.quickOrder=name=>{
+  const it=ITEMS.find(x=>x.n===name);if(!it)return;
+  go('po');
+  $('oSupplier').value=it.sup;refreshItemSelect();
+  $('oItem').value=it.n;$('oQty').value=recommendQty(it);
+  $('oAiHint').classList.add('show');setTimeout(()=>$('oAiHint').classList.remove('show'),2200);
+  renderPaper();
+  showToast(it.n+' の発注書を準備しました');
+};
+
+/* ============ PURCHASE ORDERS ============ */
+function renderSupplierSelect(){$('oSupplier').innerHTML='<option value="">選択してください</option>'+SUPPLIERS.map(s=>'<option>'+esc(s.name)+'</option>').join('');}
+function refreshItemSelect(){
+  const sup=$('oSupplier').value;
+  const list=ITEMS.filter(i=>!sup||i.sup===sup);
+  $('oItem').innerHTML='<option value="">選択してください</option>'+list.map(i=>'<option>'+esc(i.n)+'</option>').join('');
+}
+function renderPaper(){
+  const supName=$('oSupplier').value;
+  $('poSup').textContent=(supName||'')+'　御中';
+  const it=ITEMS.find(x=>x.n===$('oItem').value);
+  const qty=+$('oQty').value||0;
+  if(it&&qty>0){
+    const amt=qty*it.unit;const tax=Math.round(amt*0.1);
+    $('poRows').innerHTML='<tr><td>'+esc(it.n)+'</td><td class="r">'+qty+'</td><td class="r">'+yen(it.unit)+'</td><td class="r">'+yen(amt)+'</td></tr>';
+    $('poSub').textContent=yen(amt);$('poTax').textContent=yen(tax);
+    $('poGrand').textContent=yen(amt+tax);$('poGrand2').textContent=yen(amt+tax);
+  }else{
+    $('poRows').innerHTML='<tr><td colspan="4" style="text-align:center;color:#aab2c4;padding:14px">← 仕入先・商品・数量を入力してください</td></tr>';
+    $('poSub').textContent='¥0';$('poTax').textContent='¥0';$('poGrand').textContent='¥0';$('poGrand2').textContent='¥0';
+  }
+}
+function renderPo(){
+  renderSupplierSelect();refreshItemSelect();renderPaper();
+  $('poCount').textContent=pos.length+'件';
+  $('poHistory').innerHTML=pos.slice().sort((a,b)=>b.date-a.date).map(p=>'<tr>'+
+    '<td class="mono" style="font-size:12px">'+esc(p.no)+'</td>'+
+    '<td><b>'+esc(p.sup)+'</b></td>'+
+    '<td style="color:var(--ink-2)">'+esc(p.item)+'</td>'+
+    '<td class="r tnum">'+p.qty+'</td>'+
+    '<td class="r tnum"><b>'+yen(p.grand)+'</b></td>'+
+    '<td>'+poBadge(p.status)+'</td></tr>').join('')
+    || '<tr><td colspan="6" class="empty-cell">発注履歴がありません</td></tr>';
+}
+$('oSupplier').addEventListener('change',()=>{refreshItemSelect();renderPaper();});
+$('oItem').addEventListener('change',()=>{
+  const it=ITEMS.find(x=>x.n===$('oItem').value);
+  if(it){$('oQty').value=recommendQty(it);$('oAiHint').classList.add('show');setTimeout(()=>$('oAiHint').classList.remove('show'),2200);}
+  renderPaper();
+});
+$('oQty').addEventListener('input',renderPaper);
+$('oSample').addEventListener('click',()=>{
+  const target=alertItems()[0]||ITEMS.find(i=>stateOf(i)!=='over')||ITEMS[0];
+  $('oSupplier').value=target.sup;refreshItemSelect();
+  $('oItem').value=target.n;$('oQty').value=recommendQty(target);
+  $('oAiHint').classList.add('show');setTimeout(()=>$('oAiHint').classList.remove('show'),2200);
+  renderPaper();
+});
+$('oCreate').addEventListener('click',async()=>{
+  const it=ITEMS.find(x=>x.n===$('oItem').value);const qty=+$('oQty').value||0;
+  if(!$('oSupplier').value||!it||qty<=0){showToast('仕入先・商品・数量を入力してください');return;}
+  const btn=$('oCreate');btn.textContent='⚡ AIが仕上げ中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,800));
+  const now=new Date();const no='PO-'+(2026100+pos.length+1);
+  const due=new Date(now.getFullYear(),now.getMonth(),now.getDate()+ (SUPPLIERS.find(s=>s.name===$('oSupplier').value)||{lead:3}).lead);
+  $('poNo').textContent=no;$('poDate').textContent=fmtDL(now);$('poDue').textContent=fmtDL(due);
+  const sub=qty*it.unit;const tax=Math.round(sub*0.1);
+  pos.push({no,sup:$('oSupplier').value,item:it.n,qty,unit:it.unit,sub,tax,grand:sub+tax,status:'po-sent',date:now});
+  it.stock+=qty; /* 入庫反映（デモ） */
+  btn.textContent='⚡ AIで仕上げて発注書発行';btn.disabled=false;
+  updateBadges();
+  showToast('発注書 '+no+' を発行しました（'+it.n+' を入庫）');
+  setTimeout(()=>renderPo(),700);
+});
+
+/* ============ ALERTS ============ */
+function renderAlert(){
+  const items=alertItems();
+  const out=items.filter(i=>stateOf(i)==='out');
+  const reorder=items.filter(i=>stateOf(i)==='reorder');
+  const amt=items.reduce((s,i)=>s+recommendQty(i)*i.unit,0);
+  $('alertKpis').innerHTML=
+    kpi('#e24a4a','欠品（最優先）',out.length+'<small> 品目</small>','',out.length?'down':'up',out.length?'販売機会の損失':'なし ✓')+
+    kpi('#e3941f','発注点割れ',reorder.length+'<small> 品目</small>','','warn',reorder.length?'補充推奨':'なし')+
+    kpi('#2f6df0','対応必要 合計',items.length+'<small> 件</small>','','warn','要アクション')+
+    kpi('#16b877','推奨発注額',yen(amt),'','up','AI試算');
+  $('alertList').innerHTML=items.length?items.map(it=>{
+    const s=stateOf(it);const crit=s==='out';
+    const rec=recommendQty(it);
+    return '<div class="alert-card'+(crit?' crit':'')+'">'+
+      '<div class="aic">'+(crit?'🚫':'⚠️')+'</div>'+
+      '<div><div class="at">'+esc(it.n)+' '+stBadge(s)+'</div>'+
+      '<div class="am">在庫 '+it.stock+' / 発注点 '+it.reorder+'　・　仕入先：'+esc(it.sup)+'　・　AI推奨発注 <b>'+rec+'</b> 点（'+yen(rec*it.unit)+'）</div></div>'+
+      '<div class="aa"><button class="btn '+(crit?'primary':'amber')+'" onclick="quickOrder(\''+esc(it.n)+'\')">発注書を作成</button></div>'+
+      '</div>';
+  }).join('')
+    :'<div class="alert-card" style="border-left-color:var(--green)"><div class="aic" style="background:var(--green-soft)">✅</div><div><div class="at">対応が必要なアラートはありません</div><div class="am">すべての商品が適正在庫です。AIが24時間監視を続けています。</div></div></div>';
+  updateBadges();
+}
+$('resolveAll').addEventListener('click',()=>{
+  if(!alertItems().length){showToast('対応が必要なアラートはありません 🎉');return;}
+  go('ai');
+  setTimeout(()=>$('aiRun').click(),300);
+});
+
+/* ============ SUPPLIERS ============ */
+function renderSupplier(){
+  $('supplierRows').innerHTML=SUPPLIERS.map(s=>{
+    const items=ITEMS.filter(i=>i.sup===s.name);
+    const monthAmt=pos.filter(p=>p.sup===s.name).reduce((a,p)=>a+p.grand,0);
+    return '<tr><td><b>'+esc(s.name)+'</b></td>'+
+      '<td><span class="st plain">'+esc(s.type)+'</span></td>'+
+      '<td style="color:var(--ink-2)">'+items.length+' 品目</td>'+
+      '<td class="r tnum">'+s.lead+' 日</td>'+
+      '<td class="r tnum">'+yen(monthAmt)+'</td>'+
+      '<td style="color:var(--ink-2)">'+esc(s.staff)+'</td></tr>';
+  }).join('');
+}
+
+/* ============ AI AUTO ORDER ============ */
+function renderAi(){
+  const n=alertItems().length;
+  $('aiCount').textContent=n+'件';
+  $('aiSub').innerHTML='発注点を割り込んだ商品 <b id="aiCount">'+n+'件</b> を検知。仕入先ごとにまとめてAIが発注書の下書きを作ります。';
+}
+$('aiRun').addEventListener('click',async()=>{
+  const targets=alertItems();
+  if(!targets.length){showToast('発注が必要な商品はありません 🎉');return;}
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 生成中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},120);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  /* 仕入先ごとに集約 */
+  const bySup={};
+  targets.forEach(it=>{(bySup[it.sup]=bySup[it.sup]||[]).push(it);});
+  const groups=Object.keys(bySup).map(sup=>{
+    const its=bySup[sup];
+    const amt=its.reduce((a,it)=>a+recommendQty(it)*it.unit,0);
+    return {sup,count:its.length,amt,items:its};
+  });
+  $('genItems').innerHTML=groups.map((g,i)=>'<div class="gen-item" data-i="'+i+'"><span class="ck">✓</span>'+
+    '<b style="flex:1">'+esc(g.sup)+'</b><span style="color:var(--ink-3);font-size:12px">'+g.count+'品目</span>'+
+    '<span class="tnum" style="font-weight:800">'+yen(Math.round(g.amt*1.1))+'</span></div>').join('');
+  $('genList').classList.add('show');
+  const els=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<els.length;i++){
+    await new Promise(r=>setTimeout(r,200));els[i].classList.add('in');
+    const g=groups[i];const now=new Date();
+    g.items.forEach(it=>{
+      const qty=recommendQty(it);const sub=qty*it.unit;const tax=Math.round(sub*0.1);
+      pos.push({no:'PO-'+(2026100+pos.length+1),sup:g.sup,item:it.n,qty,unit:it.unit,sub,tax,grand:sub+tax,status:'po-draft',date:now});
+    });
+  }
+  btn.disabled=false;btn.textContent='⚡ もう一度生成';
+  showToast(groups.length+'社分・'+targets.length+'品目の発注書を一括下書きしました');
+});
+
+/* ============ INIT ============ */
+renderChips();updateBadges();renderDash();
+</script>
+</body>
+</html>

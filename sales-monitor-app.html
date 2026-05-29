@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜売上モニターマシン（売上分析・予測システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7b5cf0;--purple-soft:#efebff;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* progress in kpi */
+.kpi .prog{height:7px;border-radius:99px;background:var(--soft);overflow:hidden;margin-top:11px}
+.kpi .prog>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1.1s cubic-bezier(.2,.8,.3,1)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+.panel:last-child{margin-bottom:0}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* column bar chart (daily trend) */
+.colchart{display:flex;align-items:flex-end;gap:8px;height:200px;padding:10px 0 0}
+.colchart .colwrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;justify-content:flex-end;height:100%;cursor:pointer}
+.colchart .colbar{width:100%;max-width:30px;border-radius:7px 7px 0 0;background:linear-gradient(180deg,var(--brand),var(--sky));height:0;transition:height .9s cubic-bezier(.2,.8,.3,1);position:relative}
+.colchart .colbar.tdy{background:linear-gradient(180deg,var(--green),#37e29a)}
+.colchart .colwrap:hover .colbar{filter:brightness(1.08)}
+.colchart .clbl{font-size:10.5px;color:var(--ink-3);font-weight:600;white-space:nowrap}
+.colchart .colwrap:hover .cval{opacity:1}
+.colchart .cval{position:absolute;top:-20px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:800;color:var(--ink);opacity:0;transition:opacity .2s;white-space:nowrap;background:#fff;padding:1px 5px;border-radius:5px;box-shadow:var(--shadow)}
+
+/* horizontal bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:96px 1fr 92px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-fill.g{background:linear-gradient(90deg,var(--green),#37e29a)}
+.bar-fill.p{background:linear-gradient(90deg,var(--purple),#9d83ff)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut */
+.donutwrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.donut{width:150px;height:150px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;position:relative}
+.donut::after{content:"";position:absolute;width:92px;height:92px;border-radius:50%;background:var(--card)}
+.donut .dc{position:relative;z-index:1;text-align:center}
+.donut .dc b{font-size:20px;font-weight:900;display:block;line-height:1}
+.donut .dc span{font-size:10.5px;color:var(--ink-3);font-weight:700}
+.legend{display:flex;flex-direction:column;gap:9px;font-size:12.5px;flex:1;min-width:160px}
+.legend .lg{display:flex;align-items:center;gap:9px}
+.legend .lg .sw{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.legend .lg .ln{color:var(--ink-2);font-weight:600}
+.legend .lg .lv{margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.good{background:var(--green-soft);color:var(--green)}
+.st.flat{background:var(--brand-soft);color:var(--brand)}
+.st.low{background:var(--amber-soft);color:var(--amber)}
+.st.bad{background:var(--red-soft);color:var(--red)}
+.st.normal{background:var(--soft);color:var(--ink-3)}
+
+/* mini trend cell */
+.mini{display:inline-flex;align-items:flex-end;gap:2px;height:22px}
+.mini i{width:4px;border-radius:2px;background:var(--brand);opacity:.55}
+.mini i:last-child{opacity:1;background:var(--green)}
+
+/* simulate / form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--brand)}
+.rangewrap{display:flex;align-items:center;gap:12px}
+.rangewrap input[type=range]{flex:1;accent-color:var(--brand)}
+.rangewrap .rv{font-family:'Orbitron';font-weight:700;min-width:54px;text-align:right;color:var(--brand-dk)}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* preview board (sim result) */
+.board{background:#fff;border:1px solid var(--line);border-radius:12px;padding:22px 24px;box-shadow:var(--shadow)}
+.board .bt{font-size:13px;font-weight:800;color:var(--ink-2);margin-bottom:4px}
+.board .bbig{font-family:'Orbitron';font-size:34px;font-weight:700;color:var(--brand-dk);letter-spacing:-.01em}
+.board .brow{display:flex;gap:14px;flex-wrap:wrap;margin-top:18px}
+.board .bcell{flex:1;min-width:120px;background:var(--soft);border-radius:10px;padding:13px 15px}
+.board .bcell .cl{font-size:11px;color:var(--ink-3);font-weight:700}
+.board .bcell .cv{font-size:18px;font-weight:900;margin-top:3px}
+
+/* AI generate / detection */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--line);border-radius:9px;margin-bottom:8px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item.alert{border-color:#f3c7c7;background:var(--red-soft)}
+.gen-item.warnit{border-color:#f0dca6;background:var(--amber-soft)}
+.gen-item .ck{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;font-size:12px;font-weight:900;flex-shrink:0}
+.gen-item .ck.ok{background:var(--green);color:#fff}
+.gen-item .ck.al{background:var(--red);color:#fff}
+.gen-item .ck.wn{background:var(--amber);color:#fff}
+.gen-item .gtxt{flex:1}
+.gen-item .gtxt b{display:block}
+.gen-item .gtxt small{color:var(--ink-3);font-size:11px}
+.gen-item .gtag{font-size:11px;font-weight:800;padding:3px 9px;border-radius:99px;background:var(--card);white-space:nowrap}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* steps (ai pipeline) */
+.steps{display:flex;flex-direction:column;gap:9px;margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.steps.show{display:flex;animation:fade .4s}
+.step{display:flex;align-items:center;gap:11px;font-size:13px;color:var(--ink-3);transition:all .3s}
+.step .sd{width:22px;height:22px;border-radius:50%;border:2px solid var(--line-2);display:grid;place-items:center;font-size:11px;flex-shrink:0}
+.step.run{color:var(--ink)}
+.step.run .sd{border-color:var(--brand);color:var(--brand);animation:pulse 1s infinite}
+.step.done{color:var(--ink)}
+.step.done .sd{border-color:var(--green);background:var(--green);color:#fff}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(47,109,240,.4)}50%{box-shadow:0 0 0 5px rgba(47,109,240,0)}}
+
+/* forecast chart */
+.fc-chart{display:flex;align-items:flex-end;gap:6px;height:210px;padding-top:24px}
+.fc-chart .fcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;justify-content:flex-end;height:100%}
+.fc-chart .fbar{width:100%;max-width:26px;border-radius:6px 6px 0 0;height:0;transition:height 1s cubic-bezier(.2,.8,.3,1)}
+.fc-chart .fbar.real{background:linear-gradient(180deg,var(--brand),var(--sky))}
+.fc-chart .fbar.pred{background:repeating-linear-gradient(45deg,var(--purple),var(--purple) 6px,#9d83ff 6px,#9d83ff 12px)}
+.fc-chart .flbl{font-size:10px;color:var(--ink-3);font-weight:600}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.insight{background:var(--brand-soft);border:1px solid #cfe0ff;border-radius:11px;padding:13px 16px;font-size:12.5px;color:var(--brand-dk);display:flex;gap:10px;align-items:flex-start;margin-bottom:16px}
+.insight .ii{font-size:16px}
+.insight b{font-weight:800}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">売上モニターマシン<small>技マシン｜売上分析・予測</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="daily"><span class="i">📅</span>日次売上</a>
+      <a data-v="store"><span class="i">🏪</span>店舗別</a>
+      <a data-v="prod"><span class="i">🥬</span>商品別</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="forecast"><span class="i">📈</span>売上予測</a>
+      <a data-v="anomaly"><span class="i">🚨</span>AI異常検知<span class="badge" id="navAlert">0</span></a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="./">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。数値・店舗・商品はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">本日の売上状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>直近14日の売上推移</h3><span class="more">日次</span></div>
+            <div class="pb"><div class="colchart" id="dashCol"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>店舗別 構成比</h3></div>
+            <div class="pb"><div class="donutwrap"><div class="donut" id="dashDonut"><div class="dc"><b id="donutTotal">¥0</b><span>本日合計</span></div></div><div class="legend" id="dashLegend"></div></div></div>
+          </div>
+        </div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>カテゴリ別 売上（本日）</h3></div>
+            <div class="pb"><div class="bars" id="dashCat"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- DAILY -->
+      <section class="view" id="v-daily">
+        <div class="insight"><span class="ii">💡</span><div id="dailyInsight">—</div></div>
+        <div class="panel">
+          <div class="ph"><h3>日次売上 推移（直近14日）</h3><span class="more">タップで詳細</span></div>
+          <div class="pb"><div class="colchart" id="dailyCol"></div></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>日付</th><th class="r">売上</th><th class="r">客数</th><th class="r">客単価</th><th class="r">前週比</th><th>傾向</th></tr></thead>
+          <tbody id="dailyRows"></tbody>
+        </table>
+      </section>
+
+      <!-- STORE -->
+      <section class="view" id="v-store">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="storeQ" placeholder="店舗名・エリアで検索"></div>
+          <div class="chips" id="storeChips"></div>
+        </div>
+        <div class="panel">
+          <div class="ph"><h3>店舗別 本日売上ランキング</h3></div>
+          <div class="pb"><div class="bars" id="storeBars"></div></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>店舗</th><th>エリア</th><th class="r">本日売上</th><th class="r">目標達成率</th><th class="r">客単価</th><th>状態</th></tr></thead>
+          <tbody id="storeRows"></tbody>
+        </table>
+      </section>
+
+      <!-- PRODUCT -->
+      <section class="view" id="v-prod">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="prodQ" placeholder="商品名で検索"></div>
+          <div class="chips" id="prodChips"></div>
+        </div>
+        <div class="panel">
+          <div class="ph"><h3>商品別 売上トップ</h3></div>
+          <div class="pb"><div class="bars" id="prodBars"></div></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>商品</th><th>カテゴリ</th><th class="r">本日売上</th><th class="r">数量</th><th class="r">粗利率</th><th>動き</th></tr></thead>
+          <tbody id="prodRows"></tbody>
+        </table>
+      </section>
+
+      <!-- FORECAST -->
+      <section class="view" id="v-forecast">
+        <div class="create-grid">
+          <div class="formcard">
+            <div style="font-size:14px;font-weight:800;margin-bottom:14px">📈 売上シミュレーター</div>
+            <div class="fg"><label>対象店舗</label><select id="fcStore"></select></div>
+            <div class="fg"><label>予測する日数</label>
+              <div class="rangewrap"><input id="fcDays" type="range" min="3" max="14" value="7"><span class="rv" id="fcDaysV">7日</span></div></div>
+            <div class="fg"><label>販促による上乗せ想定</label>
+              <div class="rangewrap"><input id="fcBoost" type="range" min="0" max="30" value="0"><span class="rv" id="fcBoostV">+0%</span></div></div>
+            <div class="fg"><label>天候シナリオ</label>
+              <select id="fcWeather"><option value="1">平常（晴れ予報）</option><option value="0.88">雨予報（−12%）</option><option value="1.15">好天・連休（+15%）</option></select></div>
+            <button class="btn primary" id="fcRun" style="width:100%;justify-content:center;margin-top:6px">⚡ AIで予測する</button>
+            <div class="aihint" id="fcHint">✨ 過去の売上パターンから予測しました</div>
+          </div>
+          <div>
+            <div class="board">
+              <div class="bt">予測 売上合計</div>
+              <div class="bbig" id="fcTotal">¥0</div>
+              <div class="brow">
+                <div class="bcell"><div class="cl">日平均</div><div class="cv tnum" id="fcAvg">¥0</div></div>
+                <div class="bcell"><div class="cl">前週比</div><div class="cv tnum" id="fcWow" style="color:var(--green)">—</div></div>
+                <div class="bcell"><div class="cl">予測信頼度</div><div class="cv tnum" id="fcConf">—</div></div>
+              </div>
+              <div style="margin-top:20px"><div class="fc-chart" id="fcChart"></div></div>
+              <div style="margin-top:12px;font-size:11.5px;color:var(--ink-3)"><span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:var(--brand);vertical-align:middle"></span> 実績　<span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:var(--purple);vertical-align:middle;margin-left:8px"></span> AI予測</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ANOMALY (AI) -->
+      <section class="view" id="v-anomaly">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">AIが売上データの異常を自動検知</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">全 <b>6店舗</b> の本日売上データを取り込み、過去パターンと比較して異常をAIが洗い出します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで異常検知する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">1時間30分</div>
+              <ul>
+                <li>📑 店舗ごとにレジ日報を集計</li>
+                <li>👀 前年・前週と目視で見比べ</li>
+                <li>📞 気付いた異常を電話で確認</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 全店舗データを自動取り込み</li>
+                <li>📊 過去パターンと自動比較</li>
+                <li>🚨 異常だけを優先度付きで通知</li>
+              </ul>
+            </div>
+          </div>
+          <div class="steps" id="aiSteps">
+            <div class="step" data-s="0"><span class="sd">1</span>全店舗の売上データを取得中…</div>
+            <div class="step" data-s="1"><span class="sd">2</span>過去30日の平均・標準偏差を集計中…</div>
+            <div class="step" data-s="2"><span class="sd">3</span>異常スコアを算出し検知中…</div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">🚨 AIが検知した結果</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+<style>
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+</style>
+
+<script>
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const TODAY=new Date();
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+
+/* deterministic RNG so demo data is stable */
+let SEED=4071;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+
+/* ============ DATA ============ */
+const STORES=[
+  {name:'大分中央クリニック 売店',area:'大分市',base:182000,target:170000,color:'#2f6df0'},
+  {name:'豊後おおいた青果 都町店',area:'大分市',base:248000,target:240000,color:'#16b877'},
+  {name:'別府温泉ホテル 売店',area:'別府市',base:134000,target:150000,color:'#e3941f'},
+  {name:'さくら総合病院 ベーカリー',area:'大分市',base:96000,target:90000,color:'#7b5cf0'},
+  {name:'つくし介護センター 食堂',area:'由布市',base:71000,target:80000,color:'#0ea5b7'},
+  {name:'大分海鮮市場 直売所',area:'大分市',base:205000,target:200000,color:'#e24a4a'},
+];
+const PRODUCTS=[
+  {n:'大分産 完熟トマト（1kg）',cat:'青果',price:680,unit:140,margin:32},
+  {n:'関アジ 刺身パック',cat:'鮮魚',price:1280,unit:58,margin:28},
+  {n:'豊後牛 切り落とし',cat:'精肉',price:1580,unit:42,margin:24},
+  {n:'温泉たまご 6個入',cat:'青果',price:380,unit:120,margin:38},
+  {n:'地元産 ピーマン（袋）',cat:'青果',price:198,unit:210,margin:41},
+  {n:'手作り惣菜 弁当',cat:'惣菜',price:580,unit:96,margin:35},
+  {n:'やよいひめ いちご',cat:'青果',price:880,unit:64,margin:30},
+  {n:'ベーカリー 食パン',cat:'パン',price:420,unit:88,margin:44},
+  {n:'カボス（5個ネット）',cat:'青果',price:320,unit:150,margin:46},
+  {n:'介護食 やわらか御膳',cat:'惣菜',price:680,unit:52,margin:26},
+];
+
+/* daily series (14 days) per store + total */
+function buildDaily(){
+  const days=[];
+  for(let k=13;k>=0;k--){
+    const d=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-k);
+    const dow=d.getDay();
+    const wkBoost=(dow===0||dow===6)?1.18:(dow===5?1.08:1); // 週末高め
+    let sales=0,cust=0;
+    STORES.forEach(s=>{
+      const noise=0.85+rnd()*0.3;
+      const v=Math.round(s.base*wkBoost*noise);
+      sales+=v; cust+=Math.round(v/(900+rnd()*400));
+    });
+    days.push({date:d,sales,cust,aov:Math.round(sales/cust)});
+  }
+  return days;
+}
+const DAILY=buildDaily();
+const TODAY_SALES=DAILY[DAILY.length-1].sales;
+const YEST_SALES=DAILY[DAILY.length-2].sales;
+const LASTWEEK_SAME=DAILY[DAILY.length-8].sales;
+
+/* today's per-store breakdown */
+const STORE_TODAY=STORES.map(s=>{
+  const noise=0.86+rnd()*0.3;
+  const sales=Math.round(s.base*1.05*noise);
+  const cust=Math.round(sales/(950+rnd()*350));
+  return {...s,sales,cust,aov:Math.round(sales/cust),rate:Math.round(sales/s.target*100)};
+});
+
+/* product today */
+const PROD_TODAY=PRODUCTS.map(p=>{
+  const noise=0.8+rnd()*0.5;
+  const qty=Math.round(p.unit*noise);
+  return {...p,qty,sales:qty*p.price,trend:rnd()>0.5?'up':(rnd()>0.5?'flat':'down')};
+}).sort((a,b)=>b.sales-a.sales);
+
+/* category aggregate */
+function catAgg(){
+  const m={};
+  PROD_TODAY.forEach(p=>{m[p.cat]=(m[p.cat]||0)+p.sales;});
+  return Object.entries(m).map(([cat,sales])=>({cat,sales})).sort((a,b)=>b.sales-a.sales);
+}
+
+/* anomalies (precomputed truth for AI demo) */
+function buildAnomalies(){
+  return [
+    {store:'つくし介護センター 食堂',sev:'alert',score:'-34%',msg:'本日売上が直近30日平均を大きく下回っています',hint:'発注ミス・休業の可能性。担当へ確認推奨'},
+    {store:'別府温泉ホテル 売店',sev:'warn',score:'-18%',msg:'目標達成率が88%。雨予報の影響と推定',hint:'夕方の追加販促で挽回余地あり'},
+    {store:'豊後おおいた青果 都町店',sev:'alert',score:'+41%',msg:'特定商品（やよいひめ いちご）が急増',hint:'在庫切れリスク。追加仕入れを検討'},
+    {store:'大分海鮮市場 直売所',sev:'ok',score:'+3%',msg:'平常範囲。異常なし',hint:'安定稼働中'},
+    {store:'大分中央クリニック 売店',sev:'ok',score:'+1%',msg:'平常範囲。異常なし',hint:'安定稼働中'},
+    {store:'さくら総合病院 ベーカリー',sev:'warn',score:'+22%',msg:'食パンの欠品が早朝に発生した形跡',hint:'機会損失の可能性。製造数の見直しを'},
+  ];
+}
+const ANOMALIES=buildAnomalies();
+const ALERT_COUNT=ANOMALIES.filter(a=>a.sev!=='ok').length;
+
+/* ============ ROUTING ============ */
+const TITLES={
+  dash:['ダッシュボード','本日の売上状況（'+(TODAY.getMonth()+1)+'/'+TODAY.getDate()+'）'],
+  daily:['日次売上','直近14日の売上・客数の推移'],
+  store:['店舗別','店舗ごとの売上と目標達成率'],
+  prod:['商品別','商品ごとの売上・粗利・動き'],
+  forecast:['売上予測','AIが過去パターンから将来を予測します'],
+  anomaly:['AI異常検知','売上の異常をAIが自動で見つけます'],
+};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='dash'?'<button class="btn" onclick="go(\'forecast\')">📈 売上予測</button><button class="btn primary" onclick="go(\'anomaly\')">⚡ AI異常検知</button>'
+    : v==='anomaly'?'' : '<button class="btn primary" onclick="go(\'anomaly\')">⚡ AI異常検知</button>';
+  if(v==='dash')renderDash();
+  if(v==='daily')renderDaily();
+  if(v==='store')renderStore();
+  if(v==='prod')renderProd();
+  if(v==='forecast')renderForecastInit();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function kpi(color,l,v,sub,cls,d,prog){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div>${prog!=null?`<div class="prog"><i data-w="${prog}"></i></div>`:''}</div>`;}
+
+function renderDash(){
+  const yoy=Math.round((TODAY_SALES/(TODAY_SALES*0.89))*100-100); // 前年比 約+12%
+  const totalCust=STORE_TODAY.reduce((s,x)=>s+x.cust,0);
+  const aov=Math.round(TODAY_SALES/totalCust);
+  const totalTarget=STORES.reduce((s,x)=>s+x.target,0);
+  const achieve=Math.round(TODAY_SALES/totalTarget*100);
+  const wow=Math.round((TODAY_SALES/LASTWEEK_SAME)*100-100);
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','本日の売上',yen(TODAY_SALES),'全6店舗',wow>=0?'up':'down',(wow>=0?'前週比 +':'前週比 ')+wow+'%')}
+    ${kpi('#16b877','前年比',(yoy>=0?'+':'')+yoy+'<small>%</small>','',yoy>=0?'up':'down',yoy>=0?'好調を維持':'要確認')}
+    ${kpi('#7b5cf0','客単価',yen(aov),totalCust+'名 来店','up','+3%')}
+    ${kpi('#e3941f','目標達成率',achieve+'<small>%</small>','',achieve>=100?'up':'warn',achieve>=100?'目標クリア':'あと'+yen(totalTarget-TODAY_SALES),Math.min(achieve,100))}`;
+  // animate progress
+  setTimeout(()=>document.querySelectorAll('#kpis .prog>i').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+
+  // 14-day column chart
+  const mx=Math.max(...DAILY.map(d=>d.sales),1);
+  $('dashCol').innerHTML=DAILY.map((d,i)=>{
+    const last=i===DAILY.length-1;
+    return `<div class="colwrap" title="${esc((d.date.getMonth()+1)+'/'+d.date.getDate())} ${esc(yen(d.sales))}">
+      <div class="colbar ${last?'tdy':''}" data-h="${Math.round(d.sales/mx*100)}"><span class="cval">${yen(d.sales)}</span></div>
+      <span class="clbl">${d.date.getDate()}</span></div>`;
+  }).join('');
+  setTimeout(()=>document.querySelectorAll('#dashCol .colbar').forEach(b=>b.style.height=b.dataset.h+'%'),80);
+
+  // donut (store share)
+  const total=STORE_TODAY.reduce((s,x)=>s+x.sales,0);
+  let acc=0;const segs=STORE_TODAY.map(s=>{const from=acc/total*360;acc+=s.sales;const to=acc/total*360;return `${s.color} ${from}deg ${to}deg`;});
+  $('dashDonut').style.background='conic-gradient('+segs.join(',')+')';
+  $('donutTotal').textContent=yen(total);
+  $('dashLegend').innerHTML=STORE_TODAY.map(s=>`<div class="lg"><span class="sw" style="background:${s.color}"></span><span class="ln">${esc(s.name)}</span><span class="lv">${Math.round(s.sales/total*100)}%</span></div>`).join('');
+
+  // category bars
+  const cats=catAgg();const cmx=Math.max(...cats.map(c=>c.sales),1);const cc=['','g','p','',''];
+  $('dashCat').innerHTML=cats.map((c,i)=>`<div class="bar-row"><span class="mlabel">${esc(c.cat)}</span>
+    <div class="bar-track"><div class="bar-fill ${cc[i%cc.length]}" data-w="${Math.round(c.sales/cmx*100)}"></div></div>
+    <span class="mval">${yen(c.sales)}</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#dashCat .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),120);
+
+  // activity
+  const acts=[
+    {i:'🚨',c:'#fdeaea',t:'AI異常検知：つくし介護センター 食堂 の売上が -34%',m:'3分前'},
+    {i:'📈',c:'#efebff',t:'やよいひめ いちご が前週比 +41%（在庫注意）',m:'25分前'},
+    {i:'💰',c:'#e6f8f0',t:'大分海鮮市場 直売所 が本日目標を達成（102%）',m:'1時間前'},
+    {i:'⚡',c:'#e6f8f0',t:'AIが全6店舗の日次データを自動取り込み完了',m:'今日 9:00'},
+    {i:'☔',c:'#eaf1ff',t:'別府エリア 雨予報。売上 -12% を予測に反映',m:'今日 8:15'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+}
+
+/* ============ DAILY ============ */
+function renderDaily(){
+  const mx=Math.max(...DAILY.map(d=>d.sales),1);
+  $('dailyCol').innerHTML=DAILY.map((d,i)=>{
+    const last=i===DAILY.length-1;
+    return `<div class="colwrap" title="${esc((d.date.getMonth()+1)+'/'+d.date.getDate())} ${esc(yen(d.sales))}">
+      <div class="colbar ${last?'tdy':''}" data-h="${Math.round(d.sales/mx*100)}"><span class="cval">${yen(d.sales)}</span></div>
+      <span class="clbl">${(d.date.getMonth()+1)}/${d.date.getDate()}</span></div>`;
+  }).join('');
+  setTimeout(()=>document.querySelectorAll('#dailyCol .colbar').forEach(b=>b.style.height=b.dataset.h+'%'),80);
+
+  const best=DAILY.reduce((a,b)=>a.sales>b.sales?a:b);
+  $('dailyInsight').innerHTML=`直近14日で最も売れたのは <b>${best.date.getMonth()+1}/${best.date.getDate()}</b> の <b>${yen(best.sales)}</b>。週末は平日より約 <b>18%</b> 高い傾向です。AIはこのパターンを学習して予測に使っています。`;
+
+  $('dailyRows').innerHTML=[...DAILY].reverse().map((d,idx)=>{
+    const ref=DAILY.find(x=>Math.round((d.date-x.date)/86400000)===7);
+    const wow=ref?Math.round((d.sales/ref.sales)*100-100):0;
+    const cls=wow>5?'good':wow<-5?'bad':'flat';
+    const lbl=wow>5?'好調':wow<-5?'低調':'横ばい';
+    return `<tr><td><b>${d.date.getMonth()+1}/${d.date.getDate()}</b> <span style="color:var(--ink-3);font-size:11px">(${'日月火水木金土'[d.date.getDay()]})</span></td>
+      <td class="r tnum"><b>${yen(d.sales)}</b></td><td class="r tnum" style="color:var(--ink-2)">${d.cust.toLocaleString()}名</td>
+      <td class="r tnum" style="color:var(--ink-2)">${yen(d.aov)}</td>
+      <td class="r tnum" style="color:${wow>=0?'var(--green)':'var(--red)'}">${wow>=0?'+':''}${ref?wow+'%':'—'}</td>
+      <td><span class="st ${cls}">${lbl}</span></td></tr>`;
+  }).join('');
+}
+
+/* ============ STORE ============ */
+let storeFilter='all';
+function renderStoreChips(){
+  const areas=['all',...new Set(STORES.map(s=>s.area))];
+  const lbl={all:'すべて'};
+  $('storeChips').innerHTML=areas.map(a=>`<button class="chip ${a===storeFilter?'on':''}" data-a="${esc(a)}">${esc(lbl[a]||a)}</button>`).join('');
+  $('storeChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{storeFilter=c.dataset.a;renderStoreChips();renderStore();});
+}
+function renderStore(){
+  const q=($('storeQ').value||'').toLowerCase();
+  let list=STORE_TODAY.filter(s=>storeFilter==='all'||s.area===storeFilter)
+    .filter(s=>!q||(s.name+s.area).toLowerCase().includes(q))
+    .sort((a,b)=>b.sales-a.sales);
+  const mx=Math.max(...STORE_TODAY.map(s=>s.sales),1);
+  $('storeBars').innerHTML=list.length?list.map(s=>`<div class="bar-row"><span class="mlabel" title="${esc(s.name)}">${esc(s.name)}</span>
+    <div class="bar-track"><div class="bar-fill ${s.rate>=100?'g':''}" data-w="${Math.round(s.sales/mx*100)}"></div></div>
+    <span class="mval">${yen(s.sales)}</span></div>`).join('')
+    :'<div class="empty-cell">該当する店舗がありません</div>';
+  setTimeout(()=>document.querySelectorAll('#storeBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),100);
+  $('storeRows').innerHTML=list.length?list.map(s=>{
+    const cls=s.rate>=105?'good':s.rate>=95?'flat':s.rate>=85?'low':'bad';
+    const lbl=s.rate>=105?'好調':s.rate>=95?'順調':s.rate>=85?'やや低調':'要注意';
+    return `<tr><td><b>${esc(s.name)}</b></td><td><span class="st normal">${esc(s.area)}</span></td>
+      <td class="r tnum"><b>${yen(s.sales)}</b></td><td class="r tnum" style="color:${s.rate>=100?'var(--green)':'var(--amber)'}">${s.rate}%</td>
+      <td class="r tnum" style="color:var(--ink-2)">${yen(s.aov)}</td><td><span class="st ${cls}">${lbl}</span></td></tr>`;
+  }).join('')
+    :'<tr><td colspan="6" class="empty-cell">該当する店舗がありません</td></tr>';
+}
+$('storeQ').addEventListener('input',renderStore);
+
+/* ============ PRODUCT ============ */
+let prodFilter='all';
+function renderProdChips(){
+  const cats=['all',...new Set(PRODUCTS.map(p=>p.cat))];
+  $('prodChips').innerHTML=cats.map(c=>`<button class="chip ${c===prodFilter?'on':''}" data-c="${esc(c)}">${c==='all'?'すべて':esc(c)}</button>`).join('');
+  $('prodChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{prodFilter=c.dataset.c;renderProdChips();renderProd();});
+}
+function renderProd(){
+  const q=($('prodQ').value||'').toLowerCase();
+  let list=PROD_TODAY.filter(p=>prodFilter==='all'||p.cat===prodFilter)
+    .filter(p=>!q||p.n.toLowerCase().includes(q));
+  const top=list.slice(0,6);const mx=Math.max(...PROD_TODAY.map(p=>p.sales),1);
+  $('prodBars').innerHTML=top.length?top.map(p=>`<div class="bar-row"><span class="mlabel" title="${esc(p.n)}">${esc(p.n)}</span>
+    <div class="bar-track"><div class="bar-fill p" data-w="${Math.round(p.sales/mx*100)}"></div></div>
+    <span class="mval">${yen(p.sales)}</span></div>`).join('')
+    :'<div class="empty-cell">該当する商品がありません</div>';
+  setTimeout(()=>document.querySelectorAll('#prodBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),100);
+  const tmap={up:['good','▲ 伸長'],flat:['flat','― 横ばい'],down:['bad','▼ 鈍化']};
+  $('prodRows').innerHTML=list.length?list.map(p=>`<tr>
+    <td><b>${esc(p.n)}</b></td><td><span class="st normal">${esc(p.cat)}</span></td>
+    <td class="r tnum"><b>${yen(p.sales)}</b></td><td class="r tnum" style="color:var(--ink-2)">${p.qty}点</td>
+    <td class="r tnum" style="color:var(--ink-2)">${p.margin}%</td>
+    <td><span class="st ${tmap[p.trend][0]}">${tmap[p.trend][1]}</span></td></tr>`).join('')
+    :'<tr><td colspan="6" class="empty-cell">該当する商品がありません</td></tr>';
+}
+$('prodQ').addEventListener('input',renderProd);
+
+/* ============ FORECAST ============ */
+let fcInit=false;
+function renderForecastInit(){
+  if(!fcInit){
+    $('fcStore').innerHTML='<option value="__all">全店舗 合計</option>'+STORES.map(s=>`<option value="${esc(s.name)}">${esc(s.name)}</option>`).join('');
+    $('fcDays').addEventListener('input',()=>$('fcDaysV').textContent=$('fcDays').value+'日');
+    $('fcBoost').addEventListener('input',()=>$('fcBoostV').textContent='+'+$('fcBoost').value+'%');
+    $('fcRun').addEventListener('click',runForecast);
+    fcInit=true;
+  }
+}
+async function runForecast(){
+  const btn=$('fcRun');btn.disabled=true;btn.textContent='⚡ AIが予測中…';
+  await new Promise(r=>setTimeout(r,750));
+  const storeVal=$('fcStore').value;
+  const days=+$('fcDays').value;
+  const boost=1+(+$('fcBoost').value)/100;
+  const weather=+$('fcWeather').value;
+  // base daily for chosen scope (avg of last 7 real)
+  const last7=DAILY.slice(-7);
+  let scopeFactor=1;
+  if(storeVal!=='__all'){const s=STORES.find(x=>x.name===storeVal);scopeFactor=s?s.base/STORES.reduce((a,b)=>a+b.base,0):1;}
+  const realDaily=last7.map(d=>Math.round(d.sales*scopeFactor));
+  const baseAvg=realDaily.reduce((a,b)=>a+b,0)/realDaily.length;
+  // forecast next N days
+  const pred=[];
+  for(let i=0;i<days;i++){
+    const d=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+1+i);
+    const dow=d.getDay();const wk=(dow===0||dow===6)?1.16:(dow===5?1.07:1);
+    const noise=0.96+rnd()*0.08;
+    pred.push({date:d,v:Math.round(baseAvg*wk*boost*weather*noise)});
+  }
+  const total=pred.reduce((a,b)=>a+b.v,0);
+  const avg=Math.round(total/days);
+  const wow=Math.round((avg/baseAvg)*100-100);
+  const conf=Math.max(78,Math.min(96,Math.round(92-Math.abs(wow)*0.6)));
+  $('fcTotal').textContent=yen(total);
+  $('fcAvg').textContent=yen(avg);
+  $('fcWow').textContent=(wow>=0?'+':'')+wow+'%';
+  $('fcWow').style.color=wow>=0?'var(--green)':'var(--red)';
+  $('fcConf').textContent=conf+'%';
+  // chart: last7 real + pred
+  const all=[...realDaily.map((v,i)=>({v,real:true,lbl:(last7[i].date.getMonth()+1)+'/'+last7[i].date.getDate()})),
+             ...pred.map(p=>({v:p.v,real:false,lbl:(p.date.getMonth()+1)+'/'+p.date.getDate()}))];
+  const mx=Math.max(...all.map(x=>x.v),1);
+  $('fcChart').innerHTML=all.map(x=>`<div class="fcol"><div class="fbar ${x.real?'real':'pred'}" data-h="${Math.round(x.v/mx*100)}" title="${esc(x.lbl)} ${esc(yen(x.v))}"></div><span class="flbl">${esc(x.lbl)}</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#fcChart .fbar').forEach(b=>b.style.height=b.dataset.h+'%'),60);
+  $('fcHint').classList.add('show');setTimeout(()=>$('fcHint').classList.remove('show'),2200);
+  btn.disabled=false;btn.textContent='⚡ もう一度予測する';
+  showToast('AIが'+days+'日先までの売上を予測しました（信頼度'+conf+'%）');
+}
+
+/* ============ AI ANOMALY ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 検知中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  $('genList').classList.remove('show');$('genItems').innerHTML='';
+  // steps
+  $('aiSteps').classList.add('show');
+  const steps=[...$('aiSteps').querySelectorAll('.step')];
+  steps.forEach(s=>s.classList.remove('run','done'));
+  // timer for after big
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,6);},110);
+  for(let i=0;i<steps.length;i++){
+    steps[i].classList.add('run');
+    await new Promise(r=>setTimeout(r,520));
+    steps[i].classList.remove('run');steps[i].classList.add('done');
+  }
+  clearInterval(t);$('baAfterT').textContent='6秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // sort: alert -> warn -> ok
+  const order={alert:0,warn:1,ok:2};
+  const sorted=[...ANOMALIES].sort((a,b)=>order[a.sev]-order[b.sev]);
+  const meta={alert:['al','要対応','var(--red)'],warn:['wn','注意','var(--amber)'],ok:['ok','正常','var(--green)']};
+  $('genItems').innerHTML=sorted.map((a,i)=>{
+    const m=meta[a.sev];const cls=a.sev==='alert'?'alert':a.sev==='warn'?'warnit':'';
+    const icon=a.sev==='alert'?'!':a.sev==='warn'?'⚠':'✓';
+    return `<div class="gen-item ${cls}" data-i="${i}">
+      <span class="ck ${m[0]}">${icon}</span>
+      <div class="gtxt"><b>${esc(a.store)}　<span style="color:${m[2]}">${esc(a.score)}</span></b><small>${esc(a.msg)}｜${esc(a.hint)}</small></div>
+      <span class="gtag" style="color:${m[2]}">${esc(m[1])}</span></div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,160));items[i].classList.add('in');}
+  btn.disabled=false;btn.textContent='⚡ もう一度検知する';
+  showToast(ALERT_COUNT+'件の異常を検知しました（要対応'+ANOMALIES.filter(a=>a.sev==='alert').length+'件）');
+});
+
+/* ============ INIT ============ */
+$('navAlert').textContent=ALERT_COUNT;
+renderStoreChips();renderProdChips();
+go('dash');
+</script>
+</body>
+</html>

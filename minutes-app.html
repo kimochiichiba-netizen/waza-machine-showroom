@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜議事録マシン（議事録・ToDo自動化システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#6a4df0;--brand-dk:#5237cf;--brand-soft:#efeaff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#a98bff,#6a4df0,#37e29a,#a98bff);
+  display:grid;place-items:center;color:#fff;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(106,77,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn.sm{padding:6px 12px;font-size:12px}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl th.c,table.tbl td.c{text-align:center}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.done{background:var(--green-soft);color:var(--green)}
+.st.summarized{background:var(--brand-soft);color:var(--brand)}
+.st.processing{background:var(--amber-soft);color:var(--amber)}
+.st.draft{background:var(--soft);color:var(--ink-3)}
+.st.open{background:var(--red-soft);color:var(--red)}
+.st.doing{background:var(--amber-soft);color:var(--amber)}
+
+/* tags / pills */
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--soft);color:var(--ink-2)}
+.avs{display:flex}
+.avs .av{width:24px;height:24px;border-radius:50%;background:var(--brand-soft);color:var(--brand-dk);display:grid;place-items:center;font-size:10.5px;font-weight:800;border:2px solid #fff;margin-left:-7px}
+.avs .av:first-child{margin-left:0}
+.avs .more{width:24px;height:24px;border-radius:50%;background:var(--soft);color:var(--ink-3);display:grid;place-items:center;font-size:10px;font-weight:800;border:2px solid #fff;margin-left:-7px}
+
+/* record form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,400px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{min-height:120px;resize:vertical;line-height:1.7}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* recorder */
+.recorder{display:flex;flex-direction:column;align-items:center;gap:14px;padding:22px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#faf9ff,#f4f1ff);margin-bottom:16px}
+.rec-orb{width:78px;height:78px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#a98bff,#6a4df0);display:grid;place-items:center;font-size:30px;color:#fff;cursor:pointer;transition:transform .15s}
+.rec-orb:hover{transform:scale(1.05)}
+.rec-orb.live{background:radial-gradient(circle at 35% 30%,#ff8a8a,#e24a4a);animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(226,74,74,.4)}50%{box-shadow:0 0 0 16px rgba(226,74,74,0)}}
+.rec-time{font-family:'Orbitron';font-size:26px;font-weight:700;color:var(--ink)}
+.rec-wave{display:flex;align-items:center;gap:3px;height:30px}
+.rec-wave span{width:3px;border-radius:2px;background:var(--brand);height:6px}
+.rec-wave.live span{animation:wave .9s ease-in-out infinite}
+@keyframes wave{0%,100%{height:6px}50%{height:26px}}
+.rec-status{font-size:12.5px;color:var(--ink-3);font-weight:600}
+
+/* preview paper */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:30px 32px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.pv-title{font-size:21px;font-weight:900;letter-spacing:.1em;color:var(--brand-dk);border-bottom:3px solid var(--brand-dk);padding-bottom:7px;margin-bottom:16px}
+.pv-meta{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;font-size:12px;color:var(--ink-2);margin-bottom:16px}
+.pv-meta b{color:var(--ink);font-weight:700}
+.pv-sec{margin-top:16px}
+.pv-sec h4{font-size:13px;font-weight:800;color:var(--brand-dk);border-left:4px solid var(--brand-dk);padding-left:9px;margin-bottom:9px}
+.pv-sec ul{list-style:none;font-size:12px;color:var(--ink-2)}
+.pv-sec li{padding:5px 0 5px 18px;position:relative;line-height:1.7}
+.pv-sec li::before{content:"●";position:absolute;left:0;color:var(--brand);font-size:8px;top:9px}
+.pv-todo{display:flex;align-items:flex-start;gap:9px;padding:8px 11px;border:1px solid var(--line);border-radius:8px;margin-bottom:6px;font-size:12px}
+.pv-todo .who{font-weight:800;color:var(--brand-dk);white-space:nowrap}
+.pv-todo .due{margin-left:auto;color:var(--ink-3);font-size:11px;white-space:nowrap}
+.pv-empty{text-align:center;color:#aab2c4;padding:18px}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+
+/* pipeline steps */
+.pipe{display:flex;flex-direction:column;gap:9px;margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.pipe.show{display:flex;animation:fade .4s}
+.pstep{display:flex;align-items:center;gap:12px;padding:11px 14px;border:1px solid var(--line);border-radius:10px;font-size:13px;opacity:.45;transition:all .35s}
+.pstep.active{opacity:1;border-color:var(--brand);background:var(--brand-soft)}
+.pstep.done{opacity:1;border-color:#bdebd4;background:var(--green-soft)}
+.pstep .pi{width:28px;height:28px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px;background:#fff;border:1px solid var(--line)}
+.pstep.done .pi{background:var(--green);color:#fff;border-color:var(--green)}
+.pstep .ptxt b{font-weight:800}
+.pstep .ptxt span{display:block;font-size:11px;color:var(--ink-3)}
+.pstep .spinner{margin-left:auto;width:16px;height:16px;border:2px solid var(--brand-soft);border-top-color:var(--brand);border-radius:50%;animation:spin .7s linear infinite;display:none}
+.pstep.active .spinner{display:block}
+.pstep .pcheck{margin-left:auto;color:var(--green);font-weight:900;font-size:16px;display:none}
+.pstep.done .pcheck{display:block}
+
+/* AI result */
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:flex-start;gap:11px;padding:11px 13px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0;margin-top:1px}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#a98bff,#6a4df0);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(106,77,240,.4)}50%{box-shadow:0 0 40px rgba(169,139,255,.55)}}
+
+/* todo board */
+.board{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:860px){.board{grid-template-columns:1fr}}
+.bcol{background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:13px;min-height:120px}
+.bcol h4{font-size:13px;font-weight:800;display:flex;align-items:center;gap:8px;margin-bottom:11px;padding:0 3px}
+.bcol h4 .cnt{margin-left:auto;font-size:11px;color:var(--ink-3);font-weight:700;background:#fff;padding:1px 9px;border-radius:99px;border:1px solid var(--line)}
+.bcol .dotc{width:9px;height:9px;border-radius:3px}
+.tcard{background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px 12px;margin-bottom:9px;box-shadow:var(--shadow);cursor:pointer;transition:all .15s}
+.tcard:hover{border-color:var(--brand);transform:translateY(-1px)}
+.tcard .tt{font-size:12.5px;font-weight:700;line-height:1.5}
+.tcard .tm{display:flex;align-items:center;gap:7px;margin-top:9px;font-size:11px;color:var(--ink-3)}
+.tcard .tm .who{background:var(--brand-soft);color:var(--brand-dk);font-weight:800;padding:1px 8px;border-radius:99px}
+.tcard .tm .src{margin-left:auto;color:var(--ink-3)}
+.tcard .tm .due.late{color:var(--red);font-weight:800}
+
+/* share view */
+.share-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:860px){.share-grid{grid-template-columns:1fr}}
+.chcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow);display:flex;align-items:center;gap:13px}
+.chcard .ci{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;font-size:20px;flex-shrink:0}
+.chcard .cb b{font-size:13.5px;font-weight:800}
+.chcard .cb span{font-size:11.5px;color:var(--ink-3);display:block}
+.chcard .cs{margin-left:auto}
+.toggle{width:42px;height:24px;border-radius:99px;background:var(--line-2);position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
+.toggle.on{background:var(--green)}
+.toggle::after{content:"";position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;top:3px;left:3px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle.on::after{left:21px}
+
+/* detail modal */
+.modal{position:fixed;inset:0;background:rgba(16,24,40,.5);display:none;place-items:center;z-index:150;padding:20px}
+.modal.show{display:grid;animation:fade .25s}
+.modal-card{background:#fff;border-radius:16px;max-width:680px;width:100%;max-height:86vh;overflow-y:auto;box-shadow:var(--shadow-lg)}
+.modal-head{position:sticky;top:0;background:#fff;padding:18px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;z-index:1}
+.modal-head h3{font-size:16px;font-weight:900}
+.modal-head .x{margin-left:auto;border:1px solid var(--line-2);background:var(--card);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:15px;color:var(--ink-2)}
+.modal-body{padding:20px 22px}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.section-title{font-size:14px;font-weight:800;margin:4px 0 12px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">議事録マシン<small>技マシン｜議事録・ToDo自動化</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">📝</span>議事録一覧</a>
+      <a data-v="record"><span class="i">🎙️</span>新規録音</a>
+      <a data-v="todo"><span class="i">✅</span>ToDo管理<span class="badge" id="navOpen">0</span></a>
+      <a data-v="share"><span class="i">📤</span>共有</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI要約</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="./">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。会議・参加者・ToDoはサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">今月の会議・議事録の状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>月次の会議数推移</h3><span class="more">過去6ヶ月</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="会議名・参加者で検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>会議名</th><th>日付</th><th>参加者</th><th class="c">ToDo</th><th>状態</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- RECORD (new) -->
+      <section class="view" id="v-record">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="recorder">
+              <div class="rec-orb" id="recOrb">🎙️</div>
+              <div class="rec-time mono" id="recTime">00:00</div>
+              <div class="rec-wave" id="recWave">
+                <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+              </div>
+              <div class="rec-status" id="recStatus">マイクボタンを押すと録音を開始します</div>
+            </div>
+            <div class="fg"><label>会議名</label><input id="rTitle" placeholder="例：5月度 介護フロア連絡会議"></div>
+            <div class="fg"><label>日付</label><input id="rDate" type="date"></div>
+            <div class="fg"><label>参加者（カンマ区切り）</label><input id="rMembers" placeholder="例：佐藤, 田中, 鈴木"></div>
+            <div class="fg"><label>文字起こし（録音すると自動入力／編集も可）</label>
+              <textarea id="rText" placeholder="ここに会議の発言が文字起こしされます。サンプルを読み込むこともできます。"></textarea></div>
+            <div class="linkrow" style="margin-top:6px">
+              <button class="btn primary" id="rToAI" style="flex:1;justify-content:center">⚡ AIで議事録を作る</button>
+              <button class="btn" id="rSample">サンプル</button>
+            </div>
+          </div>
+          <div>
+            <div class="section-title">リアルタイムプレビュー</div>
+            <div class="paper" id="rPaper">
+              <div class="pv-title" id="rpvTitle">議　事　録</div>
+              <div class="pv-meta">
+                <span>日　時</span><b id="rpvDate">—</b>
+                <span>参加者</span><b id="rpvMembers">—</b>
+                <span>文字数</span><b id="rpvLen">0 文字</b>
+              </div>
+              <div class="pv-sec">
+                <h4>📄 文字起こしプレビュー</h4>
+                <div id="rpvBody" style="font-size:12px;color:var(--ink-2);white-space:pre-wrap;line-height:1.8">文字起こしを入力すると、ここに反映されます。</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TODO -->
+      <section class="view" id="v-todo">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="tq" placeholder="ToDo・担当者で検索"></div>
+          <div class="chips" id="todoChips"></div>
+        </div>
+        <div class="board">
+          <div class="bcol">
+            <h4><span class="dotc" style="background:var(--red)"></span>未着手<span class="cnt" id="cntOpen">0</span></h4>
+            <div id="colOpen"></div>
+          </div>
+          <div class="bcol">
+            <h4><span class="dotc" style="background:var(--amber)"></span>対応中<span class="cnt" id="cntDoing">0</span></h4>
+            <div id="colDoing"></div>
+          </div>
+          <div class="bcol">
+            <h4><span class="dotc" style="background:var(--green)"></span>完了<span class="cnt" id="cntDone">0</span></h4>
+            <div id="colDone"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SHARE -->
+      <section class="view" id="v-share">
+        <div class="cols">
+          <div>
+            <div class="section-title">共有する議事録</div>
+            <div class="fg"><select id="shTarget"></select></div>
+            <div class="section-title" style="margin-top:16px">配信先チャネル</div>
+            <div style="display:flex;flex-direction:column;gap:10px" id="channels"></div>
+            <button class="btn primary" id="shSend" style="margin-top:16px;width:100%;justify-content:center">📤 選択したチャネルへ共有する</button>
+          </div>
+          <div>
+            <div class="section-title">共有プレビュー</div>
+            <div class="panel">
+              <div class="ph"><h3 id="shPrevTitle">議事録の要約</h3></div>
+              <div class="pb">
+                <div id="shPreview" style="font-size:13px;color:var(--ink-2);line-height:1.8"></div>
+              </div>
+            </div>
+            <div class="section-title" style="margin-top:16px">共有履歴</div>
+            <div class="panel"><div class="pb" style="padding:0"><div class="acts" id="shHistory" style="padding:4px 16px"></div></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI SUMMARY -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">録音から議事録・ToDoをAIが自動作成</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">対象会議：<b id="aiTargetName">5月度 介護フロア連絡会議</b>（録音 42分）から、要約・決定事項・ToDoを自動で抽出します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで議事録を生成する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">90分</div>
+              <ul>
+                <li>🎧 録音を聞き直して文字起こし</li>
+                <li>✍️ 要点と決定事項を手で整理</li>
+                <li>📋 ToDoと担当者を抜き出して転記</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 音声を自動で文字起こし</li>
+                <li>📝 要点・決定事項を自動要約</li>
+                <li>✅ ToDoと担当者を自動抽出</li>
+              </ul>
+            </div>
+          </div>
+          <div class="pipe" id="pipe">
+            <div class="pstep" data-step="0">
+              <div class="pi">🎧</div>
+              <div class="ptxt"><b>音声を文字起こし中</b><span>録音データをテキスト化しています</span></div>
+              <div class="spinner"></div><div class="pcheck">✓</div>
+            </div>
+            <div class="pstep" data-step="1">
+              <div class="pi">📝</div>
+              <div class="ptxt"><b>内容を要約中</b><span>議題・決定事項を整理しています</span></div>
+              <div class="spinner"></div><div class="pcheck">✓</div>
+            </div>
+            <div class="pstep" data-step="2">
+              <div class="pi">✅</div>
+              <div class="ptxt"><b>ToDoを抽出中</b><span>担当者・期限を割り当てています</span></div>
+              <div class="spinner"></div><div class="pcheck">✓</div>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ AIが生成した議事録</div>
+            <div id="genItems"></div>
+            <div class="linkrow" style="margin-top:12px">
+              <button class="btn primary" onclick="go('list')">📝 議事録一覧で見る</button>
+              <button class="btn" onclick="go('todo')">✅ 抽出ToDoを見る</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal" id="modal">
+  <div class="modal-card">
+    <div class="modal-head"><h3 id="mTitle">議事録</h3><button class="x" id="mClose">✕</button></div>
+    <div class="modal-body" id="mBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const MEMBERS=['佐藤','田中','鈴木','高橋','渡辺','川宿田','池永','山下'];
+const TODAY=new Date();
+let SEED=4071;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+function pickN(a,n){const c=[...a];const o=[];for(let k=0;k<n&&c.length;k++){o.push(c.splice(Math.floor(rnd()*c.length),1)[0]);}return o;}
+
+// 会議テンプレ（大分の医療介護/青果/中小向けのリアルなダミー）
+const MEETING_DEFS=[
+  {title:'5月度 介護フロア連絡会議',summary:['夜勤シフトの負担集中を改善するため、6月から3交代の割り当てを見直す方針を確認した。','入浴介助の手順書を写真付きで刷新し、新人スタッフの研修に活用することを決定。','ヒヤリハット報告が前月比で2件増加。原因を共有し、動線の見直しを検討する。'],
+    decisions:['6月シフトは負担均等化案を採用','入浴介助手順書を写真付きで更新','ヒヤリハット共有会を隔週で実施'],
+    todos:[['入浴介助手順書を写真付きで作り直す','田中','open'],['6月シフト案をスタッフへ周知','佐藤','doing'],['ヒヤリハット動線図を作成','鈴木','open']]},
+  {title:'青果仕入れ・配送ルート定例',summary:['大分市内の病院向け定期便で、朝の納品遅延が続いているためルートを再編する。','豊後おおいた青果からの仕入れを週3便から週4便へ増やし、鮮度を維持する。','就労支援B型事業所との配送連携について、6月から試験運用を開始する。'],
+    decisions:['配送ルートを北回り→中央回りへ変更','仕入れを週4便に増便','B型事業所と配送試験運用を6月開始'],
+    todos:[['新配送ルートの所要時間を実測','高橋','doing'],['豊後おおいた青果へ増便を連絡','鈴木','done'],['B型事業所と配送内容をすり合わせ','川宿田','open']]},
+  {title:'クリニック向けシステム導入キックオフ',summary:['大分中央クリニックへAI業務自動化を導入するにあたり、現行の予約・受付フローを整理した。','個人情報の取り扱いについて、法務確認を経てから本番反映する方針を確認。','初期設定は6月第2週、職員研修は6月第3週で日程を仮押さえした。'],
+    decisions:['受付フローはステップを5→3に簡素化','個人情報は法務確認後に本番反映','初期設定6月第2週・研修6月第3週'],
+    todos:[['現行受付フロー図を作成','池永','done'],['個人情報の取り扱いを法務確認','渡辺','doing'],['職員研修の日程を確定','佐藤','open']]},
+  {title:'4月度 営業進捗ミーティング',summary:['吉原様への複合提案はHP制作を最有望として進める。次回商談は6月9日。','果物の福利厚生プランは反応が良く、サンプル配送を6月5日に実施する。','新規リードの掘り起こしに向け、メール営業の文面をブラッシュアップする。'],
+    decisions:['吉原様はHP制作を主軸に提案','果物サンプルを6/5に配送','営業メール文面を改善し再送'],
+    todos:[['吉原様向けHP案を仕上げる','池永','done'],['果物サンプルの配送手配','高橋','done'],['営業メール文面を改善','渡辺','done']]},
+  {title:'シフト管理システム 改善定例',summary:['現場スタッフからの「画面が複雑」という声を受け、UIをさらに簡素化する。','打刻漏れの自動アラート機能を追加し、月末の集計負担を減らす。','タブレットでの操作性を改善し、手袋をしたままでも押せるボタンサイズにする。'],
+    decisions:['ホーム画面のボタンを大型化','打刻漏れアラートを実装','ボタン最小サイズを48pxに統一'],
+    todos:[['ホーム画面のボタンを大型化','田中','doing'],['打刻漏れアラートを設計','鈴木','open']]},
+  {title:'5月度 経営会議',summary:['野菜卸売B2B事業の粗利率を試算。配送コストを抑えれば目標の25%を確保できる見込み。','補助金（IT導入支援）の申請状況を共有。GビズID審査中で6月中の登録を見込む。','M&A計画は3年以内に1〜2億円規模の株式譲渡を目標として再確認した。'],
+    decisions:['B2B事業は粗利率25%を目標に設計','補助金は6月登録を前提に準備','M&A目標を据え置き'],
+    todos:[['配送コストの実額を集計','高橋','doing'],['補助金申請書類を最終確認','渡辺','open'],['B2B価格表を作成','鈴木','open']]},
+  {title:'病院向け野菜サンプル提案 振り返り',summary:['さくら総合病院への提案は好感触。次は栄養士向けの提案資料を整える。','配送の鮮度管理について、保冷ボックスの規格を統一する必要がある。','見積りは月額固定+従量のハイブリッドが受け入れられやすいと判断。'],
+    decisions:['栄養士向け資料を新規作成','保冷ボックス規格を統一','料金は固定+従量のハイブリッド'],
+    todos:[['栄養士向け提案資料を作成','池永','open'],['保冷ボックスの規格を決定','高橋','open']]},
+  {title:'4月度 全体朝礼・周知事項',summary:['新しい勤怠ルールを全員へ周知。打刻は出勤後5分以内を徹底する。','フロア清掃の担当表を更新。感染対策として消毒頻度を1日3回に増やす。','来月の社内研修テーマを「個人情報の取り扱い」に決定。'],
+    decisions:['打刻は出勤後5分以内を徹底','消毒を1日3回に増やす','研修テーマは個人情報保護'],
+    todos:[['清掃担当表を更新','山下','done'],['研修資料を準備','渡辺','done']]},
+];
+
+let STATUSES=['done','summarized','summarized','done','processing','summarized','done','done'];
+let meetings=[];
+(function seed(){
+  for(let i=0;i<MEETING_DEFS.length;i++){
+    const def=MEETING_DEFS[i];
+    const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-Math.floor(rnd()*4),1+Math.floor(rnd()*26));
+    const members=def.todos.length?Array.from(new Set([...def.todos.map(t=>t[1]),...pickN(MEMBERS,2)])):pickN(MEMBERS,4);
+    const dur=25+Math.floor(rnd()*55);
+    const todos=def.todos.map((t,j)=>({
+      id:'T'+(i*10+j),text:t[0],who:t[1],status:t[2],
+      meeting:def.title,
+      due:new Date(d.getFullYear(),d.getMonth(),d.getDate()+5+Math.floor(rnd()*14))
+    }));
+    meetings.push({id:'M'+i,title:def.title,date:d,members,dur,
+      status:STATUSES[i]||'summarized',accuracy:90+Math.floor(rnd()*9),
+      summary:def.summary,decisions:def.decisions,todos});
+  }
+  meetings.sort((a,b)=>b.date-a.date);
+})();
+let allTodos=()=>meetings.flatMap(m=>m.todos);
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const fmtD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+const fmtSlash=d=>d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate();
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const initial=s=>esc(String(s||'').trim().charAt(0)||'?');
+const STLABEL={done:'完了',summarized:'要約済',processing:'処理中',draft:'下書き'};
+function stBadge(s){return `<span class="st ${esc(s)}">${STLABEL[s]||esc(s)}</span>`;}
+const TODOLABEL={open:'未着手',doing:'対応中',done:'完了'};
+function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function avatars(list){
+  const show=list.slice(0,3).map(n=>`<div class="av">${initial(n)}</div>`).join('');
+  const more=list.length>3?`<div class="more">+${list.length-3}</div>`:'';
+  return `<div class="avs">${show}${more}</div>`;
+}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','今月の会議・議事録の状況'],list:['議事録一覧','作成した議事録を管理します'],
+  record:['新規録音','録音すると文字起こし→議事録を自動作成します'],todo:['ToDo管理','会議から抽出されたToDoを管理します'],
+  share:['共有','議事録をメール・チャットへ自動配信します'],ai:['AI要約','録音から議事録・ToDoを自動で作ります']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn primary" onclick="go(\'record\')">🎙️ 新規録音</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI要約</button><button class="btn primary" onclick="go(\'record\')">🎙️ 新規録音</button>'
+    : v==='todo'?'<button class="btn" onclick="go(\'ai\')">⚡ ToDo自動抽出</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='todo')renderTodo();
+  if(v==='share')renderShare();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const tm=meetings.filter(m=>thisMonth(m.date));
+  const minutesSaved=meetings.length*85; // 1会議あたり約85分削減
+  const hSaved=Math.round(minutesSaved/60*10)/10;
+  const openTodo=allTodos().filter(t=>t.status!=='done').length;
+  const accs=meetings.map(m=>m.accuracy);
+  const avgAcc=Math.round(accs.reduce((s,a)=>s+a,0)/accs.length);
+  $('kpis').innerHTML=`
+    ${kpi('#6a4df0','今月の会議数',tm.length+'<small>件</small>',meetings.length+'件 累計','up','前月比 +3件')}
+    ${kpi('#16b877','作成時間の削減',hSaved+'<small>時間</small>','今月','up','1会議で約85分短縮')}
+    ${kpi('#e3941f','未完了ToDo',openTodo+'<small>件</small>',allTodos().length+'件中','warn','要フォロー')}
+    ${kpi('#0ea5b7','要約精度',avgAcc+'<small>%</small>',' ','up','安定して高精度')}`;
+  // trend (会議数 by month)
+  const months=[];for(let k=5;k>=0;k--){const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1);months.push(d);}
+  const counts=months.map(m=>meetings.filter(x=>x.date.getMonth()===m.getMonth()&&x.date.getFullYear()===m.getFullYear()).length);
+  // 演出用に少し底上げ
+  const adj=counts.map((c,i)=>c+(i<3?2+Math.floor(rnd()*3):0));
+  const mx=Math.max(...adj,1);
+  $('trendBars').innerHTML=months.map((m,i)=>`
+    <div class="bar-row"><span class="mlabel">${m.getMonth()+1}月</span>
+      <div class="bar-track"><div class="bar-fill" data-w="${Math.round(adj[i]/mx*100)}"></div></div>
+      <span class="mval">${adj[i]}件</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // activity
+  const acts=[
+    {i:'⚡',c:'#efeaff',t:'AI要約で「5月度 介護フロア連絡会議」の議事録を作成（精度96%）',m:'5分前'},
+    {i:'✅',c:'#e6f8f0',t:'鈴木 さんが「豊後おおいた青果へ増便を連絡」を完了',m:'40分前'},
+    {i:'📤',c:'#efeaff',t:'「青果仕入れ・配送ルート定例」をSlackへ共有しました',m:'1時間前'},
+    {i:'⚠️',c:'#fdeaea',t:'「職員研修の日程を確定」の期限が近づいています（担当：佐藤）',m:'今日 9:10'},
+    {i:'🎙️',c:'#efeaff',t:'「5月度 経営会議」の録音を取り込みました（38分）',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${esc(l)}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub&&sub.trim()?esc(sub)+' ・ ':''}${esc(d)}</div></div>`;}
+
+/* ============ LIST ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['summarized','要約済'],['done','完了'],['processing','処理中']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=meetings.filter(m=>filterStatus==='all'||m.status===filterStatus)
+    .filter(m=>!q||(m.title+m.members.join('')).toLowerCase().includes(q))
+    .sort((a,b)=>b.date-a.date);
+  $('listRows').innerHTML=rows.length?rows.map(m=>{
+    const open=m.todos.filter(t=>t.status!=='done').length;
+    return `<tr onclick="openMeeting('${esc(m.id)}')">
+      <td><b>${esc(m.title)}</b><div style="font-size:11px;color:var(--ink-3);margin-top:2px">録音 ${m.dur}分 ・ 精度 ${m.accuracy}%</div></td>
+      <td style="color:var(--ink-2)">${fmtSlash(m.date)}</td>
+      <td>${avatars(m.members)}</td>
+      <td class="c"><span class="pill">${m.todos.length}件${open?` <b style="color:var(--red)">(未${open})</b>`:''}</span></td>
+      <td>${stBadge(m.status)}</td></tr>`;
+  }).join('')
+    :'<tr><td colspan="5" class="empty-cell">該当する議事録がありません</td></tr>';
+}
+$('q').addEventListener('input',renderList);
+
+/* ============ MEETING DETAIL MODAL ============ */
+window.openMeeting=id=>{
+  const m=meetings.find(x=>x.id===id);if(!m)return;
+  $('mTitle').textContent=m.title;
+  const summary=`<div class="pv-sec"><h4>📝 会議の要約</h4><ul>${m.summary.map(s=>`<li>${esc(s)}</li>`).join('')}</ul></div>`;
+  const decisions=`<div class="pv-sec"><h4>✔️ 決定事項</h4><ul>${m.decisions.map(s=>`<li>${esc(s)}</li>`).join('')}</ul></div>`;
+  const todos=`<div class="pv-sec"><h4>✅ ToDo（${m.todos.length}件）</h4>${m.todos.length?m.todos.map(t=>`
+    <div class="pv-todo"><span class="who">${esc(t.who)}</span><span style="flex:1">${esc(t.text)}</span>
+    <span class="due">期限 ${fmtSlash(t.due)}</span><span class="st ${esc(t.status)}" style="margin-left:6px">${TODOLABEL[t.status]}</span></div>`).join(''):'<div class="pv-empty">ToDoはありません</div>'}</div>`;
+  $('mBody').innerHTML=`
+    <div class="pv-meta" style="margin-bottom:14px">
+      <span>日　時</span><b>${fmtDL(m.date)}</b>
+      <span>参加者</span><b>${esc(m.members.join('、'))}</b>
+      <span>録音時間</span><b>${m.dur}分 ／ 要約精度 ${m.accuracy}%</b>
+    </div>
+    ${summary}${decisions}${todos}
+    <div class="linkrow" style="margin-top:18px">
+      <button class="btn primary" onclick="shareFrom('${esc(m.id)}')">📤 この議事録を共有</button>
+      <button class="btn" onclick="closeModal()">閉じる</button>
+    </div>`;
+  $('modal').classList.add('show');
+};
+function closeModal(){$('modal').classList.remove('show');}
+window.closeModal=closeModal;
+$('mClose').addEventListener('click',closeModal);
+$('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal();});
+window.shareFrom=id=>{closeModal();go('share');$('shTarget').value=id;renderSharePreview();};
+
+/* ============ TODO BOARD ============ */
+let todoFilter='all';
+function renderTodoChips(){
+  const opts=[['all','全担当'],...Array.from(new Set(allTodos().map(t=>t.who))).map(w=>[w,w])];
+  $('todoChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===todoFilter?'on':''}" data-s="${esc(o[0])}">${esc(o[1])}</button>`).join('');
+  $('todoChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{todoFilter=c.dataset.s;renderTodoChips();renderTodo();});
+}
+function renderTodo(){
+  const q=($('tq').value||'').toLowerCase();
+  const list=allTodos().filter(t=>todoFilter==='all'||t.who===todoFilter)
+    .filter(t=>!q||(t.text+t.who+t.meeting).toLowerCase().includes(q));
+  const cols={open:[],doing:[],done:[]};
+  list.forEach(t=>cols[t.status].push(t));
+  const card=t=>{
+    const late=t.status!=='done'&&t.due<TODAY;
+    return `<div class="tcard" onclick="cycleTodo('${esc(t.id)}')">
+      <div class="tt">${esc(t.text)}</div>
+      <div class="tm"><span class="who">${esc(t.who)}</span>
+        <span class="due ${late?'late':''}">${late?'⚠ ':''}${fmtSlash(t.due)}</span>
+        <span class="src">📝 ${esc(t.meeting.length>10?t.meeting.slice(0,10)+'…':t.meeting)}</span></div>
+    </div>`;
+  };
+  $('colOpen').innerHTML=cols.open.map(card).join('')||'<div class="pv-empty" style="font-size:12px">なし</div>';
+  $('colDoing').innerHTML=cols.doing.map(card).join('')||'<div class="pv-empty" style="font-size:12px">なし</div>';
+  $('colDone').innerHTML=cols.done.map(card).join('')||'<div class="pv-empty" style="font-size:12px">なし</div>';
+  $('cntOpen').textContent=cols.open.length;
+  $('cntDoing').textContent=cols.doing.length;
+  $('cntDone').textContent=cols.done.length;
+  $('navOpen').textContent=allTodos().filter(t=>t.status!=='done').length;
+}
+const NEXT={open:'doing',doing:'done',done:'open'};
+window.cycleTodo=id=>{
+  const t=allTodos().find(x=>x.id===id);if(!t)return;
+  t.status=NEXT[t.status];
+  renderTodo();
+  showToast('「'+(t.text.length>14?t.text.slice(0,14)+'…':t.text)+'」を「'+TODOLABEL[t.status]+'」にしました');
+};
+$('tq').addEventListener('input',renderTodo);
+
+/* ============ SHARE ============ */
+const CHANNELS=[
+  {id:'slack',icon:'💬',bg:'#efeaff',name:'Slack（社内連絡）',sub:'#general へ要約を投稿',on:true},
+  {id:'mail',icon:'✉️',bg:'#eaf1ff',name:'メール配信',sub:'参加者全員へ自動送信',on:true},
+  {id:'line',icon:'📱',bg:'#e6f8f0',name:'LINE公式アカウント',sub:'担当グループへ通知',on:false},
+  {id:'pdf',icon:'📄',bg:'#fdf3e2',name:'PDF出力',sub:'社内フォルダへ保存',on:false},
+];
+let chState={};CHANNELS.forEach(c=>chState[c.id]=c.on);
+function renderShareTargets(){
+  $('shTarget').innerHTML=meetings.map(m=>`<option value="${esc(m.id)}">${esc(m.title)}（${fmtSlash(m.date)}）</option>`).join('');
+}
+function renderChannels(){
+  $('channels').innerHTML=CHANNELS.map(c=>`
+    <div class="chcard">
+      <div class="ci" style="background:${c.bg}">${c.icon}</div>
+      <div class="cb"><b>${esc(c.name)}</b><span>${esc(c.sub)}</span></div>
+      <div class="cs"><div class="toggle ${chState[c.id]?'on':''}" data-ch="${esc(c.id)}"></div></div>
+    </div>`).join('');
+  $('channels').querySelectorAll('.toggle').forEach(t=>t.onclick=()=>{chState[t.dataset.ch]=!chState[t.dataset.ch];t.classList.toggle('on');});
+}
+function renderSharePreview(){
+  const m=meetings.find(x=>x.id===$('shTarget').value)||meetings[0];
+  if(!m)return;
+  $('shPrevTitle').textContent=m.title+' の要約';
+  $('shPreview').innerHTML=`
+    <div style="font-size:11.5px;color:var(--ink-3);margin-bottom:10px">${fmtDL(m.date)} ／ 参加者：${esc(m.members.join('、'))}</div>
+    <b style="color:var(--ink)">■ 要点</b>
+    <ul style="margin:6px 0 12px;padding-left:18px">${m.summary.map(s=>`<li>${esc(s)}</li>`).join('')}</ul>
+    <b style="color:var(--ink)">■ ToDo（${m.todos.length}件）</b>
+    <ul style="margin:6px 0 0;padding-left:18px">${m.todos.map(t=>`<li>${esc(t.text)}（${esc(t.who)} / ${fmtSlash(t.due)}）</li>`).join('')||'<li>なし</li>'}</ul>`;
+}
+let shareHistory=[
+  {ch:'💬 Slack',t:'青果仕入れ・配送ルート定例',m:'1時間前'},
+  {ch:'✉️ メール',t:'4月度 営業進捗ミーティング',m:'昨日'},
+];
+function renderShareHistory(){
+  $('shHistory').innerHTML=shareHistory.map(h=>`<div class="act"><div class="ai" style="background:#efeaff">📤</div>
+    <div><div class="at">${esc(h.ch)}：${esc(h.t)}</div><div class="am">${esc(h.m)}</div></div></div>`).join('');
+}
+function renderShare(){renderShareTargets();renderChannels();renderSharePreview();renderShareHistory();}
+$('shTarget').addEventListener('change',renderSharePreview);
+$('shSend').addEventListener('click',async()=>{
+  const on=CHANNELS.filter(c=>chState[c.id]);
+  if(!on.length){showToast('配信先チャネルを1つ以上選んでください');return;}
+  const m=meetings.find(x=>x.id===$('shTarget').value)||meetings[0];
+  const btn=$('shSend');btn.disabled=true;btn.textContent='📤 送信中…';
+  await new Promise(r=>setTimeout(r,800));
+  btn.disabled=false;btn.textContent='📤 選択したチャネルへ共有する';
+  on.forEach(c=>shareHistory.unshift({ch:c.icon+' '+c.name.replace(/（.*/,''),t:m.title,m:'たった今'}));
+  renderShareHistory();
+  showToast(on.length+'件のチャネルへ「'+(m.title.length>10?m.title.slice(0,10)+'…':m.title)+'」を共有しました');
+});
+
+/* ============ RECORD (new) ============ */
+let recTimer=null,recSec=0,recording=false;
+function setRecTime(){const mm=String(Math.floor(recSec/60)).padStart(2,'0');const ss=String(recSec%60).padStart(2,'0');$('recTime').textContent=mm+':'+ss;}
+$('recOrb').addEventListener('click',()=>{
+  recording=!recording;
+  if(recording){
+    $('recOrb').classList.add('live');$('recOrb').textContent='⏸️';
+    $('recWave').classList.add('live');$('recStatus').textContent='録音中…（もう一度押すと停止）';
+    document.querySelectorAll('#recWave span').forEach((s,i)=>s.style.animationDelay=(i*0.07)+'s');
+    recTimer=setInterval(()=>{recSec++;setRecTime();},1000);
+  }else{
+    $('recOrb').classList.remove('live');$('recOrb').textContent='🎙️';
+    $('recWave').classList.remove('live');
+    clearInterval(recTimer);
+    if(recSec>0){
+      $('recStatus').textContent='録音を停止しました。AIが文字起こしします…';
+      setTimeout(()=>{
+        loadSampleTranscript();
+        $('recStatus').textContent='✅ 文字起こしが完了しました。下のボタンで議事録を作成できます。';
+      },900);
+    }else{
+      $('recStatus').textContent='マイクボタンを押すと録音を開始します';
+    }
+  }
+});
+const SAMPLE_TRANSCRIPT=`佐藤：それでは5月度の介護フロア連絡会議を始めます。まず夜勤シフトについてですが、特定の方に負担が集中しているという声が上がっています。
+田中：はい、6月からは3交代の割り当てを見直して、負担を均等にしたいと思います。
+鈴木：入浴介助の手順ですが、新人さんが分かりにくいようなので、写真付きの手順書に作り直したらどうでしょうか。
+佐藤：いいですね。それは田中さんにお願いします。あとヒヤリハットが先月より2件増えているので、動線の見直しも検討しましょう。
+田中：6月のシフト案ができたらスタッフへ周知します。`;
+function loadSampleTranscript(){
+  $('rText').value=SAMPLE_TRANSCRIPT;
+  if(!$('rTitle').value)$('rTitle').value='5月度 介護フロア連絡会議';
+  if(!$('rMembers').value)$('rMembers').value='佐藤, 田中, 鈴木';
+  if(!$('rDate').value)$('rDate').value=new Date().toISOString().slice(0,10);
+  renderRPaper();
+}
+function renderRPaper(){
+  $('rpvTitle').textContent=$('rTitle').value||'議　事　録';
+  const dv=$('rDate').value;
+  $('rpvDate').textContent=dv?fmtDL(new Date(dv+'T00:00:00')):'—';
+  const mem=($('rMembers').value||'').split(/[,、]/).map(s=>s.trim()).filter(Boolean);
+  $('rpvMembers').textContent=mem.length?mem.join('、'):'—';
+  const txt=$('rText').value||'';
+  $('rpvLen').textContent=txt.length.toLocaleString()+' 文字';
+  $('rpvBody').textContent=txt||'文字起こしを入力すると、ここに反映されます。';
+}
+['rTitle','rDate','rMembers','rText'].forEach(id=>$(id).addEventListener('input',renderRPaper));
+$('rSample').addEventListener('click',loadSampleTranscript);
+$('rToAI').addEventListener('click',()=>{
+  if(!$('rText').value.trim()){showToast('先に録音するか、サンプルを読み込んでください');return;}
+  // 録音内容をAI画面の対象にして遷移
+  $('aiTargetName').textContent=$('rTitle').value||'新規録音';
+  $('aiSub').innerHTML='対象会議：<b id="aiTargetName">'+esc($('rTitle').value||'新規録音')+'</b>（文字起こし '+($('rText').value.length)+'文字）から、要約・決定事項・ToDoを自動で抽出します。';
+  go('ai');
+  showToast('AI要約画面へ移動しました。実行ボタンを押してください');
+});
+
+/* ============ AI SUMMARY ============ */
+function delay(ms){return new Promise(r=>setTimeout(r,ms));}
+async function setStep(idx,state){
+  const steps=document.querySelectorAll('#pipe .pstep');
+  steps.forEach((s,i)=>{
+    if(i<idx){s.classList.remove('active');s.classList.add('done');}
+    else if(i===idx){s.classList.toggle('active',state==='active');s.classList.toggle('done',state==='done');}
+  });
+}
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 生成中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  $('genList').classList.remove('show');
+  // reset pipe
+  document.querySelectorAll('#pipe .pstep').forEach(s=>s.classList.remove('active','done'));
+  $('pipe').classList.add('show');
+  // counting timer
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent=s+'秒';},1000);
+  // step 0: 文字起こし
+  await setStep(0,'active');await delay(1100);await setStep(0,'done');
+  // step 1: 要約
+  await setStep(1,'active');await delay(1100);await setStep(1,'done');
+  // step 2: ToDo抽出
+  await setStep(2,'active');await delay(1100);await setStep(2,'done');
+  clearInterval(t);
+  $('baAfterT').textContent='8秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+
+  // 新しい議事録を生成（録音サンプルベース）
+  const def=MEETING_DEFS[0];
+  const now=new Date();
+  const title=$('aiTargetName').textContent||def.title;
+  const id='M'+(meetings.length+100);
+  const todos=def.todos.map((tt,j)=>({id:'TG'+(meetings.length)+'_'+j,text:tt[0],who:tt[1],status:'open',meeting:title,
+    due:new Date(now.getFullYear(),now.getMonth(),now.getDate()+7+j*3)}));
+  const newM={id,title,date:now,members:['佐藤','田中','鈴木'],dur:42,status:'summarized',accuracy:96,
+    summary:def.summary,decisions:def.decisions,todos};
+  meetings.unshift(newM);
+  $('navOpen').textContent=allTodos().filter(t=>t.status!=='done').length;
+
+  // 結果カードを段階表示
+  const cards=[
+    {ck:'📝',title:'要約 3点を作成',body:def.summary[0]},
+    {ck:'✔️',title:'決定事項 '+def.decisions.length+'件を抽出',body:def.decisions.join(' ／ ')},
+    {ck:'✅',title:'ToDo '+todos.length+'件を抽出（担当者・期限つき）',body:todos.map(t=>t.who+'：'+t.text).join(' ／ ')},
+  ];
+  $('genItems').innerHTML=cards.map((c,i)=>`<div class="gen-item" data-i="${i}">
+    <span class="ck">✓</span>
+    <div style="flex:1"><b>${esc(c.title)}</b><div style="font-size:11.5px;color:var(--ink-3);margin-top:3px">${esc(c.body)}</div></div>
+  </div>`).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await delay(220);items[i].classList.add('in');}
+
+  btn.disabled=false;btn.textContent='⚡ もう一度生成';
+  showToast('議事録を作成し、ToDo '+todos.length+'件を抽出しました');
+});
+
+/* ============ INIT ============ */
+$('rDate').value=new Date().toISOString().slice(0,10);
+renderChips();renderTodoChips();renderDash();renderRPaper();
+$('navOpen').textContent=allTodos().filter(t=>t.status!=='done').length;
+</script>
+</body>
+</html>

@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜契約書チェックマシン（契約リスク自動レビュー）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#5b3df0;--brand-dk:#4528cf;--brand-soft:#efeaff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#8a6cf0,#5b3df0,#b89aff,#8a6cf0);
+  display:grid;place-items:center;color:#fff;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(91,61,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn:disabled{opacity:.6;cursor:default}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:64px 1fr 56px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-fill.r{background:linear-gradient(90deg,#e24a4a,#f08a5b)}
+.bar-fill.a{background:linear-gradient(90deg,#e3941f,#f2c14e)}
+.bar-fill.g{background:linear-gradient(90deg,#16b877,#5bd6a0)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut */
+.donut-wrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.donut{width:130px;height:130px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;position:relative}
+.donut .hole{width:84px;height:84px;border-radius:50%;background:var(--card);display:grid;place-items:center;text-align:center}
+.donut .hole b{font-size:24px;font-weight:900;line-height:1}
+.donut .hole span{font-size:10.5px;color:var(--ink-3);font-weight:700}
+.legend{display:flex;flex-direction:column;gap:9px;font-size:12.5px}
+.legend .lr{display:flex;align-items:center;gap:9px}
+.legend .sw{width:12px;height:12px;border-radius:4px}
+.legend .lr b{margin-left:auto;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+
+/* status badge */
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.done{background:var(--green-soft);color:var(--green)}
+.st.review{background:var(--brand-soft);color:var(--brand)}
+.st.wait{background:var(--soft);color:var(--ink-3)}
+.st.fix{background:var(--amber-soft);color:var(--amber)}
+.st.danger{background:var(--red-soft);color:var(--red)}
+
+/* risk badge */
+.rk{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 11px;border-radius:8px}
+.rk.high{background:var(--red-soft);color:var(--red)}
+.rk.mid{background:var(--amber-soft);color:var(--amber)}
+.rk.low{background:var(--green-soft);color:var(--green)}
+
+/* create / check form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{min-height:220px;resize:vertical;line-height:1.7;font-size:12.5px}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.dropzone{border:2px dashed var(--line-2);border-radius:11px;padding:18px;text-align:center;color:var(--ink-3);font-size:12.5px;background:var(--soft);margin-bottom:13px;cursor:pointer;transition:all .15s}
+.dropzone:hover{border-color:var(--brand);color:var(--brand)}
+.dropzone .big{font-size:24px;margin-bottom:4px}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#8a6cf0,#5b3df0);display:grid;place-items:center;font-size:26px;margin:0;flex-shrink:0}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(91,61,240,.4)}50%{box-shadow:0 0 40px rgba(138,108,240,.6)}}
+
+/* result / review */
+.scorecard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:var(--shadow);display:none}
+.scorecard.show{display:block;animation:fade .4s}
+.score-top{display:flex;align-items:center;gap:18px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:16px}
+.score-big{width:96px;height:96px;border-radius:18px;display:grid;place-items:center;flex-shrink:0;color:#fff;text-align:center;line-height:1.1}
+.score-big b{font-size:30px;font-weight:900;font-family:'Orbitron'}
+.score-big span{font-size:10px;font-weight:700;opacity:.9}
+.risk-item{border:1px solid var(--line);border-radius:11px;padding:14px 16px;margin-bottom:10px;animation:fade .4s}
+.risk-item .rh{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.risk-item .rh b{font-size:13.5px}
+.risk-item .clause{background:var(--red-soft);border-left:4px solid var(--red);border-radius:8px;padding:9px 12px;font-size:12.5px;color:#7a2a2a;margin-bottom:8px}
+.risk-item .fix{background:var(--green-soft);border-left:4px solid var(--green);border-radius:8px;padding:9px 12px;font-size:12.5px;color:#14603f}
+.risk-item .fix b{color:var(--green);font-size:11px;display:block;margin-bottom:3px;letter-spacing:.04em}
+.risk-item .clause b{color:var(--red);font-size:11px;display:block;margin-bottom:3px;letter-spacing:.04em}
+
+/* before/after */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+
+/* templates grid */
+.tpl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:980px){.tpl-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.tpl-grid{grid-template-columns:1fr}}
+.tpl{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:16px;box-shadow:var(--shadow);transition:all .15s;cursor:pointer}
+.tpl:hover{border-color:var(--brand);transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.tpl .ic{width:40px;height:40px;border-radius:10px;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center;font-size:19px;margin-bottom:11px}
+.tpl h4{font-size:14px;font-weight:800;margin-bottom:5px}
+.tpl p{font-size:12px;color:var(--ink-3);min-height:34px}
+.tpl .meta{font-size:11px;color:var(--ink-3);margin-top:9px;display:flex;align-items:center;gap:7px;border-top:1px solid var(--line);padding-top:9px}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.steps{display:flex;gap:8px;margin-top:14px;font-size:11.5px;color:var(--ink-3);flex-wrap:wrap}
+.steps .stp{padding:5px 11px;border-radius:99px;background:var(--soft);font-weight:700}
+.steps .stp.on{background:var(--brand-soft);color:var(--brand)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">契約書チェックマシン<small>技マシン｜契約リスク管理</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">📄</span>契約書一覧</a>
+      <a data-v="check"><span class="i">🔍</span>新規チェック</a>
+      <a data-v="risk"><span class="i">⚠️</span>リスク管理<span class="badge" id="navRisk">0</span></a>
+      <a data-v="tpl"><span class="i">📋</span>テンプレ</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AIレビュー</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="./">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。契約書・取引先はサンプルです。AIレビューの結果も架空です。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">2026年5月の契約チェック状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>契約種別ごとのチェック件数</h3><span class="more">今月</span></div>
+            <div class="pb"><div class="bars" id="typeBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>リスク度の内訳</h3></div>
+            <div class="pb"><div class="donut-wrap"><div class="donut" id="donut"><div class="hole"><b id="donutTotal">0</b><span>件チェック</span></div></div>
+              <div class="legend" id="donutLegend"></div></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>要対応の契約書（リスク高）</h3><span class="more" onclick="go('risk')">リスク管理へ</span></div>
+            <div class="pb" style="padding:0">
+              <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+                <thead><tr><th>契約名</th><th>相手先</th><th>リスク度</th><th>状態</th></tr></thead>
+                <tbody id="dashRisk"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="契約名・相手先・番号で検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>契約番号</th><th>契約名</th><th>相手先</th><th>種別</th><th>リスク度</th><th>チェック日</th><th>状態</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- CHECK (new check) -->
+      <section class="view" id="v-check">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>契約名</label><input id="kName" placeholder="例：業務委託基本契約書"></div>
+            <div class="fg"><label>相手先</label><select id="kParty"></select></div>
+            <div class="fg"><label>契約種別</label><select id="kType">
+              <option>業務委託契約</option><option>賃貸借契約</option><option>売買・取引基本契約</option>
+              <option>秘密保持契約(NDA)</option><option>雇用・労働契約</option><option>システム開発契約</option>
+            </select></div>
+            <div class="dropzone" id="kDrop"><div class="big">📎</div>契約書ファイルをここにドラッグ＆ドロップ<br>（PDF / Word / 貼り付けでもOK）</div>
+            <div class="fg"><label>契約書 本文（貼り付け）</label><textarea id="kBody" placeholder="ここに契約書の条文を貼り付けてください…"></textarea></div>
+            <div class="linkrow">
+              <button class="btn primary" id="kRun" style="flex:1;justify-content:center">🔍 AIでリスクチェック</button>
+              <button class="btn" id="kSample">サンプル文を入れる</button>
+            </div>
+            <div class="steps" id="kSteps">
+              <span class="stp on">① 本文入力</span><span class="stp">② AI解析</span><span class="stp">③ リスク抽出</span><span class="stp">④ 修正案</span>
+            </div>
+          </div>
+          <div>
+            <div class="ai-stage" id="kIntro">
+              <div style="display:flex;align-items:center;gap:14px">
+                <div class="orb" id="kOrb">🤖</div>
+                <div><div style="font-size:16px;font-weight:900">AIが契約書のリスク条項を自動抽出します</div>
+                <div style="font-size:12.5px;color:var(--ink-3)">不利な条項・抜けている条項・あいまいな表現を検知し、相手の心証を損ねない<b>修正案</b>まで提示します。左に本文を入れて実行してください。</div></div>
+              </div>
+              <div class="ba" style="margin-top:18px">
+                <div class="col before">
+                  <span class="ct">😓 弁護士・自力での確認</span>
+                  <div class="big">約10時間</div>
+                  <ul>
+                    <li>📖 全条文を一字一句読み込む</li>
+                    <li>⚖️ 不利な条項を法的に判断</li>
+                    <li>✍️ 修正案を一から起案</li>
+                  </ul>
+                </div>
+                <div class="arrow">→</div>
+                <div class="col after">
+                  <span class="ct">⚡ 技マシン</span>
+                  <div class="big">約20秒</div>
+                  <ul>
+                    <li>🤖 全条文をAIが瞬時に解析</li>
+                    <li>⚠️ リスク条項を自動でランク付け</li>
+                    <li>📝 修正案を即提示・コピー可</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div class="scorecard" id="kResult" style="margin-top:0"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RISK -->
+      <section class="view" id="v-risk">
+        <div class="kpis" id="riskKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>未対応のリスク条項</h3>
+            <button class="btn green" id="autoFix" style="margin-left:auto">⚡ AIで修正案を一括作成</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>契約名</th><th>相手先</th><th>リスク条項</th><th>リスク度</th><th>状態</th><th></th></tr></thead>
+              <tbody id="riskRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TEMPLATES -->
+      <section class="view" id="v-tpl">
+        <div class="tpl-grid" id="tplGrid"></div>
+      </section>
+
+      <!-- AI REVIEW -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">未レビューの契約書をAIが一括チェック</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">未チェックの契約書 <b id="aiCount">6件</b> を、AIがまとめてリスク判定・修正案作成します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで一括レビューする</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">約10時間/件</div>
+              <ul>
+                <li>📑 1件ずつ全条文を精読</li>
+                <li>⚖️ リスク判断に専門知識が必要</li>
+                <li>🐢 6件で丸2日かかることも</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 全契約を同時にAI解析</li>
+                <li>⚠️ リスク度を自動ランク付け</li>
+                <li>📝 修正案まで自動生成</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ レビューが完了した契約書</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const PARTIES=[
+  {name:'大分中央クリニック',type:'医療'},
+  {name:'さくら総合病院',type:'医療'},
+  {name:'つくし介護センター',type:'介護'},
+  {name:'豊後おおいた青果',type:'青果卸'},
+  {name:'都町商店会',type:'小売'},
+  {name:'別府温泉ホテル組合',type:'宿泊'},
+  {name:'大分海鮮市場',type:'飲食'},
+  {name:'みらい歯科医院',type:'医療'},
+  {name:'大分システム開発(株)',type:'IT'},
+  {name:'豊後運送(株)',type:'運送'},
+];
+const CTYPES=['業務委託契約','賃貸借契約','売買・取引基本契約','秘密保持契約(NDA)','雇用・労働契約','システム開発契約'];
+const RISKS=['high','high','mid','mid','mid','low','low'];
+const STATUSES=['done','review','fix','wait','done','review'];
+
+const TODAY=new Date();
+let SEED=4242;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+/* リスク条項のサンプル（種別と相手に合わせて出す） */
+const CLAUSE_BANK=[
+  {risk:'high',title:'損害賠償の上限が定められていない',
+   clause:'第12条 乙は、本契約に関連して甲に生じた一切の損害を賠償する。',
+   fix:'第12条 乙の賠償責任は、故意または重過失による場合を除き、本契約に基づき乙が受領した委託料の総額を上限とする。'},
+  {risk:'high',title:'一方的な中途解約条項',
+   clause:'第18条 甲は、何らの理由を要せず、いつでも本契約を解約できる。',
+   fix:'第18条 甲は、30日前までに書面で通知することにより本契約を解約できる。この場合、既履行分の報酬は精算する。'},
+  {risk:'high',title:'秘密保持の期間・範囲が無期限かつ無制限',
+   clause:'第7条 乙は本契約で知り得た一切の情報を、永久に第三者へ開示してはならない。',
+   fix:'第7条 秘密保持義務の期間は契約終了後3年間とし、公知情報・独自に取得した情報は対象外とする。'},
+  {risk:'mid',title:'支払サイトが長すぎる（資金繰りリスク）',
+   clause:'第5条 甲は、検収完了月の翌々月末日に報酬を支払う。',
+   fix:'第5条 甲は、検収完了月の翌月末日までに報酬を支払う。遅延した場合は年14.6%の遅延損害金を付する。'},
+  {risk:'mid',title:'検収条件があいまい',
+   clause:'第4条 甲が成果物を満足すると認めた時点で検収完了とする。',
+   fix:'第4条 甲は納品後10営業日以内に検収を行い、期間内に通知がない場合は検収完了とみなす。'},
+  {risk:'mid',title:'再委託の制限が無い',
+   clause:'第9条 乙は本業務を自由に第三者へ再委託できる。',
+   fix:'第9条 乙は、甲の事前の書面承諾なく本業務を第三者に再委託してはならない。'},
+  {risk:'mid',title:'知的財産権の帰属が不明確',
+   clause:'第10条 成果物の権利の取扱いについては別途協議する。',
+   fix:'第10条 成果物の著作権（27条・28条の権利を含む）は、報酬の完済をもって甲に移転する。'},
+  {risk:'low',title:'反社会的勢力の排除条項が無い',
+   clause:'（暴力団排除に関する条項の記載なし）',
+   fix:'第20条（反社会的勢力の排除）として、表明保証と無催告解除条項を追加することを推奨します。'},
+  {risk:'low',title:'準拠法・管轄裁判所の記載が無い',
+   clause:'（紛争時の管轄に関する記載なし）',
+   fix:'第22条 本契約は日本法に準拠し、紛争は大分地方裁判所を第一審の専属的合意管轄とする。'},
+];
+
+const SAMPLE_TEXT=`業務委託基本契約書
+
+第1条（目的）甲は乙に対し、次の業務を委託し、乙はこれを受託する。
+第4条（検収）甲が成果物を満足すると認めた時点で検収完了とする。
+第5条（報酬の支払）甲は、検収完了月の翌々月末日に報酬を支払う。
+第7条（秘密保持）乙は本契約で知り得た一切の情報を、永久に第三者へ開示してはならない。
+第9条（再委託）乙は本業務を自由に第三者へ再委託できる。
+第12条（損害賠償）乙は、本契約に関連して甲に生じた一切の損害を賠償する。
+第18条（解約）甲は、何らの理由を要せず、いつでも本契約を解約できる。`;
+
+const TEMPLATES=[
+  {ic:'🤝',n:'業務委託基本契約書',d:'外注・委託の標準ひな形。賠償上限・検収・再委託を網羅。',clauses:'全22条',risk:'低リスク済'},
+  {ic:'🏥',n:'医療材料 取引基本契約書',d:'病院・クリニック向け。継続取引の支払条件を明確化。',clauses:'全18条',risk:'低リスク済'},
+  {ic:'🥬',n:'青果 売買取引基本契約書',d:'卸売向け。納品・検品・返品・支払サイトを整備。',clauses:'全16条',risk:'低リスク済'},
+  {ic:'🔒',n:'秘密保持契約書(NDA)',d:'期間3年・範囲限定の安全設計。情報漏えい対策。',clauses:'全9条',risk:'低リスク済'},
+  {ic:'🚚',n:'配送業務委託契約書',d:'運送・配送向け。事故時の責任分担を明記。',clauses:'全14条',risk:'低リスク済'},
+  {ic:'💼',n:'雇用契約書（正社員）',d:'労基法準拠。試用期間・残業・退職を明確化。',clauses:'全20条',risk:'低リスク済'},
+];
+
+/* seed contracts */
+let contracts=[];
+(function seed(){
+  const baseNames=['業務委託基本契約書','医療材料 取引基本契約書','青果 売買取引基本契約書','システム開発委託契約書',
+    '配送業務委託契約書','秘密保持契約書(NDA)','オフィス賃貸借契約書','保守運用契約書',
+    'コンサルティング業務委託契約','介護記録システム利用契約','レンタル機器契約書','広告制作委託契約'];
+  for(let i=0;i<18;i++){
+    const p=pick(PARTIES);
+    const risk=RISKS[i%RISKS.length];
+    let status=STATUSES[(i+2)%STATUSES.length];
+    // 高リスクは done になりにくく
+    if(risk==='high'&&status==='done')status='fix';
+    const nFindings=risk==='high'?(2+Math.floor(rnd()*2)):risk==='mid'?(1+Math.floor(rnd()*2)):Math.floor(rnd()*2);
+    const dt=new Date(TODAY.getFullYear(),TODAY.getMonth()-Math.floor(rnd()*2),1+Math.floor(rnd()*27));
+    const score=risk==='high'?(45+Math.floor(rnd()*20)):risk==='mid'?(66+Math.floor(rnd()*16)):(84+Math.floor(rnd()*12));
+    // pick clauses matching risk first
+    const matched=CLAUSE_BANK.filter(c=>c.risk===risk);
+    const findings=[];
+    for(let k=0;k<nFindings;k++){findings.push(matched[(i+k)%matched.length]);}
+    contracts.push({
+      no:'CT-'+(2026000+i+1),
+      name:baseNames[i%baseNames.length],
+      party:p.name,ptype:p.type,
+      ctype:pick(CTYPES),
+      risk,status,score,
+      findings:[...new Set(findings)],
+      date:dt,
+    });
+  }
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const fmtD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STLABEL={done:'対応済',review:'レビュー中',wait:'未チェック',fix:'要修正',danger:'要対応'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]||s}</span>`;}
+const RKLABEL={high:'⚠ 高',mid:'△ 中',low:'○ 低'};
+function rkBadge(r){return `<span class="rk ${r}">${RKLABEL[r]}</span>`;}
+function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function ym(d){return (d.getMonth()+1);}
+function scoreColor(s){return s>=84?'#16b877':s>=66?'#e3941f':'#e24a4a';}
+function scoreLabel(s){return s>=84?'良好':s>=66?'注意':'危険';}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','2026年'+ym(TODAY)+'月の契約チェック状況'],list:['契約書一覧','チェックした契約書を管理します'],
+  check:['新規チェック','契約書を入れるとAIがリスク条項を抽出します'],risk:['リスク管理','検出されたリスク条項を管理します'],
+  tpl:['テンプレ','低リスク化済みの契約ひな形を選べます'],ai:['AIレビュー','未チェックの契約書をAIが一括レビューします']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn primary" onclick="go(\'check\')">＋ 新規チェック</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI一括レビュー</button><button class="btn primary" onclick="go(\'check\')">＋ 新規チェック</button>'
+    : v==='risk'?'<button class="btn" onclick="go(\'list\')">📄 契約一覧へ</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='risk')renderRisk();
+  if(v==='tpl')renderTpl();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const tm=contracts;
+  const total=tm.length;
+  const highCnt=tm.filter(c=>c.risk==='high').length;
+  const findingsTotal=tm.reduce((s,c)=>s+c.findings.length,0);
+  const fixed=tm.filter(c=>c.status==='done').length;
+  const savedHours=total*10; // 約10h/件
+  $('kpis').innerHTML=`
+    ${kpi('#5b3df0','今月チェック数',total+'<small>件</small>','全'+CTYPES.length+'種別','up','前月比 +9件')}
+    ${kpi('#e24a4a','リスク検出',findingsTotal+'<small>件</small>','高リスク '+highCnt+'件','warn','要確認')}
+    ${kpi('#16b877','対応済',fixed+'<small>件</small>','/'+total+'件中','up','進行中')}
+    ${kpi('#0ea5b7','削減した時間','約'+savedHours+'<small>時間</small>','弁護士確認 約10h/件 換算','up','コスト削減')}`;
+  // type bars
+  const counts={};CTYPES.forEach(t=>counts[t]=0);tm.forEach(c=>{counts[c.ctype]=(counts[c.ctype]||0)+1;});
+  const arr=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  const mx=Math.max(...arr.map(a=>a[1]),1);
+  $('typeBars').innerHTML=arr.map(([t,n])=>`
+    <div class="bar-row"><span class="mlabel" style="font-size:11px">${esc(t)}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(n/mx*100)}"></div></div>
+      <span class="mval">${n}件</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#typeBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // donut
+  const rh=tm.filter(c=>c.risk==='high').length,rm=tm.filter(c=>c.risk==='mid').length,rl=tm.filter(c=>c.risk==='low').length;
+  const tot=rh+rm+rl||1;
+  const aH=rh/tot*360,aM=rm/tot*360;
+  $('donut').style.background=`conic-gradient(#e24a4a 0 ${aH}deg,#e3941f ${aH}deg ${aH+aM}deg,#16b877 ${aH+aM}deg 360deg)`;
+  $('donutTotal').textContent=tot;
+  $('donutLegend').innerHTML=`
+    <div class="lr"><span class="sw" style="background:#e24a4a"></span>高リスク<b>${rh}件</b></div>
+    <div class="lr"><span class="sw" style="background:#e3941f"></span>中リスク<b>${rm}件</b></div>
+    <div class="lr"><span class="sw" style="background:#16b877"></span>低リスク<b>${rl}件</b></div>`;
+  // dash risk table
+  const top=tm.filter(c=>c.risk==='high').sort((a,b)=>a.score-b.score).slice(0,5);
+  $('dashRisk').innerHTML=top.length?top.map(c=>`<tr onclick="go('risk')">
+    <td><b>${esc(c.name)}</b></td><td style="color:var(--ink-2)">${esc(c.party)}</td>
+    <td>${rkBadge(c.risk)}</td><td>${stBadge(c.status)}</td></tr>`).join('')
+    :'<tr><td colspan="4" class="empty-cell">高リスクの契約はありません 🎉</td></tr>';
+  // activity
+  const acts=[
+    {i:'⚠️',c:'#fdeaea',t:'業務委託基本契約書 から高リスク条項を3件検出',m:'5分前'},
+    {i:'📝',c:'#efeaff',t:'AIが「損害賠償の上限」修正案を生成しました',m:'18分前'},
+    {i:'✅',c:'#e6f8f0',t:'秘密保持契約書(NDA) のリスク対応が完了',m:'今日 10:22'},
+    {i:'⚡',c:'#efeaff',t:'AI一括レビューで 6件の契約書をチェック',m:'今日 9:05'},
+    {i:'📄',c:'#e6f8f0',t:'青果 売買取引基本契約書 を新規登録',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+  $('navRisk').textContent=tm.filter(c=>c.status!=='done'&&c.findings.length).length;
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?esc(sub)+' ・ ':''}${esc(d)}</div></div>`;}
+
+/* ============ LIST ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['high','高リスク'],['fix','要修正'],['review','レビュー中'],['done','対応済'],['wait','未チェック']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=contracts.filter(c=>{
+      if(filterStatus==='all')return true;
+      if(filterStatus==='high')return c.risk==='high';
+      return c.status===filterStatus;
+    })
+    .filter(c=>!q||(c.party+c.name+c.no).toLowerCase().includes(q))
+    .sort((a,b)=>b.date-a.date);
+  $('listRows').innerHTML=rows.length?rows.map(c=>`<tr onclick="openContract('${esc(c.no)}')">
+    <td class="mono" style="font-size:12px">${esc(c.no)}</td><td><b>${esc(c.name)}</b></td>
+    <td style="color:var(--ink-2)">${esc(c.party)}</td><td style="color:var(--ink-2)">${esc(c.ctype)}</td>
+    <td>${rkBadge(c.risk)}</td><td style="color:var(--ink-2)">${fmtD(c.date)}</td><td>${stBadge(c.status)}</td></tr>`).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する契約書がありません</td></tr>';
+}
+$('q').addEventListener('input',renderList);
+window.openContract=no=>{
+  const c=contracts.find(x=>x.no===no);if(!c)return;
+  go('check');
+  $('kName').value=c.name;$('kParty').value=c.party;$('kType').value=c.ctype;
+  $('kBody').value='（'+c.no+' の保存済み本文を読み込みました）';
+  showResult(c);
+  showToast(c.no+' のレビュー結果を表示しました');
+};
+
+/* ============ RISK ============ */
+function renderRisk(){
+  const open=contracts.filter(c=>c.findings.length&&c.status!=='done');
+  const highF=contracts.reduce((s,c)=>s+c.findings.filter(f=>f.risk==='high').length,0);
+  const allF=contracts.reduce((s,c)=>s+c.findings.length,0);
+  const fixedC=contracts.filter(c=>c.status==='done').length;
+  $('riskKpis').innerHTML=`
+    ${kpi('#e24a4a','高リスク条項',highF+'<small>件</small>','最優先で対応','down','至急')}
+    ${kpi('#e3941f','リスク条項 合計',allF+'<small>件</small>',open.length+'契約に存在','warn','要対応')}
+    ${kpi('#16b877','対応済 契約',fixedC+'<small>件</small>','/'+contracts.length+'件','up','進行中')}
+    ${kpi('#5b3df0','AI修正案','即時','全条項に提示可','up','コピー可')}`;
+  // flatten findings
+  const list=[];
+  open.forEach(c=>c.findings.forEach(f=>list.push({c,f})));
+  list.sort((a,b)=>({high:0,mid:1,low:2}[a.f.risk]-{high:0,mid:1,low:2}[b.f.risk]));
+  $('riskRows').innerHTML=list.length?list.map((x,i)=>`<tr>
+    <td><b>${esc(x.c.name)}</b></td><td style="color:var(--ink-2)">${esc(x.c.party)}</td>
+    <td style="color:var(--ink-2);max-width:280px">${esc(x.f.title)}</td><td>${rkBadge(x.f.risk)}</td><td>${stBadge(x.c.status)}</td>
+    <td class="r"><button class="btn" style="padding:6px 12px" onclick="showFix(${i})">修正案を見る</button></td></tr>`).join('')
+    :'<tr><td colspan="6" class="empty-cell">未対応のリスクはありません 🎉</td></tr>';
+  window._riskList=list;
+  $('navRisk').textContent=open.length;
+}
+window.showFix=i=>{
+  const x=window._riskList[i];if(!x)return;
+  go('check');
+  $('kName').value=x.c.name;$('kParty').value=x.c.party;$('kType').value=x.c.ctype;
+  $('kBody').value='（'+x.c.no+' の保存済み本文を読み込みました）';
+  showResult(x.c);
+  showToast('「'+x.f.title+'」の修正案を表示しました');
+};
+$('autoFix').addEventListener('click',async()=>{
+  const btn=$('autoFix');btn.textContent='⚡ 生成中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,1000));
+  let n=0;contracts.forEach(c=>{if(c.findings.length&&c.status!=='done'){if(rnd()>0.45){c.status='fix';}n+=c.findings.length;}});
+  btn.textContent='⚡ AIで修正案を一括作成';btn.disabled=false;
+  renderRisk();showToast(n+'件のリスク条項にAI修正案を作成しました');
+});
+
+/* ============ TEMPLATES ============ */
+function renderTpl(){
+  $('tplGrid').innerHTML=TEMPLATES.map((t,i)=>`<div class="tpl" onclick="useTpl(${i})">
+    <div class="ic">${t.ic}</div><h4>${esc(t.n)}</h4><p>${esc(t.d)}</p>
+    <div class="meta"><span>📑 ${esc(t.clauses)}</span><span class="rk low" style="margin-left:auto">${esc(t.risk)}</span></div></div>`).join('');
+}
+window.useTpl=i=>{
+  const t=TEMPLATES[i];if(!t)return;
+  go('check');$('kName').value=t.n;$('kBody').value='（テンプレ「'+t.n+'」を読み込みました。低リスク化済みのひな形です）';
+  showToast('テンプレ「'+t.n+'」を新規チェックに読み込みました');
+};
+
+/* ============ CHECK ============ */
+function renderPartySelect(){$('kParty').innerHTML='<option value="">選択してください</option>'+PARTIES.map(p=>`<option>${esc(p.name)}</option>`).join('');}
+$('kDrop').addEventListener('click',()=>{showToast('デモ環境のためアップロードはサンプル文で代用します');$('kBody').value=SAMPLE_TEXT;markStep(1);});
+$('kSample').addEventListener('click',()=>{
+  $('kName').value=$('kName').value||'業務委託基本契約書';
+  $('kParty').value='大分システム開発(株)';$('kType').value='業務委託契約';
+  $('kBody').value=SAMPLE_TEXT;markStep(1);showToast('サンプルの契約書本文を入力しました');
+});
+function markStep(n){
+  const stps=$('kSteps').querySelectorAll('.stp');
+  stps.forEach((s,i)=>s.classList.toggle('on',i<=n));
+}
+function showResult(c){
+  $('kIntro').style.display='none';
+  const sc=$('kResult');sc.classList.add('show');
+  const col=scoreColor(c.score);
+  const high=c.findings.filter(f=>f.risk==='high').length;
+  sc.innerHTML=`
+    <div class="score-top">
+      <div class="score-big" style="background:linear-gradient(135deg,${col},${col}cc)"><b>${c.score}</b><span>安全スコア</span></div>
+      <div style="flex:1;min-width:180px">
+        <div style="font-size:16px;font-weight:900">${esc(c.name)}</div>
+        <div style="font-size:12.5px;color:var(--ink-3);margin-bottom:8px">${esc(c.party)} ／ ${esc(c.ctype)}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">${rkBadge(c.risk)}
+          <span class="rk" style="background:var(--soft);color:var(--ink-2)">検出 ${c.findings.length}件</span>
+          ${high?`<span class="rk high">高リスク ${high}件</span>`:''}
+          <span class="rk low">判定:${scoreLabel(c.score)}</span></div>
+      </div>
+      <button class="btn green" onclick="markContractFixed('${esc(c.no)}')">✓ 修正を反映して対応済に</button>
+    </div>
+    <div style="font-size:13px;font-weight:800;margin-bottom:10px">⚠️ 検出されたリスク条項と修正案</div>
+    ${c.findings.length?c.findings.map(f=>`
+      <div class="risk-item">
+        <div class="rh">${rkBadge(f.risk)}<b>${esc(f.title)}</b></div>
+        <div class="clause"><b>⚠ 現状の条項（リスクあり）</b>${esc(f.clause)}</div>
+        <div class="fix"><b>✅ AIの修正案</b>${esc(f.fix)}</div>
+        <div style="text-align:right;margin-top:8px"><button class="btn copyfix" style="padding:6px 12px;font-size:12px" data-fix="${esc(f.fix)}">📋 修正案をコピー</button></div>
+      </div>`).join('')
+    :'<div class="empty-cell">大きなリスク条項は検出されませんでした 🎉</div>'}`;
+  sc.querySelectorAll('.copyfix').forEach(btn=>btn.addEventListener('click',()=>copyFix(btn,btn.dataset.fix)));
+}
+window.copyFix=(btn,txt)=>{
+  const t=String(txt==null?'':txt);
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).catch(()=>{});}
+  btn.textContent='✓ コピーしました';setTimeout(()=>btn.textContent='📋 修正案をコピー',1500);
+  showToast('修正案をクリップボードにコピーしました');
+};
+window.markContractFixed=no=>{
+  const c=contracts.find(x=>x.no===no);
+  if(c){c.status='done';showToast(c.name+' を「対応済」にしました');renderRisk();}
+  else{showToast('修正案を反映しました');}
+};
+$('kRun').addEventListener('click',async()=>{
+  const name=$('kName').value.trim();const party=$('kParty').value;const body=$('kBody').value.trim();
+  if(!body){showToast('契約書の本文を入力してください（サンプルボタンでもOK）');return;}
+  const btn=$('kRun');btn.disabled=true;
+  $('kIntro').style.display='block';$('kResult').classList.remove('show');
+  $('kOrb').classList.add('spin');$('kOrb').textContent='⚡';
+  const phases=['🔍 全条文を解析中…','⚖️ 不利な条項を判定中…','📝 修正案を起案中…'];
+  for(let i=0;i<phases.length;i++){btn.textContent=phases[i];markStep(i+1);await new Promise(r=>setTimeout(r,650));}
+  $('kOrb').classList.remove('spin');$('kOrb').textContent='✅';
+  btn.disabled=false;btn.textContent='🔍 AIでリスクチェック';markStep(3);
+  // build a result from body keywords (sample-driven)
+  const found=[];
+  if(/翌々月|永久|一切の損害|自由に第三者|何らの理由|満足すると認め/.test(body)){
+    CLAUSE_BANK.forEach(f=>{
+      if(f.clause!=='' && body.includes(f.clause.replace(/^第\d+条 /,'').slice(0,8))){found.push(f);}
+    });
+  }
+  // fallback: 種別に応じて代表的なリスクを3件
+  let findings = found.length?found:[CLAUSE_BANK[0],CLAUSE_BANK[3],CLAUSE_BANK[6]];
+  findings=[...new Set(findings)].slice(0,4);
+  const high=findings.filter(f=>f.risk==='high').length;
+  const score=high>=2?52:high===1?70:86;
+  const risk=score<66?'high':score<84?'mid':'low';
+  const no='CT-'+(2026000+contracts.length+1);
+  const c={no,name:name||'無題の契約書',party:party||'（相手先未設定）',ptype:'',ctype:$('kType').value,
+    risk,status:'fix',score,findings,date:new Date()};
+  contracts.push(c);
+  showResult(c);
+  showToast('リスクチェック完了：'+findings.length+'件の条項を検出しました');
+});
+
+/* ============ AI BULK REVIEW ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ レビュー中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:'+String(Math.min(s,20)).padStart(2,'0');},90);
+  await new Promise(r=>setTimeout(r,1300));
+  clearInterval(t);$('baAfterT').textContent='約20秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // pick "unchecked" looking ones (wait/review)
+  const targets=contracts.filter(c=>c.status==='wait'||c.status==='review').slice(0,6);
+  const list=targets.length?targets:contracts.slice(0,6);
+  $('genItems').innerHTML=list.map((c,i)=>{
+    return `<div class="gen-item" data-i="${i}"><span class="ck">✓</span>
+      <b style="flex:1">${esc(c.name)}</b>
+      <span style="color:var(--ink-3);font-size:12px">${esc(c.party)}</span>
+      ${rkBadge(c.risk)}
+      <span class="tnum" style="font-weight:800;color:${scoreColor(c.score)}">スコア${c.score}</span></div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,180));items[i].classList.add('in');
+    if(list[i].status==='wait')list[i].status='review';
+  }
+  btn.disabled=false;btn.textContent='⚡ もう一度レビュー';
+  showToast(items.length+'件の契約書をAIがレビューしました');
+});
+
+/* ============ INIT ============ */
+renderPartySelect();renderChips();renderDash();
+$('aiCount').textContent=contracts.filter(c=>c.status==='wait'||c.status==='review').length+'件';
+$('navRisk').textContent=contracts.filter(c=>c.status!=='done'&&c.findings.length).length;
+</script>
+</body>
+</html>

@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜健康モニターマシン（バイタル見守りシステム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--teal:#0fb6a8;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.nav a .badge.amber{background:var(--amber)}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--teal);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn.red{background:var(--red);border-color:var(--red);color:#fff}
+.btn.red:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--green),var(--teal));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl th.c,table.tbl td.c{text-align:center}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.normal{background:var(--green-soft);color:var(--green)}
+.st.caution{background:var(--amber-soft);color:var(--amber)}
+.st.danger{background:var(--red-soft);color:var(--red)}
+.st.resting{background:var(--brand-soft);color:var(--brand)}
+.st.nodata{background:var(--soft);color:var(--ink-3)}
+/* alert severity for alerts table */
+.st.high{background:var(--red-soft);color:var(--red)}
+.st.mid{background:var(--amber-soft);color:var(--amber)}
+.st.resolved{background:var(--green-soft);color:var(--green)}
+
+/* vital value coloring */
+.vit{font-variant-numeric:tabular-nums;font-weight:700}
+.vit.warn{color:var(--amber)}
+.vit.bad{color:var(--red)}
+
+/* create / record form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,400px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--brand)}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;min-height:15px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* vital preview card (monitor) */
+.monitor{background:linear-gradient(180deg,#0f1830,#16203c);border-radius:14px;padding:22px;color:#fff;box-shadow:var(--shadow)}
+.monitor .mt{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.monitor .mt .nm{font-size:17px;font-weight:900}
+.monitor .mt .rm{margin-left:auto;font-size:11.5px;color:var(--sb-ink-2)}
+.monitor .mt .pulse{width:10px;height:10px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(22,184,119,.6);animation:beat 1.1s infinite}
+@keyframes beat{0%{box-shadow:0 0 0 0 rgba(22,184,119,.5)}70%{box-shadow:0 0 0 9px rgba(22,184,119,0)}100%{box-shadow:0 0 0 0 rgba(22,184,119,0)}}
+.vgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:13px}
+.vcell{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:11px;padding:14px}
+.vcell .vl{font-size:11px;color:var(--sb-ink-2);font-weight:700;display:flex;align-items:center;gap:6px}
+.vcell .vv{font-family:'Orbitron';font-size:26px;font-weight:700;margin-top:6px;line-height:1}
+.vcell .vu{font-size:12px;color:var(--sb-ink-2);font-weight:600;margin-left:3px}
+.vcell.ok .vv{color:#4fe0a6}.vcell.warn .vv{color:#f2b94d}.vcell.bad .vv{color:#ff7a7a}
+.vcell .vj{font-size:11px;font-weight:800;margin-top:7px}
+.vcell.ok .vj{color:#4fe0a6}.vcell.warn .vj{color:#f2b94d}.vcell.bad .vj{color:#ff7a7a}
+.ai-assess{margin-top:16px;background:rgba(79,209,230,.1);border:1px solid rgba(79,209,230,.25);border-radius:11px;padding:13px 15px;font-size:12.5px;color:#d7f3fb;display:flex;gap:10px;align-items:flex-start}
+.ai-assess .ico{font-size:18px}
+
+/* ECG line */
+.ecg{height:54px;margin:14px 0 4px;border-radius:9px;background:rgba(255,255,255,.04);overflow:hidden;position:relative}
+.ecg svg{position:absolute;left:0;top:0;width:200%;height:100%;animation:ecgmove 3s linear infinite}
+@keyframes ecgmove{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+.gen-item .ck.ok{background:var(--green)}
+.gen-item .ck.al{background:var(--red)}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* report */
+.rep-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:980px){.rep-grid{grid-template-columns:1fr}}
+.donut{width:150px;height:150px;border-radius:50%;margin:6px auto 12px;display:grid;place-items:center;position:relative}
+.donut .hole{width:104px;height:104px;border-radius:50%;background:var(--card);display:grid;place-items:center;text-align:center}
+.donut .hole b{font-size:26px;font-weight:900;line-height:1}
+.donut .hole span{font-size:11px;color:var(--ink-3);font-weight:700}
+.legend{display:flex;flex-direction:column;gap:8px;font-size:12.5px}
+.legend .lg{display:flex;align-items:center;gap:8px}
+.legend .lg .sw{width:11px;height:11px;border-radius:3px}
+.legend .lg .v{margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+.toast.alert{background:#3a1414}
+.toast.alert .ck{background:var(--red)}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.mini{font-size:11px;color:var(--ink-3)}
+.room-tag{font-size:11px;color:var(--ink-3);font-weight:700}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">健康モニターマシン<small>技マシン｜バイタル見守り</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="residents"><span class="i">🧑‍🦳</span>入居者一覧</a>
+      <a data-v="record"><span class="i">📝</span>バイタル記録</a>
+      <a data-v="alerts"><span class="i">🚨</span>アラート<span class="badge" id="navAlerts">0</span></a>
+      <a data-v="report"><span class="i">📄</span>レポート</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI異常検知</a>
+    </nav>
+    <div class="org">
+      <div class="av">桜</div>
+      <div><b>さくら苑（介護老人保健施設）</b><span>デモ環境 / 看護師長</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="./">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。入居者・バイタル数値はすべてサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">本日の見守り状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel" style="margin-bottom:0">
+            <div class="ph"><h3>フロア別 正常率</h3><span class="more">本日</span></div>
+            <div class="pb"><div class="bars" id="floorBars"></div></div>
+          </div>
+          <div class="panel" style="margin-bottom:0">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:16px">
+          <div class="ph"><h3>⚠️ 要注意の入居者（AIが自動抽出）</h3><span class="more" onclick="go('residents')">入居者一覧へ</span></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>入居者</th><th>部屋</th><th class="r">体温</th><th class="r">血圧</th><th class="r">心拍</th><th>状態</th></tr></thead>
+              <tbody id="watchRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- RESIDENTS -->
+      <section class="view" id="v-residents">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="氏名・部屋番号で検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>入居者</th><th>部屋</th><th class="c">年齢</th><th class="r">体温(℃)</th><th class="r">血圧(mmHg)</th><th class="r">心拍(bpm)</th><th class="r">SpO₂(%)</th><th>状態</th><th>最終測定</th></tr></thead>
+          <tbody id="resRows"></tbody>
+        </table>
+      </section>
+
+      <!-- RECORD -->
+      <section class="view" id="v-record">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>入居者</label>
+              <select id="rName"></select></div>
+            <div class="fg-row">
+              <div class="fg"><label>体温（℃）</label><input id="rTemp" type="number" step="0.1" placeholder="例：36.5"></div>
+              <div class="fg"><label>心拍（bpm）</label><input id="rPulse" type="number" placeholder="例：72"></div>
+            </div>
+            <div class="fg-row">
+              <div class="fg"><label>収縮期血圧（上）</label><input id="rSys" type="number" placeholder="例：120"></div>
+              <div class="fg"><label>拡張期血圧（下）</label><input id="rDia" type="number" placeholder="例：78"></div>
+            </div>
+            <div class="fg"><label>SpO₂（血中酸素飽和度 %）</label><input id="rSpo2" type="number" placeholder="例：98"></div>
+            <div class="aihint" id="rAiHint">　</div>
+            <div class="linkrow" style="margin-top:8px">
+              <button class="btn primary" id="rSave" style="flex:1;justify-content:center">⚡ AI判定して記録する</button>
+              <button class="btn" id="rSample">サンプル</button>
+            </div>
+            <div class="mini" style="margin-top:10px">※ 入力すると右のモニターにリアルタイムで反映され、AIが基準値と照合します。</div>
+          </div>
+          <div>
+            <div class="monitor" id="monitor">
+              <div class="mt">
+                <span class="pulse" id="mPulse"></span>
+                <span class="nm" id="mName">入居者を選択してください</span>
+                <span class="rm" id="mRoom"></span>
+              </div>
+              <div class="ecg">
+                <svg viewBox="0 0 600 54" preserveAspectRatio="none" id="ecgSvg">
+                  <polyline id="ecgLine" points="0,27 60,27 75,27 82,8 90,46 98,27 160,27 175,27 182,8 190,46 198,27 260,27 275,27 282,8 290,46 298,27 360,27 375,27 382,8 390,46 398,27 460,27 475,27 482,8 490,46 498,27 560,27 600,27"
+                    fill="none" stroke="#4fe0a6" stroke-width="2"/>
+                </svg>
+              </div>
+              <div class="vgrid">
+                <div class="vcell ok" id="cTemp"><div class="vl">🌡️ 体温</div><div class="vv">--<span class="vu">℃</span></div><div class="vj">—</div></div>
+                <div class="vcell ok" id="cPulse"><div class="vl">💓 心拍</div><div class="vv">--<span class="vu">bpm</span></div><div class="vj">—</div></div>
+                <div class="vcell ok" id="cBp"><div class="vl">🩸 血圧</div><div class="vv">--<span class="vu">mmHg</span></div><div class="vj">—</div></div>
+                <div class="vcell ok" id="cSpo2"><div class="vl">🫁 SpO₂</div><div class="vv">--<span class="vu">%</span></div><div class="vj">—</div></div>
+              </div>
+              <div class="ai-assess" id="mAssess"><span class="ico">🤖</span><span id="mAssessTxt">数値を入力すると、AIが基準値と照らし合わせて総合判定します。</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ALERTS -->
+      <section class="view" id="v-alerts">
+        <div class="kpis" id="alertKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>アラート一覧</h3>
+            <button class="btn green" id="resolveAll" style="margin-left:auto">✓ 確認済みを一括クローズ</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>重大度</th><th>入居者</th><th>部屋</th><th>内容</th><th>検知時刻</th><th></th></tr></thead>
+              <tbody id="alertRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- REPORT -->
+      <section class="view" id="v-report">
+        <div class="rep-grid">
+          <div class="panel" style="margin-bottom:0">
+            <div class="ph"><h3>本日のバイタル判定 内訳</h3></div>
+            <div class="pb">
+              <div class="donut" id="donut"><div class="hole"><div><b id="dRate">--%</b><span>正常率</span></div></div></div>
+              <div class="legend" id="donutLegend"></div>
+            </div>
+          </div>
+          <div class="panel" style="margin-bottom:0">
+            <div class="ph"><h3>週間の正常率の推移</h3><span class="more">過去7日</span></div>
+            <div class="pb"><div class="bars" id="weekBars"></div></div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:16px">
+          <div class="ph"><h3>📄 月次レポート（家族・主治医向け）</h3>
+            <button class="btn primary" id="genReport" style="margin-left:auto">⚡ AIでレポート生成</button></div>
+          <div class="pb">
+            <div id="reportBody" class="mini" style="font-size:13px;color:var(--ink-2)">
+              「AIでレポート生成」を押すと、当月の測定データを要約した報告文をAIが自動作成します。家族説明や主治医への申し送りにそのまま使えます。
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI ANOMALY -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">バイタルを常時監視し、異常を即通知</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">見守り中の入居者 <b id="aiCount">--</b>名のバイタルを、AIが基準値と照合してリアルタイムで監視します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで一括スキャンする</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">巡回2時間ごと</div>
+              <ul>
+                <li>🚶 看護師が各部屋を定期巡回</li>
+                <li>📋 紙の記録に1人ずつ手書き</li>
+                <li>⏰ 急変は次の巡回まで気づけない</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 全員のバイタルを常時自動監視</li>
+                <li>📊 基準値を外れた瞬間にAIが検知</li>
+                <li>🚨 スマホ・PCへ即アラート通知</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">🔎 スキャン結果</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+// 基準値（介護現場の一般的な目安。判定はデモ用の簡易ロジック）
+const REF={tempCaution:37.0,tempDanger:37.8,tempLow:35.5,
+  pulseLow:50,pulseHigh:100,pulseDanger:120,
+  sysHigh:140,sysDanger:160,sysLow:90,
+  diaHigh:90,diaDanger:100,
+  spo2Caution:94,spo2Danger:90};
+
+let SEED=7777;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+function ri(lo,hi){return lo+Math.floor(rnd()*(hi-lo+1));}
+function rf(lo,hi){return Math.round((lo+rnd()*(hi-lo))*10)/10;}
+
+const FLOORS=['1F 一般','2F 一般','3F 認知症対応'];
+const STAFF=['田中(看護)','佐藤(看護)','鈴木(介護)','高橋(介護)'];
+const FAMILY=['長女','長男','次女','甥','配偶者'];
+const SURNAMES=['佐藤','田中','渡辺','清水','後藤','工藤','安部','衞藤','姫野','麻生','首藤','大久保','足立','志賀','宮崎','賀来'];
+const GNAMES_M=['正一','茂','清','勇','勝美','武雄','義男','栄一','一郎','正人'];
+const GNAMES_F=['ハル','フミ','よし子','とみ','静江','千代','ミツ','久子','幸子','タカ'];
+
+const TODAY=new Date();
+
+// 入居者を生成
+let residents=[];
+(function seed(){
+  const N=16;
+  for(let i=0;i<N;i++){
+    const male=rnd()>0.5;
+    const name=pick(SURNAMES)+' '+(male?pick(GNAMES_M):pick(GNAMES_F));
+    const floor=FLOORS[Math.floor(i/6)%3];
+    const room=(Math.floor(i/6)+1)+'0'+(1+(i%6));
+    const age=ri(74,98);
+    // バイタル：基本は正常寄りだが、数名を要注意/異常に
+    let temp=rf(36.0,37.0),pulse=ri(58,92),sys=ri(108,138),dia=ri(64,86),spo2=ri(96,99);
+    const r=rnd();
+    if(r>0.86){ // 異常
+      const k=Math.floor(rnd()*4);
+      if(k===0)temp=rf(38.0,38.9);
+      else if(k===1){pulse=ri(118,134);}
+      else if(k===2){sys=ri(162,182);dia=ri(100,112);}
+      else spo2=ri(86,89);
+    }else if(r>0.66){ // 要注意
+      const k=Math.floor(rnd()*4);
+      if(k===0)temp=rf(37.1,37.7);
+      else if(k===1)pulse=rnd()>0.5?ri(101,116):ri(46,50);
+      else if(k===2){sys=ri(142,158);dia=ri(90,98);}
+      else spo2=ri(92,94);
+    }
+    const lastMin=ri(3,140);
+    residents.push({id:i+1,name,age,male,floor,room,
+      family:pick(FAMILY),staff:pick(STAFF),
+      temp,pulse,sys,dia,spo2,lastMin,monitored:true});
+  }
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STLABEL={normal:'正常',caution:'要注意',danger:'異常',resting:'安静',nodata:'未測定'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]||esc(s)}</span>`;}
+function showToast(m,alert){const t=$('toast');$('toastMsg').textContent=m;t.classList.toggle('alert',!!alert);t.querySelector('.ck').textContent=alert?'!':'✓';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+function agoLabel(min){if(min<60)return min+'分前';const h=Math.floor(min/60);return h+'時間'+(min%60)+'分前';}
+
+// 個別バイタルの判定（'ok'|'warn'|'bad'）
+function judgeTemp(t){if(t==null)return null;if(t>=REF.tempDanger||t<REF.tempLow)return'bad';if(t>=REF.tempCaution)return'warn';return'ok';}
+function judgePulse(p){if(p==null)return null;if(p>=REF.pulseDanger||p<REF.pulseLow-4)return'bad';if(p>=REF.pulseHigh||p<=REF.pulseLow)return'warn';return'ok';}
+function judgeBp(s,d){if(s==null||d==null)return null;if(s>=REF.sysDanger||d>=REF.diaDanger||s<REF.sysLow)return'bad';if(s>=REF.sysHigh||d>=REF.diaHigh)return'warn';return'ok';}
+function judgeSpo2(o){if(o==null)return null;if(o<=REF.spo2Danger)return'bad';if(o<=REF.spo2Caution)return'warn';return'ok';}
+// 総合状態
+function overall(r){
+  const js=[judgeTemp(r.temp),judgePulse(r.pulse),judgeBp(r.sys,r.dia),judgeSpo2(r.spo2)];
+  if(js.includes('bad'))return'danger';
+  if(js.includes('warn'))return'caution';
+  return'normal';
+}
+function vitClass(j){return j==='bad'?'vit bad':j==='warn'?'vit warn':'vit';}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','本日の見守り状況'],residents:['入居者一覧','見守り中の入居者とバイタルを管理します'],
+  record:['バイタル記録','入力するとリアルタイムでAIが基準値と照合します'],alerts:['アラート','基準値を外れた入居者の通知です'],
+  report:['レポート','測定データの集計と報告文を作成します'],ai:['AI異常検知','バイタルを常時監視し、異常を即通知します']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='residents'?'<button class="btn primary" onclick="go(\'record\')">＋ バイタル記録</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI異常検知</button><button class="btn primary" onclick="go(\'record\')">＋ バイタル記録</button>'
+    : v==='alerts'?'<button class="btn" onclick="go(\'ai\')">⚡ 再スキャン</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='residents')renderResidents();
+  if(v==='alerts')renderAlerts();
+  if(v==='report')renderReport();
+  if(v==='ai')renderAiIntro();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const total=residents.filter(r=>r.monitored).length;
+  const measuredToday=residents.filter(r=>r.lastMin<=180).length;
+  const alerts=residents.filter(r=>overall(r)!=='normal').length;
+  const danger=residents.filter(r=>overall(r)==='danger').length;
+  const normal=residents.filter(r=>overall(r)==='normal').length;
+  const rate=Math.round(normal/total*100);
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','見守り人数',total+'<small>名</small>','全員オンライン','up','全室モニタ中')}
+    ${kpi('#0fb6a8','本日の測定数',measuredToday+'<small>件</small>',(total-measuredToday)+'名 未測定','up','順調')}
+    ${kpi('#e24a4a','アラート',alerts+'<small>件</small>','うち異常 '+danger+'件',danger?'down':'warn',danger?'至急対応':'経過観察')}
+    ${kpi('#16b877','正常率',rate+'<small>%</small>','',rate>=80?'up':'warn',rate>=80?'良好':'要観察')}`;
+  // floor bars
+  const fr=FLOORS.map(f=>{const list=residents.filter(r=>r.floor===f);const n=list.filter(r=>overall(r)==='normal').length;return{f,rate:Math.round(n/Math.max(list.length,1)*100)};});
+  $('floorBars').innerHTML=fr.map(x=>`
+    <div class="bar-row"><span class="mlabel">${esc(x.f.split(' ')[0])}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${x.rate}"></div></div>
+      <span class="mval">${x.rate}%</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#floorBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // activity
+  const acts=[
+    {i:'🚨',c:'#fdeaea',t:'衞藤 ハル 様（302）の SpO₂ が 88% に低下',m:'3分前'},
+    {i:'💓',c:'#e6f8f0',t:'AI異常検知が全16名のスキャンを完了（異常2件）',m:'15分前'},
+    {i:'🌡️',c:'#fdf3e2',t:'姫野 とみ 様（205）が微熱 37.4℃ 要観察',m:'42分前'},
+    {i:'📝',c:'#eaf1ff',t:'佐藤(看護) が朝のバイタル12件を記録',m:'今朝 7:30'},
+    {i:'✅',c:'#e6f8f0',t:'昨夜の見守り：急変なし・全員安定',m:'昨日 22:00'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+  // watch rows（要注意・異常のみ）
+  const watch=residents.filter(r=>overall(r)!=='normal').sort((a,b)=>(overall(b)==='danger')-(overall(a)==='danger'));
+  $('watchRows').innerHTML=watch.length?watch.map(r=>rowVital(r)).join('')
+    :'<tr><td colspan="6" class="empty-cell">要注意の入居者はいません 🎉</td></tr>';
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+function rowVital(r){
+  const jt=judgeTemp(r.temp),jp=judgePulse(r.pulse),jb=judgeBp(r.sys,r.dia);
+  return `<tr onclick="openRecord(${r.id})">
+    <td><b>${esc(r.name)}</b></td><td class="room-tag">${esc(r.room)}</td>
+    <td class="r"><span class="${vitClass(jt)}">${r.temp.toFixed(1)}</span></td>
+    <td class="r"><span class="${vitClass(jb)}">${r.sys}/${r.dia}</span></td>
+    <td class="r"><span class="${vitClass(jp)}">${r.pulse}</span></td>
+    <td>${stBadge(overall(r))}</td></tr>`;
+}
+
+/* ============ RESIDENTS ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['normal','正常'],['caution','要注意'],['danger','異常']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderResidents();});
+}
+function renderResidents(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=residents.filter(r=>filterStatus==='all'||overall(r)===filterStatus)
+    .filter(r=>!q||(r.name+r.room).toLowerCase().includes(q))
+    .sort((a,b)=>{const w={danger:0,caution:1,normal:2};return w[overall(a)]-w[overall(b)]||a.room.localeCompare(b.room);});
+  $('resRows').innerHTML=rows.length?rows.map(r=>{
+    const jt=judgeTemp(r.temp),jp=judgePulse(r.pulse),jb=judgeBp(r.sys,r.dia),jo=judgeSpo2(r.spo2);
+    return `<tr onclick="openRecord(${r.id})">
+      <td><b>${esc(r.name)}</b><div class="mini">${esc(r.floor)} / ${esc(r.staff)}</div></td>
+      <td class="room-tag">${esc(r.room)}</td>
+      <td class="c" style="color:var(--ink-2)">${r.age}</td>
+      <td class="r"><span class="${vitClass(jt)}">${r.temp.toFixed(1)}</span></td>
+      <td class="r"><span class="${vitClass(jb)}">${r.sys}/${r.dia}</span></td>
+      <td class="r"><span class="${vitClass(jp)}">${r.pulse}</span></td>
+      <td class="r"><span class="${vitClass(jo)}">${r.spo2}</span></td>
+      <td>${stBadge(overall(r))}</td>
+      <td style="color:var(--ink-2)">${agoLabel(r.lastMin)}</td></tr>`;
+  }).join('')
+    :'<tr><td colspan="9" class="empty-cell">該当する入居者がいません</td></tr>';
+}
+$('q').addEventListener('input',renderResidents);
+window.openRecord=id=>{const r=residents.find(x=>x.id===id);if(!r)return;go('record');$('rName').value=r.id;loadResidentToForm(r);};
+
+/* ============ RECORD ============ */
+function renderNameSelect(){
+  $('rName').innerHTML='<option value="">選択してください</option>'+residents.map(r=>`<option value="${r.id}">${esc(r.name)}（${esc(r.room)}）</option>`).join('');
+}
+function loadResidentToForm(r){
+  $('rTemp').value=r.temp.toFixed(1);$('rPulse').value=r.pulse;$('rSys').value=r.sys;$('rDia').value=r.dia;$('rSpo2').value=r.spo2;
+  renderMonitor();
+}
+function curVals(){
+  const temp=$('rTemp').value!==''?parseFloat($('rTemp').value):null;
+  const pulse=$('rPulse').value!==''?parseInt($('rPulse').value):null;
+  const sys=$('rSys').value!==''?parseInt($('rSys').value):null;
+  const dia=$('rDia').value!==''?parseInt($('rDia').value):null;
+  const spo2=$('rSpo2').value!==''?parseInt($('rSpo2').value):null;
+  return{temp,pulse,sys,dia,spo2};
+}
+function setCell(id,j,val,unit){
+  const el=$(id);el.classList.remove('ok','warn','bad');el.classList.add(j||'ok');
+  el.querySelector('.vv').innerHTML=(val==null||isNaN(val)?'--':val)+`<span class="vu">${unit}</span>`;
+  el.querySelector('.vj').textContent=j==null?'—':(j==='ok'?'基準内':j==='warn'?'要注意':'基準外');
+}
+function renderMonitor(){
+  const id=+$('rName').value;const r=residents.find(x=>x.id===id);
+  $('mName').textContent=r?r.name:'入居者を選択してください';
+  $('mRoom').textContent=r?(r.room+'号室 / '+r.floor):'';
+  const v=curVals();
+  const jt=judgeTemp(v.temp),jp=judgePulse(v.pulse),jb=judgeBp(v.sys,v.dia),jo=judgeSpo2(v.spo2);
+  setCell('cTemp',jt,v.temp==null?null:v.temp.toFixed(1),'℃');
+  setCell('cPulse',jp,v.pulse,'bpm');
+  setCell('cBp',jb,(v.sys!=null&&v.dia!=null)?v.sys+'/'+v.dia:null,'mmHg');
+  setCell('cSpo2',jo,v.spo2,'%');
+  // ECG / pulse animation speed
+  const beat=$('mPulse');
+  if(jp==='bad'){beat.style.background='#ff7a7a';$('ecgLine').setAttribute('stroke','#ff7a7a');$('ecgSvg').style.animationDuration='1.4s';}
+  else if(jp==='warn'){beat.style.background='#f2b94d';$('ecgLine').setAttribute('stroke','#f2b94d');$('ecgSvg').style.animationDuration='2.2s';}
+  else{beat.style.background='#16b877';$('ecgLine').setAttribute('stroke','#4fe0a6');$('ecgSvg').style.animationDuration='3s';}
+  // AI assessment
+  const js=[jt,jp,jb,jo].filter(x=>x!=null);
+  let txt,hint='';
+  if(!js.length){txt='数値を入力すると、AIが基準値と照らし合わせて総合判定します。';}
+  else{
+    const bad=[],warn=[];
+    if(jt==='bad')bad.push(v.temp>=REF.tempDanger?'発熱':'低体温');else if(jt==='warn')warn.push('微熱');
+    if(jp==='bad')bad.push(v.pulse>=REF.pulseDanger?'頻脈':'徐脈');else if(jp==='warn')warn.push('脈拍やや乱れ');
+    if(jb==='bad')bad.push(v.sys>=REF.sysDanger?'高度高血圧':'低血圧');else if(jb==='warn')warn.push('血圧高め');
+    if(jo==='bad')bad.push('SpO₂低下');else if(jo==='warn')warn.push('SpO₂やや低め');
+    if(bad.length){txt='🚨 異常を検知：'+bad.join('・')+'。基準値を大きく外れています。看護師へ即通知が必要です。';hint='⚠️ 異常値が含まれています';}
+    else if(warn.length){txt='⚠️ 要注意：'+warn.join('・')+'。経過観察を推奨します。';hint='△ 要注意の値があります';}
+    else{txt='✅ すべて基準内です。状態は安定しています。';hint='✨ すべて基準内です';}
+  }
+  $('mAssessTxt').textContent=txt;
+  const ah=$('rAiHint');ah.textContent=hint;ah.classList.toggle('show',!!hint);
+}
+['rTemp','rPulse','rSys','rDia','rSpo2'].forEach(id=>$(id).addEventListener('input',renderMonitor));
+$('rName').addEventListener('change',()=>{const r=residents.find(x=>x.id===+$('rName').value);if(r)loadResidentToForm(r);else renderMonitor();});
+$('rSample').addEventListener('click',()=>{
+  const r=residents.find(x=>overall(x)==='caution')||residents[0];
+  $('rName').value=r.id;loadResidentToForm(r);
+});
+$('rSave').addEventListener('click',async()=>{
+  const id=+$('rName').value;const r=residents.find(x=>x.id===id);
+  const v=curVals();
+  if(!r){showToast('入居者を選択してください');return;}
+  if(v.temp==null&&v.pulse==null&&v.spo2==null){showToast('バイタルを入力してください');return;}
+  const btn=$('rSave');btn.textContent='⚡ AI判定中…';btn.disabled=true;
+  await new Promise(res=>setTimeout(res,750));
+  if(v.temp!=null)r.temp=v.temp;if(v.pulse!=null)r.pulse=v.pulse;
+  if(v.sys!=null)r.sys=v.sys;if(v.dia!=null)r.dia=v.dia;if(v.spo2!=null)r.spo2=v.spo2;
+  r.lastMin=0;
+  btn.textContent='⚡ AI判定して記録する';btn.disabled=false;
+  const st=overall(r);
+  if(st==='danger'){addAlert(r,'high');showToast(r.name+' のバイタルを記録：異常を検知しアラート通知しました',true);}
+  else if(st==='caution'){addAlert(r,'mid');showToast(r.name+' のバイタルを記録：要注意として記録しました');}
+  else{showToast(r.name+' のバイタルを記録しました（基準内）');}
+  updateBadges();renderMonitor();
+});
+
+/* ============ ALERTS ============ */
+let alerts=[];let alertSeq=1;
+function buildInitialAlerts(){
+  alerts=[];
+  residents.filter(r=>overall(r)!=='normal').forEach(r=>{
+    const sev=overall(r)==='danger'?'high':'mid';
+    alerts.push(makeAlert(r,sev,ri(2,120)));
+  });
+}
+function makeAlert(r,sev,min){
+  const jt=judgeTemp(r.temp),jp=judgePulse(r.pulse),jb=judgeBp(r.sys,r.dia),jo=judgeSpo2(r.spo2);
+  let msg=[];
+  if(jt!=='ok'&&jt!=null)msg.push('体温 '+r.temp.toFixed(1)+'℃');
+  if(jp!=='ok'&&jp!=null)msg.push('心拍 '+r.pulse+'bpm');
+  if(jb!=='ok'&&jb!=null)msg.push('血圧 '+r.sys+'/'+r.dia);
+  if(jo!=='ok'&&jo!=null)msg.push('SpO₂ '+r.spo2+'%');
+  return{id:alertSeq++,resId:r.id,name:r.name,room:r.room,sev,msg:msg.join('・')||'基準値を逸脱',min,status:sev};
+}
+function addAlert(r,sev){
+  // 既存の未解決アラートがあれば更新
+  const ex=alerts.find(a=>a.resId===r.id&&a.status!=='resolved');
+  const fresh=makeAlert(r,sev,0);
+  if(ex){Object.assign(ex,fresh,{id:ex.id});}else{alerts.unshift(fresh);}
+}
+function renderAlerts(){
+  const open=alerts.filter(a=>a.status!=='resolved');
+  const high=open.filter(a=>a.sev==='high').length;
+  $('alertKpis').innerHTML=`
+    ${kpi('#e24a4a','未対応アラート',open.length+'<small>件</small>','うち重大 '+high+'件',high?'down':'warn',high?'至急対応':'経過観察')}
+    ${kpi('#e3941f','要注意（中）',open.filter(a=>a.sev==='mid').length+'<small>件</small>','','warn','経過観察')}
+    ${kpi('#16b877','本日クローズ',alerts.filter(a=>a.status==='resolved').length+'<small>件</small>','','up','対応済')}
+    ${kpi('#2f6df0','平均対応時間','4<small>分</small>','検知→通知','up','迅速')}`;
+  $('alertRows').innerHTML=alerts.length?alerts.sort((a,b)=>{const w={high:0,mid:1,resolved:2};return w[a.status]-w[b.status]||a.min-b.min;}).map(a=>{
+    const sevLabel=a.status==='resolved'?'対応済':a.sev==='high'?'重大':'中';
+    const sevCls=a.status==='resolved'?'resolved':a.sev==='high'?'high':'mid';
+    return `<tr>
+      <td><span class="st ${sevCls}">${sevLabel}</span></td>
+      <td><b>${esc(a.name)}</b></td><td class="room-tag">${esc(a.room)}</td>
+      <td>${esc(a.msg)}</td><td style="color:var(--ink-2)">${agoLabel(a.min)}</td>
+      <td class="r">${a.status==='resolved'?'<span class="mini">クローズ済</span>':`<button class="btn green" style="padding:6px 12px" onclick="resolveAlert(${a.id})">対応完了</button>`}</td></tr>`;
+  }).join('')
+    :'<tr><td colspan="6" class="empty-cell">アラートはありません 🎉</td></tr>';
+  updateBadges();
+}
+window.resolveAlert=id=>{const a=alerts.find(x=>x.id===id);if(a){a.status='resolved';renderAlerts();showToast(a.name+' のアラートを対応完了にしました');}};
+$('resolveAll').addEventListener('click',()=>{
+  const open=alerts.filter(a=>a.sev==='mid'&&a.status!=='resolved');
+  open.forEach(a=>a.status='resolved');
+  renderAlerts();showToast(open.length+'件の「中」アラートをクローズしました');
+});
+function updateBadges(){
+  const open=alerts.filter(a=>a.status!=='resolved');
+  const high=open.filter(a=>a.sev==='high').length;
+  const b=$('navAlerts');b.textContent=open.length;
+  b.classList.toggle('amber',high===0&&open.length>0);
+}
+
+/* ============ REPORT ============ */
+function renderReport(){
+  const total=residents.length;
+  const normal=residents.filter(r=>overall(r)==='normal').length;
+  const caution=residents.filter(r=>overall(r)==='caution').length;
+  const danger=residents.filter(r=>overall(r)==='danger').length;
+  const rate=Math.round(normal/total*100);
+  // donut via conic-gradient
+  const pN=normal/total*100,pC=caution/total*100;
+  $('donut').style.background=`conic-gradient(var(--green) 0 ${pN}%, var(--amber) ${pN}% ${pN+pC}%, var(--red) ${pN+pC}% 100%)`;
+  $('dRate').textContent=rate+'%';
+  $('donutLegend').innerHTML=[
+    ['var(--green)','正常',normal],['var(--amber)','要注意',caution],['var(--red)','異常',danger]
+  ].map(x=>`<div class="lg"><span class="sw" style="background:${x[0]}"></span>${x[1]}<span class="v">${x[2]}名</span></div>`).join('');
+  // week bars (擬似の過去7日正常率)
+  const days=['月','火','水','木','金','土','日'];
+  const base=[88,91,85,94,90,96,rate];
+  $('weekBars').innerHTML=days.map((d,i)=>`
+    <div class="bar-row"><span class="mlabel">${d}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${base[i]}"></div></div>
+      <span class="mval">${base[i]}%</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#weekBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+}
+$('genReport').addEventListener('click',async()=>{
+  const btn=$('genReport');btn.textContent='⚡ 生成中…';btn.disabled=true;
+  $('reportBody').innerHTML='<span class="mini">AIが当月の測定データを要約しています…</span>';
+  await new Promise(r=>setTimeout(r,1000));
+  const total=residents.length;
+  const normal=residents.filter(r=>overall(r)==='normal').length;
+  const danger=residents.filter(r=>overall(r)==='danger').length;
+  const caution=residents.filter(r=>overall(r)==='caution').length;
+  const rate=Math.round(normal/total*100);
+  const watchNames=residents.filter(r=>overall(r)!=='normal').slice(0,3).map(r=>esc(r.name)).join('、')||'なし';
+  const m=TODAY.getMonth()+1;
+  btn.textContent='⚡ AIでレポート生成';btn.disabled=false;
+  $('reportBody').innerHTML=`
+    <div style="font-weight:900;font-size:15px;margin-bottom:8px">さくら苑 ${m}月 健康モニタリング報告（AI自動生成）</div>
+    <p style="margin-bottom:10px">当月、見守り対象 <b>${total}名</b> のバイタルを健康モニターマシンで常時監視しました。
+    全測定の正常率は <b style="color:var(--green)">${rate}%</b> で、概ね安定して経過しています。</p>
+    <ul style="margin:0 0 10px 18px">
+      <li>正常：${normal}名 ／ 要注意：${caution}名 ／ 異常検知：${danger}名</li>
+      <li>要観察の入居者：${watchNames}（経過を主治医と共有済み）</li>
+      <li>AI異常検知により、夜間を含め急変の早期発見が可能となりました。</li>
+    </ul>
+    <p style="color:var(--ink-2)">本報告はAIが測定データを自動集計したものです。ご家族説明・主治医への申し送りにご活用ください。</p>
+    <div style="margin-top:12px"><button class="btn" onclick="showToast('レポートをPDFで書き出しました（デモ）')">📄 PDFで保存</button>
+    <button class="btn" onclick="showToast('ご家族へ報告メールを送信しました（デモ）')" style="margin-left:8px">✉️ 家族へ送信</button></div>`;
+  showToast('月次レポートを生成しました');
+});
+
+/* ============ AI ANOMALY ============ */
+function renderAiIntro(){$('aiCount').textContent=residents.filter(r=>r.monitored).length;}
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ スキャン中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,3);},120);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);$('baAfterT').textContent='3秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // スキャン対象：要注意/異常の入居者を結果表示
+  const targets=residents.filter(r=>overall(r)!=='normal')
+    .sort((a,b)=>(overall(b)==='danger')-(overall(a)==='danger'));
+  const list=targets.length?targets:residents.slice(0,3);
+  $('genItems').innerHTML=list.map((r,i)=>{
+    const st=overall(r);const danger=st==='danger';
+    const al=makeAlert(r,danger?'high':'mid',0);
+    return `<div class="gen-item" data-i="${i}"><span class="ck ${danger?'al':'ok'}">${danger?'!':'✓'}</span>
+      <b style="flex:1">${esc(r.name)} <span class="room-tag">（${esc(r.room)}）</span></b>
+      <span style="color:var(--ink-3);font-size:12px">${esc(al.msg||'基準内')}</span>
+      ${stBadge(st)}</div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,170));items[i].classList.add('in');}
+  // 異常/要注意をアラートに反映
+  buildInitialAlerts();
+  const dn=targets.filter(r=>overall(r)==='danger').length;
+  btn.disabled=false;btn.textContent='⚡ もう一度スキャン';
+  updateBadges();
+  showToast('全'+residents.length+'名をスキャン：異常'+dn+'件・要注意'+(targets.length-dn)+'件を検知',dn>0);
+});
+
+/* ============ INIT ============ */
+renderNameSelect();renderChips();buildInitialAlerts();renderMonitor();renderDash();renderAiIntro();updateBadges();
+</script>
+</body>
+</html>

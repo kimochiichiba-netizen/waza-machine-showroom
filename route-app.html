@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜配送ルート最適化マシン</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cf0;--purple-soft:#efeaff;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--green);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 86px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-fill.g{background:linear-gradient(90deg,var(--green),#43d9a0)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.done{background:var(--green-soft);color:var(--green)}
+.st.running{background:var(--brand-soft);color:var(--brand)}
+.st.planned{background:var(--soft);color:var(--ink-3)}
+.st.delay{background:var(--red-soft);color:var(--red)}
+.st.optimized{background:var(--purple-soft);color:var(--purple)}
+
+/* create / optimize form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--brand)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stop-head{display:grid;grid-template-columns:1fr 92px 28px;gap:7px;font-size:11px;color:var(--ink-3);font-weight:700;padding:0 2px 6px}
+.stop-row{display:grid;grid-template-columns:1fr 92px 28px;gap:7px;margin-bottom:7px;align-items:center}
+.stop-row input{padding:8px 9px;font-size:12.5px;border:1px solid var(--line-2);border-radius:8px;font-family:inherit}
+.stop-row .x{border:1px solid var(--line-2);background:var(--red-soft);color:var(--red);border-radius:7px;cursor:pointer;height:30px}
+.addline{width:100%;margin-top:3px;padding:9px;border:1px dashed var(--line-2);background:transparent;border-radius:8px;color:var(--brand);font-weight:700;font-size:12.5px;cursor:pointer}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* map preview */
+.maparea{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
+.maptabs{display:flex;border-bottom:1px solid var(--line)}
+.maptab{flex:1;text-align:center;padding:11px;font-size:12.5px;font-weight:800;cursor:pointer;color:var(--ink-3);border-bottom:2px solid transparent}
+.maptab.on{color:var(--brand);border-bottom-color:var(--brand);background:var(--brand-soft)}
+.mapcanvas{position:relative;height:330px;background:
+  linear-gradient(0deg,rgba(230,234,241,.6) 1px,transparent 1px) 0 0/100% 33px,
+  linear-gradient(90deg,rgba(230,234,241,.6) 1px,transparent 1px) 0 0/33px 100%,
+  linear-gradient(180deg,#f4f8ff,#eef3fb)}
+.mapcanvas svg{position:absolute;inset:0;width:100%;height:100%}
+.node{position:absolute;transform:translate(-50%,-50%);z-index:2}
+.node .pin{width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:grid;place-items:center;
+  box-shadow:0 3px 8px rgba(16,24,40,.25);font-size:0}
+.node .pin span{transform:rotate(45deg);font-size:11px;font-weight:900;color:#fff;font-family:'Orbitron'}
+.node.depot .pin{background:var(--ink);border-radius:7px;transform:none}
+.node.depot .pin span{transform:none;font-size:13px}
+.node .lbl{position:absolute;top:-6px;left:30px;white-space:nowrap;font-size:10.5px;font-weight:700;color:var(--ink-2);background:rgba(255,255,255,.85);padding:1px 6px;border-radius:5px;box-shadow:var(--shadow)}
+.mapstat{display:flex;gap:0;border-top:1px solid var(--line)}
+.mapstat .ms{flex:1;text-align:center;padding:13px;border-right:1px solid var(--line)}
+.mapstat .ms:last-child{border-right:0}
+.mapstat .ms .k{font-size:11px;color:var(--ink-3);font-weight:700}
+.mapstat .ms .v{font-size:19px;font-weight:900;margin-top:2px;font-family:'Orbitron'}
+.mapstat .ms .v.g{color:var(--green)}.mapstat .ms .v.b{color:var(--brand)}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* compare table for AI */
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+@media(max-width:760px){.cmp{grid-template-columns:1fr}}
+.cmpcard{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.cmpcard .hd{padding:11px 14px;font-weight:800;font-size:13px;display:flex;align-items:center;gap:8px}
+.cmpcard.before .hd{background:#f3f4f7;color:#6b7280}
+.cmpcard.after .hd{background:var(--green-soft);color:var(--green)}
+.cmpcard .seq{padding:13px 14px;font-size:12.5px;color:var(--ink-2);line-height:2}
+.cmpcard .seq b{color:var(--ink)}
+
+/* driver cards */
+.dgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:980px){.dgrid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.dgrid{grid-template-columns:1fr}}
+.dcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow)}
+.dcard .dh{display:flex;align-items:center;gap:11px;margin-bottom:12px}
+.dcard .av{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;color:#fff;font-weight:900;font-size:16px}
+.dcard .dn{font-weight:900;font-size:14.5px}
+.dcard .dm{font-size:11.5px;color:var(--ink-3)}
+.dcard .drow{display:flex;justify-content:space-between;font-size:12.5px;padding:6px 0;border-top:1px solid var(--line)}
+.dcard .drow span{color:var(--ink-3)}
+.dcard .drow b{font-weight:800}
+.loadbar{height:7px;border-radius:99px;background:var(--soft);overflow:hidden;margin-top:10px}
+.loadbar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky))}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">ルート最適化マシン<small>技マシン｜配送最適化</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">🚚</span>ルート一覧</a>
+      <a data-v="create"><span class="i">📍</span>新規最適化</a>
+      <a data-v="map"><span class="i">🗺️</span>配送マップ</a>
+      <a data-v="driver"><span class="i">👷</span>ドライバー</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI最適化<span class="badge">NEW</span></a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="./">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。配送先・距離・ドライバーはサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">本日の配送状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>曜日別の走行距離（最適化 前後）</h3><span class="more">直近1週間</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="便名・エリア・ドライバーで検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>便</th><th>エリア</th><th>ドライバー</th><th class="r">訪問数</th><th class="r">距離</th><th class="r">所要時間</th><th>状態</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- CREATE (new optimize input) -->
+      <section class="view" id="v-create">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="row2">
+              <div class="fg"><label>便名</label><input id="cName" placeholder="例：午前 北部便"></div>
+              <div class="fg"><label>出発拠点</label>
+                <select id="cDepot">
+                  <option>気持ち市場 都町デポ</option>
+                  <option>気持ち市場 大在デポ</option>
+                </select></div>
+            </div>
+            <div class="fg"><label>担当ドライバー</label><select id="cDriver"></select></div>
+            <label style="font-size:12px;font-weight:700;color:var(--ink-2)">訪問先（地点を選ぶとAIが配送時間を提案）</label>
+            <div class="stop-head" style="margin-top:7px"><div>訪問先</div><div>時間指定</div><div></div></div>
+            <div id="cStops"></div>
+            <button class="addline" id="cAdd">＋ 訪問先を追加</button>
+            <div class="aihint" id="cAiHint">✨ AIが地点の所在エリアと推奨時間帯を補完しました</div>
+            <div class="linkrow" style="margin-top:16px">
+              <button class="btn primary" id="cOpt" style="flex:1;justify-content:center">⚡ AIで最短ルートを作成</button>
+              <button class="btn" id="cSample">サンプル</button>
+            </div>
+          </div>
+          <div>
+            <div class="maparea">
+              <div class="maptabs">
+                <div class="maptab on" id="tabAfter">⚡ 最適化後</div>
+                <div class="maptab" id="tabBefore">😓 登録順</div>
+              </div>
+              <div class="mapcanvas" id="cMap"></div>
+              <div class="mapstat">
+                <div class="ms"><div class="k">訪問数</div><div class="v b" id="cmVisits">0</div></div>
+                <div class="ms"><div class="k">走行距離</div><div class="v g" id="cmDist">0.0km</div></div>
+                <div class="ms"><div class="k">所要時間</div><div class="v" id="cmTime">0分</div></div>
+              </div>
+            </div>
+            <div style="font-size:11.5px;color:var(--ink-3);margin-top:10px;padding:0 4px">
+              ※ 距離・時間は大分市内の道路網を想定したデモ計算です。実運用ではGPSと交通情報を反映します。
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MAP -->
+      <section class="view" id="v-map">
+        <div class="toolbar">
+          <div class="chips" id="mapChips" style="flex:1"></div>
+          <button class="btn primary" onclick="go('create')">＋ 新規最適化</button>
+        </div>
+        <div class="maparea">
+          <div class="mapcanvas" id="bigMap" style="height:430px"></div>
+          <div class="mapstat" id="bigMapStat"></div>
+        </div>
+      </section>
+
+      <!-- DRIVERS -->
+      <section class="view" id="v-driver">
+        <div class="dgrid" id="dgrid"></div>
+      </section>
+
+      <!-- AI OPTIMIZE -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">本日の全配送をAIで一括最適化</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">本日の配送先 <b>34件</b> ／ ドライバー <b>4名</b> を、時間指定を守りながらAIが最短ルートに組み直します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで一括最適化する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">1時間20分</div>
+              <ul>
+                <li>🗒️ 地図とにらめっこで訪問順を手で決定</li>
+                <li>🔁 時間指定が入るたびに組み直し</li>
+                <li>⛽ 遠回りに気づかず燃料・残業が増加</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 全訪問先の距離をAIが一括計算</li>
+                <li>📍 時間指定を守って最短順に並び替え</li>
+                <li>🚚 ドライバー4名へ自動で割り当て</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ 最適化されたルート</div>
+            <div id="genItems"></div>
+            <div class="cmp" id="cmpBox" style="display:none">
+              <div class="cmpcard before">
+                <div class="hd">😓 最適化前（登録順）</div>
+                <div class="seq" id="seqBefore"></div>
+              </div>
+              <div class="cmpcard after">
+                <div class="hd">⚡ 最適化後（最短ルート）</div>
+                <div class="seq" id="seqAfter"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const escAttr=s=>String(s==null?'':s).replace(/"/g,'&quot;');
+let SEED=4071;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+
+/* ============ DATA ============ */
+const DRIVERS=[
+  {name:'佐藤 健太',color:'#2f6df0',vehicle:'軽バン 大分480 あ12-34',area:'北部・都町'},
+  {name:'田中 美咲',color:'#16b877',vehicle:'1tトラック 大分100 か56-78',area:'中部・大道'},
+  {name:'鈴木 大輔',color:'#e3941f',vehicle:'軽バン 大分480 さ90-12',area:'西部・賀来'},
+  {name:'高橋 由紀',color:'#7c5cf0',vehicle:'1tトラック 大分100 た34-56',area:'東部・坂ノ市'},
+];
+// candidate delivery points around Oita (x,y on 0-100 canvas grid; minutes = recommended dwell)
+const POINTS=[
+  {n:'大分中央クリニック',x:48,y:34,area:'中部',win:'9:00-10:00'},
+  {n:'さくら総合病院',x:30,y:22,area:'北部',win:'9:00-11:00'},
+  {n:'つくし介護センター',x:66,y:28,area:'東部',win:'10:00-12:00'},
+  {n:'豊後おおいた青果センター',x:22,y:50,area:'西部',win:'指定なし'},
+  {n:'都町デイサービス',x:52,y:46,area:'中部',win:'13:00-14:00'},
+  {n:'みらい歯科医院',x:40,y:60,area:'西部',win:'指定なし'},
+  {n:'別府温泉ホテル組合',x:80,y:18,area:'東部',win:'11:00-12:00'},
+  {n:'大分海鮮市場',x:72,y:54,area:'東部',win:'指定なし'},
+  {n:'坂ノ市訪問看護ステーション',x:84,y:46,area:'東部',win:'14:00-15:00'},
+  {n:'賀来地域包括支援センター',x:14,y:36,area:'西部',win:'指定なし'},
+  {n:'大道リハビリ病院',x:44,y:24,area:'中部',win:'9:30-10:30'},
+  {n:'明野グループホーム',x:62,y:64,area:'東部',win:'15:00-16:00'},
+];
+const DEPOT={n:'都町デポ',x:50,y:50};
+
+const STLABEL={done:'配送完了',running:'配送中',planned:'予定',delay:'遅延',optimized:'最適化済'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]}</span>`;}
+
+// geometry helpers (demo "road" distance)
+function dist(a,b){const dx=a.x-b.x,dy=a.y-b.y;return Math.sqrt(dx*dx+dy*dy);}
+function kmOf(units){return units*0.42;} // canvas units -> km (demo)
+function minOf(km,dwellCount){return Math.round(km*3.2)+dwellCount*8;} // travel + dwell
+// nearest-neighbor route from depot through stops
+function optimize(stops){
+  const remaining=stops.slice();const order=[];let cur=DEPOT;let total=0;
+  while(remaining.length){
+    let bi=0,bd=Infinity;
+    for(let i=0;i<remaining.length;i++){const d=dist(cur,remaining[i]);if(d<bd){bd=d;bi=i;}}
+    total+=bd;cur=remaining[bi];order.push(cur);remaining.splice(bi,1);
+  }
+  total+=dist(cur,DEPOT); // return to depot
+  return {order,units:total};
+}
+function naive(stops){
+  let total=0,cur=DEPOT;stops.forEach(s=>{total+=dist(cur,s);cur=s;});total+=dist(cur,DEPOT);
+  return {order:stops.slice(),units:total};
+}
+
+// seed routes for list/map
+let routes=[];
+(function seed(){
+  const names=['午前 北部便','午前 中部便','午前 東部便','午後 西部便','午後 中部便','午後 東部便','夕方 集約便'];
+  const statuses=['done','done','running','planned','running','planned','done'];
+  for(let i=0;i<names.length;i++){
+    const nStops=4+Math.floor(rnd()*4);
+    const pts=[];const pool=POINTS.slice();
+    for(let j=0;j<nStops&&pool.length;j++){pts.push(pool.splice(Math.floor(rnd()*pool.length),1)[0]);}
+    const opt=optimize(pts);const nai=naive(pts);
+    const dr=DRIVERS[i%DRIVERS.length];
+    const km=kmOf(opt.units),kmB=kmOf(nai.units);
+    routes.push({id:'RT-'+(1001+i),name:names[i],area:dr.area,driver:dr.name,driverColor:dr.color,
+      stops:pts,order:opt.order,visits:pts.length,km:+km.toFixed(1),kmBefore:+kmB.toFixed(1),
+      min:minOf(km,pts.length),status:statuses[i]});
+  }
+})();
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','本日の配送状況'],list:['ルート一覧','登録された配送便を管理します'],
+  create:['新規最適化','訪問先を入れるとリアルタイムで最短ルートが組み上がります'],map:['配送マップ','便ごとの巡回ルートを地図で確認'],
+  driver:['ドライバー','ドライバーごとの配送状況と積載状況'],ai:['AI最適化','本日の全配送を一括で最短化します']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn primary" onclick="go(\'create\')">＋ 新規最適化</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI一括最適化</button><button class="btn primary" onclick="go(\'create\')">＋ 新規最適化</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='map')renderMap();
+  if(v==='driver')renderDrivers();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+function renderDash(){
+  const totalVisits=routes.reduce((s,r)=>s+r.visits,0);
+  const totalKm=routes.reduce((s,r)=>s+r.km,0);
+  const totalKmB=routes.reduce((s,r)=>s+r.kmBefore,0);
+  const saveKm=totalKmB-totalKm;
+  const savePct=Math.round(saveKm/totalKmB*100);
+  const fuelSave=Math.round(saveKm/10*155); // km/10 * 155円/L (demo)
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','本日の便数',routes.length+'<small>便</small>',totalVisits+'訪問','up','全便 最適化済')}
+    ${kpi('#16b877','走行距離 削減',saveKm.toFixed(1)+'<small>km</small>','約'+savePct+'%短縮','up','前: '+totalKmB.toFixed(0)+'km')}
+    ${kpi('#e3941f','燃料 削減',('¥'+fuelSave.toLocaleString()),'本日分','up','月換算 約¥'+(fuelSave*22).toLocaleString())}
+    ${kpi('#7c5cf0','定時到着率','96<small>%</small>',' ','up','+9pt')}`;
+  // weekday bars: before vs after
+  const days=['月','火','水','木','金','土'];
+  const before=[148,162,139,171,158,96];const after=[103,118,99,121,112,71];
+  const mx=Math.max(...before);
+  $('trendBars').innerHTML=days.map((d,i)=>`
+    <div class="bar-row"><span class="mlabel">${d} 最適化前</span>
+      <div class="bar-track"><div class="bar-fill" data-w="${Math.round(before[i]/mx*100)}"></div></div>
+      <span class="mval">${before[i]}km</span></div>
+    <div class="bar-row"><span class="mlabel" style="color:var(--green)">${d} 最適化後</span>
+      <div class="bar-track"><div class="bar-fill g" data-w="${Math.round(after[i]/mx*100)}"></div></div>
+      <span class="mval">${after[i]}km</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  const acts=[
+    {i:'⚡',c:'#e6f8f0',t:'AI最適化で本日34訪問を再編成（走行 32%短縮）',m:'5分前'},
+    {i:'🚚',c:'#eaf1ff',t:'午前 北部便（佐藤）が配送を開始しました',m:'28分前'},
+    {i:'📍',c:'#efeaff',t:'別府温泉ホテル組合 の時間指定を反映し再計算',m:'1時間前'},
+    {i:'⚠️',c:'#fdeaea',t:'午後 中部便：渋滞で到着が15分遅延の見込み',m:'今日 8:40'},
+    {i:'✅',c:'#e6f8f0',t:'午前 東部便（鈴木）が全6件の配送完了',m:'昨日 17:10'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${a.t}</div><div class="am">${a.m}</div></div></div>`).join('');
+}
+
+/* ============ LIST ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['running','配送中'],['planned','予定'],['done','配送完了'],['delay','遅延']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=routes.filter(r=>filterStatus==='all'||r.status===filterStatus)
+    .filter(r=>!q||(r.name+r.area+r.driver+r.id).toLowerCase().includes(q));
+  $('listRows').innerHTML=rows.length?rows.map(r=>`<tr onclick="openRoute('${escAttr(r.id)}')">
+    <td><b>${esc(r.name)}</b><div style="font-size:11px;color:var(--ink-3)" class="mono">${esc(r.id)}</div></td>
+    <td style="color:var(--ink-2)">${esc(r.area)}</td>
+    <td><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:50%;background:${r.driverColor}"></span>${esc(r.driver)}</span></td>
+    <td class="r tnum"><b>${r.visits}</b>件</td>
+    <td class="r tnum"><b>${r.km}</b>km</td>
+    <td class="r tnum">${r.min}分</td>
+    <td>${stBadge(r.status)}</td></tr>`).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当するルートがありません</td></tr>';
+}
+window.openRoute=id=>{mapSel=id;go('map');showToast('「'+(routes.find(r=>r.id===id)||{}).name+'」のルートを表示しました');};
+
+/* ============ MAP DRAWING ============ */
+function drawMap(el,route,useOrder){
+  if(!route){el.innerHTML='<div style="display:grid;place-items:center;height:100%;color:var(--ink-3);font-size:13px">便を選択してください</div>';return;}
+  const seq=useOrder?route.order:route.stops;
+  const pts=[DEPOT,...seq];
+  // path
+  let d='M ';d+=pts.map(p=>`${p.x} ${p.y}`).join(' L ');d+=` L ${DEPOT.x} ${DEPOT.y}`;
+  let svg=`<svg viewBox="0 0 100 100" preserveAspectRatio="none">
+    <path d="${d}" fill="none" stroke="${useOrder?'#2f6df0':'#b6c0d4'}" stroke-width="0.9"
+      stroke-dasharray="${useOrder?'0':'2 2'}" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>
+  </svg>`;
+  // nodes
+  let nodes=`<div class="node depot" style="left:${DEPOT.x}%;top:${DEPOT.y}%"><div class="pin"><span>🏠</span></div><div class="lbl">${esc(route.name)} 出発</div></div>`;
+  seq.forEach((p,i)=>{
+    const col=route.driverColor||'#2f6df0';
+    nodes+=`<div class="node" style="left:${p.x}%;top:${p.y}%"><div class="pin" style="background:${col}"><span>${i+1}</span></div><div class="lbl">${esc(p.n)}</div></div>`;
+  });
+  el.innerHTML=svg+nodes;
+}
+
+let mapSel=routes[0]?routes[0].id:null;
+function renderMap(){
+  $('mapChips').innerHTML=routes.map(r=>`<button class="chip ${r.id===mapSel?'on':''}" data-id="${escAttr(r.id)}">${esc(r.name)}</button>`).join('');
+  $('mapChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{mapSel=c.dataset.id;renderMap();});
+  const r=routes.find(x=>x.id===mapSel);
+  drawMap($('bigMap'),r,true);
+  if(r){
+    const saved=(r.kmBefore-r.km).toFixed(1);
+    $('bigMapStat').innerHTML=`
+      <div class="ms"><div class="k">ドライバー</div><div class="v" style="font-size:14px;font-family:inherit">${esc(r.driver)}</div></div>
+      <div class="ms"><div class="k">訪問数</div><div class="v b">${r.visits}</div></div>
+      <div class="ms"><div class="k">走行距離</div><div class="v g">${r.km}km</div></div>
+      <div class="ms"><div class="k">削減距離</div><div class="v g">-${saved}km</div></div>
+      <div class="ms"><div class="k">所要時間</div><div class="v">${r.min}分</div></div>`;
+  } else {$('bigMapStat').innerHTML='';}
+}
+
+/* ============ DRIVERS ============ */
+function renderDrivers(){
+  $('dgrid').innerHTML=DRIVERS.map(d=>{
+    const rs=routes.filter(r=>r.driver===d.name);
+    const visits=rs.reduce((s,r)=>s+r.visits,0);
+    const km=rs.reduce((s,r)=>s+r.km,0).toFixed(1);
+    const load=Math.min(100,40+Math.round(rnd()*55));
+    const status=rs.some(r=>r.status==='running')?'running':rs.some(r=>r.status==='planned')?'planned':'done';
+    return `<div class="dcard">
+      <div class="dh"><div class="av" style="background:${d.color}">${esc(d.name.slice(0,1))}</div>
+        <div><div class="dn">${esc(d.name)}</div><div class="dm">${esc(d.area)}担当</div></div>
+        <div style="margin-left:auto">${stBadge(status)}</div></div>
+      <div class="drow"><span>車両</span><b style="font-size:11.5px">${esc(d.vehicle)}</b></div>
+      <div class="drow"><span>担当便</span><b>${rs.length}便</b></div>
+      <div class="drow"><span>本日の訪問</span><b>${visits}件</b></div>
+      <div class="drow"><span>走行距離</span><b>${km}km</b></div>
+      <div style="font-size:11px;color:var(--ink-3);margin-top:10px;display:flex;justify-content:space-between"><span>積載率</span><b style="color:var(--ink)">${load}%</b></div>
+      <div class="loadbar"><i style="width:${load}%"></i></div>
+    </div>`;
+  }).join('');
+}
+
+/* ============ CREATE / OPTIMIZE ============ */
+let cStops=[{n:'',win:''},{n:'',win:''},{n:'',win:''}];
+let cUseOrder=true; // true=optimized after, false=naive before
+let cLast=null; // last computed {orderResult, naiveResult}
+function renderDriverSelect(){$('cDriver').innerHTML=DRIVERS.map(d=>`<option>${esc(d.name)}</option>`).join('');}
+function renderStops(){
+  $('cStops').innerHTML=cStops.map((s,i)=>`<div class="stop-row" data-i="${i}">
+    <input class="sn" list="cPointList" placeholder="訪問先名" value="${escAttr(s.n)}">
+    <input class="sw" placeholder="例 9:00" value="${escAttr(s.win)}">
+    <button class="x">✕</button></div>`).join('');
+  $('cStops').querySelectorAll('.stop-row').forEach(row=>{
+    const i=+row.dataset.i;
+    const sn=row.querySelector('.sn'),sw=row.querySelector('.sw');
+    sn.oninput=()=>{cStops[i].n=sn.value;const h=POINTS.find(x=>x.n===sn.value);
+      if(h&&!cStops[i].win){cStops[i].win=h.win==='指定なし'?'':h.win;sw.value=cStops[i].win;$('cAiHint').classList.add('show');setTimeout(()=>$('cAiHint').classList.remove('show'),2000);}
+      computeMap();};
+    sw.oninput=()=>{cStops[i].win=sw.value;};
+    row.querySelector('.x').onclick=()=>{cStops.splice(i,1);if(!cStops.length)cStops.push({n:'',win:''});renderStops();computeMap();};
+  });
+}
+function resolveStops(){
+  // map entered names to known POINTS (so we have coordinates); unknown -> skip on map but counted
+  return cStops.map(s=>{
+    const hit=POINTS.find(p=>p.n===s.n);
+    return hit?{...hit,win:s.win}:(s.n?{n:s.n,x:20+rnd()*60,y:20+rnd()*60,area:'—',win:s.win}:null);
+  }).filter(Boolean);
+}
+function computeMap(){
+  const stops=resolveStops();
+  const drv=DRIVERS.find(d=>d.name===$('cDriver').value)||DRIVERS[0];
+  const route={name:$('cName').value||'新規便',stops,order:optimize(stops).order,driverColor:drv.color};
+  const opt=optimize(stops),nai=naive(stops);
+  cLast={route,opt,nai};
+  drawMap($('cMap'),stops.length?route:null,cUseOrder);
+  const res=cUseOrder?opt:nai;
+  const km=kmOf(res.units);
+  $('cmVisits').textContent=stops.length;
+  $('cmDist').textContent=km.toFixed(1)+'km';
+  $('cmTime').textContent=stops.length?minOf(km,stops.length)+'分':'0分';
+}
+$('cName').addEventListener('input',computeMap);
+$('cDriver').addEventListener('change',computeMap);
+$('cDepot').addEventListener('change',computeMap);
+$('cAdd').addEventListener('click',()=>{cStops.push({n:'',win:''});renderStops();computeMap();});
+$('tabAfter').addEventListener('click',()=>{cUseOrder=true;$('tabAfter').classList.add('on');$('tabBefore').classList.remove('on');computeMap();});
+$('tabBefore').addEventListener('click',()=>{cUseOrder=false;$('tabBefore').classList.add('on');$('tabAfter').classList.remove('on');computeMap();});
+$('cSample').addEventListener('click',()=>{
+  $('cName').value='午前 北部便';$('cDriver').value='佐藤 健太';
+  cStops=[
+    {n:'さくら総合病院',win:'9:00-11:00'},
+    {n:'大道リハビリ病院',win:'9:30-10:30'},
+    {n:'大分中央クリニック',win:'9:00-10:00'},
+    {n:'つくし介護センター',win:'10:00-12:00'},
+    {n:'別府温泉ホテル組合',win:'11:00-12:00'},
+  ];
+  renderStops();computeMap();
+});
+$('cOpt').addEventListener('click',async()=>{
+  const stops=resolveStops();
+  if(!$('cName').value.trim()||stops.length<2){showToast('便名と訪問先を2件以上入力してください');return;}
+  const btn=$('cOpt');btn.textContent='⚡ AIが計算中…';btn.disabled=true;
+  cUseOrder=false;$('tabBefore').classList.add('on');$('tabAfter').classList.remove('on');computeMap();
+  await new Promise(r=>setTimeout(r,800));
+  cUseOrder=true;$('tabAfter').classList.add('on');$('tabBefore').classList.remove('on');computeMap();
+  const drv=DRIVERS.find(d=>d.name===$('cDriver').value)||DRIVERS[0];
+  const opt=optimize(stops),nai=naive(stops);
+  const km=+kmOf(opt.units).toFixed(1),kmB=+kmOf(nai.units).toFixed(1);
+  routes.unshift({id:'RT-'+(1001+routes.length),name:$('cName').value.trim(),area:drv.area,driver:drv.name,driverColor:drv.color,
+    stops,order:opt.order,visits:stops.length,km,kmBefore:kmB,min:minOf(km,stops.length),status:'planned'});
+  btn.textContent='⚡ AIで最短ルートを作成';btn.disabled=false;
+  showToast('最短ルートを作成しました（'+(kmB-km).toFixed(1)+'km短縮 / 一覧に追加）');
+  setTimeout(()=>{mapSel=routes[0].id;go('list');},700);
+});
+
+/* ============ AI BULK OPTIMIZE ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 最適化中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},110);
+  await new Promise(r=>setTimeout(r,1150));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // build optimized summary per route
+  $('genItems').innerHTML=routes.map((r,i)=>{
+    const saved=(r.kmBefore-r.km).toFixed(1);const pct=Math.round((r.kmBefore-r.km)/r.kmBefore*100);
+    return `<div class="gen-item" data-i="${i}"><span class="ck">✓</span>
+      <b style="flex:1">${esc(r.name)}</b>
+      <span style="color:var(--ink-3);font-size:12px">${esc(r.driver)}</span>
+      <span class="tnum" style="font-weight:800">${r.km}km</span>
+      <span class="tnum" style="color:var(--green);font-weight:800;font-size:12px">-${saved}km(${pct}%)</span></div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,160));items[i].classList.add('in');}
+  // before/after sequence comparison for first route
+  const r0=routes[0];
+  $('seqBefore').innerHTML='🏠 デポ → '+r0.stops.map((p,i)=>`${i+1}. ${esc(p.n.replace(/（.*）/,''))}`).join(' → ')+' → 🏠';
+  $('seqAfter').innerHTML='🏠 デポ → '+r0.order.map((p,i)=>`<b>${i+1}. ${esc(p.n.replace(/（.*）/,''))}</b>`).join(' → ')+' → 🏠';
+  $('cmpBox').style.display='grid';
+  // mark all optimized
+  routes.forEach(r=>{if(r.status==='planned')r.status='optimized';});
+  btn.disabled=false;btn.textContent='⚡ もう一度最適化';
+  showToast(items.length+'便のルートを一括最適化しました');
+});
+
+/* ============ INIT ============ */
+(()=>{const dl=document.createElement('datalist');dl.id='cPointList';
+  dl.innerHTML=POINTS.map(p=>`<option value="${escAttr(p.n)}">`).join('');document.body.appendChild(dl);})();
+renderDriverSelect();renderStops();computeMap();renderChips();renderDash();
+</script>
+</body>
+</html>

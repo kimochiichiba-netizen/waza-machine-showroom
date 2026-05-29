@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜介護記録マシン（介護記録支援システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7b5cf0;--purple-soft:#efeaff;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.nav a .badge.ok{background:var(--green)}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-fill.g{background:linear-gradient(90deg,var(--green),#37e29a)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.done{background:var(--green-soft);color:var(--green)}
+.st.draft{background:var(--amber-soft);color:var(--amber)}
+.st.ai{background:var(--purple-soft);color:var(--purple)}
+.st.shared{background:var(--brand-soft);color:var(--brand)}
+.st.alert{background:var(--red-soft);color:var(--red)}
+/* category tag */
+.cat{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;padding:3px 9px;border-radius:7px;background:var(--soft);color:var(--ink-2)}
+.cat.meal{background:#fff2e0;color:#c8791a}
+.cat.bath{background:#e2f5fb;color:#0e8aa0}
+.cat.vital{background:#fdeaea;color:#cc4040}
+.cat.excrete{background:#eef0f5;color:#6b7280}
+.cat.activity{background:#eafaf1;color:#16a566}
+.cat.med{background:#efeaff;color:#6b4fd0}
+
+/* voice input */
+.voice-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.voice-grid{grid-template-columns:1fr}}
+.mic-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow);text-align:center}
+.mic{width:104px;height:104px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#2f6df0);display:grid;place-items:center;font-size:42px;color:#fff;margin:8px auto 14px;cursor:pointer;transition:transform .2s;position:relative}
+.mic:hover{transform:scale(1.04)}
+.mic.rec{animation:pulse 1.1s ease-in-out infinite;background:radial-gradient(circle at 35% 30%,#ff8a8a,#e24a4a)}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(226,74,74,.45)}50%{box-shadow:0 0 0 18px rgba(226,74,74,0)}}
+.mic-state{font-size:14px;font-weight:800;margin-top:4px}
+.mic-hint{font-size:12px;color:var(--ink-3);margin-top:4px}
+.wave{display:flex;gap:4px;justify-content:center;align-items:flex-end;height:34px;margin:12px 0 4px;opacity:0;transition:opacity .3s}
+.wave.on{opacity:1}
+.wave span{width:4px;border-radius:99px;background:var(--brand);animation:bounce 1s ease-in-out infinite}
+@keyframes bounce{0%,100%{height:8px}50%{height:30px}}
+.transcript{background:var(--soft);border:1px solid var(--line);border-radius:11px;padding:14px 16px;text-align:left;font-size:13.5px;min-height:88px;margin-top:14px;color:var(--ink-2);line-height:1.8}
+.transcript b{color:var(--ink)}
+.transcript .ph{color:var(--ink-3)}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+
+/* record paper preview */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:24px 26px;box-shadow:var(--shadow);font-size:13px;color:#1a2233}
+.paper . pt{}
+.rec-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid var(--brand-dk);padding-bottom:10px;margin-bottom:14px}
+.rec-head .t{font-size:18px;font-weight:900;color:var(--brand-dk);letter-spacing:.06em}
+.rec-head .m{text-align:right;font-size:11.5px;color:var(--ink-2)}
+.rec-field{display:grid;grid-template-columns:84px 1fr;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+.rec-field .k{color:var(--ink-3);font-weight:700;font-size:12px}
+.rec-field .vv{font-weight:600}
+.rec-note{background:var(--soft);border-left:4px solid var(--brand);border-radius:6px;padding:12px 14px;margin-top:12px;font-size:13px;line-height:1.85}
+.ai-tag{display:inline-flex;align-items:center;gap:5px;background:var(--purple-soft);color:var(--purple);font-size:11px;font-weight:800;padding:3px 9px;border-radius:7px}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* form */
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:74px;line-height:1.7}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* handover cards */
+.ho-board{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:980px){.ho-board{grid-template-columns:1fr}}
+.ho-col{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.ho-col .hh{padding:12px 16px;font-size:13px;font-weight:800;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+.ho-col .hh .cnt{margin-left:auto;font-size:11px;background:var(--soft);color:var(--ink-2);padding:1px 8px;border-radius:99px;font-weight:800}
+.ho-col .hb{padding:12px}
+.ho-card{border:1px solid var(--line);border-radius:10px;padding:11px 12px;margin-bottom:9px;font-size:12.5px;background:#fff}
+.ho-card:last-child{margin-bottom:0}
+.ho-card .who{font-weight:800;font-size:13px;display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.ho-card .txt{color:var(--ink-2);line-height:1.7}
+.ho-card .meta{color:var(--ink-3);font-size:10.5px;margin-top:6px}
+.prio{width:7px;height:7px;border-radius:50%;display:inline-block}
+.prio.high{background:var(--red)}.prio.mid{background:var(--amber)}.prio.low{background:var(--green)}
+
+/* care plan */
+.plan-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:980px){.plan-grid{grid-template-columns:1fr}}
+.plan-card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.plan-card .pc{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.plan-card .pc .nm{font-size:14px;font-weight:800}
+.plan-card .pc .care{margin-left:auto;font-size:11px;font-weight:800;padding:3px 9px;border-radius:7px;background:var(--brand-soft);color:var(--brand)}
+.plan-card .pbody{padding:14px 16px}
+.goal{font-size:12.5px;color:var(--ink-2);margin-bottom:12px;background:var(--soft);border-radius:8px;padding:10px 12px}
+.goal b{color:var(--ink)}
+.prog-row{margin-bottom:11px}
+.prog-row .pl{display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:5px}
+.prog-row .pl .pct{color:var(--brand)}
+.prog-track{height:8px;border-radius:99px;background:var(--soft);overflow:hidden}
+.prog-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.av-sm{width:26px;height:26px;border-radius:50%;background:var(--brand-soft);color:var(--brand);display:inline-grid;place-items:center;font-weight:800;font-size:12px;flex-shrink:0}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">介護記録マシン<small>技マシン｜介護記録支援</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">📋</span>記録一覧</a>
+      <a data-v="voice"><span class="i">🎙️</span>音声入力</a>
+      <a data-v="handover"><span class="i">🔄</span>申し送り<span class="badge" id="navHO">0</span></a>
+      <a data-v="plan"><span class="i">📝</span>ケアプラン</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI記録生成</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>つくし介護センター</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="./">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。入居者・記録はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">本日の介護記録の状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>時間帯別の記録件数（本日）</h3><span class="more">リアルタイム</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>記録カテゴリ別の内訳（本日）</h3></div>
+            <div class="pb"><div class="bars" id="catBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>本日の入力者ランキング</h3></div>
+            <div class="pb"><div class="acts" id="rankList"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="入居者・記録内容・記録者で検索"></div>
+          <div class="chips" id="catChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>時刻</th><th>入居者</th><th>種別</th><th>記録内容</th><th>記録者</th><th>状態</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- VOICE -->
+      <section class="view" id="v-voice">
+        <div class="voice-grid">
+          <div>
+            <div class="mic-card">
+              <div class="mic" id="mic">🎙️</div>
+              <div class="mic-state" id="micState">タップして音声入力を開始</div>
+              <div class="mic-hint" id="micHint">話した内容をAIが介護記録の形に整えます</div>
+              <div class="wave" id="wave"><span style="animation-delay:0s"></span><span style="animation-delay:.1s"></span><span style="animation-delay:.2s"></span><span style="animation-delay:.3s"></span><span style="animation-delay:.15s"></span><span style="animation-delay:.25s"></span><span style="animation-delay:.05s"></span></div>
+              <div class="transcript" id="transcript"><span class="ph">マイクをタップして、入居者の様子を普段の言葉で話してください。例：「田中さん、お昼ごはん全部食べました。体温36度5分、変わりなしです」</span></div>
+            </div>
+            <div class="formcard" style="margin-top:16px">
+              <div class="fg"><label>入居者を選ぶ（任意・AIが自動判定）</label>
+                <select id="vRes"><option value="">AIに自動判定させる</option></select></div>
+              <button class="btn primary" id="vGen" style="width:100%;justify-content:center" disabled>⚡ AIで介護記録に整える</button>
+            </div>
+          </div>
+          <div>
+            <div class="formcard" style="text-align:center;color:var(--ink-3)" id="vEmpty">
+              <div style="font-size:40px;margin:24px 0 8px">📝</div>
+              <div style="font-weight:800;color:var(--ink-2);font-size:14px">整えた記録がここに表示されます</div>
+              <div style="font-size:12.5px;margin-top:6px">音声を入力して「AIで介護記録に整える」を押すと、<br>右側にきれいな記録が組み上がります。</div>
+            </div>
+            <div class="paper" id="vPaper" style="display:none">
+              <div class="rec-head">
+                <div class="t">介 護 記 録</div>
+                <div class="m"><div>記録日時：<span id="vrTime">—</span></div><div>記録者：<span id="vrStaff">—</span></div></div>
+              </div>
+              <div class="rec-field"><span class="k">入居者</span><span class="vv" id="vrName">—</span></div>
+              <div class="rec-field"><span class="k">記録種別</span><span class="vv" id="vrCat">—</span></div>
+              <div class="rec-field"><span class="k">バイタル</span><span class="vv" id="vrVital">—</span></div>
+              <div class="rec-note"><div style="margin-bottom:8px"><span class="ai-tag">✨ AIが整えた記録</span></div><span id="vrNote">—</span></div>
+              <button class="btn green" id="vSave" style="width:100%;justify-content:center;margin-top:16px">💾 この記録を保存する</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- HANDOVER -->
+      <section class="view" id="v-handover">
+        <div class="toolbar">
+          <div style="font-size:13px;color:var(--ink-2);font-weight:600">日勤 → 夜勤 の申し送り（本日 16:30 時点）</div>
+          <button class="btn primary" id="hoGen" style="margin-left:auto">⚡ AIで申し送りを自動作成</button>
+        </div>
+        <div class="ho-board" id="hoBoard"></div>
+      </section>
+
+      <!-- CARE PLAN -->
+      <section class="view" id="v-plan">
+        <div class="plan-grid" id="planGrid"></div>
+      </section>
+
+      <!-- AI GENERATE -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">音声メモから介護記録を一括生成</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">本日録りためた音声メモ <b>12件</b> から、入居者ごとの介護記録をAIが自動で清書します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで一括生成する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">50時間/月</div>
+              <ul>
+                <li>📝 勤務後に記憶をたどって手書き記入</li>
+                <li>⌨️ PCに清書し直して転記</li>
+                <li>🔄 申し送りノートを別途まとめ直す</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🎙️ 話すだけでその場で記録化</li>
+                <li>🤖 介護記録の形にAIが自動清書</li>
+                <li>✉️ 申し送りまで自動でまとまる</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ 生成された介護記録</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const RESIDENTS=[
+  {name:'田中 ハナ',room:'101',age:87,care:'要介護3',staff:'佐藤'},
+  {name:'鈴木 一郎',room:'102',age:82,care:'要介護2',staff:'佐藤'},
+  {name:'渡辺 トヨ',room:'103',age:91,care:'要介護4',staff:'田中'},
+  {name:'高橋 文子',room:'105',age:79,care:'要介護1',staff:'田中'},
+  {name:'伊藤 茂',room:'106',age:85,care:'要介護3',staff:'中村'},
+  {name:'山本 キミ',room:'108',age:93,care:'要介護5',staff:'中村'},
+  {name:'小林 春雄',room:'110',age:80,care:'要介護2',staff:'佐藤'},
+  {name:'加藤 ミサ',room:'112',age:88,care:'要介護3',staff:'田中'},
+];
+const STAFFS=['佐藤','田中','中村','大野','岩男'];
+const CATS={
+  meal:{l:'食事',i:'🍚'},bath:{l:'入浴',i:'🛁'},vital:{l:'バイタル',i:'🌡️'},
+  excrete:{l:'排泄',i:'🚽'},activity:{l:'活動',i:'🚶'},med:{l:'服薬',i:'💊'}
+};
+const NOTE_TPL={
+  meal:['主食・副食とも全量摂取。むせ込みなく、ご自分のペースで召し上がられた。','主食8割、副食全量。お茶でむせる場面あり、見守りにて対応。','食欲良好で完食。「おいしかった」と笑顔で話される。'],
+  bath:['一般浴を実施。湯加減を確認し、ご本人「気持ちよかった」と。皮膚に発赤・異常なし。','機械浴にて実施。入浴中の表情穏やか。背部に軽度の乾燥あり保湿対応。','清拭にて対応。本日は体調を考慮し入浴は見送り、明日再度声かけ予定。'],
+  vital:['体温36.5℃、血圧128/76、脈拍72、SpO2 98%。変わりなく経過。','体温37.1℃とやや高め。水分摂取を促し、午後再検にて36.8℃へ。','血圧148/90と高め。看護師へ報告し経過観察を依頼した。'],
+  excrete:['排便あり（普通便）。腹部膨満なく、すっきりされた様子。','排尿は日中5回、量・色とも問題なし。','便秘傾向のため、水分摂取と腹部マッサージにて対応。'],
+  activity:['午後のレクリエーションに参加。塗り絵を楽しまれ笑顔が見られた。','歩行訓練を実施。手すり伝いに居室から食堂まで自立歩行。','日中は傾眠がち。声かけにて離床し、車椅子にて日光浴。'],
+  med:['朝食後薬を看護師見守りのもと内服。飲み込み確認済み、残薬なし。','降圧薬を内服。拒否なく確実に服用された。','就寝前薬の内服を確認。','眠剤を希望され内服。']
+};
+const VITAL_TPL=['36.5℃ / 128-76 / 72 / SpO2 98%','37.1℃ / 134-80 / 78 / SpO2 97%','36.8℃ / 122-72 / 68 / SpO2 99%','36.6℃ / 130-78 / 70 / SpO2 98%','—'];
+
+let SEED=4071;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+const TODAY=new Date();
+function pad(n){return n<10?'0'+n:''+n;}
+
+// seed care records (today)
+const CAT_KEYS=Object.keys(CATS);
+let records=[];
+(function seed(){
+  const hours=[7,8,9,10,11,12,13,14,15,16];
+  for(let i=0;i<24;i++){
+    const r=pick(RESIDENTS);
+    const ck=pick(CAT_KEYS);
+    const hh=pick(hours);const mm=Math.floor(rnd()*6)*10;
+    const note=pick(NOTE_TPL[ck]);
+    const staff=pick(STAFFS);
+    const stt=(()=>{const x=rnd();return x<0.62?'done':x<0.78?'shared':x<0.9?'ai':'draft';})();
+    records.push({h:hh,m:mm,res:r.name,room:r.room,cat:ck,note,staff,vital:ck==='vital'?pick(VITAL_TPL.slice(0,4)):'—',status:stt});
+  }
+  records.sort((a,b)=>(b.h*60+b.m)-(a.h*60+a.m));
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STLABEL={done:'記入済',shared:'申し送り済',ai:'AI生成',draft:'下書き',alert:'要確認'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]||esc(s)}</span>`;}
+function catTag(ck){const c=CATS[ck];return c?`<span class="cat ${ck}">${c.i} ${c.l}</span>`:'';}
+function tm(r){return pad(r.h)+':'+pad(r.m);}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+
+/* ============ ROUTING ============ */
+const MD=(TODAY.getMonth()+1)+'月'+TODAY.getDate()+'日';
+const TITLES={dash:['ダッシュボード',MD+' の介護記録の状況'],list:['記録一覧','本日記入された介護記録を管理します'],
+  voice:['音声入力','話すだけでAIが介護記録に整えます'],handover:['申し送り','勤務交代時の引き継ぎをAIがまとめます'],
+  plan:['ケアプラン','入居者ごとの目標と達成度を管理します'],ai:['AI記録生成','音声メモから介護記録を自動で作ります']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn primary" onclick="go(\'voice\')">🎙️ 音声で記録</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI記録生成</button><button class="btn primary" onclick="go(\'voice\')">🎙️ 音声で記録</button>'
+    : v==='handover'?'':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='handover')renderHandover();
+  if(v==='plan')renderPlan();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const total=records.length;
+  const shared=records.filter(r=>r.status==='shared').length;
+  const draft=records.filter(r=>r.status==='draft').length;
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','今日の記録数',total+'<small>件</small>','8名分','up','前日比 +6件')}
+    ${kpi('#16b877','記入時間の削減',q('-83<small>%</small>'),'50h→8.5h/月','up','AI清書の効果')}
+    ${kpi('#0ea5b7','申し送り完了',Math.round((shared+records.filter(r=>r.status==='done').length)/total*100)+'<small>%</small>',shared+'件 共有済','up','スムーズ')}
+    ${kpi('#16b877','記録漏れ',q('0<small>件</small>'),'全入居者カバー','up','漏れなし')}`;
+  // hourly bars
+  const hours=[7,8,9,10,11,12,13,14,15,16];
+  const counts=hours.map(h=>records.filter(r=>r.h===h).length);
+  const mx=Math.max(...counts,1);
+  $('trendBars').innerHTML=hours.map((h,i)=>`
+    <div class="bar-row"><span class="mlabel">${h}時台</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(counts[i]/mx*100)}"></div></div>
+      <span class="mval">${counts[i]}件</span></div>`).join('');
+  // category bars
+  const catCount=CAT_KEYS.map(ck=>({ck,n:records.filter(r=>r.cat===ck).length}));
+  const cmx=Math.max(...catCount.map(c=>c.n),1);
+  $('catBars').innerHTML=catCount.map(c=>`
+    <div class="bar-row"><span class="mlabel">${CATS[c.ck].i}</span>
+      <div class="bar-track"><div class="bar-fill g" style="width:0" data-w="${Math.round(c.n/cmx*100)}"></div></div>
+      <span class="mval">${c.n}件</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#v-dash .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // ranking
+  const rank=STAFFS.map(s=>({s,n:records.filter(r=>r.staff===s).length})).filter(x=>x.n>0).sort((a,b)=>b.n-a.n);
+  $('rankList').innerHTML=rank.map((x,i)=>`<div class="act"><div class="ai" style="background:${i===0?'#fdf3e2':'var(--soft)'}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'👤'}</div>
+    <div style="flex:1"><div class="at">${esc(x.s)} さん</div><div class="am">本日の記録入力</div></div>
+    <div class="tnum" style="font-weight:800;align-self:center">${x.n}件</div></div>`).join('');
+  // activity
+  const acts=[
+    {i:'⚡',c:'#efeaff',t:'AIが音声メモ12件から記録を一括生成（漏れ0）',m:'3分前'},
+    {i:'🎙️',c:'#eaf1ff',t:'佐藤さんが 田中ハナ様 の食事記録を音声入力',m:'18分前'},
+    {i:'🔄',c:'#e6f8f0',t:'日勤→夜勤の申し送りをAIが自動作成しました',m:'今日 16:30'},
+    {i:'⚠️',c:'#fdeaea',t:'山本キミ様 の血圧が高め（148/90）— 看護師へ共有',m:'今日 14:10'},
+    {i:'💊',c:'#efeaff',t:'渡辺トヨ様 の服薬記録を確認済みにしました',m:'今日 9:05'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${a.t}</div><div class="am">${a.m}</div></div></div>`).join('');
+}
+function q(html){return html;} // passthrough for inline markup in KPI value
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ LIST ============ */
+let filterCat='all';
+function renderChips(){
+  const opts=[['all','すべて']].concat(CAT_KEYS.map(ck=>[ck,CATS[ck].i+' '+CATS[ck].l]));
+  $('catChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterCat?'on':''}" data-s="${esc(o[0])}">${esc(o[1])}</button>`).join('');
+  $('catChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterCat=c.dataset.s;renderChips();renderList();});
+}
+function renderList(){
+  const k=($('q').value||'').toLowerCase();
+  let rows=records.filter(r=>filterCat==='all'||r.cat===filterCat)
+    .filter(r=>!k||(r.res+r.note+r.staff+CATS[r.cat].l).toLowerCase().includes(k));
+  $('listRows').innerHTML=rows.length?rows.map(r=>`<tr>
+    <td class="mono" style="font-size:12.5px">${tm(r)}</td>
+    <td><b>${esc(r.res)}</b><div style="color:var(--ink-3);font-size:11px">${esc(r.room)}号室</div></td>
+    <td>${catTag(r.cat)}</td>
+    <td style="color:var(--ink-2);max-width:360px">${esc(r.note)}</td>
+    <td><span class="av-sm">${esc(r.staff.slice(0,1))}</span> ${esc(r.staff)}</td>
+    <td>${stBadge(r.status)}</td></tr>`).join('')
+    :'<tr><td colspan="6" class="empty-cell">該当する記録がありません</td></tr>';
+}
+$('q').addEventListener('input',renderList);
+
+/* ============ VOICE INPUT ============ */
+let recording=false,hasTranscript=false,lastVoice=null;
+const VOICE_SCRIPT=[
+  {res:'田中 ハナ',cat:'meal',vital:'—',raw:'えーっと、田中さん、お昼ごはん全部食べました。むせもなく、ご自分のペースでね。お茶はちょっとむせそうだったけど大丈夫でした。'},
+  {res:'山本 キミ',cat:'vital',vital:'37.1℃ / 134-80 / 78 / SpO2 97%',raw:'山本さん、体温37度1分で少し高め。血圧は134の80。水分とってもらって午後また測ります。'},
+  {res:'渡辺 トヨ',cat:'bath',vital:'—',raw:'渡辺さん、機械浴入りました。気持ちよかったって。背中ちょっと乾燥してたから保湿しときました。'},
+];
+function renderVoiceSelect(){$('vRes').innerHTML='<option value="">AIに自動判定させる</option>'+RESIDENTS.map(r=>`<option>${esc(r.name)}</option>`).join('');}
+$('mic').addEventListener('click',()=>{
+  if(recording){stopRec();return;}
+  recording=true;hasTranscript=false;
+  $('mic').classList.add('rec');$('mic').textContent='⏹️';
+  $('micState').textContent='録音中… もう一度タップで停止';
+  $('micHint').textContent='話している内容を聞き取っています';
+  $('wave').classList.add('on');
+  $('transcript').innerHTML='<span class="ph">聞き取り中…</span>';
+  // simulate streaming transcript
+  lastVoice=pick(VOICE_SCRIPT);
+  const full=lastVoice.raw;let i=0;
+  clearInterval(window._vt);
+  window._vt=setInterval(()=>{
+    i+=Math.max(2,Math.floor(rnd()*5));
+    $('transcript').innerHTML='<b>'+esc(full.slice(0,i))+'</b><span class="ph">'+(i<full.length?'｜':'')+'</span>';
+    if(i>=full.length){clearInterval(window._vt);}
+  },70);
+});
+function stopRec(){
+  recording=false;clearInterval(window._vt);
+  $('mic').classList.remove('rec');$('mic').textContent='🎙️';
+  $('micState').textContent='聞き取り完了';
+  $('micHint').textContent='内容を確認して「AIで整える」を押してください';
+  $('wave').classList.remove('on');
+  if(lastVoice){$('transcript').innerHTML='<b>'+esc(lastVoice.raw)+'</b>';hasTranscript=true;$('vGen').disabled=false;}
+}
+$('vGen').addEventListener('click',async()=>{
+  if(!hasTranscript||!lastVoice){showToast('先に音声を入力してください');return;}
+  const btn=$('vGen');btn.disabled=true;btn.textContent='⚡ AIが記録に整え中…';
+  await new Promise(r=>setTimeout(r,900));
+  const v=lastVoice;
+  const chosen=$('vRes').value||v.res; // AI auto-detect or manual
+  const ck=v.cat;const note=pick(NOTE_TPL[ck]);
+  const staff=pick(STAFFS.slice(0,3));
+  const now=new Date();
+  $('vEmpty').style.display='none';$('vPaper').style.display='block';
+  $('vrTime').textContent=(now.getMonth()+1)+'/'+now.getDate()+' '+pad(now.getHours())+':'+pad(now.getMinutes());
+  $('vrStaff').textContent=staff;
+  const res=RESIDENTS.find(r=>r.name===chosen);
+  $('vrName').textContent=chosen+(res?'（'+res.room+'号室・'+res.care+'）':'');
+  $('vrCat').innerHTML=catTag(ck);
+  $('vrVital').textContent=v.vital;
+  $('vrNote').textContent=note;
+  btn.disabled=false;btn.textContent='⚡ AIで介護記録に整える';
+  window._pendingVoice={h:now.getHours(),m:now.getMinutes(),res:chosen,room:res?res.room:'-',cat:ck,note,staff,vital:v.vital,status:'ai'};
+  showToast('音声から介護記録を整えました（入居者をAIが自動判定）');
+});
+$('vSave').addEventListener('click',()=>{
+  if(!window._pendingVoice){return;}
+  records.unshift(window._pendingVoice);
+  window._pendingVoice=null;
+  $('vPaper').style.display='none';$('vEmpty').style.display='block';
+  $('transcript').innerHTML='<span class="ph">マイクをタップして、入居者の様子を普段の言葉で話してください。</span>';
+  $('micState').textContent='タップして音声入力を開始';$('vGen').disabled=true;hasTranscript=false;
+  showToast('介護記録を保存しました（記録一覧に追加）');
+  setTimeout(()=>go('list'),700);
+});
+
+/* ============ HANDOVER ============ */
+let handover=[
+  {col:'継続観察',res:'山本 キミ',room:'108',prio:'high',txt:'14時の血圧が148/90と高め。看護師へ報告済み。21時に再検し、頭痛・気分不良の訴えがあれば即連絡。'},
+  {col:'継続観察',res:'渡辺 トヨ',room:'103',prio:'mid',txt:'便秘傾向が続いている。最終排便は2日前。夜間も水分摂取を促し、明朝までになければ看護師へ。'},
+  {col:'本日の対応',res:'田中 ハナ',room:'101',prio:'low',txt:'昼食全量摂取、むせなし。お茶でややむせる場面あり。とろみ調整を検討中。'},
+  {col:'本日の対応',res:'伊藤 茂',room:'106',prio:'mid',txt:'午後のレクで興奮気味になる場面あり。落ち着いて対応すれば収まる。夜間も穏やかな声かけを。'},
+  {col:'依頼事項',res:'高橋 文子',room:'105',prio:'high',txt:'就寝前薬の内服確認をお願いします（21時）。拒否があれば無理せず記録を残してください。'},
+  {col:'依頼事項',res:'小林 春雄',room:'110',prio:'low',txt:'明朝のシャワー浴を希望されています。体調を見て対応をお願いします。'},
+];
+const HO_COLS=[['本日の対応','📌'],['継続観察','👀'],['依頼事項','✅']];
+function renderHandover(){
+  $('hoBoard').innerHTML=HO_COLS.map(([name,icon])=>{
+    const items=handover.filter(h=>h.col===name);
+    return `<div class="ho-col"><div class="hh">${icon} ${esc(name)}<span class="cnt">${items.length}</span></div>
+      <div class="hb">${items.length?items.map(h=>`<div class="ho-card">
+        <div class="who"><span class="prio ${h.prio}"></span>${esc(h.res)}<span style="color:var(--ink-3);font-weight:600;font-size:11px">${esc(h.room)}号室</span></div>
+        <div class="txt">${esc(h.txt)}</div>
+        <div class="meta">日勤チームより・自動生成</div></div>`).join(''):'<div class="empty-cell" style="padding:18px;font-size:12px">項目はありません</div>'}</div></div>`;
+  }).join('');
+  $('navHO').textContent=handover.length;
+}
+$('hoGen').addEventListener('click',async()=>{
+  const btn=$('hoGen');btn.disabled=true;btn.textContent='⚡ 本日の記録を分析中…';
+  await new Promise(r=>setTimeout(r,1000));
+  // AI "finds" a new item from records
+  const extra={col:'継続観察',res:'加藤 ミサ',room:'112',prio:'mid',txt:'本日の記録から、夕食摂取量が5割と少なめでした。夜間の補食と水分摂取を促してください。AIが記録から自動抽出。'};
+  if(!handover.some(h=>h.res===extra.res&&h.col===extra.col))handover.push(extra);
+  btn.disabled=false;btn.textContent='⚡ AIで申し送りを自動作成';
+  renderHandover();
+  showToast('本日の全記録からAIが申し送りを自動作成しました');
+});
+
+/* ============ CARE PLAN ============ */
+const PLANS=[
+  {name:'田中 ハナ',room:'101',care:'要介護3',goal:'食事を自力で安全に楽しめる状態を維持する',items:[['自力摂取の維持',85],['誤嚥予防（とろみ調整）',70],['体重の安定',92]]},
+  {name:'渡辺 トヨ',room:'103',care:'要介護4',goal:'排便リズムを整え、腹部の不快感を減らす',items:[['排便コントロール',58],['水分摂取量の確保',74],['離床時間の確保',46]]},
+  {name:'伊藤 茂',room:'106',care:'要介護3',goal:'日中の活動を増やし、生活リズムを整える',items:[['レク参加',80],['昼夜リズムの安定',65],['歩行能力の維持',71]]},
+  {name:'山本 キミ',room:'108',care:'要介護5',goal:'バイタルを安定させ、安楽に過ごせるよう支援する',items:[['血圧の安定',62],['褥瘡予防',88],['苦痛の緩和',77]]},
+];
+function renderPlan(){
+  $('planGrid').innerHTML=PLANS.map(p=>`<div class="plan-card">
+    <div class="pc"><span class="av-sm">${esc(p.name.slice(0,1))}</span>
+      <div><div class="nm">${esc(p.name)}</div><div style="color:var(--ink-3);font-size:11px">${esc(p.room)}号室</div></div>
+      <span class="care">${esc(p.care)}</span></div>
+    <div class="pbody">
+      <div class="goal">🎯 長期目標：<b>${esc(p.goal)}</b></div>
+      ${p.items.map(it=>`<div class="prog-row"><div class="pl"><span>${esc(it[0])}</span><span class="pct">${it[1]}%</span></div>
+        <div class="prog-track"><div class="prog-fill" data-w="${it[1]}" style="width:0"></div></div></div>`).join('')}
+    </div></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#v-plan .prog-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+}
+
+/* ============ AI GENERATE (BULK) ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 生成中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},110);
+  await new Promise(r=>setTimeout(r,1150));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  const targets=RESIDENTS.slice(0,6);
+  $('genItems').innerHTML=targets.map((r,i)=>{
+    const ck=pick(CAT_KEYS);
+    return `<div class="gen-item" data-i="${i}"><span class="ck">✓</span>
+      <b style="flex:1">${esc(r.name)}</b>
+      <span style="color:var(--ink-3);font-size:11px">${esc(r.room)}号室</span>
+      ${catTag(ck)}<span style="color:var(--green);font-weight:800;font-size:12px">清書完了</span></div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){
+    await new Promise(r=>setTimeout(r,180));items[i].classList.add('in');
+    const r=targets[i];const ck=pick(CAT_KEYS);const note=pick(NOTE_TPL[ck]);const now=new Date();
+    records.unshift({h:now.getHours(),m:now.getMinutes(),res:r.name,room:r.room,cat:ck,note,staff:pick(STAFFS.slice(0,3)),vital:ck==='vital'?pick(VITAL_TPL.slice(0,4)):'—',status:'ai'});
+  }
+  btn.disabled=false;btn.textContent='⚡ もう一度生成';
+  showToast(items.length+'件の介護記録を一括生成しました（記録漏れ0）');
+});
+
+/* ============ INIT ============ */
+renderVoiceSelect();renderChips();renderDash();
+$('navHO').textContent=handover.length;
+</script>
+</body>
+</html>

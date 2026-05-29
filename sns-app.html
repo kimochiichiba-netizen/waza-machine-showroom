@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜SNS投稿マシン（SNS運用自動化システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#7a3df0;--brand-dk:#5f25cf;--brand-soft:#f1eaff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--pink:#e8458c;
+  --x:#0f1419;--ig:#d6249f;--line-g:#06c755;
+  --sb:#16102e;--sb-2:#1f1640;--sb-ink:#cdc6e0;--sb-ink-2:#8a82a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#a26bff,#e8458c,#e3b864,#a26bff);
+  display:grid;place-items:center;color:#fff;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(122,61,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--pink);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--pink));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.posted{background:var(--green-soft);color:var(--green)}
+.st.scheduled{background:var(--brand-soft);color:var(--brand)}
+.st.draft{background:var(--amber-soft);color:var(--amber)}
+.st.failed{background:var(--red-soft);color:var(--red)}
+
+/* platform tag */
+.plat{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;padding:3px 9px;border-radius:7px;color:#fff}
+.plat.x{background:var(--x)}
+.plat.ig{background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)}
+.plat.line{background:var(--line-g)}
+
+/* create form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,400px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:78px;line-height:1.6}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.tonerow{display:flex;gap:7px;flex-wrap:wrap}
+.tone{padding:7px 12px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.tone:hover{border-color:var(--brand)}
+.tone.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+.platpick{display:flex;gap:8px;flex-wrap:wrap}
+.platpick label{display:inline-flex;align-items:center;gap:7px;padding:8px 13px;border:1px solid var(--line-2);border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;color:var(--ink-2);transition:all .15s;margin:0}
+.platpick label.on{border-color:var(--brand);background:var(--brand-soft);color:var(--brand)}
+.platpick input{display:none}
+.aihint{font-size:11px;color:var(--green);margin-top:6px;opacity:0;transition:opacity .3s;font-weight:700}
+.aihint.show{opacity:1}
+
+/* phone mockups / preview cards */
+.previews{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:1180px){.previews{grid-template-columns:repeat(1,1fr)}}
+.pcard{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column}
+.pcard .ph-head{display:flex;align-items:center;gap:9px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.pcard .ph-head .av{width:36px;height:36px;border-radius:50%;background:var(--brand-soft);display:grid;place-items:center;font-size:16px;flex-shrink:0}
+.pcard .ph-head .nm{font-size:13px;font-weight:800;line-height:1.2}
+.pcard .ph-head .hd{font-size:11px;color:var(--ink-3)}
+.pcard .ph-body{padding:13px 14px;font-size:13px;color:var(--ink);white-space:pre-wrap;word-break:break-word;flex:1;min-height:120px}
+.pcard .ph-body .tags{color:var(--brand);font-weight:700}
+.pcard .ph-img{height:118px;background:linear-gradient(135deg,var(--brand-soft),#fbeef6);display:grid;place-items:center;font-size:34px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.pcard .ph-foot{padding:9px 14px;border-top:1px solid var(--line);display:flex;gap:16px;color:var(--ink-3);font-size:12px}
+.pcard .ph-foot span{display:inline-flex;align-items:center;gap:4px}
+.pcard.x .ph-head .nm{color:var(--x)}
+.pcard .cnt{margin-left:auto;font-size:11px;font-weight:700;color:var(--ink-3)}
+.pcard .cnt.over{color:var(--red)}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:flex-start;gap:11px;padding:11px 13px;border:1px solid var(--line);border-radius:9px;margin-bottom:9px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0;margin-top:1px}
+.gen-item .body{flex:1}
+.gen-item .body .txt{color:var(--ink-2);font-size:12.5px;margin-top:3px;white-space:pre-wrap}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#a26bff,#e8458c);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(122,61,240,.4)}50%{box-shadow:0 0 40px rgba(232,69,140,.55)}}
+
+/* calendar */
+.cal{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.cal-head{display:grid;grid-template-columns:repeat(7,1fr);background:var(--soft)}
+.cal-head div{padding:10px;text-align:center;font-size:11.5px;font-weight:700;color:var(--ink-2)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr)}
+.cal-cell{min-height:96px;border-top:1px solid var(--line);border-left:1px solid var(--line);padding:6px 7px;font-size:11px}
+.cal-cell:nth-child(7n+1){border-left:0}
+.cal-cell .dn{font-weight:700;color:var(--ink-2);font-size:12px}
+.cal-cell.today .dn{background:var(--brand);color:#fff;border-radius:6px;padding:1px 7px;display:inline-block}
+.cal-cell.muted{background:#fafbfd}
+.cal-cell.muted .dn{color:var(--ink-3)}
+.cal-ev{margin-top:4px;font-size:10.5px;font-weight:700;padding:3px 6px;border-radius:6px;color:#fff;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal-ev.x{background:var(--x)}.cal-ev.ig{background:var(--ig)}.cal-ev.line{background:var(--line-g)}
+
+/* analytics */
+.an-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:980px){.an-grid{grid-template-columns:1fr}}
+.donut{display:flex;align-items:center;gap:22px}
+.donut .ring{width:130px;height:130px;border-radius:50%;flex-shrink:0}
+.donut .lg{display:flex;flex-direction:column;gap:9px;font-size:12.5px;flex:1}
+.donut .lg .row{display:flex;align-items:center;gap:9px}
+.donut .lg .sw{width:12px;height:12px;border-radius:4px}
+.donut .lg .val{margin-left:auto;font-weight:800}
+.col-bars{display:flex;gap:14px;align-items:flex-end;height:160px;padding:6px 4px 0}
+.col-bars .cb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:7px;height:100%}
+.col-bars .cb .bar{width:60%;max-width:42px;background:linear-gradient(180deg,var(--brand),var(--pink));border-radius:7px 7px 0 0;transition:height 1s cubic-bezier(.2,.8,.3,1);height:0}
+.col-bars .cb .lab{font-size:11px;color:var(--ink-2);font-weight:600}
+.rank{display:flex;flex-direction:column}
+.rank .ri{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.rank .ri:last-child{border-bottom:0}
+.rank .ri .no{width:24px;height:24px;border-radius:7px;background:var(--brand-soft);color:var(--brand);font-weight:900;display:grid;place-items:center;font-size:12px}
+.rank .ri .eng{margin-left:auto;font-weight:800;color:var(--brand)}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">SNS投稿マシン<small>技マシン｜SNS運用自動化</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="cal"><span class="i">🗓</span>投稿カレンダー</a>
+      <a data-v="create"><span class="i">✏️</span>新規作成</a>
+      <a data-v="sched"><span class="i">⏰</span>予約一覧<span class="badge" id="navSched">0</span></a>
+      <a data-v="analytics"><span class="i">📈</span>分析</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AIマルチ生成</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="./">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。数値・投稿内容はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">2026年5月のSNS運用状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>媒体別エンゲージメント推移</h3><span class="more">過去6ヶ月</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CALENDAR -->
+      <section class="view" id="v-cal">
+        <div class="toolbar">
+          <div style="font-size:15px;font-weight:900" id="calLabel">2026年5月</div>
+          <div class="chips" style="margin-left:auto">
+            <button class="chip on" data-cf="all">すべて</button>
+            <button class="chip" data-cf="X">X</button>
+            <button class="chip" data-cf="Instagram">Instagram</button>
+            <button class="chip" data-cf="LINE">LINE</button>
+          </div>
+        </div>
+        <div class="cal">
+          <div class="cal-head"><div>日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div></div>
+          <div class="cal-grid" id="calGrid"></div>
+        </div>
+      </section>
+
+      <!-- CREATE -->
+      <section class="view" id="v-create">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>テーマ・伝えたいこと</label>
+              <textarea id="cTheme" placeholder="例：今週入荷の大分産シャインマスカット。糖度18度で甘い。週末は店頭でも販売します。"></textarea></div>
+            <div class="fg"><label>投稿する媒体</label>
+              <div class="platpick" id="cPlats">
+                <label class="on"><input type="checkbox" value="X" checked>𝕏 X</label>
+                <label class="on"><input type="checkbox" value="Instagram" checked>📷 Instagram</label>
+                <label class="on"><input type="checkbox" value="LINE" checked>💬 LINE</label>
+              </div></div>
+            <div class="fg"><label>トーン</label>
+              <div class="tonerow" id="cTones">
+                <button class="tone on" data-t="親しみ">親しみやすい</button>
+                <button class="tone" data-t="丁寧">丁寧・信頼</button>
+                <button class="tone" data-t="元気">元気・明るい</button>
+              </div></div>
+            <div class="fg"><label>投稿日時（予約）</label><input id="cWhen" type="datetime-local"></div>
+            <div class="aihint" id="cAiHint">✨ AIが媒体ごとに最適な文章・絵文字・ハッシュタグを自動調整しました</div>
+            <div class="linkrow" style="margin-top:16px">
+              <button class="btn primary" id="cGen" style="flex:1;justify-content:center">⚡ AIで3媒体の文章を生成</button>
+              <button class="btn" id="cSample">サンプル</button>
+            </div>
+            <button class="btn green" id="cSchedule" style="width:100%;margin-top:9px;justify-content:center">⏰ この内容で予約する</button>
+          </div>
+          <div>
+            <div class="previews" id="cPreviews"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCHEDULED LIST -->
+      <section class="view" id="v-sched">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="本文・媒体・テーマで検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>媒体</th><th>投稿本文</th><th>予定日時</th><th class="r">予想リーチ</th><th>状態</th><th></th></tr></thead>
+          <tbody id="schedRows"></tbody>
+        </table>
+      </section>
+
+      <!-- ANALYTICS -->
+      <section class="view" id="v-analytics">
+        <div class="kpis" id="anKpis"></div>
+        <div class="an-grid">
+          <div class="panel">
+            <div class="ph"><h3>曜日別エンゲージメント</h3><span class="more">直近4週</span></div>
+            <div class="pb"><div class="col-bars" id="anBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>媒体別シェア</h3></div>
+            <div class="pb"><div class="donut">
+              <div class="ring" id="anRing"></div>
+              <div class="lg" id="anLegend"></div>
+            </div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="ph"><h3>反応がよかった投稿 TOP5</h3></div>
+          <div class="pb"><div class="rank" id="anRank"></div></div>
+        </div>
+      </section>
+
+      <!-- AI MULTI -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div style="flex:1;min-width:200px"><div style="font-size:16px;font-weight:900">1つのテーマから、3媒体ぶんの投稿を一括生成</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">テーマ「<b>大分産シャインマスカット入荷</b>」を、X・Instagram・LINEそれぞれに最適化してAIが作ります。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで3媒体を生成する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">45分</div>
+              <ul>
+                <li>✍️ 媒体ごとに文章を書き分け</li>
+                <li>#️⃣ ハッシュタグを毎回調べる</li>
+                <li>📅 3媒体に1件ずつ予約投稿</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 テーマから3媒体ぶんを自動生成</li>
+                <li>#️⃣ 媒体に合うタグを自動付与</li>
+                <li>⏰ 最適時間にまとめて予約</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ 生成された投稿</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const num=n=>Math.round(n).toLocaleString();
+const TODAY=new Date();
+function ym(d){return (d.getMonth()+1)}
+function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function fmtDT(d){return (d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+let SEED=4242;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+/* ============ DATA ============ */
+const PLATMETA={
+  X:{label:'X',cls:'x',icon:'𝕏',handle:'@kimochi_ichiba',limit:140},
+  Instagram:{label:'Instagram',cls:'ig',icon:'📷',handle:'kimochi.ichiba',limit:2200},
+  LINE:{label:'LINE',cls:'line',icon:'💬',handle:'気持ち市場 公式',limit:500}
+};
+// テーマ→媒体別文章テンプレ（リアルな日本語ダミー）
+const THEMES=[
+  {theme:'大分産シャインマスカット入荷',emoji:'🍇',
+    X:'【本日入荷🍇】大分産シャインマスカット、糖度18度の特選品が届きました！皮ごとパクッといける甘さです。週末は店頭販売も。お早めにどうぞ✨',
+    Instagram:'🍇大分産シャインマスカット、入荷しました🍇\n\n糖度18度の特選品。種なし・皮ごと食べられる、いちばん人気の品種です🥰\nご贈答にも自宅用にもぴったり。\n\n週末は店頭でも販売します🏪\nお気軽にお立ち寄りください😊',
+    LINE:'🍇シャインマスカット入荷のお知らせ🍇\n\nいつも気持ち市場をご利用ありがとうございます。\n大分産・糖度18度の特選シャインマスカットが入荷しました。\n\n週末は店頭販売も行います。数量限定のためお早めに🙇',
+    tags:{X:'#シャインマスカット #大分グルメ #産直',Instagram:'#シャインマスカット #大分 #産直野菜 #果物好きな人と繋がりたい #気持ち市場',LINE:''}},
+  {theme:'介護施設向け給食野菜の定期便',emoji:'🥬',
+    X:'介護・医療施設さま向けの「下処理済み野菜 定期便」好評です🥬カット・洗浄済みでそのまま調理OK。厨房の手間をぐっと削減できます。資料はプロフのリンクから📄',
+    Instagram:'🥬施設さま向け 下処理済み野菜の定期便🥬\n\nカット・洗浄済みでお届けするので、厨房スタッフさんの負担を大幅に軽減✨\n大分市内なら最短翌日配送に対応しています🚚\n\n「人手が足りない」厨房の強い味方に。\nお気軽にお問い合わせください😊',
+    LINE:'🥬施設さま向け定期便のご案内🥬\n\n下処理済みのカット野菜を、必要な分だけ定期的にお届けします。\n厨房での仕込み時間を短縮でき、衛生管理も安心です。\n\n無料サンプル・お見積りも承ります。',
+    tags:{X:'#介護 #給食 #大分 #業務用野菜',Instagram:'#介護施設 #給食 #業務用野菜 #大分 #カット野菜 #気持ち市場',LINE:''}},
+  {theme:'今週のおすすめ青果セット',emoji:'🥦',
+    X:'今週のおすすめ青果セット🥦旬の大分野菜をぎゅっと詰め合わせ。何が届くかはお楽しみ！送料込み2,980円、数量限定です🚚',
+    Instagram:'🥦今週のおすすめ青果セット🥦\n\n旬の大分野菜をたっぷり詰め合わせ。\nプロが選ぶ「今いちばん美味しい」野菜だけをお届けします😋\n\n送料込み2,980円・数量限定。\nお買い物が楽になると好評です🛒',
+    LINE:'🥦今週のおすすめ青果セット🥦\n\n旬の大分野菜の詰め合わせを、送料込み2,980円でご用意しました。\n数量限定のため、ご注文はお早めに。\n\nこのトークから「セット希望」とお送りください😊',
+    tags:{X:'#野菜セット #大分 #産直',Instagram:'#野菜セット #大分グルメ #産直野菜 #旬の野菜 #気持ち市場',LINE:''}},
+  {theme:'AI業務自動化セミナーのお知らせ',emoji:'🤖',
+    X:'【無料セミナー】中小企業のためのAI業務自動化、6/20開催🤖請求・SNS・シフト管理を自動化する実例をご紹介します。大分市内・オンライン両対応。詳細はリンクから📩',
+    Instagram:'🤖無料セミナー開催のお知らせ🤖\n\n「人手が足りない」を、AIで解決しませんか？\n請求書づくり・SNS投稿・シフト管理を自動化する実例を、わかりやすくご紹介します✨\n\n📅6/20（土）開催\n📍大分市内 / オンライン両対応\n\nお申し込みはプロフのリンクから😊',
+    LINE:'🤖無料セミナーのご案内🤖\n\n中小企業向け「AI業務自動化」セミナーを6/20に開催します。\n請求・SNS・シフトの自動化事例をご紹介。\n\n大分市内・オンライン両対応。参加無料です。\nご予約はこのトークから承ります。',
+    tags:{X:'#AI #業務自動化 #大分 #中小企業',Instagram:'#AI活用 #業務効率化 #大分 #中小企業 #DX #気持ち市場',LINE:''}}
+];
+const STAFFS=['佐藤','田中','鈴木','高橋'];
+
+// seed posts (予約・投稿済・下書き混在)
+let posts=[];
+(function seed(){
+  const statuses=['posted','posted','scheduled','posted','draft','scheduled','posted'];
+  for(let i=0;i<24;i++){
+    const t=pick(THEMES);
+    const plat=pick(['X','Instagram','LINE']);
+    const body=t[plat];
+    const mOff=Math.floor(rnd()*3);
+    const day=1+Math.floor(rnd()*26);
+    const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-mOff,day,9+Math.floor(rnd()*10),pick([0,30]));
+    let stt;
+    if(d>TODAY)stt='scheduled';
+    else stt=pick(statuses)==='draft'?'draft':(rnd()>0.9?'failed':'posted');
+    const reach=600+Math.floor(rnd()*4200);
+    const eng=stt==='posted'?Math.floor(reach*(0.03+rnd()*0.09)):0;
+    posts.push({id:'P'+(1000+i),theme:t.theme,emoji:t.emoji,plat,body,when:d,status:stt,reach,eng,
+      likes:Math.floor(eng*0.7),comments:Math.floor(eng*0.12),shares:Math.floor(eng*0.18),staff:pick(STAFFS)});
+  }
+  // 確実に未来の予約をいくつか
+  for(let k=1;k<=4;k++){
+    const t=THEMES[(k)%THEMES.length];const plat=['X','Instagram','LINE','X'][k-1];
+    const d=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+k,10+k,0);
+    posts.push({id:'P'+(2000+k),theme:t.theme,emoji:t.emoji,plat,body:t[plat],when:d,status:'scheduled',
+      reach:1200+Math.floor(rnd()*2600),eng:0,likes:0,comments:0,shares:0,staff:pick(STAFFS)});
+  }
+})();
+
+const STLABEL={posted:'投稿済',scheduled:'予約中',draft:'下書き',failed:'失敗'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]}</span>`;}
+function platTag(p){const m=PLATMETA[p];return `<span class="plat ${m.cls}">${m.icon} ${m.label}</span>`;}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','2026年'+ym(TODAY)+'月のSNS運用状況'],
+  cal:['投稿カレンダー','予約・投稿済みを一覧で確認できます'],
+  create:['新規作成','1つのテーマから3媒体ぶんをまとめて作成します'],
+  sched:['予約一覧','予約・下書きの投稿を管理します'],
+  analytics:['分析','どの投稿が伸びたかを可視化します'],
+  ai:['AIマルチ生成','1テーマから3媒体ぶんを自動で作ります']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='sched'?'<button class="btn primary" onclick="go(\'create\')">＋ 新規作成</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AIマルチ生成</button><button class="btn primary" onclick="go(\'create\')">＋ 新規作成</button>'
+    : v==='cal'?'<button class="btn primary" onclick="go(\'create\')">＋ 新規作成</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='cal')renderCal();
+  if(v==='sched')renderSched();
+  if(v==='analytics')renderAnalytics();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const tm=posts.filter(p=>thisMonth(p.when));
+  const tmPosted=tm.filter(p=>p.status==='posted');
+  const totalEng=posts.filter(p=>p.status==='posted').reduce((s,p)=>s+p.eng,0);
+  const sched=posts.filter(p=>p.status==='scheduled');
+  $('kpis').innerHTML=`
+    ${kpi('#7a3df0','今月の投稿数',num(tmPosted.length)+'<small> 件</small>',tm.length+'件 作成','up','前月比 +9件')}
+    ${kpi('#e8458c','今月エンゲージ',num(tm.filter(p=>p.status==='posted').reduce((s,p)=>s+p.eng,0)),'いいね・コメント等','up','前月比 +18%')}
+    ${kpi('#16b877','予約中の投稿',num(sched.length)+'<small> 件</small>','配信待ち','up','安定運用')}
+    ${kpi('#e3941f','削減した作成時間',num(tmPosted.length*0.7)+'<small> 時間</small>','AI生成ぶん','warn','手作業換算')}`;
+  // trend: 媒体別 月次エンゲージ（過去6ヶ月の合算をバーで）
+  const months=[];for(let k=5;k>=0;k--){const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1);months.push(d);}
+  const sums=months.map(m=>posts.filter(p=>p.status==='posted'&&p.when.getMonth()===m.getMonth()&&p.when.getFullYear()===m.getFullYear()).reduce((s,p)=>s+p.eng,0));
+  // 過去月が薄い場合に見栄え用ベースを足す（デモ）
+  const padded=sums.map((s,i)=>s+ (5-i)*180 + 900);
+  const mx=Math.max(...padded,1);
+  $('trendBars').innerHTML=months.map((m,i)=>`
+    <div class="bar-row"><span class="mlabel">${m.getMonth()+1}月</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(padded[i]/mx*100)}"></div></div>
+      <span class="mval tnum">${num(padded[i])}</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // activity
+  const acts=[
+    {i:'🍇',c:'#f1eaff',t:'X「大分産シャインマスカット入荷」が予約時刻に自動投稿されました',m:'2分前'},
+    {i:'❤️',c:'#fdeaea',t:'Instagram投稿が +128 いいね（過去最高ペース）',m:'25分前'},
+    {i:'⚡',c:'#e6f8f0',t:'AIマルチ生成で 3媒体ぶんの投稿を作成しました',m:'今日 9:14'},
+    {i:'💬',c:'#e6f8f0',t:'LINE「今週のおすすめ青果セット」を配信（開封率42%）',m:'今日 8:30'},
+    {i:'⏰',c:'#f1eaff',t:'介護施設向け定期便の投稿を 5/31 10:00 に予約',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${a.m}</div></div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ CALENDAR ============ */
+let calFilter='all';
+function renderCal(){
+  const y=TODAY.getFullYear(),m=TODAY.getMonth();
+  $('calLabel').textContent=y+'年'+(m+1)+'月';
+  const first=new Date(y,m,1);const startDow=first.getDay();
+  const daysInMonth=new Date(y,m+1,0).getDate();
+  const cells=[];
+  for(let i=0;i<startDow;i++)cells.push(null);
+  for(let d=1;d<=daysInMonth;d++)cells.push(d);
+  while(cells.length%7!==0)cells.push(null);
+  $('calGrid').innerHTML=cells.map(d=>{
+    if(d===null)return `<div class="cal-cell muted"></div>`;
+    const dayPosts=posts.filter(p=>p.when.getFullYear()===y&&p.when.getMonth()===m&&p.when.getDate()===d
+      &&(calFilter==='all'||p.plat===calFilter));
+    const isToday=d===TODAY.getDate();
+    const evs=dayPosts.slice(0,3).map(p=>`<div class="cal-ev ${PLATMETA[p.plat].cls}" onclick="go('sched')" title="${esc(p.body)}">${PLATMETA[p.plat].icon} ${esc(p.theme)}</div>`).join('');
+    const more=dayPosts.length>3?`<div style="font-size:10px;color:var(--ink-3);margin-top:3px">+${dayPosts.length-3}件</div>`:'';
+    return `<div class="cal-cell ${isToday?'today':''}"><span class="dn">${d}</span>${evs}${more}</div>`;
+  }).join('');
+}
+document.querySelectorAll('[data-cf]').forEach(c=>c.onclick=()=>{
+  calFilter=c.dataset.cf;
+  document.querySelectorAll('[data-cf]').forEach(x=>x.classList.toggle('on',x===c));
+  renderCal();
+});
+
+/* ============ SCHEDULED LIST ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['scheduled','予約中'],['posted','投稿済'],['draft','下書き'],['failed','失敗']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderSched();});
+}
+function renderSched(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=posts.filter(p=>filterStatus==='all'||p.status===filterStatus)
+    .filter(p=>!q||(p.body+p.theme+p.plat).toLowerCase().includes(q))
+    .sort((a,b)=>b.when-a.when);
+  $('schedRows').innerHTML=rows.length?rows.map(p=>{
+    const snippet=p.body.replace(/\n/g,' ').slice(0,42)+(p.body.length>42?'…':'');
+    const action=p.status==='scheduled'?`<button class="btn green" style="padding:6px 12px" onclick="publishNow('${esc(p.id)}')">今すぐ投稿</button>`
+      :p.status==='draft'?`<button class="btn" style="padding:6px 12px" onclick="go('create')">編集</button>`
+      :p.status==='failed'?`<button class="btn" style="padding:6px 12px" onclick="retryPost('${esc(p.id)}')">再試行</button>`
+      :`<span style="color:var(--ink-3);font-size:12px">${num(p.eng)} 反応</span>`;
+    return `<tr>
+      <td>${platTag(p.plat)}</td>
+      <td><b>${esc(p.theme)}</b><div style="color:var(--ink-3);font-size:12px;margin-top:2px">${esc(snippet)}</div></td>
+      <td style="color:var(--ink-2)">${fmtDT(p.when)}</td>
+      <td class="r tnum">${num(p.reach)}</td>
+      <td>${stBadge(p.status)}</td>
+      <td class="r">${action}</td></tr>`;
+  }).join('')
+    :'<tr><td colspan="6" class="empty-cell">該当する投稿がありません</td></tr>';
+  $('navSched').textContent=posts.filter(p=>p.status==='scheduled').length;
+}
+$('q').addEventListener('input',renderSched);
+window.publishNow=id=>{const p=posts.find(x=>x.id===id);if(p){p.status='posted';p.when=new Date();p.eng=Math.floor(p.reach*(0.04+rnd()*0.07));p.likes=Math.floor(p.eng*0.7);renderSched();showToast(PLATMETA[p.plat].label+'に投稿しました');}};
+window.retryPost=id=>{const p=posts.find(x=>x.id===id);if(p){p.status='posted';p.eng=Math.floor(p.reach*0.05);renderSched();showToast('再投稿に成功しました');}};
+
+/* ============ ANALYTICS ============ */
+function renderAnalytics(){
+  const posted=posts.filter(p=>p.status==='posted');
+  const totalEng=posted.reduce((s,p)=>s+p.eng,0);
+  const totalReach=posted.reduce((s,p)=>s+p.reach,0);
+  const rate=totalReach?(totalEng/totalReach*100):0;
+  $('anKpis').innerHTML=`
+    ${kpi('#7a3df0','総リーチ',num(totalReach),posted.length+'投稿','up','+22%')}
+    ${kpi('#e8458c','総エンゲージ',num(totalEng),'','up','+18%')}
+    ${kpi('#16b877','平均エンゲージ率',rate.toFixed(1)+'<small>%</small>','業界平均1.2%','up','好調')}
+    ${kpi('#e3941f','最も伸びた媒体','Instagram','シェア最大','warn','注力中')}`;
+  // 曜日別
+  const dows=['日','月','火','水','木','金','土'];
+  const byDow=dows.map((_,i)=>posted.filter(p=>p.when.getDay()===i).reduce((s,p)=>s+p.eng,0));
+  const padDow=byDow.map((v,i)=>v+ [200,260,300,340,380,520,460][i]);
+  const mxD=Math.max(...padDow,1);
+  $('anBars').innerHTML=dows.map((d,i)=>`<div class="cb"><div class="bar" data-h="${Math.round(padDow[i]/mxD*100)}"></div><div class="lab">${d}</div></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#anBars .bar').forEach(b=>b.style.height=b.dataset.h+'%'),60);
+  // 媒体別シェア donut
+  const byPlat={X:0,Instagram:0,LINE:0};
+  posted.forEach(p=>byPlat[p.plat]+=p.eng);
+  const tot=byPlat.X+byPlat.Instagram+byPlat.LINE||1;
+  const cX=Math.round(byPlat.X/tot*100),cIG=Math.round(byPlat.Instagram/tot*100),cLN=100-cX-cIG;
+  const colX='#0f1419',colIG='#d6249f',colLN='#06c755';
+  $('anRing').style.background=`conic-gradient(${colX} 0 ${cX}%,${colIG} ${cX}% ${cX+cIG}%,${colLN} ${cX+cIG}% 100%)`;
+  $('anRing').style.webkitMask='radial-gradient(circle at center, transparent 42px, #000 43px)';
+  $('anRing').style.mask='radial-gradient(circle at center, transparent 42px, #000 43px)';
+  $('anLegend').innerHTML=[['X',colX,cX],['Instagram',colIG,cIG],['LINE',colLN,cLN]].map(r=>
+    `<div class="row"><span class="sw" style="background:${r[1]}"></span>${r[0]}<span class="val tnum">${r[2]}%</span></div>`).join('');
+  // ランキング
+  const top=[...posted].sort((a,b)=>b.eng-a.eng).slice(0,5);
+  $('anRank').innerHTML=top.map((p,i)=>`<div class="ri">
+    <span class="no">${i+1}</span>${platTag(p.plat)}
+    <span style="font-weight:700">${esc(p.theme)}</span>
+    <span class="eng tnum">${num(p.eng)} 反応</span></div>`).join('')
+    ||'<div class="empty-cell">まだ投稿データがありません</div>';
+}
+
+/* ============ CREATE ============ */
+let cTone='親しみ';
+let cGenerated=null; // {X:{body,tags},...}
+function selectedPlats(){return [...$('cPlats').querySelectorAll('input:checked')].map(i=>i.value);}
+$('cPlats').querySelectorAll('label').forEach(lab=>{
+  const inp=lab.querySelector('input');
+  inp.addEventListener('change',()=>{lab.classList.toggle('on',inp.checked);renderPreviews();});
+});
+$('cTones').querySelectorAll('.tone').forEach(t=>t.onclick=()=>{
+  cTone=t.dataset.t;$('cTones').querySelectorAll('.tone').forEach(x=>x.classList.toggle('on',x===t));renderPreviews();
+});
+$('cTheme').addEventListener('input',()=>{cGenerated=null;renderPreviews();});
+
+function toneDecorate(base){
+  if(cTone==='元気')return base+' 🎉✨';
+  if(cTone==='丁寧')return base;
+  return base+' 😊';
+}
+// テーマからそれっぽい3媒体文章を作る（テンプレ照合 or 汎用）
+function buildForPlat(plat,theme){
+  const match=THEMES.find(t=>theme&&(theme.includes(t.theme.slice(0,4))||t.theme.includes(theme.slice(0,4))));
+  if(match)return {body:match[plat],tags:match.tags[plat]};
+  const t=esc(theme)||'（テーマを入力してください）';
+  if(plat==='X')return {body:toneDecorate('【お知らせ】'+t+' 詳しくはプロフのリンクから📩'),tags:'#大分 #気持ち市場'};
+  if(plat==='Instagram')return {body:toneDecorate('✨'+t+'✨\n\n気持ち市場からのお知らせです。\n気になる方はお気軽にお問い合わせください'),tags:'#大分 #気持ち市場 #産直'};
+  return {body:'いつもご利用ありがとうございます。\n\n'+t+'\n\nご質問はこのトークからお気軽にどうぞ😊',tags:''};
+}
+function previewData(plat){
+  const theme=$('cTheme').value;
+  if(cGenerated&&cGenerated[plat])return cGenerated[plat];
+  return buildForPlat(plat,theme);
+}
+function renderPreviews(){
+  const plats=selectedPlats();
+  if(!plats.length){$('cPreviews').innerHTML='<div class="empty-cell" style="grid-column:1/-1;border:1px dashed var(--line-2);border-radius:14px">媒体を1つ以上選んでください</div>';return;}
+  $('cPreviews').innerHTML=plats.map(p=>{
+    const m=PLATMETA[p];const d=previewData(p);
+    const full=(d.body||'')+(d.tags?'\n\n'+d.tags:'');
+    const len=full.length;const over=len>m.limit;
+    const img=p==='Instagram'?`<div class="ph-img">${$('cTheme').value?'🖼':'📷'}</div>`:'';
+    const foot=p==='X'?'<span>💬 12</span><span>🔁 8</span><span>❤️ 64</span>'
+      :p==='Instagram'?'<span>❤️ 128</span><span>💬 9</span><span>🔖 保存</span>'
+      :'<span>👀 開封 42%</span>';
+    return `<div class="pcard ${m.cls}">
+      <div class="ph-head"><div class="av">${m.icon}</div>
+        <div><div class="nm">${esc(m.handle)}</div><div class="hd">${m.label}・プレビュー</div></div>
+        <div class="cnt ${over?'over':''}">${len}/${m.limit}</div></div>
+      ${p==='Instagram'?img:''}
+      <div class="ph-body">${esc(d.body||'')}${d.tags?'\n\n<span class="tags">'+esc(d.tags)+'</span>':''}</div>
+      ${p!=='Instagram'?'':''}
+      <div class="ph-foot">${foot}</div></div>`;
+  }).join('');
+}
+$('cSample').addEventListener('click',()=>{
+  $('cTheme').value='今週入荷の大分産シャインマスカット。糖度18度で甘い。週末は店頭でも販売します。';
+  const dt=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+1,10,0);
+  $('cWhen').value=dt.toISOString().slice(0,16);
+  cGenerated=null;renderPreviews();
+});
+$('cGen').addEventListener('click',async()=>{
+  const theme=$('cTheme').value.trim();
+  const plats=selectedPlats();
+  if(!theme){showToast('テーマを入力してください');return;}
+  if(!plats.length){showToast('媒体を選んでください');return;}
+  const btn=$('cGen');btn.textContent='⚡ AIが生成中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,850));
+  cGenerated={};
+  ['X','Instagram','LINE'].forEach(p=>{cGenerated[p]=buildForPlat(p,theme);});
+  btn.textContent='⚡ AIで3媒体の文章を生成';btn.disabled=false;
+  $('cAiHint').classList.add('show');setTimeout(()=>$('cAiHint').classList.remove('show'),2600);
+  renderPreviews();showToast('3媒体ぶんの文章を生成しました');
+});
+$('cSchedule').addEventListener('click',()=>{
+  const theme=$('cTheme').value.trim();
+  const plats=selectedPlats();
+  if(!theme){showToast('テーマを入力してください');return;}
+  if(!plats.length){showToast('媒体を選んでください');return;}
+  let when=$('cWhen').value?new Date($('cWhen').value):new Date(TODAY.getTime()+86400000);
+  const matched=THEMES.find(t=>theme.includes(t.theme.slice(0,4))||t.theme.includes(theme.slice(0,4)));
+  const emoji=matched?matched.emoji:'📢';
+  plats.forEach(p=>{
+    const d=previewData(p);
+    posts.push({id:'P'+(3000+posts.length),theme:theme.slice(0,18),emoji,plat:p,
+      body:(d.body||'')+(d.tags?'\n\n'+d.tags:''),when:new Date(when),status:'scheduled',
+      reach:1000+Math.floor(rnd()*2800),eng:0,likes:0,comments:0,shares:0,staff:'佐藤'});
+  });
+  showToast(plats.length+'媒体ぶんを予約しました（'+fmtDT(when)+'）');
+  $('navSched').textContent=posts.filter(p=>p.status==='scheduled').length;
+  setTimeout(()=>go('sched'),700);
+});
+
+/* ============ AI MULTI GENERATE ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 生成中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},110);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  const base=THEMES[0]; // シャインマスカット
+  const targets=['X','Instagram','LINE'];
+  $('genItems').innerHTML=targets.map((p,i)=>{
+    const body=base[p];const tags=base.tags[p];
+    const full=body+(tags?'\n\n'+tags:'');
+    return `<div class="gen-item" data-i="${i}"><span class="ck">✓</span>
+      <div class="body">${platTag(p)} <b style="margin-left:4px">${PLATMETA[p].limit}字まで最適化</b>
+      <div class="txt">${esc(full)}</div></div></div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  const when=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+1,10,0);
+  for(let i=0;i<items.length;i++){
+    await new Promise(r=>setTimeout(r,220));items[i].classList.add('in');
+    const p=targets[i];const body=base[p]+(base.tags[p]?'\n\n'+base.tags[p]:'');
+    posts.push({id:'P'+(4000+posts.length),theme:base.theme,emoji:base.emoji,plat:p,body,
+      when:new Date(when.getTime()+i*3600000),status:'scheduled',
+      reach:1400+Math.floor(rnd()*2600),eng:0,likes:0,comments:0,shares:0,staff:'佐藤'});
+  }
+  btn.disabled=false;btn.textContent='⚡ もう一度生成';
+  $('navSched').textContent=posts.filter(p=>p.status==='scheduled').length;
+  showToast('3媒体ぶんの投稿を生成し、予約しました');
+});
+
+/* ============ INIT ============ */
+(function initWhen(){const d=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+1,10,0);$('cWhen').value=d.toISOString().slice(0,16);})();
+renderChips();renderPreviews();renderDash();
+$('navSched').textContent=posts.filter(p=>p.status==='scheduled').length;
+</script>
+</body>
+</html>

@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜レシート経費精算マシン</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut / category */
+.cat-row{display:flex;align-items:center;gap:11px;padding:9px 0;font-size:12.5px;border-bottom:1px solid var(--line)}
+.cat-row:last-child{border-bottom:0}
+.cat-row .cdot{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.cat-row .cn{font-weight:600;color:var(--ink-2)}
+.cat-row .cv{margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums}
+.cat-row .cp{width:42px;text-align:right;color:var(--ink-3);font-size:11.5px}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.approved{background:var(--green-soft);color:var(--green)}
+.st.pending{background:var(--amber-soft);color:var(--amber)}
+.st.synced{background:var(--brand-soft);color:var(--brand)}
+.st.rejected{background:var(--red-soft);color:var(--red)}
+.st.draft{background:var(--soft);color:var(--ink-3)}
+.tag-cat{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:7px;background:var(--soft);color:var(--ink-2)}
+
+/* capture / upload */
+.cap-grid{display:grid;grid-template-columns:minmax(300px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.cap-grid{grid-template-columns:1fr}}
+.dropzone{background:var(--card);border:2px dashed var(--line-2);border-radius:14px;padding:34px 20px;text-align:center;cursor:pointer;transition:all .2s}
+.dropzone:hover{border-color:var(--brand);background:var(--brand-soft)}
+.dropzone .big-ic{font-size:46px;margin-bottom:10px}
+.dropzone .dz-t{font-weight:800;font-size:15px}
+.dropzone .dz-s{color:var(--ink-3);font-size:12px;margin-top:5px}
+.dz-thumbs{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
+.dz-thumb{width:64px;height:84px;border-radius:8px;border:1px solid var(--line-2);display:grid;place-items:center;font-size:24px;background:linear-gradient(160deg,#fff,#f1f4fa);position:relative}
+.dz-thumb .pg{position:absolute;bottom:3px;right:4px;font-size:8px;color:var(--ink-3)}
+.samples{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.sample-chip{padding:8px 12px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.sample-chip:hover{border-color:var(--brand);color:var(--brand)}
+
+/* receipt preview paper */
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.scan-head{display:flex;align-items:center;gap:11px;margin-bottom:14px}
+.scan-orb{width:44px;height:44px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:20px;flex-shrink:0}
+.scan-orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--brand)}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.field-ai{position:relative}
+.ai-pill{position:absolute;right:9px;top:32px;font-size:10px;font-weight:800;color:var(--green);background:var(--green-soft);padding:2px 7px;border-radius:6px;opacity:0;transition:opacity .3s}
+.ai-pill.show{opacity:1}
+.conf-bar{height:5px;border-radius:99px;background:var(--soft);overflow:hidden;margin-top:6px}
+.conf-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--green),var(--sky));width:0;transition:width .9s cubic-bezier(.2,.8,.3,1)}
+.recpaper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:22px 22px;box-shadow:var(--shadow);font-family:'Noto Sans JP',monospace;font-size:12px;color:#2a3140;max-width:340px;margin:0 auto}
+.recpaper .rp-store{font-size:16px;font-weight:900;text-align:center;letter-spacing:.04em}
+.recpaper .rp-sub{text-align:center;color:var(--ink-3);font-size:10.5px;margin-bottom:8px}
+.recpaper .rp-dash{border-top:1px dashed #b8c0cf;margin:9px 0}
+.recpaper .rp-line{display:flex;justify-content:space-between;padding:2px 0}
+.recpaper .rp-total{display:flex;justify-content:space-between;font-weight:900;font-size:15px;margin-top:4px}
+.recpaper .rp-foot{text-align:center;color:var(--ink-3);font-size:10px;margin-top:8px}
+.scan-overlay{position:relative;overflow:hidden}
+.scan-line{position:absolute;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--sky),transparent);box-shadow:0 0 14px var(--sky);top:0;display:none}
+.scan-line.go{display:block;animation:scanmove 1.1s linear}
+@keyframes scanmove{0%{top:0}100%{top:100%}}
+
+/* freee sync */
+.sync-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:var(--shadow)}
+.freee-head{display:flex;align-items:center;gap:13px;margin-bottom:16px}
+.freee-logo{width:46px;height:46px;border-radius:11px;background:linear-gradient(135deg,#2864f0,#15c3d6);display:grid;place-items:center;color:#fff;font-weight:900;font-size:13px;letter-spacing:.02em}
+.conn-state{margin-left:auto;display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:800;color:var(--green);background:var(--green-soft);padding:6px 13px;border-radius:99px}
+.conn-state::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green)}
+.sync-rows{display:flex;flex-direction:column}
+.sync-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);font-size:13px}
+.sync-row:last-child{border-bottom:0}
+.sync-row .sic{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-size:15px;background:var(--soft)}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900}
+.gen-item .gcat{font-size:11px;color:var(--ink-3)}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* account master */
+.acc-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:760px){.acc-grid{grid-template-columns:1fr}}
+.acc-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow)}
+.acc-card .an{font-weight:800;font-size:14px;display:flex;align-items:center;gap:8px}
+.acc-card .ad{color:var(--ink-3);font-size:11.5px;margin-top:3px}
+.acc-card .akw{margin-top:9px;display:flex;gap:5px;flex-wrap:wrap}
+.acc-card .kw{font-size:10.5px;background:var(--soft);color:var(--ink-2);padding:2px 8px;border-radius:6px;font-weight:600}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">経費精算マシン<small>技マシン｜レシート精算</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">🧾</span>精算一覧</a>
+      <a data-v="capture"><span class="i">📷</span>レシート撮影</a>
+      <a data-v="acc"><span class="i">📚</span>勘定科目</a>
+      <a data-v="freee"><span class="i">🔗</span>freee連携<span class="badge" id="navPending">0</span></a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI読取（一括）</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 経理担当</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="./">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。金額・店舗名はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">今月の経費精算状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>月次の経費精算額</h3><span class="more">過去6ヶ月</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>勘定科目の内訳（今月）</h3></div>
+            <div class="pb"><div id="catList"></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>承認待ちのレシート</h3><span class="more" onclick="go('list')">一覧へ</span></div>
+            <div class="pb" style="padding:0"><div class="acts" id="pendingMini" style="padding:6px 18px"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="店舗・科目・申請者で検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>日付</th><th>店舗・摘要</th><th>勘定科目</th><th class="r">金額(税込)</th><th>申請者</th><th>状態</th><th></th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- CAPTURE -->
+      <section class="view" id="v-capture">
+        <div class="cap-grid">
+          <div>
+            <div class="dropzone" id="dropzone">
+              <div class="big-ic">📷</div>
+              <div class="dz-t">レシート画像をアップロード</div>
+              <div class="dz-s">クリックして撮影画像を選択（JPG / PNG / PDF）<br>または下のサンプルレシートで試す</div>
+              <div class="dz-thumbs" id="dzThumbs"></div>
+            </div>
+            <div class="samples" id="sampleChips"></div>
+          </div>
+          <div class="formcard">
+            <div class="scan-head">
+              <div class="scan-orb" id="scanOrb">🤖</div>
+              <div><div style="font-weight:900;font-size:15px">AI自動読取結果</div>
+              <div style="font-size:12px;color:var(--ink-3)" id="scanSub">レシートを選ぶと、AIが店舗名・金額・科目を自動で読み取ります。</div></div>
+            </div>
+            <div class="scan-overlay">
+              <div class="scan-line" id="scanLine"></div>
+              <div class="recpaper" id="recpaper">
+                <div class="rp-store" id="rpStore">RECEIPT</div>
+                <div class="rp-sub" id="rpSubt">レシートを選択してください</div>
+                <div class="rp-dash"></div>
+                <div id="rpLines"></div>
+                <div class="rp-dash"></div>
+                <div class="rp-total"><span>合計</span><span id="rpTotal">¥0</span></div>
+                <div class="rp-foot" id="rpFoot">— —</div>
+              </div>
+            </div>
+            <div style="margin-top:16px" id="scanForm">
+              <div class="fg-row">
+                <div class="fg field-ai"><label>店舗 / 支払先</label><input id="fStore" placeholder="—"><span class="ai-pill" id="pillStore">AI</span></div>
+                <div class="fg field-ai"><label>利用日</label><input id="fDate" placeholder="—"><span class="ai-pill" id="pillDate">AI</span></div>
+              </div>
+              <div class="fg-row">
+                <div class="fg field-ai"><label>金額（税込）</label><input id="fAmt" placeholder="—"><span class="ai-pill" id="pillAmt">AI</span></div>
+                <div class="fg field-ai"><label>勘定科目</label><select id="fAcc"></select><span class="ai-pill" id="pillAcc">AI判定</span></div>
+              </div>
+              <div class="fg"><label>摘要（メモ）</label><input id="fMemo" placeholder="—"></div>
+              <div class="fg"><label>科目判定の確信度</label>
+                <div class="conf-bar"><div class="conf-fill" id="confFill"></div></div>
+                <div style="font-size:11px;color:var(--ink-3);margin-top:4px" id="confTxt">レシート未選択</div>
+              </div>
+              <button class="btn primary" id="fRegister" style="width:100%;justify-content:center;margin-top:6px">✓ この内容で精算登録</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ACCOUNTS -->
+      <section class="view" id="v-acc">
+        <div class="panel" style="margin-bottom:16px">
+          <div class="ph"><h3>AI科目判定ルール</h3><span class="more">学習済</span></div>
+          <div class="pb" style="font-size:12.5px;color:var(--ink-2)">店舗名・品目のキーワードからAIが勘定科目を自動で判定します。判定がずれた時に1度直せば、AIが次から学習します。下は登録済みの科目とキーワード例です。</div>
+        </div>
+        <div class="acc-grid" id="accGrid"></div>
+      </section>
+
+      <!-- FREEE -->
+      <section class="view" id="v-freee">
+        <div class="sync-card" style="margin-bottom:16px">
+          <div class="freee-head">
+            <div class="freee-logo">freee</div>
+            <div><div style="font-weight:900;font-size:15px">freee会計 連携</div>
+            <div style="font-size:12px;color:var(--ink-3)">承認済みのレシートを仕訳データとして自動で同期します。</div></div>
+            <div class="conn-state">接続済み</div>
+          </div>
+          <div style="display:flex;gap:9px;flex-wrap:wrap">
+            <button class="btn primary" id="syncRun">🔗 承認済みを freee へ同期</button>
+            <button class="btn" id="syncTest">接続テスト</button>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="ph"><h3>同期キュー（仕訳プレビュー）</h3><span class="more" id="syncCount">—</span></div>
+          <div class="pb"><div class="sync-rows" id="syncRows"></div></div>
+        </div>
+      </section>
+
+      <!-- AI BULK -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">溜まったレシートをまとめてAI読取</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">未処理のレシート <b>24枚</b> を、AIが一括で読み取り・科目判定・精算登録します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ 24枚をAIで一括処理</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">16時間 / 月</div>
+              <ul>
+                <li>🧾 レシートを1枚ずつ電卓で集計</li>
+                <li>⌨️ 日付・金額・科目を手入力</li>
+                <li>📒 会計ソフトへ転記・仕訳</li>
+                <li>📎 のり付け台紙へ貼って保管</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>📷 画像から自動で文字読取（OCR）</li>
+                <li>🤖 金額・店舗・科目をAI判定</li>
+                <li>🔗 freeeへ仕訳を自動連携</li>
+                <li>🗂 電子帳簿保存法に対応して保管</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ AIが読み取った精算データ</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const ACCOUNTS=[
+  {n:'旅費交通費',ic:'🚕',d:'電車・タクシー・ガソリン・駐車場',kw:['タクシー','JR','給油','ENEOS','駐車場','高速','大分交通']},
+  {n:'会議費',ic:'☕',d:'打合せの飲食・喫茶（少額）',kw:['カフェ','コーヒー','喫茶','スターバックス','打合せ']},
+  {n:'接待交際費',ic:'🍶',d:'取引先との会食・贈答',kw:['居酒屋','寿司','料亭','和食','贈答','花']},
+  {n:'消耗品費',ic:'📎',d:'文具・備品・少額の物品',kw:['文具','カウネット','アスクル','ホームセンター','コメリ','事務用品']},
+  {n:'福利厚生費',ic:'🍱',d:'スタッフの飲食・差入れ・健診',kw:['弁当','差入れ','スーパー','まるしょく','コンビニ','薬局']},
+  {n:'通信費',ic:'📶',d:'携帯・回線・切手・宅配',kw:['ドコモ','au','ソフトバンク','郵便','切手','ヤマト','佐川']},
+  {n:'新聞図書費',ic:'📕',d:'書籍・新聞・資料',kw:['書店','本','新聞','Amazon書籍','紀伊國屋']},
+  {n:'雑費',ic:'🧾',d:'上記に当てはまらないもの',kw:['その他','クリーニング','ゴミ']},
+];
+const STAFF=['佐藤(経理)','田中(訪問看護)','鈴木(配送)','高橋(営業)','渡辺(施設長)'];
+const STORES=[
+  {s:'大分交通 タクシー',cat:'旅費交通費',memo:'クリニック往訪',min:980,max:3200},
+  {s:'ENEOS 大分中央SS',cat:'旅費交通費',memo:'社用車 給油',min:4200,max:8800},
+  {s:'JR九州 大分駅',cat:'旅費交通費',memo:'出張 別府往復',min:520,max:2400},
+  {s:'スターバックス 大分駅前店',cat:'会議費',memo:'取引先と打合せ',min:880,max:2600},
+  {s:'居酒屋 とよ常 都町店',cat:'接待交際費',memo:'病院関係者 会食',min:8800,max:24000},
+  {s:'カウネット',cat:'消耗品費',memo:'コピー用紙・ファイル',min:2400,max:9800},
+  {s:'コメリ 大分東店',cat:'消耗品費',memo:'清掃用品・電池',min:1200,max:6400},
+  {s:'まるしょく 中島店',cat:'福利厚生費',memo:'スタッフ差入れ',min:1800,max:5200},
+  {s:'セブンイレブン 大分都町店',cat:'福利厚生費',memo:'会議用 飲み物',min:540,max:2100},
+  {s:'ヤマト運輸',cat:'通信費',memo:'検体・書類 宅配',min:760,max:3400},
+  {s:'紀伊國屋書店 大分店',cat:'新聞図書費',memo:'介護報酬 改定資料',min:1980,max:5400},
+  {s:'ドコモショップ 大分',cat:'通信費',memo:'業務用携帯 通信料',min:3300,max:9900},
+];
+const TODAY=new Date();
+function ym(d){return (d.getMonth()+1)}
+let SEED=4242;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+function rint(lo,hi){return lo+Math.floor(rnd()*(hi-lo+1));}
+const STATUSES=['synced','synced','approved','approved','pending','approved','synced','pending'];
+
+let receipts=[];
+(function seed(){
+  let id=0;
+  for(let i=0;i<26;i++){
+    const st=pick(STORES);
+    let amt=rint(st.min,st.max);amt=Math.round(amt/10)*10;
+    const issue=new Date(TODAY.getFullYear(),TODAY.getMonth()-Math.floor(rnd()*3),1+Math.floor(rnd()*26));
+    let stt=pick(STATUSES);
+    receipts.push({id:'RC-'+(40250+(++id)),store:st.s,cat:st.cat,memo:st.memo,amt,tax:Math.round(amt-amt/1.1),date:issue,staff:pick(STAFF),status:stt});
+  }
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+const fmtD=d=>(d.getFullYear())+'/'+(d.getMonth()+1)+'/'+d.getDate();
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STLABEL={approved:'承認済',pending:'承認待ち',synced:'freee同期済',rejected:'差戻し',draft:'下書き'};
+function stBadge(s){return `<span class="st ${esc(s)}">${esc(STLABEL[s]||s)}</span>`;}
+function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function catIcon(name){const a=ACCOUNTS.find(x=>x.n===name);return a?a.ic:'🧾';}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+const CATCOLORS=['#2f6df0','#16b877','#e3941f','#0ea5b7','#9b59d8','#e24a4a','#5b6cf0','#8a94a6'];
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','今月の経費精算状況'],list:['精算一覧','レシートから登録された精算データを管理します'],
+  capture:['レシート撮影','撮影した画像をAIが自動で読み取ります'],acc:['勘定科目','AIが判定に使う科目とルール'],
+  freee:['freee連携','承認済みデータを会計ソフトへ同期します'],ai:['AI読取（一括）','溜まったレシートをまとめて自動処理します']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn primary" onclick="go(\'capture\')">📷 レシート撮影</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI一括読取</button><button class="btn primary" onclick="go(\'capture\')">📷 レシート撮影</button>'
+    : v==='capture'?'<button class="btn" onclick="go(\'ai\')">⚡ まとめて読取</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='acc')renderAcc();
+  if(v==='freee')renderFreee();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${esc(l)}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?esc(sub)+' ・ ':''}${esc(d)}</div></div>`;}
+function renderDash(){
+  const tm=receipts.filter(r=>thisMonth(r.date));
+  const tmSum=tm.reduce((s,r)=>s+r.amt,0);
+  const cnt=tm.length;
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','今月の精算額',yen(tmSum),cnt+'件 処理','up','前月比 +8%')}
+    ${kpi('#16b877','処理件数',cnt+'<small>件</small>','','up','すべてAI読取')}
+    ${kpi('#e3941f','削減した時間','16<small>時間/月</small>','手作業比','up','約95%短縮')}
+    ${kpi('#0ea5b7','科目判定精度','98.4<small>%</small>','','up','学習で向上中')}`;
+  // trend
+  const months=[];for(let k=5;k>=0;k--){const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1);months.push(d);}
+  const sums=months.map(m=>receipts.filter(r=>r.date.getMonth()===m.getMonth()&&r.date.getFullYear()===m.getFullYear()).reduce((s,r)=>s+r.amt,0));
+  const mx=Math.max(...sums,1);
+  $('trendBars').innerHTML=months.map((m,i)=>`
+    <div class="bar-row"><span class="mlabel">${m.getMonth()+1}月</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(sums[i]/mx*100)}"></div></div>
+      <span class="mval">${yen(sums[i])}</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // category breakdown (this month)
+  const byCat={};tm.forEach(r=>{byCat[r.cat]=(byCat[r.cat]||0)+r.amt;});
+  const cats=Object.keys(byCat).sort((a,b)=>byCat[b]-byCat[a]);
+  const catTotal=cats.reduce((s,c)=>s+byCat[c],0)||1;
+  $('catList').innerHTML=cats.length?cats.map((c,i)=>`<div class="cat-row">
+    <span class="cdot" style="background:${CATCOLORS[i%CATCOLORS.length]}"></span>
+    <span class="cn">${catIcon(c)} ${esc(c)}</span>
+    <span class="cv tnum">${yen(byCat[c])}</span>
+    <span class="cp">${Math.round(byCat[c]/catTotal*100)}%</span></div>`).join('')
+    :'<div class="empty-cell">今月のデータがありません</div>';
+  // activity
+  const acts=[
+    {i:'📷',c:'#e6f8f0',t:'スターバックス のレシートをAIが読取（会議費 ¥1,240）',m:'3分前'},
+    {i:'🔗',c:'#eaf1ff',t:'承認済み 6件を freee へ自動同期しました',m:'42分前'},
+    {i:'⚡',c:'#e6f8f0',t:'AI一括読取で 12枚のレシートを処理（精度98%）',m:'今日 9:05'},
+    {i:'✅',c:'#e6f8f0',t:'渡辺(施設長) が ENEOS の精算を承認',m:'今日 8:40'},
+    {i:'⚠️',c:'#fdeaea',t:'居酒屋 とよ常 が接待交際費の上限に近づいています',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+  // pending mini
+  const pend=receipts.filter(r=>r.status==='pending').slice(0,5);
+  $('pendingMini').innerHTML=pend.length?pend.map(r=>`<div class="act"><div class="ai" style="background:var(--amber-soft)">${catIcon(r.cat)}</div>
+    <div style="flex:1"><div class="at">${esc(r.store)}</div><div class="am">${esc(r.staff)} ・ ${esc(r.cat)}</div></div>
+    <div style="font-weight:800" class="tnum">${yen(r.amt)}</div></div>`).join('')
+    :'<div class="empty-cell">承認待ちはありません 🎉</div>';
+}
+
+/* ============ LIST ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['pending','承認待ち'],['approved','承認済'],['synced','freee同期済']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=receipts.filter(r=>filterStatus==='all'||r.status===filterStatus)
+    .filter(r=>!q||(r.store+r.cat+r.staff+r.memo).toLowerCase().includes(q))
+    .sort((a,b)=>b.date-a.date);
+  $('listRows').innerHTML=rows.length?rows.map(r=>`<tr>
+    <td style="color:var(--ink-2)" class="tnum">${fmtD(r.date)}</td>
+    <td><b>${esc(r.store)}</b><div style="color:var(--ink-3);font-size:11px">${esc(r.memo)}</div></td>
+    <td><span class="tag-cat">${catIcon(r.cat)} ${esc(r.cat)}</span></td>
+    <td class="r tnum"><b>${yen(r.amt)}</b></td>
+    <td style="color:var(--ink-2)">${esc(r.staff)}</td>
+    <td>${stBadge(r.status)}</td>
+    <td class="r">${r.status==='pending'?`<button class="btn green" style="padding:6px 12px" onclick="approve('${esc(r.id)}')">承認</button>`:''}</td></tr>`).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する精算データがありません</td></tr>';
+}
+window.approve=id=>{const r=receipts.find(x=>x.id===id);if(r){r.status='approved';renderList();updateBadges();showToast(r.store+' の精算を承認しました');}};
+function attachSearch(){$('q').addEventListener('input',renderList);}
+
+/* ============ CAPTURE ============ */
+function fillAccSelect(sel,val){sel.innerHTML=ACCOUNTS.map(a=>`<option ${a.n===val?'selected':''}>${esc(a.n)}</option>`).join('');}
+function renderCaptureInit(){
+  fillAccSelect($('fAcc'),'');
+  $('sampleChips').innerHTML=STORES.slice(0,6).map((s,i)=>`<button class="sample-chip" data-i="${i}">🧾 ${esc(s.s.split(' ')[0])}</button>`).join('');
+  $('sampleChips').querySelectorAll('.sample-chip').forEach(c=>c.onclick=()=>runScan(+c.dataset.i));
+}
+let scannedData=null;
+$('dropzone')?.addEventListener('click',()=>runScan(Math.floor(rnd()*STORES.length)));
+async function runScan(idx){
+  const st=STORES[idx%STORES.length];
+  let amt=rint(st.min,st.max);amt=Math.round(amt/10)*10;
+  const date=new Date(TODAY.getFullYear(),TODAY.getMonth(),Math.max(1,TODAY.getDate()-rint(0,8)));
+  // thumb
+  $('dzThumbs').innerHTML=`<div class="dz-thumb">🧾<span class="pg">1/1</span></div>`;
+  // start scan animation
+  const orb=$('scanOrb');orb.classList.add('spin');orb.textContent='⚡';
+  $('scanSub').textContent='AIが画像を解析しています…';
+  $('scanLine').classList.remove('go');void $('scanLine').offsetWidth;$('scanLine').classList.add('go');
+  // clear pills
+  ['pillStore','pillDate','pillAmt','pillAcc'].forEach(p=>$(p).classList.remove('show'));
+  $('confFill').style.width='0';$('confTxt').textContent='解析中…';
+  // show raw receipt
+  const tax=Math.round(amt-amt/1.1);
+  $('rpStore').textContent=st.s;
+  $('rpSubt').textContent='大分県大分市 / '+fmtDL(date);
+  $('rpLines').innerHTML=`<div class="rp-line"><span>${esc(st.memo)}</span><span>${yen(amt-tax)}</span></div>
+    <div class="rp-line"><span>消費税(10%)</span><span>${yen(tax)}</span></div>`;
+  $('rpTotal').textContent=yen(amt);
+  $('rpFoot').textContent='No.'+rint(1000,9999)+' レジ '+rint(1,5)+' 担当 山田';
+  await new Promise(r=>setTimeout(r,1150));
+  // fill form progressively
+  $('fStore').value=st.s;$('pillStore').classList.add('show');
+  await new Promise(r=>setTimeout(r,160));
+  $('fDate').value=fmtD(date);$('pillDate').classList.add('show');
+  await new Promise(r=>setTimeout(r,160));
+  $('fAmt').value=yen(amt);$('pillAmt').classList.add('show');
+  await new Promise(r=>setTimeout(r,160));
+  fillAccSelect($('fAcc'),st.cat);$('pillAcc').classList.add('show');
+  $('fMemo').value=st.memo;
+  const conf=92+Math.floor(rnd()*8);
+  $('confFill').style.width=conf+'%';
+  $('confTxt').textContent='確信度 '+conf+'% ・「'+st.s.split(' ')[0]+'」を学習済キーワードと照合 → '+st.cat+' と判定';
+  orb.classList.remove('spin');orb.textContent='✅';
+  $('scanSub').textContent='読取完了。内容を確認して登録してください。';
+  scannedData={store:st.s,cat:st.cat,memo:st.memo,amt,tax,date};
+  showToast('AIがレシートを読み取りました（確信度'+conf+'%）');
+}
+$('fRegister')?.addEventListener('click',()=>{
+  const amtNum=parseInt(($('fAmt').value||'').replace(/[^0-9]/g,''),10);
+  if(!$('fStore').value||!amtNum){showToast('レシートを読み取ってください');return;}
+  const d=new Date();
+  receipts.push({id:'RC-'+(40250+receipts.length+1),store:$('fStore').value,cat:$('fAcc').value,
+    memo:$('fMemo').value||'',amt:amtNum,tax:Math.round(amtNum-amtNum/1.1),date:d,staff:'佐藤(経理)',status:'pending'});
+  updateBadges();
+  showToast('精算データを登録しました（承認待ち）');
+  setTimeout(()=>go('list'),650);
+});
+
+/* ============ ACCOUNTS ============ */
+function renderAcc(){
+  $('accGrid').innerHTML=ACCOUNTS.map(a=>{
+    const cnt=receipts.filter(r=>r.cat===a.n).length;
+    return `<div class="acc-card">
+      <div class="an">${a.ic} ${esc(a.n)} <span style="margin-left:auto;font-size:11px;color:var(--ink-3);font-weight:700">${cnt}件</span></div>
+      <div class="ad">${esc(a.d)}</div>
+      <div class="akw">${a.kw.map(k=>`<span class="kw">${esc(k)}</span>`).join('')}</div></div>`;
+  }).join('');
+}
+
+/* ============ FREEE ============ */
+function renderFreee(){
+  const queue=receipts.filter(r=>r.status==='approved');
+  $('syncCount').textContent=queue.length+'件 待機';
+  $('syncRows').innerHTML=queue.length?queue.map(r=>`<div class="sync-row">
+    <div class="sic">${catIcon(r.cat)}</div>
+    <div style="flex:1"><b>${esc(r.store)}</b><div style="color:var(--ink-3);font-size:11px">借方：${esc(r.cat)} ／ 貸方：未払金 ・ ${fmtD(r.date)}</div></div>
+    <div class="tnum" style="font-weight:800">${yen(r.amt)}</div>
+    <span class="st approved">同期待ち</span></div>`).join('')
+    :'<div class="empty-cell">同期待ちのデータはありません。すべて同期済みです 🎉</div>';
+}
+$('syncTest')?.addEventListener('click',()=>showToast('freee会計との接続は正常です（API応答 OK）'));
+$('syncRun')?.addEventListener('click',async()=>{
+  const btn=$('syncRun');const queue=receipts.filter(r=>r.status==='approved');
+  if(!queue.length){showToast('同期待ちのデータがありません');return;}
+  btn.disabled=true;btn.textContent='🔗 freee へ送信中…';
+  await new Promise(r=>setTimeout(r,1000));
+  queue.forEach(r=>r.status='synced');
+  btn.disabled=false;btn.textContent='🔗 承認済みを freee へ同期';
+  renderFreee();updateBadges();
+  showToast(queue.length+'件の仕訳を freee へ同期しました');
+});
+
+/* ============ AI BULK ============ */
+$('aiRun')?.addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 読取中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='読取中 '+Math.min(s,9)+'枚';},120);
+  await new Promise(r=>setTimeout(r,1200));
+  clearInterval(t);$('baAfterT').textContent='12秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // generate items
+  const n=8;const gen=[];
+  for(let i=0;i<n;i++){const st=pick(STORES);let amt=rint(st.min,st.max);amt=Math.round(amt/10)*10;gen.push({st,amt});}
+  $('genItems').innerHTML=gen.map((g,i)=>`<div class="gen-item" data-i="${i}">
+    <span class="ck">✓</span>
+    <b style="flex:1">${esc(g.st.s)}</b>
+    <span class="gcat">${catIcon(g.st.cat)} ${esc(g.st.cat)}</span>
+    <span class="tnum" style="font-weight:800">${yen(g.amt)}</span></div>`).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,170));items[i].classList.add('in');
+    const g=gen[i];const d=new Date();
+    receipts.push({id:'RC-'+(40250+receipts.length+1),store:g.st.s,cat:g.st.cat,memo:g.st.memo,amt:g.amt,
+      tax:Math.round(g.amt-g.amt/1.1),date:d,staff:'佐藤(経理)',status:'pending'});
+  }
+  updateBadges();
+  btn.disabled=false;btn.textContent='⚡ もう一度読取';
+  $('aiSub').innerHTML='読取完了。<b>'+items.length+'枚</b> を精算一覧（承認待ち）に追加しました。';
+  showToast(items.length+'枚のレシートをAIが一括読取しました');
+});
+
+/* ============ BADGES / INIT ============ */
+function updateBadges(){$('navPending').textContent=receipts.filter(r=>r.status==='approved').length;}
+renderChips();attachSearch();renderCaptureInit();renderDash();updateBadges();
+</script>
+</body>
+</html>

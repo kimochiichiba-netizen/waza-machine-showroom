@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜月次決算マシン（月次決算自動化システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cf0;--purple-soft:#efeafe;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel+.panel{margin-top:16px}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 92px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-fill.g{background:linear-gradient(90deg,var(--green),#5fd6a6)}
+.bar-fill.p{background:linear-gradient(90deg,var(--purple),#a98cf5)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* dual bar (dept) */
+.dbar{display:flex;flex-direction:column;gap:16px}
+.dbar-row .dh{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;margin-bottom:6px}
+.dbar-row .dh b{font-weight:700}
+.dbar-row .dh .dv{font-weight:800;font-variant-numeric:tabular-nums}
+.dbar-row .dh .dr{color:var(--ink-3);font-size:11px;font-weight:700;margin-left:7px}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s}
+table.tbl tbody tr:hover{background:var(--soft)}
+table.tbl tbody tr.subtotal{background:var(--soft);font-weight:800}
+table.tbl tbody tr.subtotal td{color:var(--ink)}
+table.tbl tbody tr.grand td{background:var(--brand-dk);color:#fff;font-weight:900;border-top:2px solid var(--brand-dk)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.ok{background:var(--green-soft);color:var(--green)}
+.st.high{background:var(--red-soft);color:var(--red)}
+.st.mid{background:var(--amber-soft);color:var(--amber)}
+.st.info{background:var(--brand-soft);color:var(--brand)}
+.st.done{background:var(--green-soft);color:var(--green)}
+.st.run{background:var(--brand-soft);color:var(--brand)}
+.posneg{font-weight:800;font-variant-numeric:tabular-nums}
+.posneg.up{color:var(--green)}.posneg.down{color:var(--red)}
+
+/* anomaly cards */
+.alerts{display:flex;flex-direction:column;gap:12px}
+.alert{display:flex;gap:14px;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--amber);border-radius:12px;padding:15px 17px;box-shadow:var(--shadow)}
+.alert.high{border-left-color:var(--red)}
+.alert.mid{border-left-color:var(--amber)}
+.alert.info{border-left-color:var(--brand)}
+.alert .ico{width:38px;height:38px;border-radius:10px;flex-shrink:0;display:grid;place-items:center;font-size:18px}
+.alert.high .ico{background:var(--red-soft)}.alert.mid .ico{background:var(--amber-soft)}.alert.info .ico{background:var(--brand-soft)}
+.alert .body{flex:1;min-width:0}
+.alert .ttl{font-size:14px;font-weight:800;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.alert .desc{font-size:12.5px;color:var(--ink-2);margin-top:4px}
+.alert .meta{font-size:11.5px;color:var(--ink-3);margin-top:7px;display:flex;gap:14px;flex-wrap:wrap}
+.alert .meta b{color:var(--ink-2)}
+.alert .act-btn{margin-left:auto;align-self:center;flex-shrink:0}
+
+/* segmented period control */
+.seg{display:inline-flex;background:var(--soft);border:1px solid var(--line-2);border-radius:9px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;padding:7px 14px;border-radius:7px;font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer}
+.seg button.on{background:var(--card);color:var(--brand);box-shadow:var(--shadow)}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+
+/* AI progress steps */
+.steps{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.steps.show{display:block;animation:fade .4s}
+.step{display:flex;align-items:center;gap:11px;padding:10px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:.45;transition:all .35s}
+.step.in{opacity:1;border-color:#bdebd4;background:var(--green-soft)}
+.step.run{opacity:1;border-color:var(--brand);background:var(--brand-soft)}
+.step .ck{width:22px;height:22px;border-radius:50%;background:var(--line-2);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+.step.in .ck{background:var(--green)}
+.step.run .ck{background:var(--brand);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+.step .sm{margin-left:auto;font-size:11.5px;color:var(--ink-3);font-weight:700}
+
+/* AI result */
+.ai-result{margin-top:18px;border-top:1px solid var(--line);padding-top:18px;display:none}
+.ai-result.show{display:block;animation:fade .4s}
+.rgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+@media(max-width:680px){.rgrid{grid-template-columns:1fr}}
+.rcard{background:var(--soft);border:1px solid var(--line);border-radius:11px;padding:14px 16px}
+.rcard .rl{font-size:11.5px;color:var(--ink-3);font-weight:700}
+.rcard .rv{font-size:22px;font-weight:900;margin-top:5px;font-variant-numeric:tabular-nums}
+.rcard .rd{font-size:11px;margin-top:4px;font-weight:700}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.sectionnote{font-size:12px;color:var(--ink-3);margin:-6px 0 14px}
+.donut-wrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.donut{width:150px;height:150px;border-radius:50%;flex-shrink:0;position:relative}
+.donut::after{content:"";position:absolute;inset:26px;background:var(--card);border-radius:50%}
+.donut .cn{position:absolute;inset:0;display:grid;place-items:center;text-align:center;z-index:2}
+.donut .cn b{font-size:20px;font-weight:900;display:block}
+.donut .cn span{font-size:10.5px;color:var(--ink-3)}
+.legend{display:flex;flex-direction:column;gap:9px;font-size:12.5px}
+.legend .lg{display:flex;align-items:center;gap:9px}
+.legend .lg .sw{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.legend .lg .lv{margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums;padding-left:18px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">月次決算マシン<small>技マシン｜月次決算自動化</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="trial"><span class="i">📒</span>試算表</a>
+      <a data-v="dept"><span class="i">🏢</span>部門別</a>
+      <a data-v="mom"><span class="i">📈</span>前月比</a>
+      <a data-v="anomaly"><span class="i">🚨</span>異常<span class="badge" id="navAnom">0</span></a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI自動決算</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="./">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。数値・部門はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">2026年4月度の月次決算</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>売上・粗利・営業利益の推移</h3><span class="more">過去6ヶ月</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div>
+              <div style="display:flex;gap:18px;margin-top:14px;font-size:11.5px;color:var(--ink-3);font-weight:700">
+                <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:11px;height:11px;border-radius:3px;background:var(--brand)"></span>売上</span>
+                <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:11px;height:11px;border-radius:3px;background:var(--green)"></span>粗利</span>
+                <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:11px;height:11px;border-radius:3px;background:var(--purple)"></span>営業利益</span>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>部門別 売上構成</h3><span class="more" onclick="go('dept')">部門別を見る</span></div>
+            <div class="pb"><div class="donut-wrap"><div class="donut" id="donut"></div><div class="legend" id="donutLegend"></div></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>AIが検知した異常</h3><span class="more" onclick="go('anomaly')">すべて見る</span></div>
+            <div class="pb"><div class="alerts" id="dashAlerts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TRIAL BALANCE -->
+      <section class="view" id="v-trial">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="tbQ" placeholder="勘定科目で検索（例：売上高、仕入高）"></div>
+          <div class="chips" id="tbChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>区分</th><th>勘定科目</th><th class="r">前月繰越</th><th class="r">当月借方</th><th class="r">当月貸方</th><th class="r">当月残高</th></tr></thead>
+          <tbody id="tbRows"></tbody>
+        </table>
+      </section>
+
+      <!-- DEPARTMENT -->
+      <section class="view" id="v-dept">
+        <div class="kpis" id="deptKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>部門別 損益（当月）</h3><span class="more">売上 / 粗利率順</span></div>
+          <div class="pb"><div class="dbar" id="deptBars"></div></div>
+        </div>
+        <div class="panel">
+          <div class="ph"><h3>部門別 損益明細</h3></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>部門</th><th class="r">売上高</th><th class="r">売上原価</th><th class="r">粗利</th><th class="r">販管費</th><th class="r">営業利益</th><th class="r">粗利率</th></tr></thead>
+              <tbody id="deptRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- MONTH OVER MONTH -->
+      <section class="view" id="v-mom">
+        <div style="margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <div class="seg" id="momSeg">
+            <button class="on" data-m="prev">前月比（3月→4月）</button>
+            <button data-m="year">前年同月比</button>
+          </div>
+          <span class="sectionnote" style="margin:0">プラス＝改善、マイナス＝悪化として色分けしています。</span>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>科目</th><th class="r" id="momHA">前月</th><th class="r" id="momHB">当月</th><th class="r">増減額</th><th class="r">増減率</th><th>傾向</th></tr></thead>
+          <tbody id="momRows"></tbody>
+        </table>
+      </section>
+
+      <!-- ANOMALY -->
+      <section class="view" id="v-anomaly">
+        <div class="kpis" id="anomKpis"></div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap">
+          <div class="chips" id="anomChips"></div>
+          <span class="sectionnote" style="margin:0;margin-left:auto">AIが当月の仕訳と過去推移を照合し、自動で検知した注意点です。</span>
+        </div>
+        <div class="alerts" id="anomList"></div>
+      </section>
+
+      <!-- AI AUTO CLOSING -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div style="min-width:0"><div style="font-size:16px;font-weight:900">会計データから月次決算を自動作成</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">今月の仕訳データ <b>1,284件</b> を読み込み、試算表の作成から異常値チェックまでAIが自動で行います。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで月次決算を実行</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">約18時間</div>
+              <ul>
+                <li>📥 会計ソフトから仕訳をエクスポート</li>
+                <li>🧮 科目を集計し試算表を手で作成</li>
+                <li>👀 部門別・前月比を目視で突合</li>
+                <li>🔎 異常値を一つずつ探して確認</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 仕訳を自動集計し試算表を生成</li>
+                <li>🏢 部門別・前月比を自動作成</li>
+                <li>🚨 異常値をAIが自動で抽出・説明</li>
+                <li>📄 月次レポートまで即日完成</li>
+              </ul>
+            </div>
+          </div>
+          <div class="steps" id="aiSteps">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">🔄 処理ステップ</div>
+            <div id="stepItems"></div>
+          </div>
+          <div class="ai-result" id="aiResult">
+            <div style="font-size:13px;font-weight:800;margin-bottom:12px">✅ 月次決算が完成しました</div>
+            <div class="rgrid" id="resultCards"></div>
+            <div style="display:flex;gap:9px;flex-wrap:wrap">
+              <button class="btn primary" onclick="go('trial')">📒 試算表を見る</button>
+              <button class="btn" onclick="go('dept')">🏢 部門別を見る</button>
+              <button class="btn" onclick="go('anomaly')">🚨 異常をすべて見る</button>
+              <button class="btn green" id="aiReport" style="margin-left:auto">📄 月次レポートを出力</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+// 部門：大分の医療介護・青果・中小事業のリアルなライン
+const DEPTS=[
+  {name:'青果卸売（病院向け）',rev:8420000,cogs:6230000,sga:1180000,color:'#16b877'},
+  {name:'介護施設サポート',rev:5180000,cogs:2890000,sga:1240000,color:'#2f6df0'},
+  {name:'AI業務自動化（技マシン）',rev:3650000,cogs:980000,sga:1320000,color:'#7c5cf0'},
+  {name:'ホームページ制作・保守',rev:1980000,cogs:520000,sga:610000,color:'#e3941f'},
+  {name:'配送・物流（就労支援連携）',rev:1240000,cogs:840000,sga:360000,color:'#0ea5b7'},
+];
+function deptCalc(d){const gross=d.rev-d.cogs;const op=gross-d.sga;const gpr=d.rev?gross/d.rev*100:0;return {...d,gross,op,gpr};}
+const DEPTC=DEPTS.map(deptCalc);
+
+const TOTAL={
+  rev:DEPTC.reduce((s,d)=>s+d.rev,0),
+  cogs:DEPTC.reduce((s,d)=>s+d.cogs,0),
+  gross:DEPTC.reduce((s,d)=>s+d.gross,0),
+  sga:DEPTC.reduce((s,d)=>s+d.sga,0),
+  op:DEPTC.reduce((s,d)=>s+d.op,0),
+};
+
+// 試算表（勘定科目）
+const TB=[
+  {grp:'資産',acc:'現金及び預金',open:18400000,dr:9200000,cr:7850000},
+  {grp:'資産',acc:'売掛金',open:12600000,dr:20470000,cr:18900000},
+  {grp:'資産',acc:'商品（青果在庫）',open:980000,dr:6230000,cr:6010000},
+  {grp:'資産',acc:'未収入金',open:420000,dr:180000,cr:150000},
+  {grp:'負債',acc:'買掛金',open:8200000,dr:9560000,cr:10350000},
+  {grp:'負債',acc:'未払金',open:1340000,dr:980000,cr:1120000},
+  {grp:'負債',acc:'預り金（源泉等）',open:280000,dr:240000,cr:310000},
+  {grp:'純資産',acc:'資本金',open:42000,dr:0,cr:0},
+  {grp:'純資産',acc:'繰越利益剰余金',open:14260000,dr:0,cr:1880000},
+  {grp:'収益',acc:'売上高',open:0,dr:0,cr:20470000},
+  {grp:'収益',acc:'雑収入',open:0,dr:0,cr:64000},
+  {grp:'費用',acc:'仕入高（売上原価）',open:0,dr:11460000,cr:0},
+  {grp:'費用',acc:'外注費（配送・制作）',open:0,dr:1240000,cr:0},
+  {grp:'費用',acc:'役員報酬',open:0,dr:1600000,cr:0},
+  {grp:'費用',acc:'給料手当',open:0,dr:1920000,cr:0},
+  {grp:'費用',acc:'地代家賃',open:0,dr:480000,cr:0},
+  {grp:'費用',acc:'水道光熱費',open:0,dr:268000,cr:0},
+  {grp:'費用',acc:'通信費',open:0,dr:96000,cr:0},
+  {grp:'費用',acc:'広告宣伝費',open:0,dr:540000,cr:0},
+  {grp:'費用',acc:'支払手数料（システム等）',open:0,dr:312000,cr:0},
+];
+// 残高方向：資産・費用は借方プラス、負債・純資産・収益は貸方プラス
+function tbBalance(r){
+  const debitSide=(r.grp==='資産'||r.grp==='費用');
+  return debitSide ? r.open + r.dr - r.cr : r.open + r.cr - r.dr;
+}
+
+// 前月比（実額ベース／プラス＝改善方向で表示判定）
+// 増減が「良いこと」かどうか：売上/粗利/利益は増=良、費用は減=良
+const MOM=[
+  {acc:'売上高',          prev:19180000,cur:20470000,year:17650000,good:'inc'},
+  {acc:'売上原価',        prev:11020000,cur:11460000,year:10180000,good:'dec'},
+  {acc:'売上総利益（粗利）',prev:8160000, cur:9010000, year:7470000, good:'inc'},
+  {acc:'販売費及び一般管理費',prev:4480000,cur:4710000,year:4120000,good:'dec'},
+  {acc:'営業利益',        prev:3680000, cur:4300000, year:3350000, good:'inc'},
+  {acc:'広告宣伝費',      prev:280000,  cur:540000,  year:240000,  good:'dec'},
+  {acc:'水道光熱費',      prev:212000,  cur:268000,  year:228000,  good:'dec'},
+];
+
+// 異常検知
+const ANOMALIES=[
+  {sev:'high',icon:'⚠️',cat:'費用急増',title:'広告宣伝費が前月比 +92.9%',
+   desc:'広告宣伝費が前月28万円→当月54万円に増加。同程度の売上増を伴っていないため、効果の確認をおすすめします。',
+   meta:['科目：広告宣伝費','前月比：+260,000円','参照：3月 ¥280,000 → 4月 ¥540,000']},
+  {sev:'high',icon:'📉',cat:'粗利率低下',title:'青果卸売（病院向け）の粗利率が 26.0% に低下',
+   desc:'青果卸売部門の粗利率が目標35%を下回っています。仕入単価の上昇、または値引きの可能性があります。',
+   meta:['部門：青果卸売（病院向け）','粗利率：26.0%（目標35%）','売上原価率：74.0%']},
+  {sev:'mid',icon:'🧾',cat:'計上漏れの疑い',title:'水道光熱費が前年同月比 +17.5%',
+   desc:'季節要因を考慮しても水道光熱費の増加幅が大きめです。二重計上や前月未計上分の混在がないか確認してください。',
+   meta:['科目：水道光熱費','前年同月比：+40,000円','当月：¥268,000']},
+  {sev:'mid',icon:'💰',cat:'残高不一致',title:'買掛金の貸方残が前月から +150,000円',
+   desc:'買掛金の増加に対し、対応する仕入計上のタイミングがずれている可能性があります。締め日のずれを確認してください。',
+   meta:['科目：買掛金','当月貸方残：¥7,210,000','差異：+150,000円']},
+  {sev:'info',icon:'📅',cat:'入力遅延',title:'4月後半の経費精算が未入力（推定12件）',
+   desc:'例年4月は経費精算が月末に集中します。未入力の精算が残っている可能性があるため、締め前に確認をおすすめします。',
+   meta:['対象：旅費交通費・消耗品費','推定：約12件','影響額（推定）：¥80,000前後']},
+];
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+const yenS=n=>(n<0?'-¥':'¥')+Math.abs(Math.round(n)).toLocaleString();
+const pct=n=>n.toFixed(1)+'%';
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function showToast(m){$('toastMsg').textContent=esc(m);$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+const SEV_LABEL={high:'要対応',mid:'注意',info:'参考'};
+const SEV_ST={high:'high',mid:'mid',info:'info'};
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','2026年4月度の月次決算'],trial:['試算表','当月の勘定科目残高（合計残高試算表）'],
+  dept:['部門別','部門ごとの売上・粗利・営業利益'],mom:['前月比','科目ごとの増減を分析します'],
+  anomaly:['異常','AIが検知した注意点を一覧表示'],ai:['AI自動決算','会計データから月次決算を自動で作ります']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = (v==='dash')
+    ? '<button class="btn" onclick="go(\'anomaly\')">🚨 異常を見る</button><button class="btn primary" onclick="go(\'ai\')">⚡ AI自動決算</button>'
+    : (v==='trial'||v==='dept'||v==='mom'||v==='anomaly')
+      ? '<button class="btn" id="topExport">📄 レポート出力</button>'
+      : '';
+  const ex=$('topExport');if(ex)ex.onclick=()=>showToast('月次レポート（PDF）を出力しました');
+  if(v==='dash')renderDash();
+  if(v==='trial')renderTB();
+  if(v==='dept')renderDept();
+  if(v==='mom')renderMom();
+  if(v==='anomaly')renderAnom();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${esc(l)}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?esc(sub)+' ・ ':''}${esc(d)}</div></div>`;}
+
+function renderDash(){
+  const opr=TOTAL.op/TOTAL.rev*100;
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','当月 売上高',yen(TOTAL.rev),'',  'up','前月比 +6.7%')}
+    ${kpi('#16b877','売上総利益',yen(TOTAL.gross),pct(TOTAL.gross/TOTAL.rev*100)+' 粗利率','up','前月比 +10.4%')}
+    ${kpi('#7c5cf0','営業利益',yen(TOTAL.op),pct(opr)+' 利益率','up','前月比 +16.8%')}
+    ${kpi('#e3941f','前月比（営業利益）','+'+yen(620000).slice(1),'',  'up','+16.8%')}`;
+
+  // trend: 売上/粗利/営業利益の6ヶ月
+  const labels=['11月','12月','1月','2月','3月','4月'];
+  const rev =[16980000,18250000,17320000,18640000,19180000,20470000];
+  const grs =[7180000, 7920000, 7240000, 8020000, 8160000, 9010000];
+  const opv =[2980000, 3520000, 2860000, 3480000, 3680000, 4300000];
+  const mx=Math.max(...rev);
+  $('trendBars').innerHTML=labels.map((m,i)=>`
+    <div style="margin-bottom:4px">
+      <div style="font-size:11.5px;color:var(--ink-2);font-weight:700;margin-bottom:5px">${m}</div>
+      <div class="bar-row" style="grid-template-columns:0 1fr 92px;margin-bottom:4px"><span></span>
+        <div class="bar-track"><div class="bar-fill" data-w="${Math.round(rev[i]/mx*100)}"></div></div><span class="mval">${yen(rev[i])}</span></div>
+      <div class="bar-row" style="grid-template-columns:0 1fr 92px;margin-bottom:4px"><span></span>
+        <div class="bar-track"><div class="bar-fill g" data-w="${Math.round(grs[i]/mx*100)}"></div></div><span class="mval">${yen(grs[i])}</span></div>
+      <div class="bar-row" style="grid-template-columns:0 1fr 92px"><span></span>
+        <div class="bar-track"><div class="bar-fill p" data-w="${Math.round(opv[i]/mx*100)}"></div></div><span class="mval">${yen(opv[i])}</span></div>
+    </div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+
+  // donut: dept revenue
+  let acc=0;const stops=DEPTC.map(d=>{const start=acc/TOTAL.rev*360;acc+=d.rev;const end=acc/TOTAL.rev*360;return `${d.color} ${start}deg ${end}deg`;});
+  $('donut').style.background=`conic-gradient(${stops.join(',')})`;
+  $('donut').innerHTML=`<div class="cn"><b class="tnum">${yen(TOTAL.rev)}</b><span>当月 売上合計</span></div>`;
+  $('donutLegend').innerHTML=DEPTC.map(d=>`<div class="lg"><span class="sw" style="background:${d.color}"></span>${esc(d.name)}<span class="lv">${pct(d.rev/TOTAL.rev*100)}</span></div>`).join('');
+
+  // activity
+  const acts=[
+    {i:'⚡',c:'#e6f8f0',t:'AI自動決算が完了（仕訳1,284件・所要8秒）',m:'今日 9:02'},
+    {i:'🚨',c:'#fdeaea',t:'広告宣伝費の急増を検知（前月比+92.9%）',m:'今日 9:02'},
+    {i:'📒',c:'#eaf1ff',t:'4月度の試算表を自動生成しました',m:'今日 9:02'},
+    {i:'🏢',c:'#efeafe',t:'部門別損益を更新（5部門）',m:'今日 9:02'},
+    {i:'📄',c:'#e6f8f0',t:'3月度 月次レポートを出力（PDF）',m:'昨日 17:40'},
+  ];
+  $('dashAlerts')&&renderDashAlerts();
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+}
+function renderDashAlerts(){
+  $('dashAlerts').innerHTML=ANOMALIES.slice(0,3).map(a=>`
+    <div class="alert ${SEV_ST[a.sev]}">
+      <div class="ico">${a.icon}</div>
+      <div class="body">
+        <div class="ttl">${esc(a.title)}<span class="st ${SEV_ST[a.sev]}">${SEV_LABEL[a.sev]}</span></div>
+        <div class="desc">${esc(a.desc)}</div>
+      </div>
+    </div>`).join('');
+}
+
+/* ============ TRIAL BALANCE ============ */
+let tbFilter='all';
+function renderTBChips(){
+  const opts=[['all','すべて'],['資産','資産'],['負債','負債'],['純資産','純資産'],['収益','収益'],['費用','費用']];
+  $('tbChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===tbFilter?'on':''}" data-s="${esc(o[0])}">${esc(o[1])}</button>`).join('');
+  $('tbChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{tbFilter=c.dataset.s;renderTBChips();renderTB();});
+}
+function renderTB(){
+  const q=($('tbQ').value||'').toLowerCase();
+  const groups=['資産','負債','純資産','収益','費用'];
+  let html='';let totOpen=0,totDr=0,totCr=0,totBal=0;
+  groups.forEach(g=>{
+    if(tbFilter!=='all'&&tbFilter!==g)return;
+    const rows=TB.filter(r=>r.grp===g).filter(r=>!q||r.acc.toLowerCase().includes(q));
+    if(!rows.length)return;
+    let so=0,sd=0,sc=0,sb=0;
+    rows.forEach(r=>{
+      const bal=tbBalance(r);so+=r.open;sd+=r.dr;sc+=r.cr;sb+=bal;
+      totOpen+=r.open;totDr+=r.dr;totCr+=r.cr;totBal+=bal;
+      html+=`<tr>
+        <td><span class="st info" style="background:var(--soft);color:var(--ink-2)">${esc(r.grp)}</span></td>
+        <td><b>${esc(r.acc)}</b></td>
+        <td class="r tnum" style="color:var(--ink-2)">${r.open?yen(r.open):'—'}</td>
+        <td class="r tnum">${r.dr?yen(r.dr):'—'}</td>
+        <td class="r tnum">${r.cr?yen(r.cr):'—'}</td>
+        <td class="r tnum"><b>${yen(bal)}</b></td></tr>`;
+    });
+    html+=`<tr class="subtotal"><td></td><td>${esc(g)} 小計</td>
+      <td class="r tnum">${yen(so)}</td><td class="r tnum">${yen(sd)}</td><td class="r tnum">${yen(sc)}</td><td class="r tnum">${yen(sb)}</td></tr>`;
+  });
+  if(tbFilter==='all'){
+    html+=`<tr class="grand"><td></td><td>合計</td>
+      <td class="r tnum">${yen(totOpen)}</td><td class="r tnum">${yen(totDr)}</td><td class="r tnum">${yen(totCr)}</td><td class="r tnum">${yen(totBal)}</td></tr>`;
+  }
+  $('tbRows').innerHTML=html||'<tr><td colspan="6" class="empty-cell">該当する勘定科目がありません</td></tr>';
+}
+$('tbQ').addEventListener('input',renderTB);
+
+/* ============ DEPARTMENT ============ */
+function renderDept(){
+  const best=DEPTC.reduce((a,b)=>b.gpr>a.gpr?b:a);
+  $('deptKpis').innerHTML=`
+    ${kpi('#2f6df0','部門数',DEPTC.length+'<small>部門</small>','','up','全部門 黒字')}
+    ${kpi('#16b877','最高 粗利率',pct(best.gpr),best.name,'up','好調')}
+    ${kpi('#7c5cf0','全社 営業利益',yen(TOTAL.op),'','up','前月比 +16.8%')}
+    ${kpi('#e3941f','全社 粗利率',pct(TOTAL.gross/TOTAL.rev*100),'','warn','目標 45%')}`;
+
+  const mx=Math.max(...DEPTC.map(d=>d.rev));
+  const sorted=[...DEPTC].sort((a,b)=>b.rev-a.rev);
+  $('deptBars').innerHTML=sorted.map(d=>`
+    <div class="dbar-row">
+      <div class="dh"><b>${esc(d.name)}</b><span><span class="dv">${yen(d.rev)}</span><span class="dr">粗利率 ${pct(d.gpr)}</span></span></div>
+      <div class="bar-track" style="height:13px"><div class="bar-fill" data-w="${Math.round(d.rev/mx*100)}" style="background:linear-gradient(90deg,${d.color},${d.color}aa)"></div></div>
+    </div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#deptBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+
+  $('deptRows').innerHTML=sorted.map(d=>`<tr>
+    <td><b>${esc(d.name)}</b></td>
+    <td class="r tnum">${yen(d.rev)}</td>
+    <td class="r tnum" style="color:var(--ink-2)">${yen(d.cogs)}</td>
+    <td class="r tnum">${yen(d.gross)}</td>
+    <td class="r tnum" style="color:var(--ink-2)">${yen(d.sga)}</td>
+    <td class="r tnum"><b>${yen(d.op)}</b></td>
+    <td class="r"><span class="st ${d.gpr>=40?'ok':d.gpr>=30?'mid':'high'}">${pct(d.gpr)}</span></td></tr>`).join('')
+    + `<tr class="grand"><td>全社合計</td><td class="r tnum">${yen(TOTAL.rev)}</td><td class="r tnum">${yen(TOTAL.cogs)}</td>
+       <td class="r tnum">${yen(TOTAL.gross)}</td><td class="r tnum">${yen(TOTAL.sga)}</td><td class="r tnum">${yen(TOTAL.op)}</td>
+       <td class="r">${pct(TOTAL.gross/TOTAL.rev*100)}</td></tr>`;
+}
+
+/* ============ MONTH OVER MONTH ============ */
+let momMode='prev';
+function renderMomSeg(){
+  $('momSeg').querySelectorAll('button').forEach(b=>{
+    b.classList.toggle('on',b.dataset.m===momMode);
+    b.onclick=()=>{momMode=b.dataset.m;renderMomSeg();renderMom();};
+  });
+}
+function renderMom(){
+  const isPrev=momMode==='prev';
+  $('momHA').textContent=isPrev?'前月（3月）':'前年同月（4月）';
+  $('momHB').textContent='当月（4月）';
+  $('momRows').innerHTML=MOM.map(r=>{
+    const base=isPrev?r.prev:r.year;
+    const diff=r.cur-base;
+    const rate=base?diff/base*100:0;
+    // 良い方向か：good='inc'なら増加が良い、'dec'なら減少が良い
+    const improved=(r.good==='inc')?diff>=0:diff<=0;
+    const cls=improved?'up':'down';
+    const arrow=diff>0?'▲':(diff<0?'▼':'—');
+    const trend=improved?'改善':'悪化';
+    return `<tr>
+      <td><b>${esc(r.acc)}</b></td>
+      <td class="r tnum" style="color:var(--ink-2)">${yen(base)}</td>
+      <td class="r tnum"><b>${yen(r.cur)}</b></td>
+      <td class="r"><span class="posneg ${cls}">${yenS(diff)}</span></td>
+      <td class="r"><span class="posneg ${cls}">${arrow} ${Math.abs(rate).toFixed(1)}%</span></td>
+      <td><span class="st ${improved?'ok':'high'}">${trend}</span></td></tr>`;
+  }).join('');
+}
+
+/* ============ ANOMALY ============ */
+let anomFilter='all';
+function renderAnomChips(){
+  const opts=[['all','すべて'],['high','要対応'],['mid','注意'],['info','参考']];
+  $('anomChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===anomFilter?'on':''}" data-s="${o[0]}">${esc(o[1])}</button>`).join('');
+  $('anomChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{anomFilter=c.dataset.s;renderAnomChips();renderAnomList();});
+}
+function renderAnom(){
+  const high=ANOMALIES.filter(a=>a.sev==='high').length;
+  const mid=ANOMALIES.filter(a=>a.sev==='mid').length;
+  $('anomKpis').innerHTML=`
+    ${kpi('#e24a4a','要対応',high+'<small>件</small>','','down','至急確認')}
+    ${kpi('#e3941f','注意',mid+'<small>件</small>','','warn','確認推奨')}
+    ${kpi('#2f6df0','検知合計',ANOMALIES.length+'<small>件</small>','','up','AI自動検知')}
+    ${kpi('#16b877','チェック科目','20<small>科目</small>','仕訳1,284件','up','全件照合済')}`;
+  renderAnomChips();renderAnomList();
+}
+function renderAnomList(){
+  const rows=ANOMALIES.filter(a=>anomFilter==='all'||a.sev===anomFilter);
+  $('anomList').innerHTML=rows.length?rows.map((a,idx)=>`
+    <div class="alert ${SEV_ST[a.sev]}">
+      <div class="ico">${a.icon}</div>
+      <div class="body">
+        <div class="ttl">${esc(a.title)}<span class="st ${SEV_ST[a.sev]}">${SEV_LABEL[a.sev]}</span>
+          <span class="st info" style="background:var(--soft);color:var(--ink-2)">${esc(a.cat)}</span></div>
+        <div class="desc">${esc(a.desc)}</div>
+        <div class="meta">${a.meta.map(m=>`<span>・${esc(m)}</span>`).join('')}</div>
+      </div>
+      <button class="btn act-btn" data-i="${ANOMALIES.indexOf(a)}">✓ 確認済にする</button>
+    </div>`).join('')
+    :'<div class="empty-cell">該当する異常はありません 🎉</div>';
+  $('anomList').querySelectorAll('.act-btn').forEach(b=>b.onclick=()=>{
+    const i=+b.dataset.i;const item=ANOMALIES[i];
+    showToast('「'+item.title+'」を確認済にしました');
+    b.textContent='✓ 確認済';b.disabled=true;b.style.opacity='.55';
+  });
+}
+
+/* ============ AI AUTO CLOSING ============ */
+const AI_STEPS=[
+  {t:'会計ソフトから仕訳データを読み込み',d:'1,284件'},
+  {t:'勘定科目ごとに自動集計',d:'20科目'},
+  {t:'合計残高試算表を生成',d:''},
+  {t:'部門別に損益を按分・集計',d:'5部門'},
+  {t:'前月・前年と自動で突合',d:''},
+  {t:'AIが異常値を抽出・説明',d:'5件検知'},
+];
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 処理中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  $('aiResult').classList.remove('show');
+  // before/after timer
+  $('baAfterT').textContent='0秒';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent=Math.min(s,8)+'秒';},150);
+  // steps
+  $('stepItems').innerHTML=AI_STEPS.map((st,i)=>`
+    <div class="step" data-i="${i}"><span class="ck">${i+1}</span><span style="flex:1">${esc(st.t)}</span><span class="sm">${esc(st.d)}</span></div>`).join('');
+  $('aiSteps').classList.add('show');
+  const steps=[...$('stepItems').querySelectorAll('.step')];
+  for(let i=0;i<steps.length;i++){
+    steps[i].classList.add('run');
+    await new Promise(r=>setTimeout(r,520));
+    steps[i].classList.remove('run');steps[i].classList.add('in');
+    steps[i].querySelector('.ck').textContent='✓';
+  }
+  clearInterval(t);$('baAfterT').textContent='8秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // result cards
+  $('resultCards').innerHTML=`
+    <div class="rcard"><div class="rl">当月 売上高</div><div class="rv tnum">${yen(TOTAL.rev)}</div><div class="rd" style="color:var(--green)">前月比 +6.7%</div></div>
+    <div class="rcard"><div class="rl">営業利益</div><div class="rv tnum">${yen(TOTAL.op)}</div><div class="rd" style="color:var(--green)">前月比 +16.8%</div></div>
+    <div class="rcard"><div class="rl">AI検知 異常</div><div class="rv tnum">${ANOMALIES.length}<span style="font-size:13px"> 件</span></div><div class="rd" style="color:var(--red)">要対応 ${ANOMALIES.filter(a=>a.sev==='high').length}件</div></div>`;
+  $('aiResult').classList.add('show');
+  btn.disabled=false;btn.textContent='⚡ もう一度実行';
+  showToast('月次決算が完成しました（所要8秒・異常5件を検知）');
+});
+$('aiReport').addEventListener('click',()=>showToast('月次レポート（PDF）を出力しました'));
+
+/* ============ INIT ============ */
+$('navAnom').textContent=ANOMALIES.filter(a=>a.sev!=='info').length;
+renderTBChips();renderMomSeg();
+renderDash();
+</script>
+</body>
+</html>

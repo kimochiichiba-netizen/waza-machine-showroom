@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜配送マシン（配送追跡通知システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.nav a .badge.g{background:var(--green)}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn:disabled{opacity:.6;cursor:default}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-fill.g{background:linear-gradient(90deg,var(--green),#37e29a)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut */
+.donut-wrap{display:flex;align-items:center;gap:20px}
+.donut{width:128px;height:128px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;position:relative}
+.donut::after{content:"";position:absolute;width:84px;height:84px;border-radius:50%;background:var(--card)}
+.donut .dc{position:relative;z-index:1;text-align:center}
+.donut .dc b{font-size:24px;font-weight:900;display:block;line-height:1}
+.donut .dc span{font-size:10.5px;color:var(--ink-3);font-weight:700}
+.legend{flex:1;display:flex;flex-direction:column;gap:9px;font-size:12.5px}
+.legend .lr{display:flex;align-items:center;gap:9px}
+.legend .lr .sw{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.legend .lr .ln{color:var(--ink-2);font-weight:600}
+.legend .lr .lv{margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.done{background:var(--green-soft);color:var(--green)}
+.st.transit{background:var(--brand-soft);color:var(--brand)}
+.st.prep{background:var(--soft);color:var(--ink-3)}
+.st.delay{background:var(--red-soft);color:var(--red)}
+.st.soon{background:var(--amber-soft);color:var(--amber)}
+
+/* track map */
+.track-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;align-items:start}
+@media(max-width:980px){.track-grid{grid-template-columns:1fr}}
+.map{position:relative;background:linear-gradient(160deg,#eef3fb,#e6eefa);border:1px solid var(--line);border-radius:14px;height:430px;overflow:hidden;box-shadow:var(--shadow)}
+.map .grid-bg{position:absolute;inset:0;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:38px 38px;opacity:.5}
+.map .road{position:absolute;height:7px;background:#c9d4e6;border-radius:99px;opacity:.85}
+.map svg{position:absolute;inset:0;width:100%;height:100%}
+.map .pin{position:absolute;transform:translate(-50%,-100%);font-size:22px;cursor:pointer;transition:transform .15s;filter:drop-shadow(0 3px 4px rgba(0,0,0,.18))}
+.map .pin:hover{transform:translate(-50%,-100%) scale(1.18)}
+.map .pin.truck{font-size:26px;transition:left 1.4s cubic-bezier(.4,.1,.3,1),top 1.4s cubic-bezier(.4,.1,.3,1);z-index:5;animation:bob 1.4s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translate(-50%,-100%)}50%{transform:translate(-50%,-108%)}}
+.map .plabel{position:absolute;transform:translate(-50%,4px);background:var(--card);border:1px solid var(--line-2);border-radius:7px;padding:2px 8px;font-size:10.5px;font-weight:700;white-space:nowrap;box-shadow:var(--shadow);pointer-events:none}
+.map .legend-fl{position:absolute;left:12px;bottom:12px;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:11px;display:flex;flex-direction:column;gap:5px;backdrop-filter:blur(4px)}
+.map .legend-fl .lr{display:flex;align-items:center;gap:7px;font-weight:700;color:var(--ink-2)}
+
+/* timeline */
+.tl{position:relative;padding-left:6px}
+.tl .step{position:relative;padding:0 0 18px 28px;border-left:2px solid var(--line);margin-left:8px}
+.tl .step:last-child{border-left-color:transparent;padding-bottom:0}
+.tl .step .dot{position:absolute;left:-9px;top:1px;width:16px;height:16px;border-radius:50%;background:var(--card);border:2px solid var(--line-2);display:grid;place-items:center;font-size:9px}
+.tl .step.done .dot{background:var(--green);border-color:var(--green);color:#fff}
+.tl .step.now .dot{background:var(--brand);border-color:var(--brand);color:#fff;box-shadow:0 0 0 4px var(--brand-soft)}
+.tl .step .tt{font-weight:700;font-size:13px}
+.tl .step .tm{font-size:11px;color:var(--ink-3);margin-top:1px}
+.tl .step.pending .tt{color:var(--ink-3)}
+.deliv-card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.deliv-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid var(--line);cursor:pointer;transition:background .12s;font-size:13px}
+.deliv-row:first-child{border-top:0}
+.deliv-row:hover{background:var(--soft)}
+.deliv-row.on{background:var(--brand-soft)}
+.deliv-row .em{font-size:20px;width:26px;text-align:center}
+.deliv-row .nm b{font-weight:700}
+.deliv-row .nm span{display:block;font-size:11px;color:var(--ink-3)}
+.deliv-row .eta{margin-left:auto;text-align:right;font-size:11px;color:var(--ink-2)}
+.deliv-row .eta b{font-size:13px;color:var(--ink)}
+
+/* notify settings */
+.set-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+@media(max-width:980px){.set-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:90px;line-height:1.7}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.toggle-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.toggle-row:last-child{border-bottom:0}
+.toggle-row .tx{flex:1}
+.toggle-row .tx b{font-size:13px;font-weight:700}
+.toggle-row .tx span{display:block;font-size:11px;color:var(--ink-3)}
+.sw-toggle{width:42px;height:24px;border-radius:99px;background:var(--line-2);position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
+.sw-toggle::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.sw-toggle.on{background:var(--green)}
+.sw-toggle.on::after{left:21px}
+.tplchips{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+.tplchips .chip{font-size:11.5px;padding:6px 11px}
+.aihint{font-size:11px;color:var(--green);margin-top:6px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* phone preview */
+.phone{margin:0 auto;width:280px;background:#0f1830;border-radius:30px;padding:12px;box-shadow:var(--shadow-lg)}
+.phone .scr{background:#e9edf4;border-radius:20px;min-height:430px;padding:14px 12px;display:flex;flex-direction:column;gap:10px}
+.phone .pbar{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--ink-2);font-weight:700;padding:2px 4px}
+.phone .pbar .av{width:24px;height:24px;border-radius:7px;background:var(--green);display:grid;place-items:center;color:#fff;font-size:13px}
+.bubble{background:#fff;border-radius:4px 14px 14px 14px;padding:11px 13px;font-size:12.5px;box-shadow:0 1px 2px rgba(0,0,0,.06);max-width:92%;line-height:1.65;white-space:pre-wrap;word-break:break-word}
+.bubble .bt{font-size:13px}
+.bubble .bm{font-size:10px;color:var(--ink-3);text-align:right;margin-top:4px}
+.bubble.line::before{content:"LINE 通知";display:block;font-size:9.5px;font-weight:800;color:var(--green);margin-bottom:5px;letter-spacing:.05em}
+.bubble.sms::before{content:"SMS 通知";display:block;font-size:9.5px;font-weight:800;color:var(--brand);margin-bottom:5px;letter-spacing:.05em}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900}
+.gen-item .ch{width:20px;height:20px;border-radius:50%;background:var(--brand);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.pred-card{background:linear-gradient(180deg,var(--brand-soft),#f5f9ff);border:1px solid #c9ddff;border-radius:12px;padding:14px 16px;margin-bottom:12px;display:flex;gap:13px;align-items:flex-start}
+.pred-card .pi{font-size:22px}
+.pred-card .pt{font-weight:800;font-size:13.5px;margin-bottom:2px}
+.pred-card .pm{font-size:12px;color:var(--ink-2)}
+.pred-card .pe{margin-left:auto;text-align:right;flex-shrink:0}
+.pred-card .pe b{font-family:'Orbitron';font-size:15px;color:var(--brand-dk)}
+.pred-card .pe span{display:block;font-size:10px;color:var(--ink-3);font-weight:700}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">配送マシン<small>技マシン｜配送追跡通知</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">🚚</span>配送一覧</a>
+      <a data-v="map"><span class="i">🗺️</span>追跡マップ</a>
+      <a data-v="notify"><span class="i">🔔</span>通知設定</a>
+      <a data-v="cust"><span class="i">🏥</span>顧客</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI予測・自動通知<span class="badge g" id="navAi">AI</span></a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="./">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。数値・配送先はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">本日の配送状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>曜日別 配送件数（今週）</h3><span class="more">過去7日</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>本日の配送ステータス内訳</h3></div>
+            <div class="pb"><div class="donut-wrap"><div class="donut" id="donut"><div class="dc"><b id="donutPct">0%</b><span>定時率</span></div></div><div class="legend" id="donutLegend"></div></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>進行中の配送（リアルタイム）</h3><span class="more" onclick="go('map')">マップで見る</span></div>
+            <div class="pb" style="padding:0"><div id="dashLive"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="伝票番号・配送先・ドライバーで検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>伝票番号</th><th>配送先</th><th>区分</th><th>ドライバー</th><th>予定時刻</th><th class="r">到着予測</th><th>状況</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- TRACK MAP -->
+      <section class="view" id="v-map">
+        <div class="track-grid">
+          <div>
+            <div class="map" id="map">
+              <div class="grid-bg"></div>
+              <div class="road" style="left:8%;top:50%;width:84%"></div>
+              <div class="road" style="left:30%;top:18%;width:7px;height:64%"></div>
+              <div class="road" style="left:64%;top:24%;width:7px;height:52%"></div>
+              <svg id="mapPath"></svg>
+              <div class="legend-fl">
+                <div class="lr">🏢 出発（気持ち市場 物流センター）</div>
+                <div class="lr">🚚 配送車（現在地）</div>
+                <div class="lr">📍 配送先</div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="panel" style="margin-bottom:14px">
+              <div class="ph"><h3>配送ルート ＃<span id="routeNo">R-01</span></h3><span class="st transit" style="margin-left:auto" id="routeStatus">配送中</span></div>
+              <div class="pb"><div class="tl" id="timeline"></div></div>
+            </div>
+            <div class="deliv-card">
+              <div style="padding:12px 16px;font-size:12px;font-weight:800;color:var(--ink-2);background:var(--soft)">本日の配送（クリックで追跡）</div>
+              <div id="delivRows"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- NOTIFY SETTINGS -->
+      <section class="view" id="v-notify">
+        <div class="set-grid">
+          <div class="formcard">
+            <div style="font-size:14px;font-weight:800;margin-bottom:14px">通知タイミング</div>
+            <div class="toggle-row"><div class="tx"><b>出発時に通知</b><span>配送車が物流センターを出発したとき</span></div><div class="sw-toggle on" data-t="depart"></div></div>
+            <div class="toggle-row"><div class="tx"><b>到着30分前に通知</b><span>AI予測でお届け30分前に自動送信</span></div><div class="sw-toggle on" data-t="soon"></div></div>
+            <div class="toggle-row"><div class="tx"><b>遅延時に通知</b><span>渋滞等で予測が遅れたとき自動でお詫び連絡</span></div><div class="sw-toggle on" data-t="delay"></div></div>
+            <div class="toggle-row"><div class="tx"><b>配達完了の通知</b><span>お届け完了をすぐにお知らせ</span></div><div class="sw-toggle on" data-t="done"></div></div>
+            <div style="font-size:14px;font-weight:800;margin:18px 0 12px">送信チャネル・文面</div>
+            <div class="fg"><label>送信チャネル</label>
+              <select id="nChannel"><option>LINE 公式アカウント</option><option>SMS（ショートメール）</option><option>メール</option></select></div>
+            <div class="fg"><label>通知の文面（{差込}は自動で置換）</label>
+              <textarea id="nBody">いつもお世話になっております。気持ち市場です。
+本日{時刻}頃に「{品名}」をお届け予定です。
+ドライバー：{担当}／伝票：{伝票}
+ご不在の場合はこのメッセージにご返信ください。</textarea>
+              <div class="aihint" id="nAiHint">✨ AIが施設向けの丁寧な文面に整えました</div>
+            </div>
+            <div class="tplchips">
+              <button class="chip" data-tpl="medical">🏥 医療・介護向け</button>
+              <button class="chip" data-tpl="veg">🥬 青果・飲食向け</button>
+              <button class="chip" data-tpl="simple">✂️ シンプル</button>
+            </div>
+            <div class="linkrow" style="margin-top:16px">
+              <button class="btn primary" id="nSave" style="flex:1;justify-content:center">⚡ AIで整えて保存</button>
+              <button class="btn" id="nTest">テスト送信</button>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:800;color:var(--ink-2);margin-bottom:10px;text-align:center">📱 お客様の画面プレビュー（リアルタイム）</div>
+            <div class="phone">
+              <div class="scr">
+                <div class="pbar"><div class="av">気</div>気持ち市場 配送通知</div>
+                <div class="bubble" id="prevBubble"><div class="bt" id="prevBody"></div><div class="bm">既読</div></div>
+                <div class="bubble line" style="align-self:flex-end;background:#9ee6b8;border-radius:14px 4px 14px 14px"><div class="bt" style="font-size:12px">承知しました。よろしくお願いします🙏</div><div class="bm">既読</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CUSTOMERS -->
+      <section class="view" id="v-cust">
+        <table class="tbl">
+          <thead><tr><th>配送先</th><th>区分</th><th>住所</th><th class="r">今月配送</th><th>通知</th><th>担当</th></tr></thead>
+          <tbody id="custRows"></tbody>
+        </table>
+      </section>
+
+      <!-- AI PREDICT / NOTIFY -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">配送状況からAIが到着時刻を予測 → 自動で通知</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">進行中の配送 <b>6件</b> について、GPSと交通状況からAIが到着時刻を予測し、お客様へ自動通知します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで予測・一括通知する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">1時間20分</div>
+              <ul>
+                <li>📞 配送先ごとに電話で到着時刻を連絡</li>
+                <li>🗒️ ドライバーへ無線で位置確認</li>
+                <li>⏰ 遅延のたびに謝罪の電話・折り返し対応</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🛰️ GPS×交通状況で到着時刻を自動予測</li>
+                <li>🔔 30分前・遅延・完了を自動でLINE通知</li>
+                <li>📉 問合せ電話が激減、現場の手が空く</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">📡 AI予測と送信した通知</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const CUSTOMERS=[
+  {name:'大分中央クリニック',type:'医療',addr:'大分市中央町2-1',staff:'佐藤',ch:'LINE'},
+  {name:'さくら総合病院',type:'医療',addr:'大分市古国府5-8',staff:'佐藤',ch:'LINE'},
+  {name:'つくし介護センター',type:'介護',addr:'大分市明野東3-2',staff:'田中',ch:'SMS'},
+  {name:'みらい歯科医院',type:'医療',addr:'大分市大手町1-4',staff:'田中',ch:'LINE'},
+  {name:'のぞみ訪問看護ステーション',type:'介護',addr:'大分市萩原4-6',staff:'田中',ch:'LINE'},
+  {name:'豊後おおいた青果',type:'青果卸',addr:'大分市公設市場内',staff:'鈴木',ch:'LINE'},
+  {name:'大分海鮮市場 居酒屋',type:'飲食',addr:'大分市府内町3-7',staff:'鈴木',ch:'SMS'},
+  {name:'都町ベーカリーカフェ',type:'飲食',addr:'大分市都町2-9',staff:'鈴木',ch:'LINE'},
+  {name:'別府温泉ホテル組合',type:'宿泊',addr:'別府市北浜1-2',staff:'高橋',ch:'メール'},
+  {name:'グループホームあおぞら',type:'介護',addr:'大分市三佐5-1',staff:'高橋',ch:'SMS'},
+];
+const GOODS=['青果定期便（Lボックス）','業務用野菜セット','カット野菜パック','鮮魚セット','給食用食材一式','介護食ゼリー','日配品セット','果物詰め合わせ'];
+const DRIVERS=['川宿田','安部','後藤','志村'];
+const STLABEL={done:'配達完了',transit:'配送中',prep:'準備中',delay:'遅延',soon:'まもなく到着'};
+const TODAY=new Date();
+
+/* deterministic RNG */
+let SEED=4071;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+/* seed deliveries */
+let deliveries=[];
+(function seed(){
+  const statuses=['done','done','transit','soon','prep','transit','delay','done','transit','prep','soon','transit'];
+  for(let i=0;i<24;i++){
+    const c=pick(CUSTOMERS);
+    const stt=pick(statuses);
+    const baseH=8+Math.floor(rnd()*9);const baseM=Math.floor(rnd()*4)*15;
+    const plan=baseH+':'+String(baseM).padStart(2,'0');
+    let etaMin=baseH*60+baseM;
+    if(stt==='delay')etaMin+=18+Math.floor(rnd()*22);
+    else if(stt!=='done')etaMin+=Math.floor(rnd()*8)-4;
+    const eta=Math.floor(etaMin/60)+':'+String(((etaMin%60)+60)%60).padStart(2,'0');
+    deliveries.push({no:'TRK-'+(50230+i),cust:c.name,type:c.type,goods:pick(GOODS),driver:pick(DRIVERS),plan,eta,status:stt,ch:c.ch});
+  }
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]}</span>`;}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+const typeEmoji=t=>({医療:'🏥',介護:'🧑‍🦽',青果卸:'🥬',飲食:'🍴',宿泊:'🏨'}[t]||'🏢');
+const stEmoji=s=>({done:'✅',transit:'🚚',prep:'📦',delay:'⚠️',soon:'🔔'}[s]||'🚚');
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','本日の配送状況'],list:['配送一覧','本日の配送伝票を管理します'],
+  map:['追跡マップ','配送車の現在地と到着予測をリアルタイム表示'],notify:['通知設定','お客様への自動通知を設定します'],
+  cust:['顧客','配送先ごとの状況'],ai:['AI予測・自動通知','配送状況から到着時刻を予測し自動通知']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn" onclick="go(\'map\')">🗺️ マップ表示</button><button class="btn primary" onclick="go(\'ai\')">⚡ AI一括通知</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'map\')">🗺️ 追跡マップ</button><button class="btn primary" onclick="go(\'ai\')">⚡ AI予測・通知</button>'
+    : v==='map'?'<button class="btn primary" onclick="go(\'ai\')">⚡ AIで全件通知</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='map')renderMap();
+  if(v==='cust')renderCust();
+  if(v==='notify')renderPreview();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const total=deliveries.length;
+  const done=deliveries.filter(d=>d.status==='done').length;
+  const delay=deliveries.filter(d=>d.status==='delay').length;
+  const ontime=Math.round((total-delay)/total*100);
+  const notified=68+done; // demo number
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','本日の配送数',total+'<small>件</small>','進行中 '+deliveries.filter(d=>d.status!=='done').length+'件','up','前日比 +4件')}
+    ${kpi('#16b877','定時到着率',ontime+'<small>%</small>','','up','目標95%を達成')}
+    ${kpi('#0ea5b7','通知送信数',notified+'<small>件</small>','自動送信','up','LINE中心')}
+    ${kpi('#e3941f','問合せ削減',(72)+'<small>%</small>','「今どこ？」電話','up','導入前比')}`;
+  // weekday bars (last 7 days)
+  const wd=['日','月','火','水','木','金','土'];
+  const days=[];for(let k=6;k>=0;k--){const d=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-k);days.push(d);}
+  const counts=days.map((d,i)=>14+Math.floor(rndStable(d.getDate())*16));
+  counts[counts.length-1]=total;
+  const mx=Math.max(...counts,1);
+  $('trendBars').innerHTML=days.map((d,i)=>`
+    <div class="bar-row"><span class="mlabel">${wd[d.getDay()]}</span>
+      <div class="bar-track"><div class="bar-fill ${i===days.length-1?'g':''}" style="width:0" data-w="${Math.round(counts[i]/mx*100)}"></div></div>
+      <span class="mval">${counts[i]}件</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // donut
+  const seg=[['配達完了',done,'#16b877'],['配送中',deliveries.filter(d=>d.status==='transit'||d.status==='soon').length,'#2f6df0'],['準備中',deliveries.filter(d=>d.status==='prep').length,'#8a94a6'],['遅延',delay,'#e24a4a']];
+  let acc=0;const stops=seg.map(s=>{const from=acc/total*360;acc+=s[1];const to=acc/total*360;return `${s[2]} ${from}deg ${to}deg`;}).join(',');
+  $('donut').style.background=`conic-gradient(${stops})`;
+  $('donutPct').textContent=ontime+'%';
+  $('donutLegend').innerHTML=seg.map(s=>`<div class="lr"><span class="sw" style="background:${s[2]}"></span><span class="ln">${s[0]}</span><span class="lv">${s[1]}件</span></div>`).join('');
+  // live deliveries
+  const live=deliveries.filter(d=>d.status==='transit'||d.status==='soon'||d.status==='delay').slice(0,5);
+  $('dashLive').innerHTML=live.map(d=>`<div class="deliv-row" onclick="go('map')">
+    <span class="em">${stEmoji(d.status)}</span>
+    <div class="nm"><b>${esc(d.cust)}</b><span>${esc(d.goods)}・${esc(d.driver)}</span></div>
+    <div class="eta">${stBadge(d.status)}<br><b>${esc(d.eta)} 着</b></div></div>`).join('')
+    || '<div class="empty-cell">進行中の配送はありません</div>';
+  // activity
+  const acts=[
+    {i:'🔔',c:'#e6f8f0',t:'大分中央クリニック へ「まもなく到着」をLINE自動通知',m:'たった今'},
+    {i:'✅',c:'#e6f8f0',t:'みらい歯科医院 への配達が完了しました',m:'6分前'},
+    {i:'⚠️',c:'#fdeaea',t:'つくし介護センター 行きが渋滞で18分遅延 → お詫び自動送信',m:'14分前'},
+    {i:'🚚',c:'#eaf1ff',t:'配送ルート R-02 が物流センターを出発',m:'今日 8:40'},
+    {i:'⚡',c:'#e6f8f0',t:'AI予測で本日 6件の到着時刻を一括更新',m:'今日 8:12'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${a.t}</div><div class="am">${a.m}</div></div></div>`).join('');
+}
+function rndStable(seed){let x=Math.sin(seed*97.13)*10000;return x-Math.floor(x);}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ LIST ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['transit','配送中'],['soon','まもなく到着'],['prep','準備中'],['delay','遅延'],['done','配達完了']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  const order={delay:0,soon:1,transit:2,prep:3,done:4};
+  let rows=deliveries.filter(d=>filterStatus==='all'||d.status===filterStatus)
+    .filter(d=>!q||(d.cust+d.goods+d.no+d.driver).toLowerCase().includes(q))
+    .sort((a,b)=>order[a.status]-order[b.status]);
+  $('listRows').innerHTML=rows.length?rows.map(d=>`<tr onclick="trackFromList('${esc(d.no)}')">
+    <td class="mono" style="font-size:12px">${esc(d.no)}</td><td><b>${esc(d.cust)}</b><br><span style="font-size:11px;color:var(--ink-3)">${esc(d.goods)}</span></td>
+    <td><span class="st prep" style="background:var(--soft);color:var(--ink-2)">${typeEmoji(d.type)} ${esc(d.type)}</span></td>
+    <td style="color:var(--ink-2)">${esc(d.driver)}</td><td style="color:var(--ink-2)">${esc(d.plan)}</td>
+    <td class="r tnum"><b>${esc(d.eta)}</b></td><td>${stBadge(d.status)}</td></tr>`).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する配送がありません</td></tr>';
+}
+window.trackFromList=no=>{const d=deliveries.find(x=>x.no===no);if(d){mapSel=deliveries.filter(x=>x.status!=='done'&&x.status!=='prep').findIndex(x=>x.no===no);if(mapSel<0)mapSel=0;go('map');}};
+
+/* ============ TRACK MAP ============ */
+let mapSel=0;
+function mapList(){return deliveries.filter(d=>d.status==='transit'||d.status==='soon'||d.status==='delay');}
+function renderMap(){
+  const list=mapList();
+  if(!list.length){$('delivRows').innerHTML='<div class="empty-cell">進行中の配送はありません</div>';return;}
+  if(mapSel>=list.length)mapSel=0;
+  $('delivRows').innerHTML=list.map((d,i)=>`<div class="deliv-row ${i===mapSel?'on':''}" onclick="selectDeliv(${i})">
+    <span class="em">${stEmoji(d.status)}</span>
+    <div class="nm"><b>${esc(d.cust)}</b><span>${esc(d.no)}・${esc(d.goods)}</span></div>
+    <div class="eta">${stBadge(d.status)}<br><b>${esc(d.eta)} 着</b></div></div>`).join('');
+  drawRoute(list[mapSel]);
+}
+window.selectDeliv=i=>{mapSel=i;renderMap();};
+function drawRoute(d){
+  // positions (percent)
+  const start={x:8,y:50};
+  const targets=[{x:30,y:18},{x:64,y:24},{x:92,y:50},{x:64,y:76},{x:30,y:82},{x:48,y:50}];
+  const ti=mapList().indexOf(d)%targets.length;const end=targets[ti<0?0:ti];
+  // truck progress depends on status
+  const prog=d.status==='soon'?0.82:d.status==='delay'?0.55:0.45;
+  const tx=start.x+(end.x-start.x)*prog, ty=start.y+(end.y-start.y)*prog;
+  const map=$('map');
+  // clear dynamic
+  map.querySelectorAll('.pin,.plabel').forEach(e=>e.remove());
+  const svg=$('mapPath');
+  svg.innerHTML=`<line x1="${start.x}%" y1="${start.y}%" x2="${end.x}%" y2="${end.y}%" stroke="#b9c6df" stroke-width="3" stroke-dasharray="2 7" stroke-linecap="round"/>
+    <line x1="${start.x}%" y1="${start.y}%" x2="${tx}%" y2="${ty}%" stroke="#2f6df0" stroke-width="3.5" stroke-linecap="round"/>`;
+  addPin(start.x,start.y,'🏢','物流センター');
+  addPin(end.x,end.y,'📍',d.cust);
+  const truck=document.createElement('div');truck.className='pin truck';truck.textContent=d.status==='delay'?'🚛':'🚚';
+  truck.style.left=tx+'%';truck.style.top=ty+'%';map.appendChild(truck);
+  // timeline
+  $('routeNo').textContent='R-'+String(mapSel+1).padStart(2,'0');
+  const rs=$('routeStatus');rs.className='st '+d.status;rs.textContent=STLABEL[d.status];
+  const steps=[
+    {t:'受注・積込み完了',m:'物流センター',state:'done'},
+    {t:'出発',m:'8:40 出発済み',state:'done'},
+    {t:'配送中（'+(d.status==='delay'?'渋滞あり':'順調')+'）',m:'現在地：'+(d.status==='soon'?'目的地付近':'国道10号 周辺'),state:'now'},
+    {t:d.status==='soon'?'まもなく到着':'到着予定',m:d.eta+' 頃（AI予測）'+(d.status==='delay'?' ※18分遅延':''),state:d.status==='soon'?'now':'pending'},
+    {t:'お届け完了・サイン受領',m:'—',state:'pending'},
+  ];
+  $('timeline').innerHTML=steps.map(s=>`<div class="step ${s.state}"><div class="dot">${s.state==='done'?'✓':''}</div>
+    <div class="tt">${esc(s.t)}</div><div class="tm">${esc(s.m)}</div></div>`).join('');
+}
+function addPin(x,y,em,label){
+  const map=$('map');
+  const p=document.createElement('div');p.className='pin';p.style.left=x+'%';p.style.top=y+'%';p.textContent=em;map.appendChild(p);
+  const l=document.createElement('div');l.className='plabel';l.style.left=x+'%';l.style.top=y+'%';l.textContent=label;map.appendChild(l);
+}
+
+/* ============ CUSTOMERS ============ */
+function renderCust(){
+  $('custRows').innerHTML=CUSTOMERS.map(c=>{
+    const cnt=deliveries.filter(d=>d.cust===c.name).length+Math.floor(rndStable(c.name.length*7)*40);
+    return `<tr><td><b>${esc(c.name)}</b></td><td><span class="st prep" style="background:var(--soft);color:var(--ink-2)">${typeEmoji(c.type)} ${esc(c.type)}</span></td>
+      <td style="color:var(--ink-2)">${esc(c.addr)}</td><td class="r tnum">${cnt}件</td>
+      <td><span class="st done">${esc(c.ch)}</span></td><td style="color:var(--ink-2)">${esc(c.staff)}</td></tr>`;
+  }).join('');
+}
+
+/* ============ NOTIFY SETTINGS ============ */
+const TPL={
+  medical:`いつもお世話になっております。気持ち市場です。
+本日{時刻}頃に「{品名}」を{配送先}様へお届け予定です。
+お受け取りのご都合が悪い場合は、お手数ですがこのメッセージにご返信ください。
+ドライバー：{担当}／伝票番号：{伝票}`,
+  veg:`【気持ち市場】配送のお知らせ
+{配送先}様
+本日{時刻}頃に「{品名}」をお届けします🥬
+鮮度を保つため、お受け取り後はお早めに冷蔵をお願いします。
+担当：{担当}／伝票：{伝票}`,
+  simple:`【気持ち市場】本日{時刻}頃に「{品名}」をお届け予定です。伝票：{伝票}`
+};
+function renderPreview(){
+  const raw=$('nBody').value;
+  const filled=raw
+    .replace(/\{時刻\}/g,'14:30').replace(/\{品名\}/g,'青果定期便（Lボックス）')
+    .replace(/\{担当\}/g,'川宿田').replace(/\{伝票\}/g,'TRK-50231').replace(/\{配送先\}/g,'大分中央クリニック');
+  // esc() prevents XSS from user-edited textarea before injecting into innerHTML
+  $('prevBody').innerHTML=esc(filled).replace(/\n/g,'<br>');
+  const ch=$('nChannel').value;
+  const b=$('prevBubble');b.className='bubble '+(ch.indexOf('LINE')>=0?'line':ch.indexOf('SMS')>=0?'sms':'');
+}
+$('nBody').addEventListener('input',renderPreview);
+$('nChannel').addEventListener('change',renderPreview);
+document.querySelectorAll('.sw-toggle').forEach(t=>t.addEventListener('click',()=>{t.classList.toggle('on');showToast('通知設定を更新しました');}));
+document.querySelectorAll('.tplchips .chip').forEach(c=>c.addEventListener('click',()=>{
+  $('nBody').value=TPL[c.dataset.tpl];renderPreview();
+  $('nAiHint').classList.add('show');setTimeout(()=>$('nAiHint').classList.remove('show'),2200);
+}));
+$('nSave').addEventListener('click',async()=>{
+  const btn=$('nSave');btn.disabled=true;btn.textContent='⚡ AIが整え中…';
+  await new Promise(r=>setTimeout(r,800));
+  $('nAiHint').classList.add('show');setTimeout(()=>$('nAiHint').classList.remove('show'),2200);
+  btn.disabled=false;btn.textContent='⚡ AIで整えて保存';
+  showToast('通知設定を保存しました（AIが文面を最適化）');
+});
+$('nTest').addEventListener('click',()=>{showToast('テスト通知を管理者あてに送信しました📱');});
+
+/* ============ AI PREDICT / NOTIFY ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 予測中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='🛰️';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,6);},150);
+  await new Promise(r=>setTimeout(r,1150));
+  clearInterval(t);$('baAfterT').textContent='6秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  const targets=deliveries.filter(d=>d.status==='transit'||d.status==='soon'||d.status==='delay').slice(0,6);
+  $('genItems').innerHTML=targets.map((d,i)=>{
+    const delay=d.status==='delay';
+    const icon=delay?'⚠️':'🔔';
+    const msg=delay?'渋滞検知 → お詫びと新着予測を自動送信':'到着30分前を予測 → 自動通知';
+    return `<div class="gen-item" data-i="${i}"><span class="${delay?'ch':'ck'}">${delay?'!':'✓'}</span>
+      <div style="flex:1"><b>${esc(d.cust)}</b> <span style="color:var(--ink-3);font-size:11px">${esc(d.no)}</span><div style="font-size:11px;color:var(--ink-2)">${icon} ${msg}</div></div>
+      <span style="color:var(--ink-3);font-size:11px">${esc(d.ch)}</span><span class="tnum" style="font-weight:800">${esc(d.eta)} 着</span></div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,200));items[i].classList.add('in');}
+  btn.disabled=false;btn.textContent='⚡ もう一度予測・通知';
+  showToast(items.length+'件の到着予測を更新し、お客様へ自動通知しました');
+});
+
+/* ============ INIT ============ */
+renderChips();renderDash();renderPreview();
+$('navAi').textContent='AI';
+</script>
+</body>
+</html>

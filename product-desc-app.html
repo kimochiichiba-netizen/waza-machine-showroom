@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜商品説明文マシン（AI商品説明文 生成システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#7a45e0;--brand-dk:#5f2fc4;--brand-soft:#f0eafb;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--pink:#e055a0;
+  --sb:#160f30;--sb-2:#1f163c;--sb-ink:#cdc4e0;--sb-ink-2:#867da6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#b07cff,#e055a0,#e3b864,#b07cff);
+  display:grid;place-items:center;color:#1a0a2a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(122,69,224,.4)}
+.nav a .badge{margin-left:auto;background:var(--pink);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:64px 1fr 86px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--pink));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.pub{background:var(--green-soft);color:var(--green)}
+.st.review{background:var(--brand-soft);color:var(--brand)}
+.st.draft{background:var(--amber-soft);color:var(--amber)}
+.st.gen{background:var(--soft);color:var(--ink-3)}
+
+/* score pill */
+.score{display:inline-flex;align-items:center;gap:5px;font-weight:800;font-size:12px;padding:3px 9px;border-radius:7px}
+.score.hi{background:var(--green-soft);color:var(--green)}
+.score.mid{background:var(--amber-soft);color:var(--amber)}
+.score.lo{background:var(--red-soft);color:var(--red)}
+
+/* create form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card);resize:vertical}
+.fg textarea{min-height:78px;line-height:1.7}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.fg .hint{font-size:11px;color:var(--ink-3);margin-top:4px}
+.tagrow{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.tagpick{padding:6px 11px;border-radius:99px;border:1px solid var(--line-2);background:var(--card);font-size:12px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.tagpick:hover{border-color:var(--brand)}
+.tagpick.on{background:var(--brand);border-color:var(--brand);color:#fff}
+.aihint{font-size:11px;color:var(--green);margin-top:6px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* preview card (EC product page mock) */
+.paper{background:#fff;border:1px solid var(--line);border-radius:12px;padding:26px 28px;box-shadow:var(--shadow);font-size:13px;color:#1a2233}
+.pv-cat{font-size:11px;color:var(--brand);font-weight:800;letter-spacing:.06em}
+.pv-title{font-size:22px;font-weight:900;line-height:1.4;margin:6px 0 4px;border-left:5px solid var(--brand);padding-left:11px}
+.pv-seo{background:var(--soft);border-radius:8px;padding:11px 13px;margin:14px 0;font-size:12px}
+.pv-seo .lab{font-size:10.5px;color:var(--ink-3);font-weight:800;letter-spacing:.05em;display:block;margin-bottom:3px}
+.pv-seo .seoTitle{font-weight:800;color:var(--brand-dk)}
+.pv-seo .seoDesc{color:var(--ink-2);margin-top:8px;line-height:1.65}
+.pv-body{margin-top:14px;line-height:1.95;font-size:13px;white-space:pre-wrap;color:#26303f}
+.pv-bullets{list-style:none;margin-top:14px}
+.pv-bullets li{padding:7px 0 7px 26px;position:relative;font-size:12.5px;color:var(--ink-2);border-top:1px dashed var(--line)}
+.pv-bullets li:first-child{border-top:0}
+.pv-bullets li::before{content:"✓";position:absolute;left:2px;color:var(--green);font-weight:900}
+.pv-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px}
+.pv-tags span{font-size:11px;background:var(--brand-soft);color:var(--brand);padding:3px 9px;border-radius:99px;font-weight:700}
+.pv-empty{text-align:center;color:#aab2c4;padding:30px 10px;font-size:13px}
+.pv-metarow{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.pv-metarow .m{flex:1;min-width:90px;background:var(--soft);border-radius:9px;padding:9px 11px;text-align:center}
+.pv-metarow .m b{display:block;font-size:17px;font-weight:900;color:var(--ink)}
+.pv-metarow .m span{font-size:10.5px;color:var(--ink-3);font-weight:700}
+
+/* SEO analysis */
+.seo-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:980px){.seo-grid{grid-template-columns:1fr}}
+.ring-wrap{display:flex;align-items:center;gap:20px}
+.ring{--p:0;width:118px;height:118px;border-radius:50%;flex-shrink:0;
+  background:conic-gradient(var(--green) calc(var(--p)*1%),var(--soft) 0);display:grid;place-items:center;transition:--p 1s}
+.ring::before{content:"";position:absolute;width:90px;height:90px;border-radius:50%;background:var(--card)}
+.ring b{position:relative;font-size:30px;font-weight:900;font-family:'Orbitron'}
+.ring small{position:relative;display:block;font-size:10px;color:var(--ink-3);text-align:center;font-weight:700}
+.kwbars{display:flex;flex-direction:column;gap:12px}
+.kw-row{display:grid;grid-template-columns:96px 1fr 46px;align-items:center;gap:11px;font-size:12.5px}
+.kw-row .kl{font-weight:700;color:var(--ink-2)}
+.kw-track{height:9px;border-radius:99px;background:var(--soft);overflow:hidden}
+.kw-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--sky),var(--green));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.kw-row .kv{text-align:right;font-weight:800;color:var(--ink)}
+.checklist{display:flex;flex-direction:column;gap:9px}
+.chk{display:flex;align-items:flex-start;gap:10px;font-size:13px;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+.chk .mark{width:22px;height:22px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;font-size:12px;font-weight:900;color:#fff}
+.chk.ok .mark{background:var(--green)}
+.chk.warn .mark{background:var(--amber)}
+.chk.bad .mark{background:var(--red)}
+.chk .ct b{display:block;font-weight:700}
+.chk .ct span{font-size:11.5px;color:var(--ink-3)}
+
+/* AI generate / before-after */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.ba .txtbox{margin-top:12px;background:rgba(255,255,255,.6);border-radius:9px;padding:11px 13px;font-size:12px;line-height:1.8;color:#2a3343;min-height:90px}
+.ba .before .txtbox{color:#7a8499;font-style:italic}
+
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#b07cff,#7a45e0);display:grid;place-items:center;font-size:26px;margin:0 auto;position:relative}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(122,69,224,.4)}50%{box-shadow:0 0 40px rgba(224,85,160,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.cv-bar{display:inline-block;width:54px;height:7px;border-radius:99px;background:var(--soft);overflow:hidden;vertical-align:middle;margin-left:8px}
+.cv-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--brand),var(--pink))}
+
+/* a11y focus */
+.nav a:focus-visible,.btn:focus-visible,.chip:focus-visible,.tagpick:focus-visible,
+input:focus-visible,select:focus-visible,textarea:focus-visible,table.tbl tbody tr:focus-visible{
+  outline:2px solid var(--brand);outline-offset:2px}
+.nav a:focus-visible{outline-offset:-2px}
+
+/* channel export cards */
+.export-row{display:flex;gap:12px;flex-wrap:wrap}
+.export-card{flex:1;min-width:200px;border:1px solid var(--line);border-radius:12px;padding:15px 16px;background:var(--soft);display:flex;flex-direction:column;gap:9px}
+.export-card .ec-h{display:flex;align-items:center;gap:9px;font-weight:800;font-size:13.5px}
+.export-card .ec-h .mk{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-size:15px;color:#fff;font-weight:900}
+.export-card .ec-n{font-size:12px;color:var(--ink-3);font-weight:700}
+.export-card .ec-n b{color:var(--ink);font-size:15px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">商品説明文マシン<small>技マシン｜AI商品説明文</small></div>
+    </div>
+    <div class="nav-sec" id="navSecMain">管理メニュー</div>
+    <nav class="nav" id="nav" role="menubar" aria-labelledby="navSecMain">
+      <a data-v="dash" class="on" role="menuitem" tabindex="0" aria-current="page"><span class="i" aria-hidden="true">📊</span>ダッシュボード</a>
+      <a data-v="list" role="menuitem" tabindex="0"><span class="i" aria-hidden="true">🛍️</span>商品一覧</a>
+      <a data-v="create" role="menuitem" tabindex="0"><span class="i" aria-hidden="true">✏️</span>新規作成</a>
+      <a data-v="seo" role="menuitem" tabindex="0"><span class="i" aria-hidden="true">🔍</span>SEO分析<span class="badge" id="navReview" aria-label="レビュー待ち件数">0</span></a>
+      <a data-v="channel" role="menuitem" tabindex="0"><span class="i" aria-hidden="true">📈</span>チャネル別実績</a>
+    </nav>
+    <div class="nav-sec" id="navSecAi">AIメニュー</div>
+    <nav class="nav" role="menubar" aria-labelledby="navSecAi">
+      <a data-v="ai" role="menuitem" tabindex="0"><span class="i" aria-hidden="true">⚡</span>AI生成</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="./">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar" role="note"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。商品・数値はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">商品説明文の作成状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>カテゴリ別の平均CV率</h3><span class="more">直近30日</span></div>
+            <div class="pb"><div class="bars" id="cvBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic" aria-hidden="true">🔍</span><input id="q" placeholder="商品名・カテゴリで検索" aria-label="商品名・カテゴリで検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>商品名</th><th>カテゴリ</th><th class="r">SEOスコア</th><th class="r">想定CV率</th><th>更新日</th><th>状態</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- CREATE -->
+      <section class="view" id="v-create">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>商品名</label><input id="cName" placeholder="例：大分産 完熟シャインマスカット 2房"></div>
+            <div class="fg"><label>カテゴリ</label>
+              <select id="cCat"></select></div>
+            <div class="fg"><label>価格（税込）</label><input id="cPrice" type="number" min="0" placeholder="例：5980"></div>
+            <div class="fg"><label>商品の特徴（箇条書き・思いつくままでOK）</label>
+              <textarea id="cFeat" placeholder="例：大分の契約農家、糖度18度以上、種なしで皮ごと食べられる、化粧箱入りで贈答用に最適"></textarea>
+              <div class="hint">特徴を入れるほどAIが具体的な説明文を作ります</div>
+            </div>
+            <div class="fg"><label>狙うトーン</label>
+              <div class="tagrow" id="toneRow"></div>
+            </div>
+            <div class="aihint" id="cAiHint">✨ AIが訴求ポイントを補完しました</div>
+            <div class="linkrow" style="margin-top:16px">
+              <button class="btn primary" id="cGen" style="flex:1;justify-content:center">⚡ AIで説明文を作成</button>
+              <button class="btn" id="cSample">サンプル</button>
+            </div>
+            <button class="btn green" id="cSave" style="width:100%;justify-content:center;margin-top:9px">この内容で商品を登録</button>
+          </div>
+          <div>
+            <div class="paper" id="cPaper">
+              <div id="pvBody"><div class="pv-empty">← 商品特徴を入力して「AIで説明文を作成」を押すと、ここに売れる説明文とSEOタイトルがプレビューされます。</div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SEO -->
+      <section class="view" id="v-seo">
+        <div class="toolbar">
+          <div class="search"><span class="ic" aria-hidden="true">🔍</span><input id="seoQ" placeholder="分析する商品を検索" aria-label="分析する商品を検索"></div>
+          <select id="seoPick" class="chip" style="min-width:240px;cursor:pointer" aria-label="分析する商品を選択"></select>
+          <button class="btn primary" id="seoRun">🔍 SEOを再分析</button>
+        </div>
+        <div class="seo-grid">
+          <div class="panel">
+            <div class="ph"><h3>総合SEOスコア</h3><span class="more" id="seoTarget">—</span></div>
+            <div class="pb">
+              <div class="ring-wrap">
+                <div class="ring" id="seoRing" style="position:relative"><b id="seoScoreNum">0</b><small>/100</small></div>
+                <div>
+                  <div style="font-size:13px;font-weight:800;margin-bottom:4px" id="seoGrade">分析待ち</div>
+                  <div style="font-size:12px;color:var(--ink-2);line-height:1.7" id="seoComment">商品を選んで「SEOを再分析」を押すと、検索で見つかりやすくするための改善点が表示されます。</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>主要キーワードの含有率</h3></div>
+            <div class="pb"><div class="kwbars" id="kwBars"></div></div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:16px">
+          <div class="ph"><h3>改善チェックリスト</h3></div>
+          <div class="pb"><div class="checklist" id="checklist"></div></div>
+        </div>
+      </section>
+
+      <!-- AI GEN -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb" aria-hidden="true">🤖</div>
+            <div style="min-width:200px;flex:1"><div style="font-size:16px;font-weight:900">商品の特徴から「売れる説明文」を自動生成</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub" aria-live="polite">公開前の商品の素っ気ない説明文を、AIが購買意欲を高める文章に書き換えます。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで一括リライト</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手書き</span>
+              <div class="big" id="baBeforeT">1商品 25分</div>
+              <div class="txtbox" id="baBeforeTxt">シャインマスカット 2房。大分県産。種なし。化粧箱入り。</div>
+              <ul>
+                <li>🖊 特徴を文章にするのに時間がかかる</li>
+                <li>😣 ライターに外注すると1本3,000円〜</li>
+                <li>📉 検索キーワードの入れ忘れで埋もれる</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <div class="txtbox" id="baAfterTxt" style="opacity:.45">（AI実行で売れる説明文がここに生成されます）</div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 特徴を魅力的な文章に自動変換</li>
+                <li>🔑 SEOキーワードを自動で最適配置</li>
+                <li>📈 想定CV率・SEOスコアも同時算出</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ リライトされた商品</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CHANNEL / PARTNER PERFORMANCE -->
+      <section class="view" id="v-channel">
+        <div class="kpis" id="chKpis"></div>
+        <div class="cols" style="grid-template-columns:1fr 1fr">
+          <div class="panel">
+            <div class="ph"><h3>販売チャネル別の実績</h3><span class="more">想定CV率 × 公開数</span></div>
+            <div class="pb"><div class="bars" id="chBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>取引先（出荷元農家・メーカー）別の登録数</h3></div>
+            <div class="pb"><div class="bars" id="partnerBars"></div></div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:16px">
+          <div class="ph"><h3>説明文テンプレート（トーン別）の利用状況</h3>
+            <span class="more">よく使うトーンを把握</span></div>
+          <div class="pb"><div class="bars" id="tplBars"></div></div>
+        </div>
+        <div class="panel" style="margin-top:16px">
+          <div class="ph"><h3>チャネル向け一括エクスポート</h3>
+            <span class="more">公開中の商品をCSVで書き出し</span></div>
+          <div class="pb">
+            <p style="font-size:12.5px;color:var(--ink-2);margin-bottom:14px">公開中の商品説明文を、各モール（楽天・Amazon）の取り込み形式に合わせてCSVで書き出します。デモのためダウンロードは行わず、件数のプレビューを表示します。</p>
+            <div class="export-row" id="exportRow"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"><span class="ck" aria-hidden="true">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const CATEGORIES=['青果・果物','青果・野菜','医療・衛生用品','介護用品','加工食品','日用品','ギフト・贈答'];
+const TONES=['高級・上質','親しみやすい','信頼・安心','お得感','ギフト向け'];
+
+/* feature word bank for AI text composition (deterministic, no external calls) */
+const PHRASE={
+  open:{
+    '高級・上質':'ひと粒ひと粒に手間を惜しまず育てた、特別な一品をお届けします。',
+    '親しみやすい':'毎日のくらしに、ちょっとうれしいをプラス。気持ち市場が自信を持っておすすめする商品です。',
+    '信頼・安心':'大分の現場で本当に選ばれているものだけを、安心の品質でお届けします。',
+    'お得感':'この品質でこの価格。一度使うと手放せない、コスパ抜群の人気商品です。',
+    'ギフト向け':'大切な方へ。「ありがとう」の気持ちが伝わる、贈って喜ばれる逸品です。'
+  }
+};
+const CV_BY_CAT={'青果・果物':4.8,'青果・野菜':3.9,'医療・衛生用品':3.2,'介護用品':3.5,'加工食品':4.1,'日用品':2.8,'ギフト・贈答':5.6};
+
+const TODAY=new Date();
+let SEED=7777;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+const STATUSES=['pub','pub','review','draft','pub','gen','review'];
+
+/* seed products */
+const SEED_PRODUCTS=[
+  {name:'大分産 完熟シャインマスカット 2房 化粧箱入り',cat:'青果・果物',price:5980,feat:'糖度18度以上,種なしで皮ごと,大分の契約農家,贈答用化粧箱'},
+  {name:'豊後牛コロッケ 業務用 20個セット',cat:'加工食品',price:2480,feat:'大分ブランド豊後牛使用,冷凍で長期保存,揚げるだけ'},
+  {name:'別府湾産 関あじ 一夜干し 4枚',cat:'青果・果物',price:3200,feat:'豊後水道の天然関あじ,職人の一夜干し,脂のり抜群'},
+  {name:'介護用 やわらかおかゆ ごはん 30食',cat:'介護用品',price:4280,feat:'嚥下しやすいなめらか食感,レンジ対応,管理栄養士監修'},
+  {name:'国産ヒノキ 使い捨てマスク 50枚',cat:'医療・衛生用品',price:880,feat:'やわらか不織布,耳が痛くなりにくい,個包装'},
+  {name:'おおいた香りの米 ひとめぼれ 5kg',cat:'青果・野菜',price:3480,feat:'大分県産,減農薬栽培,つやと甘み'},
+  {name:'大分かぼす ぽん酢 360ml 3本',cat:'加工食品',price:1980,feat:'大分特産かぼす果汁,化学調味料不使用,鍋に最適'},
+  {name:'高吸収 大人用紙おむつ テープ式 L 24枚',cat:'介護用品',price:1680,feat:'12時間吸収,ムレにくい通気性,やわらか素材'},
+  {name:'豊後おおいた 旬の野菜お任せ便 Lボックス',cat:'青果・野菜',price:3800,feat:'朝採れ直送,7〜9品目,農家の手書きレシピ付き'},
+  {name:'手指消毒用アルコールジェル 500ml',cat:'医療・衛生用品',price:780,feat:'アルコール70%,保湿成分配合,ポンプ式'},
+  {name:'大分産いちご さがほのか 2パック',cat:'青果・果物',price:1280,feat:'完熟収穫,甘み濃厚,朝採れ当日発送'},
+  {name:'介護施設向け とろみ調整食品 1kg',cat:'介護用品',price:2980,feat:'すぐ溶ける,味を変えない,飲み込みやすさ調整'},
+  {name:'大分銘菓 ざびえる 詰め合わせ 16個',cat:'ギフト・贈答',price:1620,feat:'大分の定番土産,上品な甘さ,個包装でお配りに'},
+  {name:'業務用 大分産 乾しいたけ どんこ 200g',cat:'加工食品',price:2280,feat:'肉厚どんこ,だしが濃い,国産100%'},
+];
+/* sales channels & partners (for channel/partner performance screen) */
+const CHANNELS=['自社EC','楽天市場','Amazon','ふるさと納税'];
+const PARTNERS=['大分・契約農家グループ','豊後牛 加工センター','別府湾 漁協','大分メディカル商会','おおいた製菓'];
+const CH_CV_BIAS={'自社EC':0.4,'楽天市場':0.1,'Amazon':-0.2,'ふるさと納税':0.8};
+
+let products=SEED_PRODUCTS.map((p,i)=>{
+  const status=pick(STATUSES);
+  const baseCv=CV_BY_CAT[p.cat]||3.0;
+  const seo=status==='draft'||status==='gen'?40+Math.floor(rnd()*25):70+Math.floor(rnd()*28);
+  const cv=Math.round((baseCv+(rnd()*1.4-0.7))*10)/10;
+  const d=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-Math.floor(rnd()*40));
+  return {id:'P-'+(1001+i),...p,status,seo,cv:Math.max(0.8,cv),updated:d,desc:'',
+    channel:CHANNELS[i%CHANNELS.length],partner:PARTNERS[i%PARTNERS.length]};
+});
+
+/* live state reflected on the dashboard so numbers move when the user acts */
+const stats={rewritten:0,addedThisWeek:0,cvGainPt:0,seoGainPt:12,lastAvgSecs:8,toneUse:{}};
+const ACTLOG=[];/* most-recent first; populated by user actions */
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+const fmtDL=d=>(d.getMonth()+1)+'/'+d.getDate();
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STLABEL={pub:'公開中',review:'レビュー待ち',draft:'下書き',gen:'未生成'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]||s}</span>`;}
+function scoreCls(n){return n>=80?'hi':n>=60?'mid':'lo';}
+function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function featList(feat){return String(feat||'').split(/[,、\n]/).map(s=>s.trim()).filter(Boolean);}
+
+/* deterministic "AI" description composer (no external calls) */
+function composeDesc(name,cat,price,feat,tone){
+  const feats=featList(feat);
+  const open=PHRASE.open[tone]||PHRASE.open['信頼・安心'];
+  let body=open+'\n\n';
+  if(feats.length){
+    body+='【'+esc(name)+'】の特長\n';
+    body+=feats.map(f=>'・'+f+'。'+detail(f)).join('\n');
+  }
+  body+='\n\n大分・気持ち市場が品質を見極めてお届け。'+(price?'今なら'+yen(price)+'（税込）。':'')+'まずはお試しください。';
+  return {open,body,bullets:feats.slice(0,5)};
+}
+function detail(f){
+  const t=f.replace(/\s/g,'');
+  if(/糖度|甘/.test(t))return'口に広がる濃厚な甘さをぜひ。';
+  if(/種なし|皮ごと/.test(t))return'手間なくそのまま召し上がれます。';
+  if(/農家|直送|朝採れ|減農薬|栽培/.test(t))return'生産者の顔が見える安心の品質。';
+  if(/贈答|化粧箱|ギフト|お配り/.test(t))return'大切な方への贈り物にも喜ばれます。';
+  if(/保存|冷凍|長期/.test(t))return'必要なときにサッと使えて便利。';
+  if(/吸収|ムレ|通気|やわらか|なめらか|飲み込み|嚥下/.test(t))return'使う方にやさしい設計です。';
+  if(/アルコール|不織布|個包装|消毒|衛生/.test(t))return'毎日の衛生管理を支えます。';
+  return'現場で選ばれている確かな品質です。';
+}
+function seoTitleOf(name,cat){
+  const region='大分産';const head=name.includes('大分')?name:region+' '+name;
+  return (head+' ｜通販・お取り寄せ｜気持ち市場').slice(0,40);
+}
+function seoDescOf(name,feat){
+  const feats=featList(feat);const lead=feats.slice(0,2).join('・');
+  return (name+'を産地直送でお届け。'+(lead?lead+'。':'')+'大分の気持ち市場が品質厳選。送料・ギフト対応も可能です。').slice(0,120);
+}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','商品説明文の作成状況'],list:['商品一覧','登録した商品と説明文を管理します'],
+  create:['新規作成','特徴を入れるとAIが説明文とSEOタイトルを作ります'],seo:['SEO分析','検索で見つかりやすくする改善点を分析します'],
+  channel:['チャネル別実績','取引先・販売チャネル別の成績とエクスポート'],
+  ai:['AI生成','特徴から「売れる説明文」を自動で作ります']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn primary" onclick="go(\'create\')">＋ 新規作成</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI生成</button><button class="btn primary" onclick="go(\'create\')">＋ 新規作成</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='seo')renderSeoPick();
+  if(v==='channel')renderChannel();
+  if(v==='ai')refreshAiStage();
+}
+document.querySelectorAll('.nav a').forEach(a=>{
+  a.addEventListener('click',()=>go(a.dataset.v));
+  a.addEventListener('keydown',e=>{
+    if(e.key==='Enter'||e.key===' '){e.preventDefault();go(a.dataset.v);}
+    else if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+      e.preventDefault();
+      const items=[...document.querySelectorAll('.nav a')];
+      const idx=items.indexOf(a);const next=items[(idx+(e.key==='ArrowDown'?1:items.length-1))%items.length];
+      if(next)next.focus();
+    }
+  });
+});
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const total=products.length;
+  const avgCv=products.reduce((s,p)=>s+p.cv,0)/total;
+  const avgSeo=Math.round(products.reduce((s,p)=>s+p.seo,0)/total);
+  const review=products.filter(p=>p.status==='review').length;
+  const pub=products.filter(p=>p.status==='pub').length;
+  const cvNote=stats.rewritten?'リライト後 +'+stats.cvGainPt.toFixed(1)+'pt':'カテゴリ平均から算出';
+  const cvCls=stats.rewritten?'up':'warn';
+  const addNote=stats.addedThisWeek?'今週 +'+stats.addedThisWeek+'件':'今週の追加なし';
+  const addCls=stats.addedThisWeek?'up':'warn';
+  $('kpis').innerHTML=`
+    ${kpi('#7a45e0','登録商品数',total+'<small>件</small>','公開中 '+pub+'件',addCls,addNote)}
+    ${kpi('#e055a0','平均CV率',avgCv.toFixed(1)+'<small>%</small>','',cvCls,cvNote)}
+    ${kpi('#16b877','平均SEOスコア',avgSeo+'<small>/100</small>','','up','+'+stats.seoGainPt+'pt 改善')}
+    ${kpi('#e3941f','平均作成時間',stats.lastAvgSecs+'<small>秒</small>','手作業 25分→','up','約99%短縮')}`;
+  // CV by category
+  const cats=[...new Set(products.map(p=>p.cat))];
+  const rows=cats.map(c=>{const ps=products.filter(p=>p.cat===c);return {c,cv:ps.reduce((s,p)=>s+p.cv,0)/ps.length};}).sort((a,b)=>b.cv-a.cv);
+  const mx=Math.max(...rows.map(r=>r.cv),1);
+  $('cvBars').innerHTML=rows.map(r=>`
+    <div class="bar-row"><span class="mlabel">${esc(r.c)}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(r.cv/mx*100)}"></div></div>
+      <span class="mval">${r.cv.toFixed(1)}%</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#cvBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // activity (recent actions are prepended dynamically)
+  const acts=[
+    {i:'🔍',c:'#e6f8f0',t:'「豊後牛コロッケ」のSEOスコアが 68→91 に改善',m:'42分前'},
+    {i:'🛍️',c:'#e6f8f0',t:'「大分かぼす ぽん酢」を公開しました',m:'今日 10:08'},
+    {i:'✏️',c:'#f0eafb',t:'新規商品「別府湾産 関あじ 一夜干し」を下書き保存',m:'今日 9:21'},
+    {i:'⚠️',c:'#fdeaea',t:'「使い捨てマスク 50枚」の説明文がレビュー待ちです',m:'昨日'},
+  ];
+  ACTLOG.forEach(a=>acts.unshift(a));
+  acts.length=Math.min(acts.length,6);
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ LIST ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['pub','公開中'],['review','レビュー待ち'],['draft','下書き'],['gen','未生成']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=products.filter(p=>filterStatus==='all'||p.status===filterStatus)
+    .filter(p=>!q||(p.name+p.cat).toLowerCase().includes(q))
+    .sort((a,b)=>b.updated-a.updated);
+  $('listRows').innerHTML=rows.length?rows.map(p=>`<tr tabindex="0" role="button" aria-label="${esc(p.name)} のSEO分析を開く" onclick="openSeo('${esc(p.id)}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openSeo('${esc(p.id)}')}">
+    <td><b>${esc(p.name)}</b><div style="font-size:11px;color:var(--ink-3)" class="mono">${esc(p.id)}</div></td>
+    <td style="color:var(--ink-2)">${esc(p.cat)}</td>
+    <td class="r"><span class="score ${scoreCls(p.seo)}">${p.seo}</span></td>
+    <td class="r tnum"><b>${p.cv.toFixed(1)}%</b><span class="cv-bar"><i style="width:${Math.min(100,Math.round(p.cv/6*100))}%"></i></span></td>
+    <td style="color:var(--ink-2)">${fmtDL(p.updated)}</td><td>${stBadge(p.status)}</td></tr>`).join('')
+    :'<tr><td colspan="6" class="empty-cell">該当する商品がありません</td></tr>';
+  $('navReview').textContent=products.filter(p=>p.status==='review').length;
+}
+$('q').addEventListener('input',renderList);
+window.openSeo=id=>{$('seoPick')._pending=id;go('seo');$('seoPick').value=id;runSeo();};
+
+/* ============ CREATE ============ */
+let curTone='信頼・安心';
+function renderToneRow(){
+  $('toneRow').innerHTML=TONES.map(t=>`<button type="button" class="tagpick ${t===curTone?'on':''}" data-t="${esc(t)}">${esc(t)}</button>`).join('');
+  $('toneRow').querySelectorAll('.tagpick').forEach(b=>b.onclick=()=>{curTone=b.dataset.t;renderToneRow();});
+}
+function renderCatSelect(){$('cCat').innerHTML=CATEGORIES.map(c=>`<option>${esc(c)}</option>`).join('');}
+$('cSample').addEventListener('click',()=>{
+  $('cName').value='大分産 完熟シャインマスカット 2房 化粧箱入り';
+  $('cCat').value='青果・果物';$('cPrice').value=5980;
+  $('cFeat').value='糖度18度以上, 種なしで皮ごと食べられる, 大分の契約農家から産地直送, 贈答用の化粧箱入り';
+  curTone='ギフト向け';renderToneRow();
+  showToast('サンプルを入力しました。AI作成を押してください');
+});
+$('cGen').addEventListener('click',async()=>{
+  const name=$('cName').value.trim();const feat=$('cFeat').value.trim();
+  if(!name||!feat){showToast('商品名と特徴を入力してください');return;}
+  const btn=$('cGen');btn.textContent='⚡ AIが作成中…';btn.disabled=true;
+  $('cAiHint').classList.add('show');
+  await new Promise(r=>setTimeout(r,850));
+  renderPaper(name,$('cCat').value,+$('cPrice').value||0,feat,curTone);
+  saveWarned=false;
+  btn.textContent='⚡ AIで説明文を作成';btn.disabled=false;
+  setTimeout(()=>$('cAiHint').classList.remove('show'),2000);
+  showToast('AIが説明文とSEOタイトルを生成しました');
+});
+function renderPaper(name,cat,price,feat,tone){
+  const d=composeDesc(name,cat,price,feat,tone);
+  const seoT=seoTitleOf(name,cat);const seoD=seoDescOf(name,feat);
+  const baseCv=CV_BY_CAT[cat]||3.0;const cv=Math.round((baseCv+1.3)*10)/10;const seo=84+Math.floor(rnd()*12);
+  $('pvBody').innerHTML=`
+    <div class="pv-cat">${esc(cat)}${price?' ・ '+esc(yen(price)):''}</div>
+    <div class="pv-title">${esc(name)}</div>
+    <div class="pv-seo">
+      <span class="lab">SEOタイトル（検索結果の見出し）</span>
+      <span class="seoTitle">${esc(seoT)}</span>
+      <span class="lab" style="margin-top:9px">メタディスクリプション</span>
+      <span class="seoDesc">${esc(seoD)}</span>
+    </div>
+    <div class="pv-body">${esc(d.body)}</div>
+    ${d.bullets.length?`<ul class="pv-bullets">${d.bullets.map(b=>`<li>${esc(b)}</li>`).join('')}</ul>`:''}
+    <div class="pv-metarow">
+      <div class="m"><b>${seo}</b><span>SEOスコア</span></div>
+      <div class="m"><b>${cv.toFixed(1)}%</b><span>想定CV率</span></div>
+      <div class="m"><b>${d.body.length}<small style="font-size:10px">字</small></b><span>説明文の長さ</span></div>
+    </div>
+    <div class="pv-tags">${featList(feat).slice(0,6).map(t=>`<span>#${esc(t.replace(/\s/g,''))}</span>`).join('')}</div>`;
+  $('cPaper')._draft={name,cat,price,feat,tone,desc:d.body,seo,cv};
+}
+let saveWarned=false;
+$('cSave').addEventListener('click',()=>{
+  const name=$('cName').value.trim();const feat=$('cFeat').value.trim();
+  if(!name){showToast('商品名を入力してください');return;}
+  const draft=$('cPaper')._draft;
+  // #4: if no AI preview generated yet, gently warn first (then allow save on 2nd press)
+  if(!draft&&!saveWarned){
+    saveWarned=true;
+    showToast('説明文プレビュー未生成です。「AIで説明文を作成」を押すとSEOスコアが上がります（もう一度押すと下書きで登録）');
+    return;
+  }
+  saveWarned=false;
+  const baseCv=CV_BY_CAT[$('cCat').value]||3.0;
+  const p={id:'P-'+(1001+products.length),name,cat:$('cCat').value,price:+$('cPrice').value||0,feat,
+    status:draft?'review':'draft',seo:draft?draft.seo:48,cv:draft?draft.cv:Math.round(baseCv*10)/10,updated:new Date(),desc:draft?draft.desc:'',
+    channel:CHANNELS[products.length%CHANNELS.length],partner:PARTNERS[products.length%PARTNERS.length]};
+  products.unshift(p);
+  stats.addedThisWeek++;
+  if(draft)stats.toneUse[draft.tone]=(stats.toneUse[draft.tone]||0)+1;
+  ACTLOG.unshift({i:'✏️',c:'#f0eafb',t:'新規商品「'+name+'」を'+(draft?'登録（レビュー待ち）':'下書き保存')+'しました',m:'たった今'});
+  $('cPaper')._draft=null;
+  showToast('商品「'+name+'」を登録しました（一覧に追加）');
+  setTimeout(()=>go('list'),650);
+});
+
+/* ============ SEO ============ */
+function renderSeoPick(){
+  const q=($('seoQ').value||'').toLowerCase();
+  const list=products.filter(p=>!q||(p.name+p.cat).toLowerCase().includes(q));
+  const cur=$('seoPick').value;
+  $('seoPick').innerHTML=list.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')
+    || '<option value="">該当なし</option>';
+  if($('seoPick')._pending){$('seoPick').value=$('seoPick')._pending;$('seoPick')._pending=null;}
+  else if(cur&&list.find(p=>p.id===cur))$('seoPick').value=cur;
+  if($('seoPick').value)runSeo();
+}
+$('seoQ').addEventListener('input',renderSeoPick);
+$('seoPick').addEventListener('change',runSeo);
+$('seoRun').addEventListener('click',()=>{
+  const btn=$('seoRun');btn.textContent='🔍 分析中…';btn.disabled=true;
+  setTimeout(()=>{btn.textContent='🔍 SEOを再分析';btn.disabled=false;runSeo();showToast('SEO分析を更新しました');},700);
+});
+function runSeo(){
+  const id=$('seoPick').value;const p=products.find(x=>x.id===id);if(!p)return;
+  $('seoTarget').textContent=p.id;
+  const score=p.seo;
+  $('seoRing').style.setProperty('--p',score);
+  $('seoRing').style.background=`conic-gradient(${score>=80?'var(--green)':score>=60?'var(--amber)':'var(--red)'} calc(var(--p)*1%),var(--soft) 0)`;
+  let n=0;const t=setInterval(()=>{n+=Math.ceil(score/18);if(n>=score){n=score;clearInterval(t);}$('seoScoreNum').textContent=n;},35);
+  $('seoGrade').textContent=score>=80?'良好（上位表示が狙えます）':score>=60?'要改善（あと一歩）':'改善が必要';
+  $('seoComment').textContent=score>=80
+    ?'検索キーワードと商品情報が十分に入っています。このまま公開して問題ありません。'
+    :'タイトルや説明文に検索されやすい言葉が不足しています。下のチェックリストを直すとスコアが上がります。';
+  // keyword bars
+  const kws=[['商品名キーワード',Math.min(100,55+score/3)],['産地（大分）',score>=70?92:48],['用途・シーン',score>=70?78:40],['カテゴリ語',Math.min(100,score+8)]];
+  $('kwBars').innerHTML=kws.map(k=>`<div class="kw-row"><span class="kl">${esc(k[0])}</span>
+    <div class="kw-track"><div class="kw-fill" data-w="${Math.round(k[1])}"></div></div><span class="kv">${Math.round(k[1])}%</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#kwBars .kw-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // checklist
+  const items=[
+    {ok:score>=70,t:'タイトルに商品名＋産地が含まれている',d:'例：「大分産 完熟シャインマスカット」'},
+    {ok:score>=60,t:'説明文が120字以上ある',d:'検索エンジンに内容が伝わる長さ'},
+    {ok:score>=80,t:'特徴が箇条書きで整理されている',d:'読みやすさと検索性が向上'},
+    {ok:p.cv>=3.5,t:'購入につながる訴求ワードがある',d:'「贈答用」「送料無料」など'},
+    {ok:p.status==='pub',t:'商品が公開状態になっている',d:'下書き・レビュー待ちは検索対象外'},
+  ];
+  $('checklist').innerHTML=items.map(i=>{const cls=i.ok?'ok':(i.t.includes('公開')||i.t.includes('120字')?'bad':'warn');
+    return `<div class="chk ${cls}"><div class="mark">${i.ok?'✓':'!'}</div><div class="ct"><b>${esc(i.t)}</b><span>${esc(i.d)}</span></div></div>`;}).join('');
+}
+
+/* ============ CHANNEL / PARTNER PERFORMANCE ============ */
+function barRows(rows,unit){
+  const mx=Math.max(...rows.map(r=>r.v),1);
+  return rows.map(r=>`<div class="bar-row"><span class="mlabel">${esc(r.l)}</span>
+    <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(r.v/mx*100)}"></div></div>
+    <span class="mval">${esc(r.disp!=null?r.disp:r.v+(unit||''))}</span></div>`).join('');
+}
+function renderChannel(){
+  const pub=products.filter(p=>p.status==='pub');
+  // KPI strip
+  const bestCh=CHANNELS.map(c=>{const ps=products.filter(p=>p.channel===c);
+    return {c,cv:ps.length?ps.reduce((s,p)=>s+p.cv,0)/ps.length:0};}).sort((a,b)=>b.cv-a.cv)[0];
+  const partnerCount=new Set(products.map(p=>p.partner)).size;
+  $('chKpis').innerHTML=`
+    ${kpi('#0ea5b7','販売チャネル数',CHANNELS.length+'<small>ch</small>','','up','自社EC＋3モール')}
+    ${kpi('#7a45e0','取引先（出荷元）',partnerCount+'<small>社</small>','','up','大分の生産者中心')}
+    ${kpi('#e055a0','最量販チャネル',(bestCh?bestCh.cv.toFixed(1):'0.0')+'<small>%</small>',bestCh?esc(bestCh.c):'','up','想定CV率トップ')}
+    ${kpi('#16b877','エクスポート対象',pub.length+'<small>件</small>','公開中の商品','up','CSV書き出し可')}`;
+  // channel bars (avg CV)
+  const chRows=CHANNELS.map(c=>{const ps=products.filter(p=>p.channel===c);
+    const cv=ps.length?ps.reduce((s,p)=>s+p.cv,0)/ps.length:0;
+    return {l:c,v:Math.round(cv*10)/10,disp:cv.toFixed(1)+'% / '+ps.length+'件'};}).sort((a,b)=>b.v-a.v);
+  $('chBars').innerHTML=barRows(chRows);
+  // partner bars (count)
+  const pRows=[...new Set(products.map(p=>p.partner))].map(pt=>({l:pt,v:products.filter(p=>p.partner===pt).length}))
+    .sort((a,b)=>b.v-a.v).map(r=>({...r,disp:r.v+'件'}));
+  $('partnerBars').innerHTML=barRows(pRows);
+  // tone template usage (seed defaults + live stats)
+  const baseTone={'高級・上質':4,'親しみやすい':2,'信頼・安心':3,'お得感':2,'ギフト向け':3};
+  const tplRows=TONES.map(t=>({l:t,v:(baseTone[t]||0)+(stats.toneUse[t]||0)})).sort((a,b)=>b.v-a.v)
+    .map(r=>({...r,disp:r.v+'回'}));
+  $('tplBars').innerHTML=barRows(tplRows);
+  // export cards
+  const rakuten=pub.length,amazon=pub.filter(p=>p.seo>=70).length;
+  $('exportRow').innerHTML=`
+    <div class="export-card">
+      <div class="ec-h"><span class="mk" style="background:#bf0000">R</span>楽天市場 商品CSV</div>
+      <div class="ec-n">対象 <b>${rakuten}</b> 件（公開中すべて）</div>
+      <button class="btn primary" style="justify-content:center" onclick="doExport('楽天市場',${rakuten})">⬇ CSVを書き出す</button>
+    </div>
+    <div class="export-card">
+      <div class="ec-h"><span class="mk" style="background:#ff9900">a</span>Amazon 出品CSV</div>
+      <div class="ec-n">対象 <b>${amazon}</b> 件（SEO70以上）</div>
+      <button class="btn primary" style="justify-content:center" onclick="doExport('Amazon',${amazon})">⬇ CSVを書き出す</button>
+    </div>
+    <div class="export-card">
+      <div class="ec-h"><span class="mk" style="background:#7a45e0">技</span>汎用CSV（全項目）</div>
+      <div class="ec-n">対象 <b>${products.length}</b> 件（全商品）</div>
+      <button class="btn" style="justify-content:center" onclick="doExport('汎用',${products.length})">⬇ CSVを書き出す</button>
+    </div>`;
+  setTimeout(()=>document.querySelectorAll('#v-channel .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+}
+window.doExport=(ch,n)=>{showToast(ch+'向けCSV（'+n+'件）を書き出しました（デモのため実ダウンロードなし）');};
+
+/* ============ AI GEN (bulk rewrite) ============ */
+function aiTargets(){return products.filter(p=>p.status!=='pub');}
+function refreshAiStage(){
+  // #5: reflect how many products still need rewriting; disable button when none remain
+  const targets=aiTargets();const btn=$('aiRun');
+  if(!targets.length){
+    btn.disabled=true;btn.textContent='✅ リライト対象がありません';
+    $('aiSub').innerHTML='公開前の商品はありません。新規作成または下書き商品が増えると、ここで一括リライトできます。';
+  }else{
+    btn.disabled=false;btn.textContent=stats.rewritten?'⚡ 続けてリライト（残り'+targets.length+'件）':'⚡ AIで一括リライト';
+    $('aiSub').innerHTML='公開前の商品 <b>'+targets.length+'件</b> の素っ気ない説明文を、AIが購買意欲を高める文章に書き換えます。';
+  }
+  // #3: Before/After reflect the actual first target product (not a fixed item)
+  const head=targets[0];
+  if(head){
+    const feats=featList(head.feat);
+    $('baBeforeTxt').textContent=head.name+'。'+feats.join('。')+(feats.length?'。':'');
+    $('baAfterT').textContent='— ';
+    $('baAfterTxt').style.opacity='.45';
+    $('baAfterTxt').textContent='（AI実行で「'+head.name+'」の売れる説明文がここに生成されます）';
+    $('baAfterList').style.opacity='.4';
+  }
+}
+$('aiRun').addEventListener('click',async()=>{
+  const targets=aiTargets().slice(0,6);
+  if(!targets.length){showToast('リライト対象の商品がありません');return;}
+  const head=targets[0];
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 生成中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  // #3: After text generated from the actual head product via composeDesc()
+  const composed=composeDesc(head.name,head.cat,head.price,head.feat,'高級・上質');
+  const afterTxt=composed.body.replace(/\n+/g,' ').trim();
+  $('baAfterTxt').style.opacity='1';$('baAfterTxt').textContent='';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,8);},120);
+  let ti=0;const typer=setInterval(()=>{ti+=3;$('baAfterTxt').textContent=afterTxt.slice(0,ti);if(ti>=afterTxt.length)clearInterval(typer);},22);
+  await new Promise(r=>setTimeout(r,1300));
+  clearInterval(t);clearInterval(typer);$('baAfterTxt').textContent=afterTxt;$('baAfterT').textContent='8秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // precompute new values per target (capped to realistic ceilings — #5)
+  const plan=targets.map(p=>{
+    const newCv=Math.min(6.5,Math.round((p.cv+1.5+rnd()*0.6)*10)/10);
+    const newSeo=Math.min(98,p.seo+18+Math.floor(rnd()*8));
+    return {p,newCv,newSeo};
+  });
+  $('genItems').innerHTML=plan.map((x,i)=>`<div class="gen-item" data-i="${i}"><span class="ck" aria-hidden="true">✓</span><b style="flex:1">${esc(x.p.name)}</b>
+      <span class="score hi">SEO ${x.newSeo}</span>
+      <span class="tnum" style="font-weight:800;color:var(--green)">CV ${x.p.cv.toFixed(1)}→${x.newCv.toFixed(1)}%</span></div>`).join('');
+  $('genList').classList.add('show');
+  const els=[...$('genItems').querySelectorAll('.gen-item')];
+  let totalGain=0;
+  for(let i=0;i<els.length;i++){
+    await new Promise(r=>setTimeout(r,180));els[i].classList.add('in');
+    const {p,newCv,newSeo}=plan[i];
+    totalGain+=(newCv-p.cv);
+    p.cv=newCv;p.seo=newSeo;p.status='pub';p.updated=new Date();
+  }
+  // update live stats so the dashboard reflects this run (#2)
+  stats.rewritten+=els.length;
+  stats.cvGainPt=Math.round((totalGain/els.length)*10)/10;
+  stats.seoGainPt=18;stats.lastAvgSecs=8;
+  ACTLOG.unshift({i:'⚡',c:'#f0eafb',t:'AI生成で'+els.length+'件をリライト（平均CV +'+stats.cvGainPt.toFixed(1)+'pt）',m:'たった今'});
+  $('navReview').textContent=products.filter(p=>p.status==='review').length;
+  refreshAiStage();
+  showToast(els.length+'件の商品説明文をリライトしました');
+});
+
+/* ============ INIT ============ */
+renderCatSelect();renderToneRow();renderChips();renderDash();
+$('navReview').textContent=products.filter(p=>p.status==='review').length;
+</script>
+</body>
+</html>

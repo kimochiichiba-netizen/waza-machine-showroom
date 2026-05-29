@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜電話応答マシン（電話自動応答システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cff;--purple-soft:#efebff;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.nav a .badge.live{background:var(--green)}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut for result mix */
+.donut-wrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.donut{width:128px;height:128px;border-radius:50%;flex-shrink:0;position:relative;display:grid;place-items:center}
+.donut::after{content:"";position:absolute;inset:18px;background:var(--card);border-radius:50%}
+.donut .dc{position:relative;z-index:1;text-align:center}
+.donut .dc b{font-size:24px;font-weight:900;display:block;line-height:1}
+.donut .dc span{font-size:10.5px;color:var(--ink-3);font-weight:700}
+.legend{display:flex;flex-direction:column;gap:9px;font-size:12.5px}
+.legend .lg{display:flex;align-items:center;gap:9px}
+.legend .lg .sw{width:11px;height:11px;border-radius:3px}
+.legend .lg b{margin-left:auto;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.ok{background:var(--green-soft);color:var(--green)}
+.st.booked{background:var(--brand-soft);color:var(--brand)}
+.st.transfer{background:var(--purple-soft);color:var(--purple)}
+.st.info{background:var(--soft);color:var(--ink-3)}
+.st.missed{background:var(--red-soft);color:var(--red)}
+.st.callback{background:var(--amber-soft);color:var(--amber)}
+.st.confirmed{background:var(--green-soft);color:var(--green)}
+.st.pending{background:var(--amber-soft);color:var(--amber)}
+.tag-cat{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:6px;background:var(--soft);color:var(--ink-2)}
+
+/* settings form */
+.set-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:860px){.set-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:var(--shadow)}
+.formcard h3{font-size:14.5px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.formcard .desc{font-size:12px;color:var(--ink-3);margin-bottom:16px}
+.fg{margin-bottom:14px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card);resize:vertical}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.toggle-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.toggle-row:last-child{border-bottom:0}
+.toggle-row .tt{font-size:13px;font-weight:700}
+.toggle-row .td{font-size:11.5px;color:var(--ink-3)}
+.toggle{margin-left:auto;width:44px;height:25px;border-radius:99px;background:var(--line-2);position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;border:none}
+.toggle::after{content:"";position:absolute;top:3px;left:3px;width:19px;height:19px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle.on{background:var(--green)}
+.toggle.on::after{left:22px}
+
+/* AI answer console */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+
+/* live conversation log */
+.convo{margin-top:18px;border-top:1px solid var(--line);padding-top:18px;display:none}
+.convo.show{display:block;animation:fade .4s}
+.phone-frame{background:linear-gradient(180deg,#0f1830,#16203c);border-radius:16px;padding:18px 16px;max-width:520px;margin:0 auto}
+.call-head{display:flex;align-items:center;gap:11px;color:#fff;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:14px}
+.call-head .ringicon{width:38px;height:38px;border-radius:50%;background:rgba(22,184,119,.18);display:grid;place-items:center;font-size:18px}
+.call-head .ringicon.ringing{animation:ring .8s ease-in-out infinite}
+@keyframes ring{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+.call-head b{font-size:14px;display:block}
+.call-head span{font-size:11px;color:var(--sb-ink-2)}
+.call-timer{margin-left:auto;font-family:'Orbitron';font-size:14px;color:#37e29a}
+.bubbles{display:flex;flex-direction:column;gap:10px;min-height:40px}
+.bub{max-width:80%;padding:9px 13px;border-radius:13px;font-size:12.5px;line-height:1.5;opacity:0;transform:translateY(8px);animation:pop .35s forwards}
+@keyframes pop{to{opacity:1;transform:none}}
+.bub.ai{align-self:flex-start;background:#243154;color:#dde6fb;border-bottom-left-radius:4px}
+.bub.caller{align-self:flex-end;background:#37e29a;color:#04231a;border-bottom-right-radius:4px;font-weight:600}
+.bub .who{font-size:9.5px;font-weight:800;letter-spacing:.06em;opacity:.7;margin-bottom:2px;text-transform:uppercase}
+.typing{align-self:flex-start;display:flex;gap:4px;padding:11px 14px;background:#243154;border-radius:13px;border-bottom-left-radius:4px}
+.typing span{width:6px;height:6px;border-radius:50%;background:#7d88a6;animation:blink 1.2s infinite}
+.typing span:nth-child(2){animation-delay:.2s}.typing span:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,60%,100%{opacity:.3}30%{opacity:1}}
+.result-card{margin-top:16px;border:1px solid var(--green);background:var(--green-soft);border-radius:12px;padding:16px 18px;opacity:0;transform:translateY(8px);transition:all .4s}
+.result-card.in{opacity:1;transform:none}
+.result-card h4{font-size:13.5px;font-weight:800;color:var(--green);margin-bottom:10px;display:flex;align-items:center;gap:7px}
+.result-card .rrow{display:grid;grid-template-columns:96px 1fr;gap:6px;font-size:12.5px;padding:4px 0}
+.result-card .rrow span{color:var(--ink-2);font-weight:700}
+.sms-chip{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--line);border-radius:9px;padding:8px 12px;font-size:12px;margin-top:10px;color:var(--ink-2)}
+.sms-chip .ic{width:22px;height:22px;border-radius:6px;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* booking detail / preview pane */
+.detail-grid{display:grid;grid-template-columns:1fr 360px;gap:16px;align-items:start}
+@media(max-width:980px){.detail-grid{grid-template-columns:1fr}}
+.minical{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.minical .mh{display:flex;align-items:center;margin-bottom:12px}
+.minical .mh b{font-size:14px;font-weight:800}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;text-align:center}
+.cal-grid .wd{font-size:10px;color:var(--ink-3);font-weight:700;padding:4px 0}
+.cal-grid .cell{aspect-ratio:1;display:grid;place-items:center;font-size:12px;border-radius:8px;position:relative;cursor:default}
+.cal-grid .cell.has{font-weight:800}
+.cal-grid .cell .pip{position:absolute;bottom:4px;width:5px;height:5px;border-radius:50%;background:var(--brand)}
+.cal-grid .cell.today{background:var(--brand-soft);color:var(--brand);font-weight:900}
+
+/* live ring banner */
+.live-banner{background:linear-gradient(90deg,#e6f8f0,#f1fdf8);border:1px solid #bdebd4;border-radius:12px;padding:13px 18px;display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.live-banner .pulse{width:11px;height:11px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(22,184,119,.5);animation:pulse 1.6s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(22,184,119,.5)}70%{box-shadow:0 0 0 9px rgba(22,184,119,0)}100%{box-shadow:0 0 0 0 rgba(22,184,119,0)}}
+.live-banner b{font-size:13px}
+.live-banner span{font-size:12px;color:var(--ink-2)}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.transcript-pop{font-size:12px;color:var(--ink-2);background:var(--soft);border-radius:9px;padding:10px 12px;margin-top:4px;display:none}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">電話応答マシン<small>技マシン｜電話自動応答</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="calls"><span class="i">📞</span>着信履歴<span class="badge live" id="navLive">受付中</span></a>
+      <a data-v="logs"><span class="i">💬</span>応答ログ</a>
+      <a data-v="book"><span class="i">📅</span>予約管理<span class="badge" id="navBook">0</span></a>
+      <a data-v="set"><span class="i">⚙️</span>設定</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI応答</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="./">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。電話番号・着信内容はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">本日の電話応答状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="live-banner">
+          <span class="pulse"></span>
+          <b>AI自動応答 稼働中</b>
+          <span>24時間365日、すべての着信にAIが応答しています。取りこぼしはありません。</span>
+        </div>
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel" style="margin-bottom:0">
+            <div class="ph"><h3>時間帯別の着信件数</h3><span class="more">本日</span></div>
+            <div class="pb"><div class="bars" id="hourBars"></div></div>
+          </div>
+          <div class="panel" style="margin-bottom:0">
+            <div class="ph"><h3>応答結果の内訳</h3><span class="more">本日</span></div>
+            <div class="pb"><div class="donut-wrap"><div class="donut" id="donut"><div class="dc"><b id="donutPct">0%</b><span>自動対応</span></div></div><div class="legend" id="donutLegend"></div></div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="ph"><h3>最近のアクティビティ</h3><span class="more" onclick="go('logs')">応答ログを見る</span></div>
+          <div class="pb"><div class="acts" id="acts"></div></div>
+        </div>
+      </section>
+
+      <!-- CALLS -->
+      <section class="view" id="v-calls">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="発信者・要件で検索"></div>
+          <div class="chips" id="resultChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>時刻</th><th>発信者</th><th>区分</th><th>要件</th><th>応答</th><th>通話時間</th><th>結果</th></tr></thead>
+          <tbody id="callRows"></tbody>
+        </table>
+      </section>
+
+      <!-- LOGS -->
+      <section class="view" id="v-logs">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="qLog" placeholder="発信者・キーワードで会話を検索"></div>
+        </div>
+        <div id="logList"></div>
+      </section>
+
+      <!-- BOOKINGS -->
+      <section class="view" id="v-book">
+        <div class="kpis" id="bookKpis"></div>
+        <div class="detail-grid">
+          <div class="panel" style="margin-bottom:0">
+            <div class="ph"><h3>AIが獲得した予約</h3>
+              <button class="btn green" id="syncCal" style="margin-left:auto">📆 カレンダーへ一括同期</button></div>
+            <div class="pb" style="padding:0">
+              <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+                <thead><tr><th>予約日時</th><th>お客様</th><th>内容</th><th>経路</th><th>状態</th><th></th></tr></thead>
+                <tbody id="bookRows"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="minical">
+            <div class="mh"><b id="calMonth">予約カレンダー</b></div>
+            <div class="cal-grid" id="calGrid"></div>
+            <div style="font-size:11px;color:var(--ink-3);margin-top:12px;display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:50%;background:var(--brand);display:inline-block"></span>予約あり</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SETTINGS -->
+      <section class="view" id="v-set">
+        <div class="set-grid">
+          <div class="formcard">
+            <h3>🤖 AI応答の基本設定</h3>
+            <div class="desc">着信時にAIが話す内容を設定します。入力すると下のプレビューに反映されます。</div>
+            <div class="fg"><label>事業所名（AIが名乗ります）</label><input id="setName" value="つくし介護センター"></div>
+            <div class="fg"><label>最初のあいさつ</label><textarea id="setGreet" rows="2">お電話ありがとうございます。つくし介護センターでございます。AIオペレーターが承ります。</textarea></div>
+            <div class="fg"><label>受付できる用件</label>
+              <select id="setMode">
+                <option>予約・見学のお申し込み</option>
+                <option>営業時間・アクセスのご案内</option>
+                <option>ご家族からのお問い合わせ全般</option>
+              </select></div>
+            <div class="fg"><label>営業時間外の対応</label>
+              <select>
+                <option>AIが要件を聞き取り、SMSで折り返し予約</option>
+                <option>緊急連絡先の音声案内</option>
+              </select></div>
+          </div>
+          <div>
+            <div class="formcard" style="margin-bottom:16px">
+              <h3>🔔 通知・連携</h3>
+              <div class="desc">予約獲得・取りこぼし時のスタッフ通知を設定します。</div>
+              <div class="toggle-row"><div><div class="tt">予約獲得をSMSで担当へ通知</div><div class="td">AIが予約を取るたびに担当スタッフへ即時SMS</div></div><button class="toggle on" data-tg></button></div>
+              <div class="toggle-row"><div><div class="tt">発信者へ確認SMSを自動送信</div><div class="td">予約完了後、お客様へ確認メッセージを送付</div></div><button class="toggle on" data-tg></button></div>
+              <div class="toggle-row"><div><div class="tt">専門的な相談はスタッフへ転送</div><div class="td">AIが判断できない内容は担当へ電話を取り次ぎ</div></div><button class="toggle on" data-tg></button></div>
+              <div class="toggle-row"><div><div class="tt">Google カレンダー連携</div><div class="td">獲得した予約を自動でカレンダー登録</div></div><button class="toggle" data-tg></button></div>
+            </div>
+            <div class="formcard">
+              <h3>👋 応答プレビュー</h3>
+              <div class="desc">設定した内容でAIが話す様子のイメージです。</div>
+              <div class="phone-frame" style="max-width:none">
+                <div class="call-head"><div class="ringicon">📞</div><div><b>着信中…</b><span id="prevName">つくし介護センター</span></div></div>
+                <div class="bubbles" style="opacity:1;min-height:0"><div class="bub ai" style="opacity:1;transform:none;max-width:100%"><div class="who">AIオペレーター</div><span id="prevGreet">お電話ありがとうございます。</span></div></div>
+              </div>
+              <button class="btn primary" id="setSave" style="width:100%;justify-content:center;margin-top:16px">設定を保存</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI ANSWER -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div style="min-width:200px"><div style="font-size:16px;font-weight:900">AIが電話に出て、予約まで完了させます</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">「見学を予約したい」という<b>新規のお客様</b>からの着信を、AIが応答する様子を再現します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AI応答を実行する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">取りこぼし多発</div>
+              <ul>
+                <li>📵 来客対応・介護中は電話に出られない</li>
+                <li>🕗 営業時間外・昼休みの着信は留守電のみ</li>
+                <li>↩️ 折り返しても繋がらず予約を逃す</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 着信を取りこぼしゼロでAIが応答</li>
+                <li>📅 用件を聞き取り、その場で予約を登録</li>
+                <li>✉️ お客様と担当へ確認SMSを自動送信</li>
+              </ul>
+            </div>
+          </div>
+          <div class="convo" id="convo">
+            <div style="font-size:13px;font-weight:800;margin-bottom:12px">📞 リアルタイム応答ログ</div>
+            <div class="phone-frame">
+              <div class="call-head">
+                <div class="ringicon" id="ringIcon">📞</div>
+                <div><b id="callerName">090-XXXX-XXXX</b><span id="callerSub">着信</span></div>
+                <div class="call-timer" id="callTimer">0:00</div>
+              </div>
+              <div class="bubbles" id="bubbles"></div>
+            </div>
+            <div class="result-card" id="resultCard">
+              <h4>✅ AIが対応を完了しました</h4>
+              <div class="rrow"><span>お客様</span><div id="rcName"></div></div>
+              <div class="rrow"><span>用件</span><div id="rcReq"></div></div>
+              <div class="rrow"><span>予約日時</span><div id="rcWhen"></div></div>
+              <div class="rrow"><span>通話時間</span><div id="rcDur"></div></div>
+              <div class="sms-chip"><span class="ic">✉️</span><span id="rcSms"></span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const TODAY=new Date();
+function pad(n){return n<10?'0'+n:''+n;}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+let SEED=4071;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+/* ============ DATA ============ */
+const RES={ok:'案内完了',booked:'予約獲得',transfer:'担当へ転送',callback:'折返し予約',missed:'取りこぼし'};
+// 区分（事業者タイプ）
+const CALLERS=[
+  {n:'田村 美和子 様',cat:'ご家族',tel:'097-534-21XX'},
+  {n:'豊後青果 仕入課',cat:'取引先',tel:'097-556-88XX'},
+  {n:'佐々木 健一 様',cat:'新規',tel:'080-1122-33XX'},
+  {n:'大分中央クリニック',cat:'医療連携',tel:'097-545-77XX'},
+  {n:'渡辺 とし子 様',cat:'ご利用者',tel:'097-512-90XX'},
+  {n:'別府ケアプラン',cat:'ケアマネ',tel:'0977-22-44XX'},
+  {n:'非通知',cat:'不明',tel:'非通知'},
+  {n:'松田 隆 様',cat:'新規',tel:'090-7788-12XX'},
+  {n:'都町花店',cat:'取引先',tel:'097-538-66XX'},
+  {n:'幸せ訪問看護',cat:'医療連携',tel:'097-560-30XX'},
+];
+const REQS=[
+  {t:'見学の予約をしたい',r:'booked'},
+  {t:'母の面会の予約変更',r:'booked'},
+  {t:'営業時間を知りたい',r:'ok'},
+  {t:'請求書の内容について',r:'transfer'},
+  {t:'入所の空き状況の相談',r:'transfer'},
+  {t:'納品時間の確認',r:'ok'},
+  {t:'体験利用を申し込みたい',r:'booked'},
+  {t:'担当ケアマネへ連絡希望',r:'transfer'},
+  {t:'場所・駐車場の案内',r:'ok'},
+  {t:'折り返しの予約希望',r:'callback'},
+];
+// 会話スクリプト（応答ログ用）
+const SCRIPTS={
+  booked:[['ai','お電話ありがとうございます。AIオペレーターが承ります。'],['caller','見学の予約をお願いしたいのですが。'],['ai','かしこまりました。ご希望のお日にちはございますか？'],['caller','来週の水曜の午後がいいです。'],['ai','5月××日（水）14時でご予約を承りました。確認のSMSをお送りします。']],
+  ok:[['ai','お電話ありがとうございます。AIオペレーターが承ります。'],['caller','営業時間を教えてください。'],['ai','平日は8時30分から17時30分、土曜は午前のみ承っております。']],
+  transfer:[['ai','お電話ありがとうございます。AIオペレーターが承ります。'],['caller','入所の空き状況を相談したいです。'],['ai','専門の担当者におつなぎいたします。少々お待ちください。']],
+  callback:[['ai','お電話ありがとうございます。AIオペレーターが承ります。'],['caller','今は時間がないので折り返してほしい。'],['ai','承知しました。明日10時に担当よりお電話するご予約を承りました。']],
+  missed:[['ai','お電話ありがとうございます。AIオペレーターが承ります。'],['caller','（無言で切断）']],
+};
+
+let calls=[];
+(function seedCalls(){
+  for(let i=0;i<26;i++){
+    const c=pick(CALLERS);
+    let rq=pick(REQS);
+    // 一部は古い日（過去数日）に分散
+    const dayOffset=Math.floor(rnd()*4);
+    const hh=8+Math.floor(rnd()*11);const mm=Math.floor(rnd()*60);
+    const dur=rq.r==='missed'?0:20+Math.floor(rnd()*150);
+    let result=rq.r;
+    if(c.n==='非通知'&&rnd()>0.5)result='missed';
+    const d=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-dayOffset,hh,mm);
+    calls.push({id:i,caller:c.n,cat:c.cat,tel:c.tel,req:rq.t,result,dur,when:d,handler:result==='transfer'?'担当へ転送':'AI自動応答',script:SCRIPTS[result==='missed'?'missed':result]});
+  }
+  calls.sort((a,b)=>b.when-a.when);
+})();
+
+let bookings=[
+  {when:new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate(),14,0),name:'佐々木 健一 様',body:'施設見学（新規）',via:'AI電話応答',status:'confirmed'},
+  {when:new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate(),16,30),name:'田村 美和子 様',body:'面会予約',via:'AI電話応答',status:'confirmed'},
+  {when:new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+1,10,0),name:'松田 隆 様',body:'体験利用',via:'AI電話応答',status:'pending'},
+  {when:new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+2,11,0),name:'渡辺 とし子 様',body:'面会予約',via:'AI電話応答',status:'confirmed'},
+  {when:new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+3,15,0),name:'幸せ訪問看護',body:'連携カンファレンス',via:'AI電話応答',status:'pending'},
+];
+
+/* ============ FORMAT ============ */
+const fmtTime=d=>pad(d.getHours())+':'+pad(d.getMinutes());
+const fmtDate=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtDT=d=>(d.getMonth()+1)+'/'+d.getDate()+' '+fmtTime(d);
+const WD=['日','月','火','水','木','金','土'];
+const fmtFull=d=>(d.getMonth()+1)+'月'+d.getDate()+'日('+WD[d.getDay()]+') '+fmtTime(d);
+const fmtDur=s=>s===0?'—':Math.floor(s/60)+'分'+pad(s%60)+'秒';
+function isToday(d){return d.getFullYear()===TODAY.getFullYear()&&d.getMonth()===TODAY.getMonth()&&d.getDate()===TODAY.getDate();}
+function resBadge(r){return `<span class="st ${r}">${RES[r]}</span>`;}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','本日の電話応答状況'],calls:['着信履歴','AIが応答したすべての着信'],
+  logs:['応答ログ','AIとお客様の会話内容を確認できます'],book:['予約管理','AIが電話で獲得した予約'],
+  set:['設定','AIの応答内容・通知を設定します'],ai:['AI応答','着信からAI応答・予約登録までを再現します']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='calls'?'<button class="btn primary" onclick="go(\'ai\')">⚡ AI応答デモ</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'logs\')">💬 応答ログ</button><button class="btn primary" onclick="go(\'ai\')">⚡ AI応答デモ</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='calls')renderCalls();
+  if(v==='logs')renderLogs();
+  if(v==='book')renderBook();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+function renderDash(){
+  const td=calls.filter(c=>isToday(c.when));
+  const total=td.length;
+  const handled=td.filter(c=>c.result!=='transfer').length;
+  const missed=td.filter(c=>c.result==='missed').length;
+  const booked=td.filter(c=>c.result==='booked').length;
+  const rate=total?Math.round(handled/total*100):100;
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','今日の着信',total+'<small>件</small>','24時間AI受付','up','前日比 +6件')}
+    ${kpi('#16b877','自動対応率',rate+'<small>%</small>','',rate>=80?'up':'warn',rate>=80?'人手いらず':'要確認')}
+    ${kpi('#7c5cff','予約獲得',booked+'<small>件</small>','電話から自動','up','機会損失ゼロ')}
+    ${kpi('#e24a4a','取りこぼし',missed+'<small>件</small>',' ',missed?'down':'up',missed?'要フォロー':'0件 達成')}`;
+  // 時間帯別
+  const slots=[['8-10時',0],['10-12時',0],['12-14時',0],['14-16時',0],['16-18時',0],['夜間',0]];
+  td.forEach(c=>{const h=c.when.getHours();let idx=h<10?0:h<12?1:h<14?2:h<16?3:h<18?4:5;slots[idx][1]++;});
+  const mx=Math.max(...slots.map(s=>s[1]),1);
+  $('hourBars').innerHTML=slots.map(s=>`
+    <div class="bar-row"><span class="mlabel">${s[0]}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(s[1]/mx*100)}"></div></div>
+      <span class="mval">${s[1]}件</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#hourBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // donut
+  const segs=[
+    {k:'ok',l:'案内のみで完了',c:'#16b877',v:td.filter(c=>c.result==='ok').length},
+    {k:'booked',l:'予約を獲得',c:'#2f6df0',v:booked},
+    {k:'callback',l:'折返し予約',c:'#e3941f',v:td.filter(c=>c.result==='callback').length},
+    {k:'transfer',l:'担当へ転送',c:'#7c5cff',v:td.filter(c=>c.result==='transfer').length},
+    {k:'missed',l:'取りこぼし',c:'#e24a4a',v:missed},
+  ].filter(s=>s.v>0);
+  const sum=segs.reduce((a,s)=>a+s.v,0)||1;
+  let acc=0;const stops=segs.map(s=>{const a=acc/sum*360;acc+=s.v;const b=acc/sum*360;return `${s.c} ${a}deg ${b}deg`;}).join(',');
+  $('donut').style.background=`conic-gradient(${stops})`;
+  $('donutPct').textContent=rate+'%';
+  $('donutLegend').innerHTML=segs.map(s=>`<div class="lg"><span class="sw" style="background:${s.c}"></span>${s.l}<b>${s.v}件</b></div>`).join('');
+  // activity
+  const acts=[
+    {i:'📅',c:'#eaf1ff',t:'佐々木 健一 様 の施設見学（本日14時）をAIが予約登録',m:'8分前'},
+    {i:'✉️',c:'#e6f8f0',t:'田村 美和子 様 へ面会予約の確認SMSを自動送信',m:'21分前'},
+    {i:'🤖',c:'#e6f8f0',t:'昼休み中の着信3件にAIが応答（取りこぼし0）',m:'今日 12:40'},
+    {i:'🔀',c:'#efebff',t:'入所相談のお問い合わせを担当ケアマネへ転送',m:'今日 11:05'},
+    {i:'🌙',c:'#fdf3e2',t:'営業時間外の着信を受け、折返し予約を登録',m:'今日 6:12'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+}
+
+/* ============ CALLS ============ */
+let filterRes='all';
+function renderChips(){
+  const opts=[['all','すべて'],['booked','予約獲得'],['ok','案内完了'],['callback','折返し予約'],['transfer','担当へ転送'],['missed','取りこぼし']];
+  $('resultChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterRes?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('resultChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterRes=c.dataset.s;renderChips();renderCalls();});
+}
+function renderCalls(){
+  const q=($('q').value||'').toLowerCase();
+  const rows=calls.filter(c=>filterRes==='all'||c.result===filterRes)
+    .filter(c=>!q||(c.caller+c.req+c.cat).toLowerCase().includes(q));
+  $('callRows').innerHTML=rows.length?rows.map(c=>`<tr onclick="openLog(${c.id})">
+    <td class="tnum" style="color:var(--ink-2)">${esc(fmtDT(c.when))}</td>
+    <td><b>${esc(c.caller)}</b><div style="font-size:11px;color:var(--ink-3)" class="tnum">${esc(c.tel)}</div></td>
+    <td><span class="tag-cat">${esc(c.cat)}</span></td>
+    <td style="color:var(--ink-2)">${esc(c.req)}</td>
+    <td style="color:var(--ink-2);font-size:12px">${esc(c.handler)}</td>
+    <td class="tnum" style="color:var(--ink-2)">${esc(fmtDur(c.dur))}</td>
+    <td>${resBadge(c.result)}</td></tr>`).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する着信がありません</td></tr>';
+}
+window.openLog=id=>{go('logs');$('qLog').value=calls.find(c=>c.id===id).caller;renderLogs();};
+
+/* ============ LOGS ============ */
+function renderLogs(){
+  const q=($('qLog').value||'').toLowerCase();
+  const rows=calls.filter(c=>!q||(c.caller+c.req+c.script.map(s=>s[1]).join('')).toLowerCase().includes(q));
+  $('logList').innerHTML=rows.length?rows.map(c=>`
+    <div class="panel">
+      <div class="ph">
+        <div class="call-head" style="border:0;padding:0;margin:0;color:var(--ink)">
+          <div class="ringicon" style="background:var(--green-soft);width:34px;height:34px">📞</div>
+          <div><b style="font-size:13.5px">${esc(c.caller)}</b><span style="color:var(--ink-3)">${esc(fmtDT(c.when))} ・ ${esc(c.cat)} ・ 通話 ${esc(fmtDur(c.dur))}</span></div>
+        </div>
+        ${resBadge(c.result)}
+      </div>
+      <div class="pb">
+        <div class="phone-frame" style="max-width:none;background:var(--soft)">
+          <div class="bubbles" style="opacity:1">
+            ${c.script.map(s=>`<div class="bub ${s[0]==='ai'?'ai':'caller'}" style="opacity:1;transform:none;${s[0]==='ai'?'background:#fff;color:var(--ink);border:1px solid var(--line)':''}">
+              <div class="who" style="${s[0]==='ai'?'color:var(--brand)':'color:#04231a'}">${s[0]==='ai'?'AIオペレーター':esc(c.caller)}</div>${esc(s[1])}</div>`).join('')}
+          </div>
+        </div>
+      </div>
+    </div>`).join('')
+    :'<div class="panel"><div class="empty-cell">該当する会話ログがありません</div></div>';
+}
+$('qLog').addEventListener('input',renderLogs);
+
+/* ============ BOOKINGS ============ */
+function renderBook(){
+  const td=bookings.filter(b=>isToday(b.when)).length;
+  const confirmed=bookings.filter(b=>b.status==='confirmed').length;
+  $('bookKpis').innerHTML=`
+    ${kpi('#2f6df0','予約 合計',bookings.length+'<small>件</small>','すべてAI電話経由','up','手入力ゼロ')}
+    ${kpi('#16b877','本日の予約',td+'<small>件</small>','','up','準備OK')}
+    ${kpi('#e3941f','確認待ち',(bookings.length-confirmed)+'<small>件</small>','SMS送信済','warn','返信待ち')}
+    ${kpi('#7c5cff','確定済',confirmed+'<small>件</small>','','up','カレンダー反映可')}`;
+  $('navBook').textContent=bookings.length;
+  $('bookRows').innerHTML=bookings.slice().sort((a,b)=>a.when-b.when).map((b,idx)=>`<tr>
+    <td class="tnum"><b>${esc(fmtFull(b.when))}</b></td>
+    <td>${esc(b.name)}</td>
+    <td style="color:var(--ink-2)">${esc(b.body)}</td>
+    <td><span class="tag-cat">${esc(b.via)}</span></td>
+    <td>${b.status==='confirmed'?'<span class="st confirmed">確定</span>':'<span class="st pending">確認待ち</span>'}</td>
+    <td class="r">${b.status==='pending'?`<button class="btn green" style="padding:6px 12px" onclick="confirmBook(${idx})">確定</button>`:'<span style="color:var(--ink-3);font-size:12px">—</span>'}</td>
+  </tr>`).join('');
+  // mini calendar
+  const y=TODAY.getFullYear(),m=TODAY.getMonth();
+  $('calMonth').textContent=(m+1)+'月の予約';
+  const first=new Date(y,m,1).getDay();const days=new Date(y,m+1,0).getDate();
+  const bk={};bookings.forEach(b=>{if(b.when.getMonth()===m)bk[b.when.getDate()]=true;});
+  let cells=['日','月','火','水','木','金','土'].map(w=>`<div class="wd">${w}</div>`).join('');
+  for(let i=0;i<first;i++)cells+='<div class="cell"></div>';
+  for(let d=1;d<=days;d++){
+    const cls=(d===TODAY.getDate()?'today ':'')+(bk[d]?'has':'');
+    cells+=`<div class="cell ${cls}">${d}${bk[d]?'<span class="pip"></span>':''}</div>`;
+  }
+  $('calGrid').innerHTML=cells;
+}
+window.confirmBook=idx=>{const sorted=bookings.slice().sort((a,b)=>a.when-b.when);const b=sorted[idx];b.status='confirmed';renderBook();showToast(b.name+' の予約を確定しました');};
+$('syncCal').addEventListener('click',async()=>{
+  const btn=$('syncCal');btn.disabled=true;btn.textContent='📆 同期中…';
+  await new Promise(r=>setTimeout(r,900));
+  btn.disabled=false;btn.textContent='📆 カレンダーへ一括同期';
+  showToast(bookings.length+'件の予約をGoogleカレンダーへ同期しました');
+});
+
+/* ============ SETTINGS ============ */
+document.querySelectorAll('[data-tg]').forEach(t=>t.addEventListener('click',()=>t.classList.toggle('on')));
+function syncPreview(){$('prevName').textContent=$('setName').value||'（事業所名）';$('prevGreet').textContent=$('setGreet').value||'（あいさつ文）';}
+$('setName').addEventListener('input',syncPreview);
+$('setGreet').addEventListener('input',syncPreview);
+$('setSave').addEventListener('click',()=>showToast('AI応答の設定を保存しました'));
+
+/* ============ AI ANSWER DEMO ============ */
+let aiBusy=false;
+$('aiRun').addEventListener('click',async()=>{
+  if(aiBusy)return;aiBusy=true;
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 応答中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  $('convo').classList.add('show');
+  $('resultCard').classList.remove('in');
+  $('bubbles').innerHTML='';
+  $('ringIcon').classList.add('ringing');
+  $('callerName').textContent='090-7788-12XX';$('callerSub').textContent='新規のお客様 ・ 着信中…';
+  // before counter (取りこぼしのまま) — afterはタイマー
+  let sec=0;const timer=setInterval(()=>{sec++;$('callTimer').textContent='0:'+pad(sec);},1000);
+  const script=[
+    ['ai','お電話ありがとうございます。つくし介護センターでございます。AIオペレーターが承ります。'],
+    ['caller','あの、施設の見学を予約したいんですが。'],
+    ['ai','ありがとうございます。見学のご予約ですね。ご希望のお日にちはございますか？'],
+    ['caller','来週の水曜日の午後で。'],
+    ['ai','承知しました。来週水曜 14時のご予約を承りました。お名前を頂戴できますか？'],
+    ['caller','松田と申します。'],
+    ['ai','松田様ですね。ご予約を確定しました。確認のメッセージをSMSでお送りします。ありがとうございました。'],
+  ];
+  for(let i=0;i<script.length;i++){
+    const [who,txt]=script[i];
+    if(who==='ai'){
+      const tp=document.createElement('div');tp.className='typing';tp.innerHTML='<span></span><span></span><span></span>';
+      $('bubbles').appendChild(tp);$('bubbles').scrollTop=9999;
+      await new Promise(r=>setTimeout(r,650));tp.remove();
+    } else {
+      await new Promise(r=>setTimeout(r,500));
+    }
+    const b=document.createElement('div');b.className='bub '+(who==='ai'?'ai':'caller');
+    b.innerHTML=`<div class="who">${who==='ai'?'AIオペレーター':'お客様'}</div>${esc(txt)}`;
+    $('bubbles').appendChild(b);
+    if(who==='caller'){$('callerSub').textContent='通話中';$('ringIcon').classList.remove('ringing');}
+    await new Promise(r=>setTimeout(r,420));
+  }
+  clearInterval(timer);
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // 結果生成
+  const when=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+(3),14,0);
+  $('rcName').textContent='松田 隆 様（新規）';
+  $('rcReq').textContent='施設見学のご予約';
+  $('rcWhen').textContent=fmtFull(when);
+  $('rcDur').textContent='0分'+pad(sec)+'秒';
+  $('rcSms').textContent='お客様と担当スタッフへ確認SMSを自動送信しました';
+  $('resultCard').classList.add('in');
+  // 実データへ反映
+  bookings.push({when,name:'松田 隆 様',body:'施設見学（新規）',via:'AI電話応答',status:'pending'});
+  calls.unshift({id:calls.length+100,caller:'松田 隆 様',cat:'新規',tel:'090-7788-12XX',req:'見学の予約をしたい',result:'booked',dur:sec||52,when:new Date(),handler:'AI自動応答',script:[['ai','お電話ありがとうございます。AIオペレーターが承ります。'],['caller','施設の見学を予約したいんですが。'],['ai','来週水曜14時でご予約を承りました。確認SMSをお送りします。']]});
+  $('navBook').textContent=bookings.length;
+  btn.disabled=false;btn.textContent='⚡ もう一度実行';aiBusy=false;
+  showToast('AIが電話応対し、予約1件を獲得しました');
+});
+
+/* ============ INIT ============ */
+renderChips();renderDash();
+$('navBook').textContent=bookings.length;
+</script>
+</body>
+</html>

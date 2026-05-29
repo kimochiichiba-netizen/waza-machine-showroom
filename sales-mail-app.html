@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜営業メール作成マシン</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;
+  --purple:#7c5cf0;--purple-soft:#f0ecff;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.nav a .badge.ai{background:var(--purple)}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn.purple{background:var(--purple);border-color:var(--purple);color:#fff}
+.btn.purple:hover{filter:brightness(1.08);color:#fff}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-fill.g{background:linear-gradient(90deg,var(--green),#34d399)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* funnel */
+.funnel{display:flex;flex-direction:column;gap:10px}
+.fn-row{display:grid;grid-template-columns:90px 1fr 70px;align-items:center;gap:11px;font-size:12.5px}
+.fn-row .fl{color:var(--ink-2);font-weight:700}
+.fn-bar{height:30px;border-radius:8px;display:flex;align-items:center;padding-left:12px;color:#fff;font-weight:800;font-size:13px;
+  background:linear-gradient(90deg,var(--brand),var(--sky));transition:width 1s cubic-bezier(.2,.8,.3,1);width:0}
+.fn-row .fv{text-align:right;font-weight:700;color:var(--ink)}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px;vertical-align:middle}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.replied{background:var(--green-soft);color:var(--green)}
+.st.opened{background:var(--brand-soft);color:var(--brand)}
+.st.sent{background:var(--soft);color:var(--ink-3)}
+.st.bounced{background:var(--red-soft);color:var(--red)}
+.st.draft{background:var(--amber-soft);color:var(--amber)}
+.st.scheduled{background:var(--purple-soft);color:var(--purple)}
+
+/* create form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,400px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card);resize:vertical}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.fg .hint{font-size:11px;color:var(--ink-3);margin-top:4px}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg .sgb{flex:1;min-width:70px;padding:8px 6px;border:1px solid var(--line-2);background:var(--card);border-radius:8px;font-size:12px;font-weight:700;color:var(--ink-2);cursor:pointer;text-align:center;transition:all .15s}
+.seg .sgb.on{background:var(--purple-soft);border-color:var(--purple);color:var(--purple)}
+.seg .sgb:hover{border-color:var(--purple)}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* mail preview */
+.mailcard{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
+.mail-head{padding:16px 20px;border-bottom:1px solid var(--line);background:var(--soft)}
+.mail-head .row{display:flex;gap:8px;font-size:12.5px;padding:3px 0;color:var(--ink-2)}
+.mail-head .row b{color:var(--ink-3);min-width:54px;font-weight:700}
+.mail-head .subj{font-size:16px;font-weight:900;color:var(--ink);margin-top:4px}
+.mail-body{padding:22px 24px;font-size:13.5px;line-height:1.95;white-space:pre-wrap;min-height:280px;color:#222b38}
+.mail-body .ph-empty{color:var(--ink-3);text-align:center;padding:60px 0;white-space:normal}
+.typing{border-right:2px solid var(--brand);animation:blink .8s step-end infinite}
+@keyframes blink{50%{border-color:transparent}}
+.mail-foot{padding:13px 20px;border-top:1px solid var(--line);display:flex;gap:9px;align-items:center}
+.score-pill{display:inline-flex;align-items:center;gap:7px;background:var(--green-soft);color:var(--green);font-weight:800;font-size:12px;padding:6px 12px;border-radius:99px}
+.score-pill .n{font-family:'Orbitron';font-size:14px}
+
+/* AI compare (Before/After) */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow);margin-bottom:16px}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+
+/* AI input row */
+.ai-input{display:grid;grid-template-columns:1fr;gap:14px;margin-top:18px;border-top:1px solid var(--line);padding-top:18px}
+.problem-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.pc{padding:7px 13px;border:1px solid var(--line-2);background:var(--card);border-radius:99px;font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.pc:hover{border-color:var(--purple)}
+.pc.on{background:var(--purple-soft);border-color:var(--purple);color:var(--purple)}
+
+/* AI result before/after text */
+.ai-result{margin-top:18px;display:none}
+.ai-result.show{display:block;animation:fade .4s}
+.ar-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:880px){.ar-grid{grid-template-columns:1fr}}
+.ar-box{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.ar-box .h{padding:11px 15px;font-size:12.5px;font-weight:800;display:flex;align-items:center;gap:8px}
+.ar-box.bad .h{background:#f3f4f7;color:#6b7280}
+.ar-box.good .h{background:var(--green-soft);color:var(--green)}
+.ar-box .b{padding:16px 18px;font-size:12.5px;line-height:1.85;white-space:pre-wrap;color:#2a3340}
+.ar-box.bad .b{color:#7a8499}
+.ar-metrics{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.metric{flex:1;min-width:120px;background:var(--soft);border-radius:10px;padding:12px 14px}
+.metric .ml{font-size:11px;color:var(--ink-3);font-weight:700}
+.metric .mv{font-size:20px;font-weight:900;margin-top:3px}
+.metric .mv .up{color:var(--green);font-size:12px;margin-left:5px}
+
+/* templates */
+.tpl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:980px){.tpl-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.tpl-grid{grid-template-columns:1fr}}
+.tpl{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow);display:flex;flex-direction:column;transition:all .15s;cursor:pointer}
+.tpl:hover{border-color:var(--brand);transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.tpl .tg{display:inline-flex;align-self:flex-start;font-size:11px;font-weight:800;padding:3px 10px;border-radius:7px;background:var(--brand-soft);color:var(--brand);margin-bottom:10px}
+.tpl .tg.kaigo{background:var(--purple-soft);color:var(--purple)}
+.tpl .tg.seika{background:var(--green-soft);color:var(--green)}
+.tpl .tg.chusho{background:var(--amber-soft);color:var(--amber)}
+.tpl h4{font-size:14.5px;font-weight:900;margin-bottom:6px}
+.tpl p{font-size:12px;color:var(--ink-2);line-height:1.7;flex:1}
+.tpl .tf{display:flex;align-items:center;gap:8px;margin-top:13px;font-size:11.5px;color:var(--ink-3);font-weight:700}
+.tpl .tf .ok{color:var(--green)}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#9b87f5,#7c5cf0);display:grid;place-items:center;font-size:26px;margin:0 auto;flex-shrink:0}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(124,92,240,.4)}50%{box-shadow:0 0 40px rgba(155,135,245,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.miniavt{width:24px;height:24px;border-radius:6px;background:var(--brand-soft);color:var(--brand);display:inline-grid;place-items:center;font-size:11px;font-weight:800;margin-right:8px;vertical-align:middle}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">営業メールマシン<small>技マシン｜営業文面AI</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="history"><span class="i">📨</span>送信履歴</a>
+      <a data-v="create"><span class="i">✏️</span>新規作成</a>
+      <a data-v="tpl"><span class="i">📋</span>テンプレ</a>
+      <a data-v="analytics"><span class="i">📈</span>反応分析</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI文面生成<span class="badge ai">AI</span></a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="./">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。宛先・数値はサンプルで、実際の送信は行われません。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">2026年5月の営業メール状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>月次の送信数と返信数</h3><span class="more">過去6ヶ月</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="ph"><h3>業種別の返信率</h3><span class="more">今月</span></div>
+          <div class="pb"><div class="bars" id="segBars"></div></div>
+        </div>
+      </section>
+
+      <!-- HISTORY -->
+      <section class="view" id="v-history">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="宛先・会社名・件名で検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>宛先</th><th>件名</th><th>業種</th><th>送信日時</th><th class="r">開封</th><th>状態</th></tr></thead>
+          <tbody id="histRows"></tbody>
+        </table>
+      </section>
+
+      <!-- CREATE -->
+      <section class="view" id="v-create">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>宛先の会社名</label><input id="cCompany" placeholder="例：大分中央クリニック"></div>
+            <div class="fg"><label>ご担当者名</label><input id="cPerson" placeholder="例：佐藤 様"></div>
+            <div class="fg"><label>業種</label>
+              <div class="seg" id="cSeg">
+                <button class="sgb on" data-s="医療">医療</button>
+                <button class="sgb" data-s="介護">介護</button>
+                <button class="sgb" data-s="青果">青果</button>
+                <button class="sgb" data-s="中小">中小</button>
+              </div>
+            </div>
+            <div class="fg"><label>相手の課題・困りごと</label>
+              <textarea id="cProblem" rows="3" placeholder="例：シフト作成に毎月時間がかかっている"></textarea>
+              <div class="hint">課題を入れるほど、刺さる文面になります</div>
+            </div>
+            <div class="fg"><label>提案したいサービス</label>
+              <select id="cService"></select></div>
+            <div class="fg"><label>トーン</label>
+              <div class="seg" id="cTone">
+                <button class="sgb on" data-t="丁寧">丁寧</button>
+                <button class="sgb" data-t="親しみ">親しみ</button>
+                <button class="sgb" data-t="端的">端的</button>
+              </div>
+            </div>
+            <div class="aihint" id="cAiHint">✨ AIが業種に合わせて件名を提案しました</div>
+            <div class="linkrow" style="margin-top:14px">
+              <button class="btn purple" id="cGen" style="flex:1;justify-content:center">⚡ AIで文面を生成</button>
+              <button class="btn" id="cSample">サンプル</button>
+            </div>
+            <button class="btn primary" id="cSend" style="width:100%;justify-content:center;margin-top:9px">📨 この内容で送信予約</button>
+          </div>
+          <div>
+            <div class="mailcard">
+              <div class="mail-head">
+                <div class="row"><b>From</b><span>営業部 ／ 株式会社気持ち市場</span></div>
+                <div class="row"><b>To</b><span id="mTo">（宛先を入力してください）</span></div>
+                <div class="subj" id="mSubj">件名：—</div>
+              </div>
+              <div class="mail-body" id="mBody"><div class="ph-empty">左で課題・サービスを入力し<br>「⚡ AIで文面を生成」を押すと<br>ここに営業メールが組み上がります。</div></div>
+              <div class="mail-foot">
+                <span class="score-pill" id="mScore" style="display:none">✨ 刺さり度スコア <span class="n" id="mScoreN">0</span><span>/100</span></span>
+                <button class="btn" id="mCopy" style="margin-left:auto;padding:7px 13px">📋 コピー</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TEMPLATES -->
+      <section class="view" id="v-tpl">
+        <div class="tpl-grid" id="tplGrid"></div>
+      </section>
+
+      <!-- ANALYTICS -->
+      <section class="view" id="v-analytics">
+        <div class="kpis" id="anKpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>営業ファネル（今月）</h3></div>
+            <div class="pb"><div class="funnel" id="funnel"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>反応の良かった件名 TOP5</h3></div>
+            <div class="pb"><div class="bars" id="subjBars"></div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="ph"><h3>担当者別の成績</h3></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>担当</th><th class="r">送信数</th><th class="r">開封率</th><th class="r">返信率</th><th class="r">商談化</th></tr></thead>
+              <tbody id="staffRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI GENERATE -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">顧客の課題から、刺さる営業文面を6秒で生成</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">相手の困りごとを選ぶだけ。AIが心を動かす一通を自動で書きます。</div></div>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">25分／通</div>
+              <ul>
+                <li>🤔 何を書けば刺さるか毎回ゼロから悩む</li>
+                <li>⌨️ 文面・件名を手で書いて推敲</li>
+                <li>📉 担当者ごとに品質バラつき・返信率5%台</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 課題を選ぶだけで自動ライティング</li>
+                <li>✨ 件名・本文・刺さり度スコアを同時生成</li>
+                <li>📈 全員が高品質・返信率18%台へ</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="ai-input">
+            <div>
+              <label style="font-size:12px;font-weight:700;color:var(--ink-2)">① 相手の課題を選ぶ</label>
+              <div class="problem-chips" id="probChips"></div>
+            </div>
+            <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end">
+              <div style="flex:1;min-width:200px">
+                <label style="font-size:12px;font-weight:700;color:var(--ink-2)">② 宛先（会社名）</label>
+                <input id="aiCompany" value="つくし介護センター" style="width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;margin-top:6px">
+              </div>
+              <button class="btn purple" id="aiRun" style="height:42px">⚡ 刺さる文面を生成する</button>
+            </div>
+          </div>
+
+          <div class="ai-result" id="aiResult">
+            <div class="ar-grid">
+              <div class="ar-box bad">
+                <div class="h">😓 ありがちな営業メール（Before）</div>
+                <div class="b" id="arBefore"></div>
+              </div>
+              <div class="ar-box good">
+                <div class="h">✨ 技マシンが生成（After）</div>
+                <div class="b" id="arAfter"></div>
+              </div>
+            </div>
+            <div class="ar-metrics" id="arMetrics"></div>
+            <div style="margin-top:14px;display:flex;gap:9px;flex-wrap:wrap">
+              <button class="btn primary" id="arUse">✏️ この文面で新規作成へ</button>
+              <button class="btn" id="arRegen">🔄 別パターンを生成</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const SERVICES=[
+  'AI業務自動化 月額プラン','介護記録システム 月額','シフト管理システム 月額',
+  'ホームページ制作・保守','青果定期便（法人向け）','請求業務の自動化マシン','営業メール作成マシン'
+];
+const COMPANIES=[
+  {name:'大分中央クリニック',type:'医療',staff:'佐藤'},
+  {name:'さくら総合病院',type:'医療',staff:'佐藤'},
+  {name:'みらい歯科医院',type:'医療',staff:'田中'},
+  {name:'豊後内科クリニック',type:'医療',staff:'佐藤'},
+  {name:'つくし介護センター',type:'介護',staff:'田中'},
+  {name:'のぞみデイサービス',type:'介護',staff:'田中'},
+  {name:'あおぞら訪問看護',type:'介護',staff:'高橋'},
+  {name:'豊後おおいた青果',type:'青果',staff:'鈴木'},
+  {name:'大分中央卸売市場 仲卸',type:'青果',staff:'鈴木'},
+  {name:'別府ベジフル商会',type:'青果',staff:'鈴木'},
+  {name:'都町商店会',type:'中小',staff:'高橋'},
+  {name:'大分海鮮市場',type:'中小',staff:'高橋'},
+  {name:'株式会社吉原',type:'中小',staff:'佐藤'},
+];
+const PROBLEMS={
+  医療:[
+    {p:'シフト作成に毎月時間がかかっている',svc:'シフト管理システム 月額',line:'毎月のシフト作成にお時間を取られていませんか'},
+    {p:'紙のカルテ・記録の管理が大変',svc:'AI業務自動化 月額プラン',line:'紙の記録の転記や管理にご負担を感じていませんか'},
+    {p:'予約の電話対応に追われている',svc:'AI業務自動化 月額プラン',line:'予約のお電話対応で本来の業務が圧迫されていませんか'},
+  ],
+  介護:[
+    {p:'介護記録の手書き・転記が負担',svc:'介護記録システム 月額',line:'介護記録の手書きと転記の二度手間にお困りではありませんか'},
+    {p:'職員のシフト調整が複雑',svc:'シフト管理システム 月額',line:'職員さんのシフト調整に毎月ご苦労されていませんか'},
+    {p:'家族への報告に時間がかかる',svc:'AI業務自動化 月額プラン',line:'ご家族への報告業務にお時間を取られていませんか'},
+  ],
+  青果:[
+    {p:'受注・請求の手入力が多い',svc:'請求業務の自動化マシン',line:'受注から請求までの手入力にお手間がかかっていませんか'},
+    {p:'配送ルートの組み立てが非効率',svc:'AI業務自動化 月額プラン',line:'毎朝の配送ルート組みにお時間を取られていませんか'},
+    {p:'病院向けの新規開拓が進まない',svc:'青果定期便（法人向け）',line:'病院・施設向けの新規開拓に手が回っていないのではと存じます'},
+  ],
+  中小:[
+    {p:'ホームページが古く問い合わせが来ない',svc:'ホームページ制作・保守',line:'ホームページからのお問い合わせが減っていませんか'},
+    {p:'営業メールを書く時間がない',svc:'営業メール作成マシン',line:'日々の営業メール作成にお時間を割けていますか'},
+    {p:'請求書発行が手作業で煩雑',svc:'請求業務の自動化マシン',line:'毎月の請求書発行が手作業でご負担になっていませんか'},
+  ],
+};
+const TONE_OPEN={丁寧:'いつもお世話になっております。',親しみ:'お忙しいところ失礼いたします。',端的:'突然のご連絡失礼いたします。'};
+const TONE_CLOSE={丁寧:'ご多用のところ恐縮ですが、ご検討いただけますと幸いです。',親しみ:'まずは15分ほど、お話だけでも伺えればうれしいです。',端的:'ご興味があれば、日程を2〜3いただけますでしょうか。'};
+
+let SEED=4242;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+const TODAY=new Date();
+function ym(d){return (d.getMonth()+1);}
+
+/* seed history */
+const HSTATUS=['replied','opened','opened','sent','opened','replied','bounced','opened','sent'];
+let mails=[];
+(function seed(){
+  for(let i=0;i<26;i++){
+    const c=pick(COMPANIES);
+    const probs=PROBLEMS[c.type];const pr=pick(probs);
+    let stt=pick(HSTATUS);
+    const opens=stt==='bounced'?0:(stt==='sent'?0:1+Math.floor(rnd()*4));
+    const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-Math.floor(rnd()*3),1+Math.floor(rnd()*27),9+Math.floor(rnd()*9),Math.floor(rnd()*60));
+    mails.push({
+      company:c.name,type:c.type,staff:c.staff,
+      subject:subjectFor(c.type,pr),person:'ご担当者',
+      status:stt,opens,date:d
+    });
+  }
+})();
+function subjectFor(type,pr){
+  const m={
+    医療:'【業務効率化のご相談】'+pr.svc+'のご案内',
+    介護:'現場の負担を減らす'+pr.svc+'のご提案',
+    青果:'病院・施設向け'+pr.svc+'のご案内',
+    中小:pr.svc+'で月◯時間を削減しませんか',
+  };
+  return m[type];
+}
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const pct=n=>Math.round(n)+'%';
+const fmtDT=d=>(d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STLABEL={replied:'返信あり',opened:'開封済',sent:'送信済',bounced:'不達',draft:'下書き',scheduled:'送信予約'};
+function stBadge(s){return `<span class="st ${s}">${esc(STLABEL[s]||s)}</span>`;}
+function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','2026年'+ym(TODAY)+'月の営業メール状況'],history:['送信履歴','送ったメールと反応を管理します'],
+  create:['新規作成','顧客情報を入れるとAIが文面を生成します'],tpl:['テンプレ','業種別のすぐ使える型を用意しました'],
+  analytics:['反応分析','開封・返信・商談化を見える化します'],ai:['AI文面生成','課題から刺さる一通を6秒で作ります']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='history'?'<button class="btn primary" onclick="go(\'create\')">＋ 新規作成</button>'
+    : v==='dash'?'<button class="btn purple" onclick="go(\'ai\')">⚡ AI文面生成</button><button class="btn primary" onclick="go(\'create\')">＋ 新規作成</button>'
+    : v==='create'?'<button class="btn" onclick="go(\'ai\')">⚡ AIで作る</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='history')renderHist();
+  if(v==='tpl')renderTpl();
+  if(v==='analytics')renderAnalytics();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const tm=mails.filter(m=>thisMonth(m.date));
+  const sent=tm.length;
+  const opened=tm.filter(m=>m.status==='opened'||m.status==='replied').length;
+  const replied=tm.filter(m=>m.status==='replied').length;
+  const openRate=sent?opened/sent*100:0;
+  const replyRate=sent?replied/sent*100:0;
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','今月の送信数',sent+'<small>通</small>',sent+'件','up','前月比 +9通')}
+    ${kpi('#0ea5b7','開封率',pct(openRate),opened+'通 開封','up','業界平均22%超')}
+    ${kpi('#16b877','返信率',pct(replyRate),replied+'通 返信','up','前月比 +6pt')}
+    ${kpi('#7c5cf0','作成時間','6<small>秒/通</small>','手作業25分→','up','▲96%短縮')}`;
+  // trend: sent vs replied over 6 months
+  const months=[];for(let k=5;k>=0;k--){months.push(new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1));}
+  const sCnt=months.map(m=>mails.filter(x=>x.date.getMonth()===m.getMonth()&&x.date.getFullYear()===m.getFullYear()).length);
+  const rCnt=months.map(m=>mails.filter(x=>x.date.getMonth()===m.getMonth()&&x.date.getFullYear()===m.getFullYear()&&x.status==='replied').length);
+  const mx=Math.max(...sCnt,1);
+  $('trendBars').innerHTML=months.map((m,i)=>`
+    <div class="bar-row"><span class="mlabel">${m.getMonth()+1}月</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(sCnt[i]/mx*100)}"></div></div>
+      <span class="mval">${sCnt[i]}通 / 返${rCnt[i]}</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // segment reply rate
+  const types=['医療','介護','青果','中小'];
+  const segData=types.map(t=>{
+    const arr=mails.filter(m=>m.type===t);
+    const rep=arr.filter(m=>m.status==='replied').length;
+    return {t,rate:arr.length?rep/arr.length*100:0,n:arr.length};
+  });
+  const smx=Math.max(...segData.map(s=>s.rate),1);
+  $('segBars').innerHTML=segData.map(s=>`
+    <div class="bar-row"><span class="mlabel">${s.t}</span>
+      <div class="bar-track"><div class="bar-fill g" style="width:0" data-w="${Math.round(s.rate/smx*100)}"></div></div>
+      <span class="mval">${pct(s.rate)}</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#segBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),120);
+  // activity
+  const acts=[
+    {i:'💬',c:'#e6f8f0',t:'つくし介護センター より返信「資料拝見しました」',m:'8分前'},
+    {i:'⚡',c:'#f0ecff',t:'AIが「予約電話対応」の課題から文面を生成',m:'30分前'},
+    {i:'👀',c:'#eaf1ff',t:'大分中央クリニック がメールを開封（2回目）',m:'1時間前'},
+    {i:'📨',c:'#eaf1ff',t:'豊後おおいた青果 へ営業メールを送信',m:'今日 9:42'},
+    {i:'📈',c:'#e6f8f0',t:'今月の返信率が 18% を突破しました',m:'今日 8:10'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${esc(l)}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?esc(sub)+' ・ ':''}${esc(d)}</div></div>`;}
+
+/* ============ HISTORY ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['replied','返信あり'],['opened','開封済'],['sent','送信済'],['bounced','不達']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderHist();});
+}
+function renderHist(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=mails.filter(m=>filterStatus==='all'||m.status===filterStatus)
+    .filter(m=>!q||(m.company+m.subject+m.staff).toLowerCase().includes(q))
+    .sort((a,b)=>b.date-a.date);
+  $('histRows').innerHTML=rows.length?rows.map(m=>`<tr>
+    <td><span class="miniavt">${esc(m.company.slice(0,1))}</span><b>${esc(m.company)}</b></td>
+    <td style="color:var(--ink-2);max-width:300px">${esc(m.subject)}</td>
+    <td><span class="st sent" style="background:var(--soft);color:var(--ink-2)">${esc(m.type)}</span></td>
+    <td style="color:var(--ink-2)">${fmtDT(m.date)}</td>
+    <td class="r tnum" style="color:var(--ink-2)">${m.opens?m.opens+'回':'—'}</td>
+    <td>${stBadge(m.status)}</td></tr>`).join('')
+    :'<tr><td colspan="6" class="empty-cell">該当するメールがありません</td></tr>';
+}
+$('q').addEventListener('input',renderHist);
+
+/* ============ TEMPLATES ============ */
+const TEMPLATES=[
+  {tag:'医療',cls:'',title:'クリニック向け 業務効率化',desc:'予約電話・カルテ管理の負担に共感し、AI自動化で外来に集中できる未来を提示する型。',used:'42回'},
+  {tag:'介護',cls:'kaigo',title:'介護施設向け 記録DX',desc:'手書き記録の二度手間に寄り添い、現場職員の残業削減という具体メリットを訴求する型。',used:'38回'},
+  {tag:'青果',cls:'seika',title:'病院・施設への新規開拓',desc:'院内の食材調達の手間に着目し、定期便で安定供給と原価メリットを提案する型。',used:'27回'},
+  {tag:'中小',cls:'chusho',title:'HP集客の立て直し',desc:'古いHPで問い合わせが減った課題に対し、制作＋保守で問い合わせ増を約束する型。',used:'31回'},
+  {tag:'中小',cls:'chusho',title:'請求業務の自動化提案',desc:'毎月の手作業の請求書発行を、納品データから一括生成する価値で訴求する型。',used:'19回'},
+  {tag:'医療',cls:'',title:'歯科向け リコール促進',desc:'定期検診の案内漏れに着目し、自動リマインドで再来院率を上げる提案の型。',used:'15回'},
+];
+function renderTpl(){
+  $('tplGrid').innerHTML=TEMPLATES.map((t,i)=>`<div class="tpl" data-i="${i}">
+    <span class="tg ${t.cls}">${esc(t.tag)}</span>
+    <h4>${esc(t.title)}</h4>
+    <p>${esc(t.desc)}</p>
+    <div class="tf"><span class="ok">✓ AI最適化済</span><span style="margin-left:auto">使用 ${esc(t.used)}</span></div>
+  </div>`).join('');
+  $('tplGrid').querySelectorAll('.tpl').forEach(el=>el.onclick=()=>{
+    const t=TEMPLATES[+el.dataset.i];
+    showToast('「'+t.title+'」を新規作成に読み込みました');
+    go('create');
+    const seg=t.tag==='医療'?'医療':t.tag;
+    setSeg('cSeg',seg==='中小'?'中小':seg);
+    setTimeout(()=>{$('cCompany').focus();},200);
+  });
+}
+
+/* ============ ANALYTICS ============ */
+function renderAnalytics(){
+  const tm=mails.filter(m=>thisMonth(m.date));
+  const sent=tm.length;
+  const opened=tm.filter(m=>m.status==='opened'||m.status==='replied').length;
+  const replied=tm.filter(m=>m.status==='replied').length;
+  const deals=Math.max(1,Math.round(replied*0.55));
+  $('anKpis').innerHTML=`
+    ${kpi('#2f6df0','送信',sent+'<small>通</small>','今月','up','+9通')}
+    ${kpi('#0ea5b7','開封',opened+'<small>通</small>',pct(sent?opened/sent*100:0),'up','+4pt')}
+    ${kpi('#16b877','返信',replied+'<small>通</small>',pct(sent?replied/sent*100:0),'up','+6pt')}
+    ${kpi('#7c5cf0','商談化',deals+'<small>件</small>','返信から','up','受注見込')}`;
+  const funnel=[
+    {l:'送信',v:sent,c:'linear-gradient(90deg,#2f6df0,#0ea5b7)'},
+    {l:'開封',v:opened,c:'linear-gradient(90deg,#0ea5b7,#16b877)'},
+    {l:'返信',v:replied,c:'linear-gradient(90deg,#16b877,#34d399)'},
+    {l:'商談化',v:deals,c:'linear-gradient(90deg,#7c5cf0,#9b87f5)'},
+  ];
+  const fmx=Math.max(sent,1);
+  $('funnel').innerHTML=funnel.map(f=>`<div class="fn-row"><span class="fl">${f.l}</span>
+    <div class="fn-bar" style="width:0;background:${f.c}" data-w="${Math.max(8,Math.round(f.v/fmx*100))}">${f.v}</div>
+    <span class="fv">${pct(sent?f.v/sent*100:0)}</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#funnel .fn-bar').forEach(b=>b.style.width=b.dataset.w+'%'),80);
+  // top subjects by reply
+  const top=[
+    {s:'現場の負担を減らす介護記録システムのご提案',r:31},
+    {s:'毎月◯時間を削減しませんか',r:26},
+    {s:'病院・施設向け 青果定期便のご案内',r:22},
+    {s:'予約電話の対応、AIに任せませんか',r:19},
+    {s:'ホームページからの問い合わせを増やす方法',r:14},
+  ];
+  const tmx=Math.max(...top.map(t=>t.r));
+  $('subjBars').innerHTML=top.map(t=>`<div class="bar-row" style="grid-template-columns:1fr 90px">
+    <div style="min-width:0"><div style="font-size:12px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(t.s)}</div>
+    <div class="bar-track" style="margin-top:5px"><div class="bar-fill g" style="width:0" data-w="${Math.round(t.r/tmx*100)}"></div></div></div>
+    <span class="mval">返信${t.r}%</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#subjBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),140);
+  // staff
+  const staffs=['佐藤','田中','鈴木','高橋'];
+  $('staffRows').innerHTML=staffs.map(s=>{
+    const arr=mails.filter(m=>m.staff===s);
+    const op=arr.filter(m=>m.status==='opened'||m.status==='replied').length;
+    const rp=arr.filter(m=>m.status==='replied').length;
+    return `<tr><td><span class="miniavt">${esc(s.slice(0,1))}</span><b>${esc(s)}</b></td>
+      <td class="r tnum">${arr.length}通</td>
+      <td class="r tnum">${pct(arr.length?op/arr.length*100:0)}</td>
+      <td class="r tnum" style="color:var(--green);font-weight:800">${pct(arr.length?rp/arr.length*100:0)}</td>
+      <td class="r tnum" style="color:var(--ink-2)">${Math.round(rp*0.55)}件</td></tr>`;
+  }).join('');
+}
+
+/* ============ CREATE ============ */
+function fillServices(){$('cService').innerHTML=SERVICES.map(s=>`<option>${esc(s)}</option>`).join('');}
+function setSeg(groupId,val){
+  document.querySelectorAll('#'+groupId+' .sgb').forEach(b=>b.classList.toggle('on',(b.dataset.s||b.dataset.t)===val));
+}
+$('cSeg').querySelectorAll('.sgb').forEach(b=>b.onclick=()=>{setSeg('cSeg',b.dataset.s);});
+$('cTone').querySelectorAll('.sgb').forEach(b=>b.onclick=()=>{setSeg('cTone',b.dataset.t);});
+function getSeg(groupId,attr){const el=document.querySelector('#'+groupId+' .sgb.on');return el?el.dataset[attr]:'';}
+
+function buildMail(){
+  const company=$('cCompany').value.trim();
+  const person=$('cPerson').value.trim()||'ご担当者';
+  const type=getSeg('cSeg','s')||'中小';
+  const problem=$('cProblem').value.trim();
+  const service=$('cService').value;
+  const tone=getSeg('cTone','t')||'丁寧';
+  // find a matching problem line for the type
+  const probs=PROBLEMS[type]||PROBLEMS['中小'];
+  const match=probs.find(p=>p.svc===service)||probs[0];
+  const hook=problem?('「'+problem+'」とのこと、'):(match.line+'。');
+  const benefit={
+    'AI業務自動化 月額プラン':'AIが定型業務を自動化し、月20時間以上の事務作業を削減',
+    '介護記録システム 月額':'記録の手書き・転記をゼロにし、職員さんの残業を平均30%削減',
+    'シフト管理システム 月額':'毎月のシフト作成を数分で完了し、調整の手間を大幅に削減',
+    'ホームページ制作・保守':'スマホ最適化と更新代行で、お問い合わせ数を平均1.8倍に',
+    '青果定期便（法人向け）':'院内・施設の食材を定期便で安定供給し、調達の手間とコストを削減',
+    '請求業務の自動化マシン':'納品データから請求書を一括生成し、毎月の請求業務を6秒に',
+    '営業メール作成マシン':'AIが刺さる営業文面を6秒で生成し、返信率を3倍以上に'
+  }[service]||'業務を自動化し、本来の仕事に集中できる環境を実現';
+
+  const subj=subjectFor(type,match);
+  const body=
+`${esc(company||'貴社')} ${esc(person)}
+
+${TONE_OPEN[tone]}
+株式会社気持ち市場の営業担当でございます。
+
+${hook}同じ業界の${type}の現場では共通のお悩みとして多く伺います。
+
+そこで弊社の「${esc(service)}」をご案内できればと存じます。
+このサービスでは、${benefit}できます。
+
+大分市内の同業の皆さまにも導入いただき、
+「もっと早く入れればよかった」とのお声を多数いただいております。
+
+${TONE_CLOSE[tone]}
+
+──────────────
+株式会社気持ち市場 営業部
+大分市都町 / kimochi.ichiba@gmail.com
+──────────────`;
+  return {company,person,subj,body};
+}
+function renderPreview(animated){
+  const m=buildMail();
+  $('mTo').textContent=(m.company||'（宛先未入力）')+' '+(m.person||'');
+  $('mSubj').textContent='件名：'+m.subj;
+  if(animated){
+    typeInto($('mBody'),m.body);
+  }else{
+    $('mBody').textContent=m.body;
+  }
+  // score
+  let score=62;
+  if($('cProblem').value.trim())score+=18;
+  if($('cCompany').value.trim())score+=8;
+  if($('cPerson').value.trim())score+=6;
+  score=Math.min(98,score+Math.round(rnd()*4));
+  $('mScore').style.display='inline-flex';
+  $('mScoreN').textContent=score;
+}
+let typeTimer=null;
+function typeInto(el,text){
+  if(typeTimer)clearInterval(typeTimer);
+  el.textContent='';el.classList.add('typing');
+  let i=0;const step=Math.max(2,Math.round(text.length/90));
+  typeTimer=setInterval(()=>{
+    i+=step;el.textContent=text.slice(0,i);
+    if(i>=text.length){clearInterval(typeTimer);el.classList.remove('typing');el.textContent=text;}
+  },18);
+}
+$('cGen').addEventListener('click',async()=>{
+  if(!$('cCompany').value.trim()){showToast('宛先の会社名を入力してください');return;}
+  const btn=$('cGen');btn.disabled=true;btn.textContent='⚡ AIが執筆中…';
+  $('cAiHint').classList.add('show');
+  await new Promise(r=>setTimeout(r,650));
+  renderPreview(true);
+  btn.disabled=false;btn.textContent='⚡ AIで文面を生成';
+  setTimeout(()=>$('cAiHint').classList.remove('show'),2200);
+  showToast('AIが営業文面を生成しました');
+});
+$('cSample').addEventListener('click',()=>{
+  $('cCompany').value='のぞみデイサービス';$('cPerson').value='中村 様';
+  setSeg('cSeg','介護');
+  $('cProblem').value='介護記録の手書きと転記に毎日1時間以上かかっている';
+  $('cService').value='介護記録システム 月額';
+  setSeg('cTone','丁寧');
+  renderPreview(false);
+  showToast('サンプルを読み込みました');
+});
+$('cSend').addEventListener('click',async()=>{
+  if(!$('cCompany').value.trim()){showToast('宛先の会社名を入力してください');return;}
+  const btn=$('cSend');btn.disabled=true;btn.textContent='📨 送信予約中…';
+  await new Promise(r=>setTimeout(r,700));
+  const m=buildMail();
+  mails.push({company:m.company,type:getSeg('cSeg','s')||'中小',staff:'佐藤',subject:m.subj,person:m.person,status:'scheduled',opens:0,date:new Date()});
+  btn.disabled=false;btn.textContent='📨 この内容で送信予約';
+  showToast('送信予約しました（履歴に追加・デモのため実送信なし）');
+  setTimeout(()=>go('history'),750);
+});
+$('mCopy').addEventListener('click',()=>{
+  const txt=$('mBody').textContent;
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(()=>showToast('文面をコピーしました')).catch(()=>showToast('コピーしました'));
+  }else{showToast('文面をコピーしました');}
+});
+
+/* ============ AI GENERATE ============ */
+const AI_PROBLEMS=[
+  {label:'介護記録が手書きで負担',type:'介護',svc:'介護記録システム 月額'},
+  {label:'シフト作成に時間がかかる',type:'介護',svc:'シフト管理システム 月額'},
+  {label:'予約電話の対応に追われる',type:'医療',svc:'AI業務自動化 月額プラン'},
+  {label:'病院向けの新規開拓が進まない',type:'青果',svc:'青果定期便（法人向け）'},
+  {label:'HPが古く問い合わせが来ない',type:'中小',svc:'ホームページ制作・保守'},
+  {label:'請求書発行が手作業で煩雑',type:'中小',svc:'請求業務の自動化マシン'},
+];
+let aiSel=0;
+function renderProbChips(){
+  $('probChips').innerHTML=AI_PROBLEMS.map((p,i)=>`<button class="pc ${i===aiSel?'on':''}" data-i="${i}">${esc(p.label)}</button>`).join('');
+  $('probChips').querySelectorAll('.pc').forEach(b=>b.onclick=()=>{aiSel=+b.dataset.i;renderProbChips();});
+}
+function runAI(){
+  const btn=$('aiRun');const company=$('aiCompany').value.trim()||'貴社';
+  const prob=AI_PROBLEMS[aiSel];
+  btn.disabled=true;btn.textContent='⚡ 生成中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent=Math.min(s,6)+'秒';},120);
+  setTimeout(()=>{
+    clearInterval(t);$('baAfterT').textContent='6秒';
+    $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+    // before (generic) / after (sharp)
+    const before=
+`${esc(company)} 御中
+
+お世話になっております。弊社サービスのご案内です。
+弊社では業務効率化のソリューションを多数取り扱っております。
+ぜひ一度ご検討ください。よろしくお願いいたします。`;
+    const after=
+`${esc(company)} ご担当者様
+
+いつもお世話になっております。株式会社気持ち市場でございます。
+
+「${esc(prob.label)}」――${esc(prob.type)}の現場でよく伺うお悩みです。
+御社でも、本来の仕事に割く時間が削られていないでしょうか。
+
+弊社の「${esc(prob.svc)}」なら、その手間をAIが肩代わりし、
+大分市内の同業の皆さまで月20時間以上の削減を実現しています。
+
+まずは15分ほど、御社の現状に合うかだけでもお話しできれば幸いです。
+ご都合のよい候補日を2〜3いただけますでしょうか。`;
+    $('arBefore').textContent=before;
+    $('arAfter').textContent=after;
+    const sc=88+Math.floor(rnd()*9);
+    $('arMetrics').innerHTML=`
+      ${metric('刺さり度スコア',sc+'<small style="font-size:12px">/100</small>','+'+( sc-54)+'pt')}
+      ${metric('想定 開封率','42<small style="font-size:12px">%</small>','+20pt')}
+      ${metric('想定 返信率','19<small style="font-size:12px">%</small>','+14pt')}
+      ${metric('作成時間','6<small style="font-size:12px">秒</small>','手作業25分')}`;
+    $('aiResult').classList.add('show');
+    btn.disabled=false;btn.textContent='🔄 もう一度生成';
+    showToast('刺さる営業文面を生成しました（刺さり度'+sc+'点）');
+  },1300);
+}
+function metric(l,v,up){return `<div class="metric"><div class="ml">${esc(l)}</div><div class="mv tnum">${v}<span class="up">${esc(up)}</span></div></div>`;}
+$('aiRun').addEventListener('click',runAI);
+$('arRegen').addEventListener('click',runAI);
+$('arUse').addEventListener('click',()=>{
+  const prob=AI_PROBLEMS[aiSel];
+  go('create');
+  $('cCompany').value=$('aiCompany').value.trim();
+  $('cPerson').value='ご担当者 様';
+  setSeg('cSeg',prob.type==='青果'?'青果':(prob.type==='中小'?'中小':prob.type));
+  $('cProblem').value=prob.label;
+  fillServices();$('cService').value=prob.svc;
+  renderPreview(true);
+  showToast('生成した文面を新規作成に反映しました');
+});
+
+/* ============ INIT ============ */
+fillServices();
+renderProbChips();
+renderChips();
+renderDash();
+renderPreview(false);
+</script>
+</body>
+</html>

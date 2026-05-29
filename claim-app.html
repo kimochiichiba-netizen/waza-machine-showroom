@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜クレーム返信マシン（顧客対応支援システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;
+  --purple:#7c5cf0;--purple-soft:#f0ecfe;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:64px 1fr 70px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-fill.r{background:linear-gradient(90deg,var(--red),var(--amber))}
+.bar-fill.g{background:linear-gradient(90deg,var(--green),var(--sky))}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut emotion */
+.emo-wrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.donut{width:130px;height:130px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;position:relative}
+.donut::after{content:"";position:absolute;width:84px;height:84px;border-radius:50%;background:var(--card)}
+.donut .dc{position:relative;z-index:1;text-align:center}
+.donut .dc b{font-size:22px;font-weight:900;display:block;line-height:1}
+.donut .dc span{font-size:10px;color:var(--ink-3);font-weight:700}
+.emo-legend{flex:1;min-width:140px;display:flex;flex-direction:column;gap:9px}
+.emo-legend .er{display:flex;align-items:center;gap:9px;font-size:12.5px}
+.emo-legend .er .sw{width:11px;height:11px;border-radius:3px}
+.emo-legend .er b{margin-left:auto;font-weight:800}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px;vertical-align:middle}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+
+/* status badges */
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.done{background:var(--green-soft);color:var(--green)}
+.st.replied{background:var(--brand-soft);color:var(--brand)}
+.st.progress{background:var(--amber-soft);color:var(--amber)}
+.st.new{background:var(--red-soft);color:var(--red)}
+
+/* emotion badges */
+.emo{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:7px}
+.emo.angry{background:var(--red-soft);color:var(--red)}
+.emo.frust{background:var(--amber-soft);color:var(--amber)}
+.emo.worry{background:var(--purple-soft);color:var(--purple)}
+.emo.calm{background:var(--green-soft);color:var(--green)}
+
+/* priority */
+.pri{font-size:11px;font-weight:800;padding:3px 8px;border-radius:6px}
+.pri.high{background:var(--red);color:#fff}
+.pri.mid{background:var(--amber);color:#fff}
+.pri.low{background:var(--soft);color:var(--ink-2)}
+
+/* create / new form */
+.create-grid{display:grid;grid-template-columns:minmax(340px,460px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card);resize:vertical}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.fg textarea{min-height:128px;line-height:1.7}
+.samplebtns{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:13px}
+.samplebtns .sb{font-size:11.5px;font-weight:700;padding:6px 11px;border-radius:8px;border:1px dashed var(--line-2);background:var(--soft);color:var(--ink-2);cursor:pointer;transition:all .15s}
+.samplebtns .sb:hover{border-color:var(--brand);color:var(--brand);border-style:solid}
+
+/* analysis live preview */
+.ana-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.ana-empty{color:var(--ink-3);text-align:center;padding:38px 10px;font-size:13px}
+.ana-head{display:flex;align-items:center;gap:11px;margin-bottom:14px;flex-wrap:wrap}
+.ana-head .lab{font-size:11px;color:var(--ink-3);font-weight:700}
+.meter{display:flex;flex-direction:column;gap:10px;margin:14px 0}
+.meter-row{font-size:12px}
+.meter-row .mt{display:flex;justify-content:space-between;margin-bottom:4px;font-weight:700;color:var(--ink-2)}
+.meter-track{height:9px;border-radius:99px;background:var(--soft);overflow:hidden}
+.meter-fill{height:100%;border-radius:99px;width:0;transition:width .9s cubic-bezier(.2,.8,.3,1)}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.tag2{font-size:11px;font-weight:700;padding:4px 9px;border-radius:7px;background:var(--soft);color:var(--ink-2)}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* AI generate stage */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+
+/* generated reply drafts */
+.gen-list{margin-top:20px;border-top:1px solid var(--line);padding-top:18px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.draft{border:1px solid var(--line);border-radius:12px;margin-bottom:12px;overflow:hidden;opacity:0;transform:translateY(8px);transition:all .45s}
+.draft.in{opacity:1;transform:none}
+.draft .dh{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--soft);border-bottom:1px solid var(--line)}
+.draft .dh .ck{width:22px;height:22px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+.draft .dh .tt{font-weight:800;font-size:13.5px}
+.draft .dh .tn{font-size:11px;color:var(--ink-3);font-weight:600}
+.draft .dh .pill{margin-left:auto;font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:99px;background:var(--brand-soft);color:var(--brand)}
+.draft .db{padding:15px 16px;font-size:13px;color:var(--ink);white-space:pre-wrap;line-height:1.85}
+.draft .df{display:flex;gap:8px;padding:0 16px 14px}
+.draft .df .btn{padding:7px 13px;font-size:12px}
+
+/* solutions list */
+.sol{display:flex;gap:12px;padding:13px 15px;border:1px solid var(--line);border-radius:11px;margin-bottom:9px;background:var(--card);opacity:0;transform:translateX(-8px);transition:all .4s}
+.sol.in{opacity:1;transform:none}
+.sol .no{width:26px;height:26px;border-radius:8px;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:900;font-size:13px;flex-shrink:0}
+.sol .st-t{font-weight:800;font-size:13.5px;margin-bottom:2px}
+.sol .st-d{font-size:12px;color:var(--ink-2)}
+.sol .effort{margin-left:auto;text-align:right;flex-shrink:0;font-size:11px;color:var(--ink-3);font-weight:700}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+
+/* claim detail bubble (history) */
+.bubble{background:var(--soft);border:1px solid var(--line);border-radius:11px;padding:13px 15px;font-size:13px;color:var(--ink-2);line-height:1.8}
+.bubble.reply{background:var(--brand-soft);border-color:#cfe0ff;color:var(--ink)}
+.hist-item{padding:14px 0;border-bottom:1px solid var(--line)}
+.hist-item:last-child{border-bottom:0}
+.hist-meta{display:flex;align-items:center;gap:9px;margin-bottom:8px;flex-wrap:wrap;font-size:12px;color:var(--ink-3)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">クレーム返信マシン<small>技マシン｜顧客対応支援</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">📥</span>対応一覧<span class="badge" id="navNew">0</span></a>
+      <a data-v="new"><span class="i">✏️</span>新規対応</a>
+      <a data-v="hist"><span class="i">🕑</span>履歴</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="emo"><span class="i">😶</span>感情分析</a>
+      <a data-v="ai"><span class="i">⚡</span>AI返信生成</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="./">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。顧客名・クレーム内容はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">今月の顧客対応状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>曜日別のクレーム件数</h3><span class="more">直近2週間</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>感情の内訳</h3><span class="more">今月</span></div>
+            <div class="pb"><div class="emo-wrap"><div class="donut" id="donut"><div class="dc"><b id="donutN">0</b><span>件</span></div></div><div class="emo-legend" id="emoLegend"></div></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>カテゴリ別の発生状況</h3><span class="more">今月</span></div>
+            <div class="pb"><div class="bars" id="catBars"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="顧客名・件名・内容で検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>受付番号</th><th>顧客</th><th>件名</th><th>感情</th><th>優先</th><th>受付日</th><th>状態</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- NEW -->
+      <section class="view" id="v-new">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>顧客 / 施設名</label>
+              <select id="nCust"></select></div>
+            <div class="fg"><label>件名</label><input id="nSubject" placeholder="例：配送が遅れた件について"></div>
+            <div class="fg"><label>カテゴリ</label>
+              <select id="nCat"><option>配送・納品</option><option>品質・鮮度</option><option>接客・対応</option><option>請求・金額</option><option>システム不具合</option><option>その他</option></select></div>
+            <label style="font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px;display:block">クレーム本文（入力するとAIがリアルタイムで感情を分析）</label>
+            <div class="samplebtns" id="sampleBtns"></div>
+            <div class="fg"><textarea id="nBody" placeholder="お客様から届いたクレーム文を貼り付け、または入力してください。"></textarea></div>
+            <div class="linkrow" style="margin-top:6px">
+              <button class="btn primary" id="nGen" style="flex:1;justify-content:center">⚡ AIで返信文を生成</button>
+              <button class="btn" id="nClear">クリア</button>
+            </div>
+          </div>
+          <div>
+            <div class="ana-card" id="anaCard">
+              <div class="ana-empty" id="anaEmpty">✏️ 左にクレーム文を入力すると、ここに<br>AIの感情分析がリアルタイムで表示されます。</div>
+              <div id="anaBody" style="display:none">
+                <div class="ana-head">
+                  <span class="lab">AI感情分析</span>
+                  <span class="emo" id="anaEmo">—</span>
+                  <span class="pri" id="anaPri">—</span>
+                  <span style="margin-left:auto;font-size:11px;color:var(--ink-3);font-weight:700">推定カテゴリ：<b id="anaCat" style="color:var(--ink-2)">—</b></span>
+                </div>
+                <div class="meter">
+                  <div class="meter-row"><div class="mt"><span>怒り</span><span id="lblAngry">0%</span></div><div class="meter-track"><div class="meter-fill" id="mAngry" style="background:linear-gradient(90deg,var(--red),var(--amber))"></div></div></div>
+                  <div class="meter-row"><div class="mt"><span>不満・不信</span><span id="lblFrust">0%</span></div><div class="meter-track"><div class="meter-fill" id="mFrust" style="background:linear-gradient(90deg,var(--amber),#f0c64a)"></div></div></div>
+                  <div class="meter-row"><div class="mt"><span>不安</span><span id="lblWorry">0%</span></div><div class="meter-track"><div class="meter-fill" id="mWorry" style="background:linear-gradient(90deg,var(--purple),#a48bf5)"></div></div></div>
+                </div>
+                <div style="font-size:12px;color:var(--ink-2);font-weight:700;margin:14px 0 6px">検出されたキーワード</div>
+                <div class="tags" id="anaTags"></div>
+                <div style="font-size:12px;color:var(--ink-2);font-weight:700;margin:16px 0 6px">推奨トーン</div>
+                <div class="bubble" id="anaTone" style="font-size:12.5px">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- EMOTION ANALYSIS -->
+      <section class="view" id="v-emo">
+        <div class="kpis" id="emoKpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>感情スコアの分布</h3><span class="more">対応一覧より集計</span></div>
+            <div class="pb"><div class="bars" id="emoBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>感情 × カテゴリ の傾向</h3></div>
+            <div class="pb">
+              <table class="tbl" style="border:0;box-shadow:none">
+                <thead><tr><th>カテゴリ</th><th class="r">件数</th><th class="r">怒り強め</th><th>主な感情</th></tr></thead>
+                <tbody id="emoMatrix"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:16px">
+          <div class="ph"><h3>要注意（怒り度が高い未対応のクレーム）</h3></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>顧客</th><th>件名</th><th>感情</th><th class="r">怒り度</th><th>優先</th><th></th></tr></thead>
+              <tbody id="emoAlert"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- HISTORY -->
+      <section class="view" id="v-hist">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="hq" placeholder="対応済みの履歴を顧客名・件名で検索"></div>
+        </div>
+        <div id="histRows"></div>
+      </section>
+
+      <!-- AI REPLY GENERATE -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">クレーム文から、謝罪文と解決策をAIが自動生成</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">未対応のクレーム <b id="aiPendN">0</b>件 から、感情に合わせた謝罪文＋解決策3案をAIが作成します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ 一番優先度の高い案件で生成</button>
+          </div>
+
+          <div style="margin:16px 0 4px">
+            <div style="font-size:12px;color:var(--ink-2);font-weight:700;margin-bottom:7px">対象のクレーム</div>
+            <div class="bubble" id="aiSource">— ボタンを押すと、最優先の未対応クレームが読み込まれます。</div>
+          </div>
+
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">約40分</div>
+              <ul>
+                <li>😰 怒っている文章を読んで気が重くなる</li>
+                <li>📝 謝罪の言い回しを何度も書き直す</li>
+                <li>🤝 上司に相談し、解決策をすり合わせ</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">—</div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 感情を解析しトーンを自動調整</li>
+                <li>📄 謝罪文を即時に作成</li>
+                <li>💡 解決策を3案まとめて提示</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:12px">💡 AIが提案した解決策（3案）</div>
+            <div id="solItems"></div>
+            <div style="font-size:13px;font-weight:800;margin:18px 0 12px">✉️ 生成された返信文ドラフト</div>
+            <div id="draftItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const CUSTOMERS=[
+  {name:'大分中央クリニック',type:'医療'},
+  {name:'さくら総合病院',type:'医療'},
+  {name:'つくし介護センター',type:'介護'},
+  {name:'豊後おおいた青果',type:'青果卸'},
+  {name:'都町商店会',type:'小売'},
+  {name:'別府温泉ホテル組合',type:'宿泊'},
+  {name:'大分海鮮市場',type:'飲食'},
+  {name:'みらい歯科医院',type:'医療'},
+  {name:'のぞみデイサービス',type:'介護'},
+  {name:'大分駅前カフェ',type:'飲食'},
+];
+const CATS=['配送・納品','品質・鮮度','接客・対応','請求・金額','システム不具合','その他'];
+// emotion key: angry / frust / worry / calm
+const EMO_LABEL={angry:'😠 怒り',frust:'😞 不満',worry:'😟 不安',calm:'🙂 冷静'};
+const EMO_CLASS={angry:'angry',frust:'frust',worry:'worry',calm:'calm'};
+const ST_LABEL={new:'未対応',progress:'対応中',replied:'返信済',done:'解決'};
+
+/* seeded RNG (deterministic demo data) */
+let SEED=8821;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+function ri(min,max){return min+Math.floor(rnd()*(max-min+1));}
+
+const TODAY=new Date();
+const SAMPLE_BODIES=[
+  {cat:'配送・納品',emo:'angry',body:'今日の朝に届くはずだった野菜がまだ来ていません。厨房が回らず患者さんの昼食に間に合わなくなる。いったいどうなっているんですか。至急対応してください。',subject:'本日分の配送が届いていない件'},
+  {cat:'品質・鮮度',emo:'frust',body:'昨日納品されたレタスの一部が傷んでいて使えませんでした。前にも同じことがあったので、検品をしっかりしてほしいです。今後改善してもらえますか。',subject:'納品野菜の鮮度について'},
+  {cat:'接客・対応',emo:'angry',body:'電話対応してくれた担当者の言い方が非常に冷たく、不愉快でした。こちらは困って連絡しているのに、たらい回しにされて頭にきています。',subject:'電話対応への苦情'},
+  {cat:'請求・金額',emo:'worry',body:'今月の請求書の金額が先月よりかなり高くなっているのですが、内容に間違いはないでしょうか。心配なので明細を確認させてください。',subject:'請求金額の確認のお願い'},
+  {cat:'システム不具合',emo:'frust',body:'介護記録システムにログインできず、朝から記録作業が止まっています。スタッフが手書きで対応していて困っています。早く直してください。',subject:'システムにログインできない'},
+  {cat:'配送・納品',emo:'angry',body:'頼んだ商品と違うものが届きました。返品と再配送をすぐにお願いします。こんなミスが続くと取引を考え直さないといけません。',subject:'誤配送について'},
+];
+
+/* seed claims */
+let claims=[];
+(function seed(){
+  const subjects={
+    '配送・納品':['配送遅延の件','誤配送について','納品時間の変更依頼','配送ルートの相談'],
+    '品質・鮮度':['野菜の鮮度について','梱包の破損','異物混入の疑い','賞味期限の表記'],
+    '接客・対応':['電話対応への苦情','折り返し連絡がない','説明が分かりにくい','態度について'],
+    '請求・金額':['請求金額の確認','二重請求の疑い','支払期日の相談','割引適用の確認'],
+    'システム不具合':['ログインできない','画面が固まる','データが消えた','通知が来ない'],
+    'その他':['営業時間の問い合わせ','要望・ご意見','その他お問い合わせ','資料請求']
+  };
+  const emos=['angry','angry','frust','frust','worry','calm'];
+  const sts=['new','new','progress','replied','done','done','done'];
+  for(let i=0;i<26;i++){
+    const c=pick(CUSTOMERS);
+    const cat=pick(CATS);
+    const emo=pick(emos);
+    let status=pick(sts);
+    const daysAgo=ri(0,13);
+    const d=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-daysAgo,9+ri(0,8),ri(0,59));
+    // anger score by emotion
+    const anger= emo==='angry'?ri(72,96): emo==='frust'?ri(45,68): emo==='worry'?ri(20,42):ri(5,22);
+    const pri= anger>=70?'high': anger>=45?'mid':'low';
+    if(daysAgo<=1 && rnd()>0.4) status='new';
+    claims.push({
+      no:'CS-'+(20260+i+1),
+      cust:c.name, type:c.type,
+      subject:pick(subjects[cat]),
+      cat, emo, anger, pri, status,
+      date:d,
+      body:'（サンプル本文）'+subjects[cat][0]+'についてのお問い合わせです。',
+      reply: (status==='replied'||status==='done') ? '【自動生成】このたびはご不便をおかけし誠に申し訳ございません。至急確認のうえ対応いたします。' : ''
+    });
+  }
+  // ensure some new high-priority ones
+  claims[0].status='new';claims[0].emo='angry';claims[0].anger=92;claims[0].pri='high';claims[0].cat='配送・納品';
+  claims[0].subject='本日分の配送が届いていない件';claims[0].body=SAMPLE_BODIES[0].body;claims[0].cust='大分中央クリニック';claims[0].type='医療';
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmtD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtDT=d=>(d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+function stBadge(s){return `<span class="st ${s}">${ST_LABEL[s]}</span>`;}
+function emoBadge(e){return `<span class="emo ${EMO_CLASS[e]}">${EMO_LABEL[e]}</span>`;}
+function priBadge(p){const l={high:'高',mid:'中',low:'低'};return `<span class="pri ${p}">優先 ${l[p]}</span>`;}
+function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+
+/* ============ ROUTING ============ */
+const TITLES={
+  dash:['ダッシュボード','今月の顧客対応状況'],
+  list:['対応一覧','受け付けたクレームを管理します'],
+  new:['新規対応','クレーム文を入力するとAIが感情を分析します'],
+  hist:['履歴','解決・返信済みの対応履歴'],
+  emo:['感情分析','クレームの感情傾向を可視化します'],
+  ai:['AI返信生成','謝罪文と解決策3案を自動で作ります']
+};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn primary" onclick="go(\'new\')">＋ 新規対応</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI返信生成</button><button class="btn primary" onclick="go(\'new\')">＋ 新規対応</button>'
+    : v==='emo'?'<button class="btn primary" onclick="go(\'ai\')">⚡ 返信を生成</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='emo')renderEmo();
+  if(v==='hist')renderHist();
+  if(v==='ai')refreshAiSub();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const tm=claims.filter(c=>thisMonth(c.date));
+  const newN=claims.filter(c=>c.status==='new').length;
+  const solved=claims.filter(c=>c.status==='done').length;
+  const solveRate=Math.round(solved/claims.length*100);
+  const avgSat=(3.9+rnd()*0.6).toFixed(1);
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','今月の対応数',tm.length+'<small>件</small>',newN+'件 未対応','up','前月比 +8%')}
+    ${kpi('#16b877','平均返信時間','3<small>分</small>','AI下書き利用時','up','手作業40分→3分')}
+    ${kpi('#e3941f','解決率',solveRate+'<small>%</small>','',solveRate>=60?'up':'warn',solveRate>=60?'目標達成':'要改善')}
+    ${kpi('#7c5cf0','顧客満足度',avgSat+'<small>/5.0</small>','返信後アンケート','up','+0.3pt')}`;
+
+  // weekday bars (last 14days grouped by weekday)
+  const wd=['月','火','水','木','金','土','日'];
+  const counts=[0,0,0,0,0,0,0];
+  claims.forEach(c=>{const days=(TODAY-c.date)/86400000;if(days<=14){let g=(c.date.getDay()+6)%7;counts[g]++;}});
+  const mx=Math.max(...counts,1);
+  $('trendBars').innerHTML=wd.map((w,i)=>`
+    <div class="bar-row"><span class="mlabel">${w}曜日</span>
+      <div class="bar-track"><div class="bar-fill r" data-w="${Math.round(counts[i]/mx*100)}"></div></div>
+      <span class="mval">${counts[i]}件</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+
+  // emotion donut
+  const tmE=claims.filter(c=>thisMonth(c.date));
+  const ec={angry:0,frust:0,worry:0,calm:0};tmE.forEach(c=>ec[c.emo]++);
+  const total=tmE.length||1;
+  const cols={angry:'#e24a4a',frust:'#e3941f',worry:'#7c5cf0',calm:'#16b877'};
+  let acc=0;const segs=[];
+  ['angry','frust','worry','calm'].forEach(k=>{const pct=ec[k]/total*100;if(pct>0){segs.push(`${cols[k]} ${acc}% ${acc+pct}%`);acc+=pct;}});
+  $('donut').style.background=`conic-gradient(${segs.join(',')})`;
+  $('donutN').textContent=tmE.length;
+  $('emoLegend').innerHTML=['angry','frust','worry','calm'].map(k=>`
+    <div class="er"><span class="sw" style="background:${cols[k]}"></span>${EMO_LABEL[k]}<b>${ec[k]}件</b></div>`).join('');
+
+  // category bars
+  const catCount={};CATS.forEach(c=>catCount[c]=0);tmE.forEach(c=>catCount[c.cat]++);
+  const cmx=Math.max(...Object.values(catCount),1);
+  $('catBars').innerHTML=CATS.map(cat=>`
+    <div class="bar-row" style="grid-template-columns:96px 1fr 50px"><span class="mlabel" style="font-size:11.5px">${esc(cat)}</span>
+      <div class="bar-track"><div class="bar-fill" data-w="${Math.round(catCount[cat]/cmx*100)}"></div></div>
+      <span class="mval">${catCount[cat]}件</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#catBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+
+  // activity
+  const acts=[
+    {i:'⚡',c:'#e6f8f0',t:'AIが「配送遅延の件」の謝罪文と解決策3案を生成',m:'3分前'},
+    {i:'✉️',c:'#eaf1ff',t:'みらい歯科医院 へ返信を送信（満足度5）',m:'27分前'},
+    {i:'😠',c:'#fdeaea',t:'大分中央クリニック から怒り度92%のクレームを受付',m:'1時間前'},
+    {i:'✅',c:'#e6f8f0',t:'つくし介護センター の対応を「解決」に更新',m:'今日 9:40'},
+    {i:'😟',c:'#f0ecfe',t:'豊後おおいた青果 から不安度の高い請求の問い合わせ',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ LIST ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['new','未対応'],['progress','対応中'],['replied','返信済'],['done','解決'],['angry','怒り'],['frust','不満']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
+}
+function matchFilter(c){
+  if(filterStatus==='all')return true;
+  if(filterStatus==='angry'||filterStatus==='frust')return c.emo===filterStatus;
+  return c.status===filterStatus;
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=claims.filter(matchFilter)
+    .filter(c=>!q||(c.cust+c.subject+c.body+c.no).toLowerCase().includes(q))
+    .sort((a,b)=>b.date-a.date);
+  $('listRows').innerHTML=rows.length?rows.map(c=>`<tr onclick="openClaim('${esc(c.no)}')">
+    <td class="mono" style="font-size:12px">${esc(c.no)}</td>
+    <td><b>${esc(c.cust)}</b><div style="font-size:11px;color:var(--ink-3)">${esc(c.type)}</div></td>
+    <td style="color:var(--ink-2)">${esc(c.subject)}</td>
+    <td>${emoBadge(c.emo)}</td>
+    <td>${priBadge(c.pri)}</td>
+    <td style="color:var(--ink-2)">${fmtD(c.date)}</td>
+    <td>${stBadge(c.status)}</td></tr>`).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する対応がありません</td></tr>';
+  $('navNew').textContent=claims.filter(c=>c.status==='new').length;
+}
+window.openClaim=no=>{
+  const c=claims.find(x=>x.no===no);if(!c)return;
+  // load into new view & switch
+  go('new');
+  $('nCust').value=c.cust;$('nSubject').value=c.subject;$('nCat').value=c.cat;$('nBody').value=c.body;
+  analyze();
+  showToast(no+' を読み込みました');
+};
+
+/* ============ NEW + LIVE ANALYSIS ============ */
+function renderCustSelect(){$('nCust').innerHTML='<option value="">選択してください</option>'+CUSTOMERS.map(c=>`<option>${esc(c.name)}</option>`).join('');}
+function renderSampleBtns(){
+  $('sampleBtns').innerHTML=SAMPLE_BODIES.map((s,i)=>`<button class="sb" data-i="${i}">📋 サンプル${i+1}（${esc(s.cat)}）</button>`).join('');
+  $('sampleBtns').querySelectorAll('.sb').forEach(b=>b.onclick=()=>{
+    const s=SAMPLE_BODIES[+b.dataset.i];
+    $('nBody').value=s.body;$('nSubject').value=s.subject;$('nCat').value=s.cat;
+    analyze();
+  });
+}
+// keyword dictionaries for the demo analyzer
+const KW={
+  angry:['至急','いったい','どうなって','頭にき','不愉快','許せない','最悪','怒','ふざけ','二度と','責任','たらい回し','考え直','取引'],
+  frust:['また','前にも','改善','遅','使えな','困','直して','何度も','同じ','遅れ','ミス','不満','残念'],
+  worry:['心配','不安','大丈夫','確認','間違い','どうすれ','教えて','本当に','間に合う']
+};
+function analyze(){
+  const body=$('nBody').value||'';
+  if(!body.trim()){$('anaEmpty').style.display='';$('anaBody').style.display='none';return;}
+  $('anaEmpty').style.display='none';$('anaBody').style.display='';
+  let angry=8,frust=8,worry=6;const found=[];
+  Object.keys(KW).forEach(k=>{KW[k].forEach(w=>{if(body.includes(w)){if(k==='angry')angry+=16;if(k==='frust')frust+=14;if(k==='worry')worry+=15;if(found.indexOf(w)<0&&found.length<8)found.push(w);}});});
+  if(/[！!]{1,}/.test(body))angry+=12;
+  if(body.length>120)frust+=6;
+  if(/[？?]/.test(body))worry+=8;
+  angry=Math.min(angry,97);frust=Math.min(frust,93);worry=Math.min(worry,90);
+  // dominant
+  let dom='calm',mx=Math.max(angry,frust,worry);
+  if(mx<25)dom='calm';else if(angry===mx)dom='angry';else if(frust===mx)dom='frust';else dom='worry';
+  $('anaEmo').className='emo '+EMO_CLASS[dom];$('anaEmo').textContent=EMO_LABEL[dom];
+  const pri= angry>=70?'high': (angry>=45||frust>=60)?'mid':'low';
+  $('anaPri').className='pri '+pri;$('anaPri').textContent='優先 '+({high:'高',mid:'中',low:'低'}[pri]);
+  $('anaCat').textContent=$('nCat').value;
+  $('lblAngry').textContent=Math.round(angry)+'%';$('lblFrust').textContent=Math.round(frust)+'%';$('lblWorry').textContent=Math.round(worry)+'%';
+  setTimeout(()=>{$('mAngry').style.width=angry+'%';$('mFrust').style.width=frust+'%';$('mWorry').style.width=worry+'%';},40);
+  $('anaTags').innerHTML=found.length?found.map(w=>`<span class="tag2">${esc(w)}</span>`).join(''):'<span class="tag2" style="color:var(--ink-3)">特徴的なキーワードなし</span>';
+  const tone= dom==='angry'?'強い不満と緊急性を検出。まず深くお詫びし、即時対応と再発防止を明確に約束する誠実なトーンを推奨します。'
+    : dom==='frust'?'繰り返しへの不満を検出。「またか」という気持ちに寄り添い、原因と具体的な改善策を示すトーンを推奨します。'
+    : dom==='worry'?'不安・確認の意図を検出。安心していただけるよう、丁寧に状況を説明し確認結果を伝えるトーンを推奨します。'
+    : '比較的冷静な内容です。迅速かつ簡潔に事実を伝える、丁寧で前向きなトーンを推奨します。';
+  $('anaTone').textContent=tone;
+  // remember for AI gen
+  window._lastAna={angry,frust,worry,dom,pri,found};
+}
+$('nBody').addEventListener('input',analyze);
+$('nCat').addEventListener('change',()=>{if($('nBody').value.trim())analyze();});
+$('nClear').addEventListener('click',()=>{$('nCust').value='';$('nSubject').value='';$('nBody').value='';analyze();});
+$('nGen').addEventListener('click',()=>{
+  if(!$('nBody').value.trim()){showToast('クレーム文を入力してください');return;}
+  // push as a new claim if not exists & jump to AI gen
+  const dom=(window._lastAna&&window._lastAna.dom)||'frust';
+  const anger=Math.round((window._lastAna&&window._lastAna.angry)||40);
+  const pri=(window._lastAna&&window._lastAna.pri)||'mid';
+  const no='CS-'+(20260+claims.length+1);
+  claims.unshift({no,cust:$('nCust').value||'（未選択の顧客）',type:'—',subject:$('nSubject').value||'お問い合わせ',cat:$('nCat').value,emo:dom,anger,pri,status:'new',date:new Date(),body:$('nBody').value,reply:''});
+  aiTarget={no,cust:$('nCust').value||'（未選択の顧客）',subject:$('nSubject').value||'お問い合わせ',body:$('nBody').value,emo:dom,anger,cat:$('nCat').value};
+  go('ai');
+  runAi();
+});
+
+/* ============ EMOTION ANALYSIS VIEW ============ */
+function renderEmo(){
+  const ec={angry:0,frust:0,worry:0,calm:0};claims.forEach(c=>ec[c.emo]++);
+  const total=claims.length;
+  const avgAnger=Math.round(claims.reduce((s,c)=>s+c.anger,0)/total);
+  const highN=claims.filter(c=>c.anger>=70).length;
+  $('emoKpis').innerHTML=`
+    ${kpi('#e24a4a','怒り含有','${0}',' ','warn',' ')}`; // placeholder replaced below
+  $('emoKpis').innerHTML=`
+    ${kpi('#e24a4a','怒りのクレーム',ec.angry+'<small>件</small>',Math.round(ec.angry/total*100)+'%','down','要優先対応')}
+    ${kpi('#e3941f','平均 怒り度',avgAnger+'<small>%</small>','全'+total+'件','warn','前週比 -4pt')}
+    ${kpi('#7c5cf0','不安の声',ec.worry+'<small>件</small>','安心訴求が有効','up','フォロー推奨')}
+    ${kpi('#16b877','冷静な問合せ',ec.calm+'<small>件</small>','迅速回答でOK','up','満足度高め')}`;
+
+  // distribution bars
+  const cols={angry:'g',frust:'r',worry:'g',calm:'g'};
+  const mx=Math.max(...Object.values(ec),1);
+  $('emoBars').innerHTML=['angry','frust','worry','calm'].map(k=>`
+    <div class="bar-row" style="grid-template-columns:84px 1fr 50px"><span class="mlabel">${EMO_LABEL[k]}</span>
+      <div class="bar-track"><div class="bar-fill ${k==='angry'?'r':k==='frust'?'':'g'}" data-w="${Math.round(ec[k]/mx*100)}"></div></div>
+      <span class="mval">${ec[k]}件</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#emoBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+
+  // matrix by category
+  $('emoMatrix').innerHTML=CATS.map(cat=>{
+    const cc=claims.filter(c=>c.cat===cat);
+    if(!cc.length)return '';
+    const hot=cc.filter(c=>c.anger>=70).length;
+    const counts={angry:0,frust:0,worry:0,calm:0};cc.forEach(c=>counts[c.emo]++);
+    let main='calm',m=0;Object.keys(counts).forEach(k=>{if(counts[k]>m){m=counts[k];main=k;}});
+    return `<tr><td><b>${esc(cat)}</b></td><td class="r tnum">${cc.length}件</td><td class="r tnum" style="color:${hot?'var(--red)':'var(--ink-3)'}">${hot}件</td><td>${emoBadge(main)}</td></tr>`;
+  }).join('');
+
+  // alert: high anger & not done
+  const alert=claims.filter(c=>c.anger>=65&&c.status!=='done').sort((a,b)=>b.anger-a.anger);
+  $('emoAlert').innerHTML=alert.length?alert.map(c=>`<tr>
+    <td><b>${esc(c.cust)}</b></td><td style="color:var(--ink-2)">${esc(c.subject)}</td><td>${emoBadge(c.emo)}</td>
+    <td class="r tnum"><b style="color:var(--red)">${c.anger}%</b></td><td>${priBadge(c.pri)}</td>
+    <td class="r"><button class="btn primary" style="padding:6px 12px" onclick="openClaim('${esc(c.no)}')">対応する</button></td></tr>`).join('')
+    :'<tr><td colspan="6" class="empty-cell">怒り度の高い未対応はありません 🎉</td></tr>';
+}
+
+/* ============ HISTORY ============ */
+function renderHist(){
+  const q=($('hq').value||'').toLowerCase();
+  const rows=claims.filter(c=>c.status==='done'||c.status==='replied')
+    .filter(c=>!q||(c.cust+c.subject+c.body).toLowerCase().includes(q))
+    .sort((a,b)=>b.date-a.date);
+  $('histRows').innerHTML=rows.length?rows.map(c=>`
+    <div class="panel" style="margin-bottom:12px">
+      <div class="ph"><span class="mono" style="font-size:11px;color:var(--ink-3)">${esc(c.no)}</span>
+        <h3 style="font-size:13.5px">${esc(c.cust)}｜${esc(c.subject)}</h3>
+        <span style="margin-left:auto;display:flex;gap:7px;align-items:center">${emoBadge(c.emo)}${stBadge(c.status)}</span></div>
+      <div class="pb">
+        <div class="hist-meta"><span>📅 ${fmtDT(c.date)}</span><span>🏷️ ${esc(c.cat)}</span><span>怒り度 ${c.anger}%</span></div>
+        <div class="bubble" style="margin-bottom:9px">😠 ${esc(c.body)}</div>
+        <div class="bubble reply">✉️ ${esc(c.reply||'このたびはご不便をおかけし誠に申し訳ございません。')}</div>
+      </div>
+    </div>`).join('')
+    :'<div class="empty-cell">該当する履歴がありません</div>';
+}
+$('hq').addEventListener('input',renderHist);
+$('q').addEventListener('input',renderList);
+
+/* ============ AI REPLY GENERATE ============ */
+let aiTarget=null;
+function refreshAiSub(){
+  const pend=claims.filter(c=>c.status==='new'||c.status==='progress');
+  $('aiPendN').textContent=pend.length;
+}
+function topPending(){
+  const pend=claims.filter(c=>c.status==='new'||c.status==='progress');
+  pend.sort((a,b)=>b.anger-a.anger);
+  return pend[0]||claims[0];
+}
+function buildReply(target){
+  const cust=target.cust||'お客様';
+  const dom=target.emo;
+  const open= dom==='angry'?`${cust} ご担当者様\n\nこのたびは「${target.subject}」につきまして、多大なご不便とご不快な思いをおかけし、誠に申し訳ございません。`
+    : dom==='frust'?`${cust} ご担当者様\n\nこのたびは「${target.subject}」につきまして、重ねてご迷惑をおかけしておりますこと、心よりお詫び申し上げます。`
+    : dom==='worry'?`${cust} ご担当者様\n\nこのたびは「${target.subject}」につきまして、ご不安をおかけしておりますことをお詫び申し上げます。ご安心いただけるようご説明いたします。`
+    : `${cust} ご担当者様\n\n平素より格別のお引き立てを賜り、誠にありがとうございます。「${target.subject}」につきましてご連絡いたします。`;
+  const body= dom==='angry'?`いただいたお話を社内で重く受け止めております。直ちに状況を確認のうえ、本日中に責任をもって対応させていただきます。\nまた、再発防止のため担当者間で手順を見直し、改善策を徹底してまいります。`
+    : dom==='frust'?`同様のことが繰り返され、ご不快な思いをおかけしましたことを重ねてお詫びいたします。原因を確認し、検品・連絡体制を見直したうえで、具体的な改善策をご報告いたします。`
+    : dom==='worry'?`内容を一つひとつ確認いたしました。ご不明な点や気がかりな点について、明細とあわせて丁寧にご説明いたしますので、どうぞご安心ください。`
+    : `ご連絡いただいた内容を確認いたしました。速やかに対応のうえ、結果をご報告いたします。`;
+  const close=`\n取り急ぎお詫びかたがたご連絡申し上げます。今後ともどうぞよろしくお願い申し上げます。\n\n株式会社気持ち市場 カスタマーサポート`;
+  return open+'\n\n'+body+close;
+}
+function buildSolutions(target){
+  const dom=target.emo;const cat=target.cat||'その他';
+  // category-aware 3 solutions
+  const M={
+    '配送・納品':[
+      {t:'即時の代替配送を手配',d:'最寄り拠点から不足分を当日中に再配送。到着予定を電話でも連絡。',e:'対応 15分'},
+      {t:'配送状況のリアルタイム共有',d:'次回以降、出発・到着の通知を自動送信し「届かない不安」を解消。',e:'設定 5分'},
+      {t:'配送ルートと締切の見直し',d:'納品先の優先度を上げ、朝便の締切を前倒し。担当を固定化。',e:'翌日〜'},
+    ],
+    '品質・鮮度':[
+      {t:'該当商品の返品・差し替え',d:'傷んだ分を無償で再納品。写真を確認し原因をトレース。',e:'対応 当日'},
+      {t:'検品チェックの二重化',d:'出荷前のダブルチェック表を導入し、鮮度基準を明文化。',e:'翌日〜'},
+      {t:'仕入れ・保管温度の見直し',d:'入荷から納品までの温度管理を記録し、品質を安定化。',e:'今週中'},
+    ],
+    '接客・対応':[
+      {t:'担当者・上長から直接お詫び',d:'まず電話で謝罪し、経緯を傾聴。記録を残し共有。',e:'対応 10分'},
+      {t:'対応手順・話法の研修',d:'クレーム初動のトークスクリプトを整備し全員で共有。',e:'今週中'},
+      {t:'折り返しルールの徹底',d:'受付から30分以内の一次連絡をルール化し抜け漏れ防止。',e:'即日適用'},
+    ],
+    '請求・金額':[
+      {t:'請求明細の即時開示',d:'該当月の明細を分かりやすく整理して送付し疑問を解消。',e:'対応 15分'},
+      {t:'差額があれば訂正・返金',d:'誤りが確認できた場合は速やかに訂正請求または返金。',e:'当日〜翌日'},
+      {t:'請求前チェックの自動化',d:'金額変動を自動検知し、増減時に事前にお知らせ。',e:'設定 5分'},
+    ],
+    'システム不具合':[
+      {t:'応急の代替手段を案内',d:'復旧までの間、紙やスマホでの暫定運用方法をご案内。',e:'対応 5分'},
+      {t:'原因調査と緊急復旧',d:'ログを確認し原因を特定。優先対応で早期復旧を図る。',e:'本日中'},
+      {t:'監視・自動再起動の設定',d:'再発防止のため死活監視と自動復旧を導入。',e:'今週中'},
+    ],
+    'その他':[
+      {t:'内容を確認しご連絡',d:'ご要望を整理し、担当より折り返しご説明いたします。',e:'対応 当日'},
+      {t:'FAQ・案内の整備',d:'よくある質問として整理し、次回以降すぐ回答できるように。',e:'今週中'},
+      {t:'担当窓口の明確化',d:'お問い合わせ種別ごとの窓口を明示し迷わせない。',e:'即日適用'},
+    ],
+  };
+  return M[cat]||M['その他'];
+}
+function runAi(){
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 生成中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  if(!aiTarget){const t=topPending();aiTarget={no:t.no,cust:t.cust,subject:t.subject,body:t.body,emo:t.emo,anger:t.anger,cat:t.cat};}
+  $('aiSource').innerHTML=`<div style="display:flex;gap:8px;align-items:center;margin-bottom:7px;flex-wrap:wrap">
+    <b>${esc(aiTarget.cust)}</b>${emoBadge(aiTarget.emo)}<span style="font-size:11px;color:var(--ink-3)">怒り度 ${aiTarget.anger}% ・ ${esc(aiTarget.cat)}</span></div>
+    <div style="font-weight:700;color:var(--ink);margin-bottom:4px">${esc(aiTarget.subject)}</div>
+    <div style="font-size:12.5px">${esc(aiTarget.body)}</div>`;
+  // counter animation
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent=s+'秒';},120);
+  setTimeout(()=>{
+    clearInterval(t);$('baAfterT').textContent='3秒';
+    $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+    // solutions
+    const sols=buildSolutions(aiTarget);
+    $('solItems').innerHTML=sols.map((s,i)=>`<div class="sol" data-i="${i}"><div class="no">${i+1}</div>
+      <div><div class="st-t">${esc(s.t)}</div><div class="st-d">${esc(s.d)}</div></div>
+      <div class="effort">想定<br>${esc(s.e)}</div></div>`).join('');
+    // draft reply
+    const reply=buildReply(aiTarget);
+    $('draftItems').innerHTML=`<div class="draft" data-i="0">
+      <div class="dh"><span class="ck">✓</span><div><div class="tt">謝罪＋対応のご連絡（${EMO_LABEL[aiTarget.emo]}に最適化）</div><div class="tn">宛先：${esc(aiTarget.cust)} ／ 件名：Re: ${esc(aiTarget.subject)}</div></div><span class="pill">AI生成</span></div>
+      <div class="db" id="draftText">${esc(reply)}</div>
+      <div class="df"><button class="btn green" id="draftSend">✉️ この内容で返信する</button><button class="btn" id="draftCopy">📋 コピー</button><button class="btn" id="draftRegen">↻ 別の言い回しで</button></div>
+    </div>`;
+    $('genList').classList.add('show');
+    // animate in
+    const solEls=[...$('solItems').querySelectorAll('.sol')];
+    solEls.forEach((el,i)=>setTimeout(()=>el.classList.add('in'),120*i));
+    setTimeout(()=>$('draftItems').querySelector('.draft').classList.add('in'),120*solEls.length+100);
+    // wire buttons
+    $('draftSend').onclick=()=>{
+      const c=claims.find(x=>x.no===aiTarget.no);
+      if(c){c.status='done';c.reply=reply;}
+      showToast(aiTarget.cust+' へ返信を送信しました（履歴に保存）');
+      $('draftSend').disabled=true;$('draftSend').textContent='✓ 送信済み';
+      refreshAiSub();
+    };
+    $('draftCopy').onclick=()=>{
+      const ta=document.createElement('textarea');ta.value=reply;document.body.appendChild(ta);ta.select();
+      try{document.execCommand('copy');showToast('返信文をコピーしました');}catch(e){showToast('コピーに対応していません');}
+      document.body.removeChild(ta);
+    };
+    $('draftRegen').onclick=()=>{runAi();};
+    btn.disabled=false;btn.textContent='⚡ もう一度生成';
+    showToast('謝罪文と解決策3案を生成しました');
+  },1300);
+}
+$('aiRun').addEventListener('click',()=>{aiTarget=null;runAi();});
+
+/* ============ INIT ============ */
+renderCustSelect();renderSampleBtns();renderChips();renderDash();analyze();
+$('navNew').textContent=claims.filter(c=>c.status==='new').length;
+refreshAiSub();
+</script>
+</body>
+</html>

@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜競合分析マシン（競合リサーチ自動化）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#6d3df0;--brand-dk:#5526cf;--brand-soft:#f0eaff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;
+  --sb:#150f30;--sb-2:#1d163c;--sb-ink:#cdc4e0;--sb-ink-2:#897da6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#a77bff,#6d3df0,#e3b864,#a77bff);
+  display:grid;place-items:center;color:#0a041a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(109,61,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--green);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:120px 1fr 56px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-fill.me{background:linear-gradient(90deg,var(--green),#3fd49b)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl th.c,table.tbl td.c{text-align:center}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.done{background:var(--green-soft);color:var(--green)}
+.st.running{background:var(--brand-soft);color:var(--brand)}
+.st.scheduled{background:var(--soft);color:var(--ink-3)}
+.st.stale{background:var(--amber-soft);color:var(--amber)}
+.st.failed{background:var(--red-soft);color:var(--red)}
+
+/* compare table */
+.cmp-wrap{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+table.cmp{width:100%;border-collapse:collapse;min-width:680px}
+table.cmp th,table.cmp td{padding:12px 14px;font-size:12.5px;text-align:center;border-bottom:1px solid var(--line);border-right:1px solid var(--line)}
+table.cmp th:last-child,table.cmp td:last-child{border-right:0}
+table.cmp thead th{background:var(--soft);font-weight:800;color:var(--ink-2);position:sticky;top:0}
+table.cmp thead th.me{background:var(--green-soft);color:var(--green)}
+table.cmp tbody th{text-align:left;background:#fbfcfe;font-weight:700;color:var(--ink);white-space:nowrap}
+table.cmp td.me{background:#f3fdf8;font-weight:700}
+table.cmp td.best{color:var(--green);font-weight:800}
+table.cmp td.worst{color:var(--red)}
+.dotrow{display:inline-flex;gap:3px}
+.dotrow .d{width:8px;height:8px;border-radius:50%;background:var(--line-2)}
+.dotrow .d.f{background:var(--amber)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:11.5px;color:var(--ink-3)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+
+/* market map (scatter) */
+.map-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:18px}
+.scatter{position:relative;height:420px;margin:30px 0 10px;border-left:2px solid var(--line-2);border-bottom:2px solid var(--line-2)}
+.scatter .axl-y{position:absolute;left:-30px;top:50%;transform:rotate(-90deg) translateX(50%);transform-origin:left;font-size:11px;font-weight:700;color:var(--ink-3);white-space:nowrap}
+.scatter .axl-x{position:absolute;bottom:-26px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:700;color:var(--ink-3)}
+.scatter .grid-x,.scatter .grid-y{position:absolute;background:var(--line);opacity:.6}
+.scatter .grid-x{height:1px;width:100%;left:0}
+.scatter .grid-y{width:1px;height:100%;top:0}
+.dotmk{position:absolute;transform:translate(-50%,50%);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;transition:transform .2s}
+.dotmk:hover{transform:translate(-50%,50%) scale(1.12);z-index:5}
+.dotmk .bub{width:42px;height:42px;border-radius:50%;background:rgba(109,61,240,.16);border:2px solid var(--brand);display:grid;place-items:center;font-size:11px;font-weight:900;color:var(--brand-dk)}
+.dotmk.me .bub{background:rgba(22,184,119,.2);border-color:var(--green);color:#0e7a4f}
+.dotmk .lb{font-size:10.5px;font-weight:700;color:var(--ink-2);background:#fff;padding:1px 5px;border-radius:5px;box-shadow:var(--shadow);white-space:nowrap}
+
+/* create form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,400px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.fg textarea{resize:vertical;min-height:70px}
+.tagpick{display:flex;flex-wrap:wrap;gap:7px}
+.tagpick .tg{padding:7px 12px;border:1px solid var(--line-2);border-radius:99px;font-size:12px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.tagpick .tg:hover{border-color:var(--brand)}
+.tagpick .tg.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+.aihint{font-size:11px;color:var(--green);margin-top:8px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* preview card */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:26px 28px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.pv-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;border-bottom:2px solid var(--brand-dk);padding-bottom:12px}
+.pv-title{font-size:18px;font-weight:900;color:var(--brand-dk)}
+.pv-title small{display:block;font-size:11px;color:var(--ink-3);font-weight:600;letter-spacing:.04em}
+.pv-meta{text-align:right;font-size:11px;color:var(--ink-2)}
+.pv-meta .no{font-family:'Orbitron';color:var(--ink);font-weight:700}
+.pv-sect{font-size:12px;font-weight:800;color:var(--ink-2);margin:16px 0 8px;display:flex;align-items:center;gap:7px}
+.pv-list{list-style:none;display:flex;flex-direction:column;gap:6px}
+.pv-list li{display:flex;align-items:center;gap:8px;padding:8px 11px;background:var(--soft);border-radius:8px;font-size:12px}
+.pv-list li .rk{width:20px;height:20px;border-radius:6px;background:var(--brand);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:800;flex-shrink:0}
+.pv-empty{text-align:center;color:#aab2c4;padding:18px;font-size:12px}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ai-input{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:14px 0 4px}
+.ai-input select{padding:10px 13px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card);min-width:200px}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:14px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900}
+.gen-cmp{margin-top:16px;display:none}
+.gen-cmp.show{display:block;animation:fade .5s}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#a77bff,#6d3df0);display:grid;place-items:center;font-size:26px;margin:0 auto;flex-shrink:0}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(109,61,240,.4)}50%{box-shadow:0 0 40px rgba(167,123,255,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.tier{font-size:11px;font-weight:800;padding:3px 9px;border-radius:6px}
+.tier.h{background:var(--red-soft);color:var(--red)}
+.tier.m{background:var(--amber-soft);color:var(--amber)}
+.tier.l{background:var(--green-soft);color:var(--green)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">競合分析マシン<small>技マシン｜競合リサーチ</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">🗂️</span>分析一覧</a>
+      <a data-v="create"><span class="i">✏️</span>新規分析</a>
+      <a data-v="cmp"><span class="i">📋</span>比較表</a>
+      <a data-v="map"><span class="i">🗺️</span>市場マップ</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI自動収集<span class="badge" id="navNew">3</span></a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="./">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。企業名・数値はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">競合リサーチの全体状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>業界内シェア（推定）</h3><span class="more">大分市内</span></div>
+            <div class="pb"><div class="bars" id="shareBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="企業名・業界・分析名で検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>分析ID</th><th>分析名</th><th>業界</th><th class="r">競合数</th><th>最終更新</th><th class="c">脅威度</th><th>状態</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- CREATE -->
+      <section class="view" id="v-create">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>分析名</label><input id="cName" placeholder="例：大分市 青果卸 競合分析"></div>
+            <div class="fg"><label>業界（選ぶとAIが収集対象を提案）</label>
+              <select id="cIndustry"></select></div>
+            <div class="fg"><label>エリア</label><input id="cArea" value="大分市"></div>
+            <div class="fg"><label>注目する比較項目</label>
+              <div class="tagpick" id="cTags"></div>
+              <div class="aihint" id="cAiHint">✨ AIが業界に合わせた比較項目を自動で選びました</div>
+            </div>
+            <div class="fg"><label>メモ（任意）</label><textarea id="cMemo" placeholder="例：価格帯と配送対応エリアを重点的に見たい"></textarea></div>
+            <div class="linkrow" style="margin-top:6px">
+              <button class="btn primary" id="cRun" style="flex:1;justify-content:center">⚡ AIで競合を収集して作成</button>
+              <button class="btn" id="cSample">サンプル</button>
+            </div>
+          </div>
+          <div>
+            <div class="paper" id="cPaper">
+              <div class="pv-top">
+                <div class="pv-title">競合分析プレビュー<small>COMPETITOR ANALYSIS</small></div>
+                <div class="pv-meta"><div>ID：<span class="no" id="pNo">—</span></div><div>作成日：<span id="pDate">—</span></div><div>エリア：<span id="pArea">大分市</span></div></div>
+              </div>
+              <div style="font-size:15px;font-weight:900" id="pName">分析名を入力してください</div>
+              <div style="font-size:12px;color:var(--ink-2);margin-top:2px">業界：<span id="pIndustry">未選択</span></div>
+              <div class="pv-sect">🎯 比較項目</div>
+              <div id="pTagList" class="tagpick"><span style="font-size:12px;color:#aab2c4">← 項目を選んでください</span></div>
+              <div class="pv-sect">🏢 収集される競合候補（AIが自動抽出）</div>
+              <ul class="pv-list" id="pCands"><li class="pv-empty" style="background:none">業界を選ぶと、AIが競合候補を提案します</li></ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- COMPARE -->
+      <section class="view" id="v-cmp">
+        <div class="toolbar">
+          <div class="chips" id="cmpIndChips"></div>
+          <button class="btn" id="cmpExport" style="margin-left:auto">📤 比較表を書き出し</button>
+        </div>
+        <div class="cmp-wrap"><table class="cmp" id="cmpTable"></table></div>
+        <div class="legend">
+          <span><i style="background:var(--green)"></i>自社（気持ち市場）</span>
+          <span><i style="background:var(--amber)"></i>● = 対応レベル</span>
+          <span><i style="background:var(--green-soft)"></i>緑文字 = 最も優れた項目</span>
+        </div>
+      </section>
+
+      <!-- MARKET MAP -->
+      <section class="view" id="v-map">
+        <div class="map-stage">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <div><div style="font-size:15px;font-weight:900">ポジショニングマップ</div>
+              <div style="font-size:12px;color:var(--ink-3)">価格帯（横軸）× サービス充実度（縦軸）で競合の位置を可視化</div></div>
+            <div class="chips" id="mapIndChips" style="margin-left:auto"></div>
+          </div>
+          <div class="scatter" id="scatter">
+            <span class="axl-y">サービス充実度 高 →</span>
+            <span class="axl-x">価格帯 高 →</span>
+          </div>
+          <div style="font-size:11.5px;color:var(--ink-3);margin-top:6px">※ 円の大きさは推定シェア。緑が自社です。空いている右上（高付加価値帯）が狙い目です。</div>
+        </div>
+      </section>
+
+      <!-- AI AUTO COLLECT -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:2px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">業界を指定するだけで、競合リストと比較表を自動生成</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">業界とエリアを選ぶと、AIが競合企業を洗い出し、比較表まで自動で組み立てます。</div></div>
+          </div>
+          <div class="ai-input">
+            <select id="aiIndustry"></select>
+            <select id="aiArea"><option>大分市</option><option>別府市</option><option>大分県全域</option></select>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで競合を自動収集する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">6時間30分</div>
+              <ul>
+                <li>🔎 競合をネットで1社ずつ検索</li>
+                <li>📝 価格やサービスを目視で書き写し</li>
+                <li>📊 Excelで比較表をコツコツ作成</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 競合企業を自動でリスト化</li>
+                <li>📋 比較項目を横並びで自動収集</li>
+                <li>🗺️ 比較表・市場マップまで自動生成</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ 収集された競合企業</div>
+            <div id="genItems"></div>
+          </div>
+          <div class="gen-cmp" id="genCmp">
+            <div style="font-size:13px;font-weight:800;margin:6px 0 10px">📋 自動生成された比較表（Before/After のAfter）</div>
+            <div class="cmp-wrap"><table class="cmp" id="genCmpTable"></table></div>
+            <div style="margin-top:14px;display:flex;gap:8px">
+              <button class="btn primary" onclick="go('cmp')">📋 比較表ビューで開く</button>
+              <button class="btn" onclick="go('map')">🗺️ 市場マップで見る</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const INDUSTRIES=['青果卸（病院・クリニック向け）','医療・介護向けシステム','中小企業向けHP制作','配送・物流','飲食店向け食材卸'];
+
+// 比較項目の候補（業界別に少しずつ変える）
+const TAG_BANK={
+  '青果卸（病院・クリニック向け）':['価格帯','配送エリア','最低ロット','当日配送','栄養士サポート','産地直送','請求の電子化'],
+  '医療・介護向けシステム':['月額料金','初期費用','シフト管理','記録の自動化','スマホ対応','サポート体制','導入実績'],
+  '中小企業向けHP制作':['制作費','月額保守','スマホ対応','AI活用','SEO対応','納期','更新代行'],
+  '配送・物流':['基本料金','即日対応','エリア','追跡機能','冷蔵対応','最低個数','法人割引'],
+  '飲食店向け食材卸':['価格帯','配送頻度','最低ロット','産地直送','メニュー提案','請求の電子化','早朝納品'],
+};
+
+// 業界ごとの競合企業（自社を含む）。score=サービス充実度(0-100), price=価格帯(0-100), share=推定%
+const MARKET={
+  '青果卸（病院・クリニック向け）':[
+    {name:'豊後おおいた青果',price:55,score:82,share:14,me:true},
+    {name:'大分中央青果市場',price:48,score:60,share:26},
+    {name:'別府ベジサプライ',price:70,score:72,share:18},
+    {name:'九州フレッシュ便',price:62,score:55,share:21},
+    {name:'みどり食材センター',price:40,score:45,share:12},
+    {name:'おおいた地産マルシェ',price:78,score:68,share:9},
+  ],
+  '医療・介護向けシステム':[
+    {name:'Careboard（自社）',price:45,score:80,share:11,me:true},
+    {name:'メディケアクラウド',price:72,score:75,share:28},
+    {name:'けあシフトPro',price:58,score:62,share:22},
+    {name:'ナースログ',price:65,score:58,share:19},
+    {name:'かいご記録くん',price:38,score:48,share:13},
+  ],
+  '中小企業向けHP制作':[
+    {name:'気持ち市場 Web',price:50,score:78,share:10,me:true},
+    {name:'大分デザインワークス',price:75,score:70,share:24},
+    {name:'おおいたWeb工房',price:60,score:58,share:20},
+    {name:'格安ホームページ.jp',price:25,score:40,share:28},
+    {name:'クリエイト別府',price:68,score:64,share:18},
+  ],
+  '配送・物流':[
+    {name:'気持ち配送便',price:52,score:74,share:9,me:true},
+    {name:'大分ロジスティクス',price:60,score:68,share:30},
+    {name:'別府クイック便',price:70,score:62,share:21},
+    {name:'九州デリバリー',price:45,score:50,share:25},
+    {name:'おおいた宅送',price:38,score:44,share:15},
+  ],
+  '飲食店向け食材卸':[
+    {name:'気持ち市場 食材便',price:54,score:76,share:11,me:true},
+    {name:'大分海鮮卸センター',price:66,score:70,share:23},
+    {name:'豊後フードサプライ',price:58,score:60,share:24},
+    {name:'別府業務食品',price:48,score:52,share:22},
+    {name:'みなと水産卸',price:72,score:64,share:20},
+  ],
+};
+
+// 比較表用の値の表現：●の数(1-5) or テキスト
+function levelDots(n){let s='<span class="dotrow">';for(let i=0;i<5;i++)s+=`<span class="d ${i<n?'f':''}"></span>`;return s+'</span>';}
+
+// 業界×項目の値生成（決定的乱数で）
+let SEED=4242;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+const PRICE_TXT=['¥','¥¥','¥¥¥','¥¥¥¥'];
+function cmpValue(tag,comp){
+  // 価格系はテキスト、それ以外は●レベル
+  if(/料金|費用|価格|制作費|基本料金|月額/.test(tag)){
+    const lv=Math.min(3,Math.floor(comp.price/26));
+    return {sort:4-lv,html:'<b>'+PRICE_TXT[lv]+'</b>',num:lv};
+  }
+  if(/エリア/.test(tag)){const v=pick(['大分市','大分・別府','県内全域','九州一円']);return {sort:0,html:v,num:0};}
+  if(/納期|頻度/.test(tag)){const v=pick(['即日','3日','1週間','2週間']);return {sort:0,html:v,num:0};}
+  if(/ロット|個数/.test(tag)){const v=pick(['1個〜','10個〜','50個〜','100個〜']);return {sort:0,html:v,num:0};}
+  // ●レベル：自社は高めに寄せる
+  let lv=1+Math.floor(rnd()*5);
+  if(comp.me)lv=Math.max(lv,4);
+  return {sort:lv,html:levelDots(lv),num:lv};
+}
+
+// 分析一覧データ
+const TODAY=new Date();
+const STATUSES=['done','done','running','stale','scheduled','done'];
+let analyses=[];
+(function seed(){
+  INDUSTRIES.forEach((ind,i)=>{
+    const comps=MARKET[ind];
+    const d=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-Math.floor(rnd()*9));
+    const threat=pick(['h','m','m','l']);
+    analyses.push({
+      id:'CA-'+(1024+i),
+      name:ind.replace(/（.*）/,'')+' 競合分析',
+      industry:ind,
+      area:'大分市',
+      count:comps.length,
+      updated:d,
+      threat,
+      status:STATUSES[i%STATUSES.length],
+    });
+  });
+  // 追加で数件
+  analyses.push({id:'CA-1031',name:'別府 宿泊向け食材卸 競合分析',industry:'飲食店向け食材卸',area:'別府市',count:4,updated:new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-12),threat:'l',status:'stale'});
+  analyses.push({id:'CA-1032',name:'大分県全域 配送 競合分析',industry:'配送・物流',area:'大分県全域',count:6,updated:new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()-1),threat:'h',status:'running'});
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const fmtD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STLABEL={done:'分析済',running:'収集中',scheduled:'予約済',stale:'要更新',failed:'失敗'};
+function stBadge(s){return `<span class="st ${s}">${esc(STLABEL[s]||s)}</span>`;}
+const THLABEL={h:'高',m:'中',l:'低'};
+function threatBadge(t){return `<span class="tier ${t}">${THLABEL[t]||t}</span>`;}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function myRank(ind){
+  const comps=[...MARKET[ind]].sort((a,b)=>b.score-a.score);
+  const idx=comps.findIndex(c=>c.me);
+  return idx<0?'—':(idx+1);
+}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','競合リサーチの全体状況'],list:['分析一覧','実施した競合分析を管理します'],
+  create:['新規分析','業界を選ぶとAIが競合候補を提案します'],cmp:['比較表','競合×項目を横並びで比較します'],
+  map:['市場マップ','競合のポジショニングを可視化します'],ai:['AI自動収集','業界指定だけで競合リストと比較表を自動生成']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn primary" onclick="go(\'create\')">＋ 新規分析</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI自動収集</button><button class="btn primary" onclick="go(\'create\')">＋ 新規分析</button>'
+    : v==='cmp'?'<button class="btn" onclick="go(\'map\')">🗺️ 市場マップへ</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='cmp')renderCmp();
+  if(v==='map')renderMap();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const done=analyses.filter(a=>a.status==='done').length;
+  const totalComp=analyses.reduce((s,a)=>s+a.count,0);
+  const last=analyses.reduce((m,a)=>a.updated>m?a.updated:m,new Date(0));
+  const mainInd='青果卸（病院・クリニック向け）';
+  const rank=myRank(mainInd);
+  $('kpis').innerHTML=`
+    ${kpi('#6d3df0','分析済 企業数',totalComp+'<small>社</small>','全'+analyses.length+'分析','up','+'+totalComp+' 社を追跡中')}
+    ${kpi('#0ea5b7','最終更新',fmtD(last),'','up','本日更新あり')}
+    ${kpi('#16b877','自社の業界順位',rank+'<small>位</small>','/ '+MARKET[mainInd].length+'社中','up','サービス充実度で上位')}
+    ${kpi('#e3941f','AI収集時間','8<small>秒</small>','手作業6.5時間→','up','約2900倍の時短')}`;
+  // share bars（青果業界）
+  const comps=[...MARKET[mainInd]].sort((a,b)=>b.share-a.share);
+  const mx=Math.max(...comps.map(c=>c.share),1);
+  $('shareBars').innerHTML=comps.map(c=>`
+    <div class="bar-row"><span class="mlabel">${esc(c.name)}</span>
+      <div class="bar-track"><div class="bar-fill ${c.me?'me':''}" style="width:0" data-w="${Math.round(c.share/mx*100)}"></div></div>
+      <span class="mval">${c.share}%</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#shareBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // activity
+  const acts=[
+    {i:'⚡',c:'#f0eaff',t:'AI自動収集で「青果卸」競合 6社を更新（充足率98%）',m:'8秒前'},
+    {i:'📈',c:'#e6f8f0',t:'別府ベジサプライ が当日配送を開始（脅威度↑）',m:'1時間前'},
+    {i:'📋',c:'#f0eaff',t:'比較表 CA-1028 を書き出しました',m:'今日 9:40'},
+    {i:'⚠️',c:'#fdeaea',t:'格安ホームページ.jp が制作費を値下げ（HP事業 要注意）',m:'今日 8:10'},
+    {i:'🗺️',c:'#e6f8f0',t:'市場マップ：右上（高付加価値帯）に空きを検出',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${esc(l)}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?esc(sub)+' ・ ':''}${esc(d)}</div></div>`;}
+
+/* ============ LIST ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['done','分析済'],['running','収集中'],['stale','要更新'],['scheduled','予約済']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=analyses.filter(a=>filterStatus==='all'||a.status===filterStatus)
+    .filter(a=>!q||(a.name+a.industry+a.id).toLowerCase().includes(q))
+    .sort((a,b)=>b.updated-a.updated);
+  $('listRows').innerHTML=rows.length?rows.map(a=>`<tr onclick="openAnalysis('${esc(a.industry)}')">
+    <td class="mono" style="font-size:12px">${esc(a.id)}</td><td><b>${esc(a.name)}</b></td>
+    <td style="color:var(--ink-2)">${esc(a.industry)}</td><td class="r tnum"><b>${a.count}</b>社</td>
+    <td style="color:var(--ink-2)">${fmtD(a.updated)}</td><td class="c">${threatBadge(a.threat)}</td><td>${stBadge(a.status)}</td></tr>`).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する分析がありません</td></tr>';
+}
+window.openAnalysis=ind=>{cmpInd=ind;mapInd=ind;go('cmp');};
+$('q').addEventListener('input',renderList);
+
+/* ============ COMPARE TABLE ============ */
+let cmpInd=INDUSTRIES[0];
+function renderCmpChips(){
+  $('cmpIndChips').innerHTML=INDUSTRIES.map(ind=>`<button class="chip ${ind===cmpInd?'on':''}" data-i="${esc(ind)}">${esc(ind.replace(/（.*）/,''))}</button>`).join('');
+  $('cmpIndChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{cmpInd=c.dataset.i;renderCmp();});
+}
+function buildCmpTable(ind){
+  SEED=4242+ind.length; // 業界ごとに決定的
+  const comps=MARKET[ind];
+  const tags=TAG_BANK[ind];
+  let head='<thead><tr><th>比較項目</th>'+comps.map(c=>`<th class="${c.me?'me':''}">${esc(c.name)}${c.me?' ⭐':''}</th>`).join('')+'</tr></thead>';
+  let body='<tbody>';
+  tags.forEach(tag=>{
+    const vals=comps.map(c=>cmpValue(tag,c));
+    const maxSort=Math.max(...vals.map(v=>v.sort));
+    body+=`<tr><th>${esc(tag)}</th>`+vals.map((v,i)=>{
+      const c=comps[i];
+      const best=v.sort>0&&v.sort===maxSort;
+      return `<td class="${c.me?'me ':''}${best?'best':''}">${v.html}</td>`;
+    }).join('')+'</tr>';
+  });
+  // 推定シェア行
+  body+=`<tr><th>推定シェア</th>`+comps.map(c=>`<td class="${c.me?'me ':''}tnum">${c.share}%</td>`).join('')+'</tr>';
+  body+='</tbody>';
+  return head+body;
+}
+function renderCmp(){
+  renderCmpChips();
+  $('cmpTable').innerHTML=buildCmpTable(cmpInd);
+}
+$('cmpExport').addEventListener('click',()=>{
+  $('cmpExport').textContent='📤 書き出し中…';
+  setTimeout(()=>{$('cmpExport').textContent='📤 比較表を書き出し';showToast('比較表「'+cmpInd.replace(/（.*）/,'')+'」をCSVで書き出しました');},700);
+});
+
+/* ============ MARKET MAP ============ */
+let mapInd=INDUSTRIES[0];
+function renderMapChips(){
+  $('mapIndChips').innerHTML=INDUSTRIES.map(ind=>`<button class="chip ${ind===mapInd?'on':''}" data-i="${esc(ind)}">${esc(ind.replace(/（.*）/,''))}</button>`).join('');
+  $('mapIndChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{mapInd=c.dataset.i;renderMap();});
+}
+function renderMap(){
+  renderMapChips();
+  const comps=MARKET[mapInd];
+  const sc=$('scatter');
+  // クリア（軸ラベルは残す）
+  sc.querySelectorAll('.dotmk,.grid-x,.grid-y').forEach(e=>e.remove());
+  // グリッド線
+  [25,50,75].forEach(p=>{
+    const gx=document.createElement('div');gx.className='grid-x';gx.style.bottom=p+'%';sc.appendChild(gx);
+    const gy=document.createElement('div');gy.className='grid-y';gy.style.left=p+'%';sc.appendChild(gy);
+  });
+  const mxShare=Math.max(...comps.map(c=>c.share),1);
+  comps.forEach((c,i)=>{
+    const el=document.createElement('div');
+    el.className='dotmk'+(c.me?' me':'');
+    el.style.left=(6+c.price*0.88)+'%';
+    el.style.bottom=(6+c.score*0.84)+'%';
+    const sz=30+Math.round(c.share/mxShare*26);
+    el.innerHTML=`<div class="bub" style="width:${sz}px;height:${sz}px">${c.share}%</div><div class="lb">${esc(c.name)}</div>`;
+    el.style.opacity='0';el.style.transition='opacity .4s, transform .2s';
+    el.title=`${c.name}：価格帯${c.price} / サービス充実度${c.score} / 推定シェア${c.share}%`;
+    el.onclick=()=>showToast(c.name+'：'+(c.me?'自社 ':'')+'価格帯'+c.price+' / 充実度'+c.score+' / シェア'+c.share+'%');
+    sc.appendChild(el);
+    setTimeout(()=>{el.style.opacity='1';},80+i*70);
+  });
+}
+
+/* ============ CREATE ============ */
+let cTagsSel=[];
+function renderIndustrySelects(){
+  const opt='<option value="">業界を選択</option>'+INDUSTRIES.map(i=>`<option>${esc(i)}</option>`).join('');
+  $('cIndustry').innerHTML=opt;
+  $('aiIndustry').innerHTML=INDUSTRIES.map(i=>`<option>${esc(i)}</option>`).join('');
+}
+function renderCTags(){
+  const ind=$('cIndustry').value;
+  const bank=TAG_BANK[ind]||[];
+  if(!bank.length){$('cTags').innerHTML='<span style="font-size:12px;color:#aab2c4">業界を選ぶと項目候補が出ます</span>';return;}
+  $('cTags').innerHTML=bank.map(t=>`<span class="tg ${cTagsSel.includes(t)?'on':''}" data-t="${esc(t)}">${esc(t)}</span>`).join('');
+  $('cTags').querySelectorAll('.tg').forEach(tg=>tg.onclick=()=>{
+    const t=tg.dataset.t;
+    if(cTagsSel.includes(t))cTagsSel=cTagsSel.filter(x=>x!==t);else cTagsSel.push(t);
+    renderCTags();renderCPaper();
+  });
+}
+function renderCPaper(){
+  $('pName').textContent=$('cName').value||'分析名を入力してください';
+  $('pArea').textContent=$('cArea').value||'—';
+  const ind=$('cIndustry').value;
+  $('pIndustry').textContent=ind||'未選択';
+  // tags
+  $('pTagList').innerHTML=cTagsSel.length?cTagsSel.map(t=>`<span class="tg on">${esc(t)}</span>`).join('')
+    :'<span style="font-size:12px;color:#aab2c4">← 項目を選んでください</span>';
+  // candidates
+  if(ind&&MARKET[ind]){
+    const cands=MARKET[ind].filter(c=>!c.me);
+    $('pCands').innerHTML=cands.map((c,i)=>`<li><span class="rk">${i+1}</span><b style="flex:1">${esc(c.name)}</b><span style="color:var(--ink-3);font-size:11px">シェア${c.share}%</span></li>`).join('');
+  }else{
+    $('pCands').innerHTML='<li class="pv-empty" style="background:none">業界を選ぶと、AIが競合候補を提案します</li>';
+  }
+}
+$('cIndustry').addEventListener('change',()=>{
+  // 業界変更時、AIが自動で項目を提案する演出
+  const bank=TAG_BANK[$('cIndustry').value]||[];
+  cTagsSel=bank.slice(0,4);
+  if(bank.length){$('cAiHint').classList.add('show');setTimeout(()=>$('cAiHint').classList.remove('show'),2200);}
+  renderCTags();renderCPaper();
+});
+$('cName').addEventListener('input',renderCPaper);
+$('cArea').addEventListener('input',renderCPaper);
+$('cSample').addEventListener('click',()=>{
+  $('cName').value='大分市 青果卸 競合分析';
+  $('cIndustry').value='青果卸（病院・クリニック向け）';
+  $('cArea').value='大分市';
+  cTagsSel=['価格帯','配送エリア','当日配送','栄養士サポート'];
+  $('cMemo').value='病院給食向けに、価格帯と当日配送の対応状況を重点的に見たい。';
+  renderCTags();renderCPaper();
+  showToast('サンプル内容を入力しました');
+});
+$('cRun').addEventListener('click',async()=>{
+  const ind=$('cIndustry').value;
+  if(!$('cName').value||!ind){showToast('分析名と業界を入力してください');return;}
+  const btn=$('cRun');btn.textContent='⚡ AIが収集中…';btn.disabled=true;
+  const now=new Date();const no='CA-'+(1033+analyses.filter(a=>a.id.startsWith('CA-10')).length);
+  $('pNo').textContent=no;$('pDate').textContent=fmtDL(now);
+  await new Promise(r=>setTimeout(r,1000));
+  analyses.unshift({id:no,name:$('cName').value,industry:ind,area:$('cArea').value||'大分市',
+    count:MARKET[ind].length,updated:now,threat:'m',status:'done'});
+  cmpInd=ind;mapInd=ind;
+  btn.textContent='⚡ AIで競合を収集して作成';btn.disabled=false;
+  showToast('競合分析 '+no+' を作成しました（'+MARKET[ind].length+'社を収集）');
+  setTimeout(()=>go('list'),700);
+});
+
+/* ============ AI AUTO COLLECT ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const ind=$('aiIndustry').value;const area=$('aiArea').value;
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 収集中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  $('genList').classList.remove('show');$('genCmp').classList.remove('show');
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,8);},120);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);$('baAfterT').textContent='8秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // 競合リスト
+  const comps=MARKET[ind].filter(c=>!c.me);
+  $('genItems').innerHTML=comps.map((c,i)=>`<div class="gen-item" data-i="${i}"><span class="ck">✓</span><b style="flex:1">${esc(c.name)}</b><span style="color:var(--ink-3);font-size:12px">${esc(area)}</span><span class="tnum" style="font-weight:800">シェア${c.share}%</span></div>`).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,170));items[i].classList.add('in');}
+  // 比較表をAfterとして自動生成
+  $('genCmpTable').innerHTML=buildCmpTable(ind);
+  $('genCmp').classList.add('show');
+  // 一覧へ反映
+  cmpInd=ind;mapInd=ind;
+  const now=new Date();
+  const exists=analyses.find(a=>a.industry===ind&&a.area===area);
+  if(exists){exists.updated=now;exists.status='done';exists.count=MARKET[ind].length;}
+  else analyses.unshift({id:'CA-'+(1040+analyses.length),name:ind.replace(/（.*）/,'')+' 競合分析',industry:ind,area,count:MARKET[ind].length,updated:now,threat:'m',status:'done'});
+  btn.disabled=false;btn.textContent='⚡ もう一度収集';
+  showToast(comps.length+'社を収集し、比較表を自動生成しました');
+});
+
+/* ============ INIT ============ */
+renderIndustrySelects();
+renderCTags();renderCPaper();
+renderChips();renderDash();
+$('navNew').textContent=analyses.filter(a=>a.status==='running'||a.status==='stale').length;
+</script>
+</body>
+</html>

@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜見積マシン（見積管理システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cf0;--purple-soft:#efeaff;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--amber);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.nav a .badge.ai{background:var(--purple)}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn.purple{background:var(--purple);border-color:var(--purple);color:#fff}
+.btn.purple:hover{filter:brightness(1.07);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* funnel */
+.funnel{display:flex;flex-direction:column;gap:10px}
+.fn-row{display:flex;align-items:center;gap:12px;font-size:12.5px}
+.fn-bar{height:34px;border-radius:9px;display:flex;align-items:center;padding:0 13px;color:#fff;font-weight:800;font-size:12.5px;min-width:60px;transition:width 1s cubic-bezier(.2,.8,.3,1);white-space:nowrap}
+.fn-row .fn-l{width:78px;color:var(--ink-2);font-weight:700;text-align:right;flex-shrink:0}
+.fn-row .fn-n{margin-left:auto;font-weight:800;color:var(--ink-2);font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.won{background:var(--green-soft);color:var(--green)}
+.st.sent{background:var(--brand-soft);color:var(--brand)}
+.st.draft{background:var(--amber-soft);color:var(--amber)}
+.st.lost{background:var(--red-soft);color:var(--red)}
+.st.review{background:var(--purple-soft);color:var(--purple)}
+
+/* create form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--brand)}
+.line-head{display:grid;grid-template-columns:1fr 46px 84px 28px;gap:7px;font-size:11px;color:var(--ink-3);font-weight:700;padding:0 2px 6px}
+.line-row{display:grid;grid-template-columns:1fr 46px 84px 28px;gap:7px;margin-bottom:7px;align-items:center}
+.line-row input{padding:8px 9px;font-size:12.5px;border:1px solid var(--line-2);border-radius:8px;font-family:inherit}
+.line-row input:focus{outline:none;border-color:var(--brand)}
+.line-row .x{border:1px solid var(--line-2);background:var(--red-soft);color:var(--red);border-radius:7px;cursor:pointer;height:30px}
+.addline{width:100%;margin-top:3px;padding:9px;border:1px dashed var(--line-2);background:transparent;border-radius:8px;color:var(--brand);font-weight:700;font-size:12.5px;cursor:pointer}
+.addline:hover{background:var(--brand-soft)}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* paper preview */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:34px 36px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
+.pv-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px}
+.pv-title{font-size:25px;font-weight:900;letter-spacing:.26em;color:var(--brand-dk);border-bottom:3px solid var(--brand-dk);padding-bottom:5px}
+.pv-meta{text-align:right;font-size:11.5px;color:var(--ink-2)}
+.pv-meta .no{font-family:'Orbitron';color:var(--ink);font-weight:700}
+.pv-cust{font-size:19px;font-weight:900;border-bottom:1.5px solid #1a2233;display:inline-block;min-width:220px;padding-bottom:5px;margin-bottom:8px}
+.pv-subj{font-size:12.5px;color:var(--ink-2);margin-bottom:4px}
+.pv-total{background:var(--soft);border-left:5px solid var(--brand-dk);border-radius:6px;padding:13px 18px;margin:18px 0;display:flex;justify-content:space-between;align-items:center}
+.pv-total .a{font-family:'Orbitron';font-size:23px;font-weight:700;color:var(--brand-dk)}
+table.pv{width:100%;border-collapse:collapse;margin-bottom:14px}
+table.pv th{background:var(--brand-dk);color:#fff;font-size:11px;padding:8px 11px;text-align:left}
+table.pv th.r,table.pv td.r{text-align:right}
+table.pv td{padding:8px 11px;border-bottom:1px solid var(--line);font-size:12px}
+.pv-sums{margin-left:auto;width:240px}
+.pv-sums .r{display:flex;justify-content:space-between;padding:6px 10px;font-size:12px;color:var(--ink-2)}
+.pv-sums .r.g{background:var(--brand-dk);color:#fff;border-radius:6px;margin-top:5px;padding:9px 10px;font-weight:800}
+
+/* convert */
+.conv-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+@media(max-width:860px){.conv-grid{grid-template-columns:1fr}}
+.conv-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow);cursor:pointer;transition:all .15s}
+.conv-card:hover{border-color:var(--brand);box-shadow:var(--shadow-lg)}
+.conv-card.sel{border-color:var(--brand);box-shadow:0 0 0 2px var(--brand-soft)}
+.conv-card .ch{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.conv-card .ch b{font-size:14.5px}
+.conv-card .meta{font-size:12px;color:var(--ink-3)}
+.conv-card .amt{font-family:'Orbitron';font-size:20px;font-weight:700;color:var(--brand-dk);margin-top:8px}
+.conv-empty{text-align:center;color:var(--ink-3);padding:30px;border:1px dashed var(--line-2);border-radius:12px}
+.arrow-flow{display:grid;place-items:center;padding:30px 0}
+.flow-card{background:var(--green-soft);border:1px solid #bdebd4;border-radius:12px;padding:18px;text-align:center}
+
+/* AI price */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ai-input{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0 4px}
+@media(max-width:780px){.ai-input{grid-template-columns:1fr 1fr}}
+.ai-input .fg{margin:0}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:18px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.proposal{background:linear-gradient(180deg,#fff,#f9fbff);border:1px solid var(--brand-soft);border-radius:12px;padding:20px;margin-top:8px}
+.prop-price{font-family:'Orbitron';font-size:34px;font-weight:700;color:var(--brand-dk);line-height:1}
+.prop-range{font-size:12px;color:var(--ink-3);margin-top:6px}
+.prop-bar{height:38px;border-radius:9px;background:linear-gradient(90deg,var(--green-soft),var(--brand-soft),var(--amber-soft));position:relative;margin:18px 0 6px}
+.prop-bar .mark{position:absolute;top:-6px;width:3px;height:50px;background:var(--brand-dk);border-radius:2px;transition:left 1s cubic-bezier(.2,.8,.3,1)}
+.prop-bar .mark::after{content:"提案";position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:800;color:var(--brand-dk);white-space:nowrap}
+.prop-scale{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-3)}
+.refs{margin-top:16px}
+.ref-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.ref-item.in{opacity:1;transform:none}
+.ref-item .rk{width:22px;height:22px;border-radius:6px;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+.win-tag{font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:5px}
+.win-tag.w{background:var(--green-soft);color:var(--green)}
+.win-tag.l{background:var(--red-soft);color:var(--red)}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#7c5cf0,#2f6df0);display:grid;place-items:center;font-size:26px;margin:0 auto;flex-shrink:0}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(124,92,240,.4)}50%{box-shadow:0 0 40px rgba(47,109,240,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">見積マシン<small>技マシン｜見積管理</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">📄</span>見積一覧</a>
+      <a data-v="create"><span class="i">✏️</span>見積作成</a>
+      <a data-v="convert"><span class="i">🔄</span>受注へ変換<span class="badge" id="navWin">0</span></a>
+      <a data-v="cust"><span class="i">🏢</span>取引先</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI価格提案<span class="badge ai">AI</span></a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="./">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。数値・取引先はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">今月の見積状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>月次の見積額推移</h3><span class="more">過去6ヶ月</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>商談ファネル（見積 → 受注）</h3><span class="more more-funnel" onclick="go('convert')">受注へ変換</span></div>
+            <div class="pb"><div class="funnel" id="funnel"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>取引先区分ごとの成約率</h3></div>
+            <div class="pb"><div class="bars" id="typeBars"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="取引先・件名・番号で検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>見積番号</th><th>取引先</th><th>件名</th><th class="r">金額(税込)</th><th>発行日</th><th>有効期限</th><th>状態</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- CREATE -->
+      <section class="view" id="v-create">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>取引先</label>
+              <select id="cCust"></select></div>
+            <div class="fg"><label>件名</label><input id="cSubject" placeholder="例：野菜定期便 ご導入"></div>
+            <div class="fg two">
+              <div><label>発行日</label><input id="cDate" type="date"></div>
+              <div><label>有効期限（日数）</label><select id="cValid"><option value="14">14日</option><option value="30" selected>30日</option><option value="60">60日</option></select></div>
+            </div>
+            <label style="font-size:12px;font-weight:700;color:var(--ink-2)">明細（品名を選ぶとAIが相場単価を提案）</label>
+            <div class="line-head" style="margin-top:7px"><div>品名</div><div>数量</div><div>単価</div><div></div></div>
+            <div id="cLines"></div>
+            <button class="addline" id="cAdd">＋ 明細を追加</button>
+            <div class="aihint" id="cAiHint">✨ AIが過去案件から相場の単価を自動入力しました</div>
+            <div class="linkrow" style="margin-top:16px">
+              <button class="btn primary" id="cIssue" style="flex:1;justify-content:center">⚡ AIで仕上げて発行</button>
+              <button class="btn" id="cSample">サンプル</button>
+            </div>
+          </div>
+          <div>
+            <div class="paper" id="cPaper">
+              <div class="pv-top">
+                <div class="pv-title">御　見　積　書</div>
+                <div class="pv-meta"><div>番号：<span class="no" id="pNo">—</span></div><div>発行日：<span id="pDate">—</span></div><div>有効期限：<span id="pDue">—</span></div></div>
+              </div>
+              <div><span class="pv-cust" id="pCust">　御中</span></div>
+              <div class="pv-subj" id="pSubj">件名：—</div>
+              <div style="font-size:11.5px;color:var(--ink-2)">下記の通りお見積り申し上げます。</div>
+              <div class="pv-total"><span style="font-weight:700">お見積り金額（税込）</span><span class="a" id="pGrand">¥0</span></div>
+              <table class="pv"><thead><tr><th>品名</th><th class="r" style="width:46px">数量</th><th class="r" style="width:88px">単価</th><th class="r" style="width:100px">金額</th></tr></thead><tbody id="pRows"></tbody></table>
+              <div class="pv-sums">
+                <div class="r"><span>小計</span><span id="pSub">¥0</span></div>
+                <div class="r"><span>消費税(10%)</span><span id="pTax">¥0</span></div>
+                <div class="r g"><span>合計</span><span id="pGrand2">¥0</span></div>
+              </div>
+              <div style="margin-top:18px;font-size:11px;color:var(--ink-2);border-top:1px solid var(--line);padding-top:12px">
+                株式会社気持ち市場　大分市都町　TEL 097-XXX-XXXX ／ ※本見積りの有効期限を過ぎた場合は再度ご相談ください。
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CONVERT -->
+      <section class="view" id="v-convert">
+        <div class="conv-grid">
+          <div>
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ 成約した見積（受注に変換できます）</div>
+            <div id="convList"></div>
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">📦 受注内容の確認</div>
+            <div id="convDetail"><div class="conv-empty">← 左から成約済みの見積を選んでください</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CUSTOMERS -->
+      <section class="view" id="v-cust">
+        <table class="tbl">
+          <thead><tr><th>取引先</th><th>区分</th><th class="r">見積件数</th><th class="r">成約率</th><th class="r">累計見積額</th><th>担当</th></tr></thead>
+          <tbody id="custRows"></tbody>
+        </table>
+      </section>
+
+      <!-- AI PRICE -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:2px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">過去の案件データから「最適な見積価格」をAIが提案</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">案件の条件を入れると、過去 <b>142件</b> の見積と成約実績から、受注しやすく粗利も確保できる価格をAIが算出します。</div></div>
+          </div>
+          <div class="ai-input">
+            <div class="fg"><label>取引先区分</label><select id="aiType"><option>医療</option><option>介護</option><option>青果卸</option><option>飲食</option><option>小売</option></select></div>
+            <div class="fg"><label>商材</label><select id="aiItem"></select></div>
+            <div class="fg"><label>数量・規模</label><input id="aiQty" type="number" min="1" value="1"></div>
+            <div class="fg"><label>競合の有無</label><select id="aiComp"><option>なし</option><option>あり（相見積もり）</option></select></div>
+          </div>
+          <button class="btn purple" id="aiRun" style="margin-top:6px">⚡ AIで最適価格を算出する</button>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">約2時間</div>
+              <ul>
+                <li>📂 過去の見積ファイルを1件ずつ確認</li>
+                <li>🧮 原価と粗利を電卓でその都度計算</li>
+                <li>🤔 「いくらなら通るか」は担当者の勘頼み</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン AI</span>
+              <div class="big" id="baAfterT">—</div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 過去142件の実績から相場を自動分析</li>
+                <li>📈 受注率と粗利のバランスで最適価格を算出</li>
+                <li>🎯 根拠となる類似案件も同時に提示</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div class="proposal">
+              <div style="font-size:12.5px;font-weight:800;color:var(--ink-2);margin-bottom:6px">💡 AIの推奨見積価格（税込）</div>
+              <div class="prop-price" id="propPrice">¥0</div>
+              <div class="prop-range" id="propRange"></div>
+              <div class="prop-bar"><div class="mark" id="propMark" style="left:50%"></div></div>
+              <div class="prop-scale"><span id="scaleLo">安い</span><span>相場</span><span id="scaleHi">高い</span></div>
+              <div style="display:flex;gap:18px;margin-top:14px;flex-wrap:wrap">
+                <div><div style="font-size:11px;color:var(--ink-3);font-weight:700">想定受注率</div><div style="font-size:18px;font-weight:900;color:var(--green)" id="propWin">—</div></div>
+                <div><div style="font-size:11px;color:var(--ink-3);font-weight:700">想定粗利率</div><div style="font-size:18px;font-weight:900;color:var(--brand)" id="propMargin">—</div></div>
+                <div style="margin-left:auto;align-self:flex-end"><button class="btn primary" id="propUse">この価格で見積作成へ</button></div>
+              </div>
+            </div>
+            <div class="refs">
+              <div style="font-size:13px;font-weight:800;margin:14px 0 8px">🔎 根拠となった類似の過去案件</div>
+              <div id="refItems"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const CUSTOMERS=[
+  {name:'大分中央クリニック',type:'医療',staff:'佐藤'},
+  {name:'さくら総合病院',type:'医療',staff:'佐藤'},
+  {name:'つくし介護センター',type:'介護',staff:'田中'},
+  {name:'豊後おおいた青果',type:'青果卸',staff:'鈴木'},
+  {name:'都町商店会',type:'小売',staff:'鈴木'},
+  {name:'別府温泉ホテル組合',type:'宿泊',staff:'高橋'},
+  {name:'大分海鮮市場',type:'飲食',staff:'高橋'},
+  {name:'みらい歯科医院',type:'医療',staff:'田中'},
+  {name:'やすらぎデイサービス',type:'介護',staff:'田中'},
+  {name:'大分駅前カフェ',type:'飲食',staff:'高橋'},
+];
+const ITEMS=[
+  {n:'青果定期便（Lボックス）',p:9800,cost:0.62},{n:'業務用野菜セット',p:12000,cost:0.65},
+  {n:'AI業務自動化 月額利用料',p:50000,cost:0.20},{n:'AI業務自動化 初期設定',p:200000,cost:0.30},
+  {n:'介護記録システム 月額',p:38000,cost:0.25},{n:'ホームページ制作 一式',p:380000,cost:0.35},
+  {n:'ホームページ保守（月額）',p:15000,cost:0.18},{n:'配送サービス（月額）',p:24000,cost:0.55},
+  {n:'シフト管理システム 月額',p:28000,cost:0.22},{n:'院内給食 野菜納品（月額）',p:86000,cost:0.68},
+  {n:'コンサルティング（1回）',p:50000,cost:0.10},{n:'LINE予約システム 初期',p:120000,cost:0.30},
+];
+const TODAY=new Date();
+function ym(d){return (d.getMonth()+1)}
+// seed
+let SEED=4242;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+const STATUSES=['won','won','sent','sent','draft','lost','won','review'];
+let quotes=[];
+(function seed(){
+  const subs=['ご導入 お見積り','定期便 お見積り','初期導入費 お見積り','月額保守 お見積り','システム連携 お見積り','野菜納品 お見積り'];
+  for(let i=0;i<26;i++){
+    const c=pick(CUSTOMERS);
+    const nItems=1+Math.floor(rnd()*3);
+    const lines=[];let sub=0;
+    for(let j=0;j<nItems;j++){const it=pick(ITEMS);const qty=1+Math.floor(rnd()*3);lines.push({n:it.n,q:qty,p:it.p});sub+=qty*it.p;}
+    const tax=Math.round(sub*0.1);
+    const issue=new Date(TODAY.getFullYear(),TODAY.getMonth()-Math.floor(rnd()*5),1+Math.floor(rnd()*26));
+    const valid=new Date(issue.getFullYear(),issue.getMonth(),issue.getDate()+30);
+    let stt=pick(STATUSES);
+    quotes.push({no:'EST-'+(2026000+i+1),cust:c.name,subject:pick(subs),lines,sub,tax,grand:sub+tax,issue,valid,status:stt,converted:false});
+  }
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+const fmtSlash=d=>d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate();
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STLABEL={won:'成約',sent:'送付済',draft:'下書き',lost:'失注',review:'検討中'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]||s}</span>`;}
+function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','2026年'+ym(TODAY)+'月の見積状況'],list:['見積一覧','発行した見積を管理します'],
+  create:['見積作成','入力するとリアルタイムで見積書が組み上がります'],convert:['受注へ変換','成約した見積を受注データに変換します'],
+  cust:['取引先','取引先ごとの見積・成約状況'],ai:['AI価格提案','過去の案件から最適な見積価格を提案します']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn purple" onclick="go(\'ai\')">⚡ AI価格提案</button><button class="btn primary" onclick="go(\'create\')">＋ 新規作成</button>'
+    : v==='dash'?'<button class="btn purple" onclick="go(\'ai\')">⚡ AI価格提案</button><button class="btn primary" onclick="go(\'create\')">＋ 新規作成</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='convert')renderConvert();
+  if(v==='cust')renderCust();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const tm=quotes.filter(i=>thisMonth(i.issue));
+  const tmSum=tm.reduce((s,i)=>s+i.grand,0);
+  const won=quotes.filter(i=>i.status==='won');
+  const decided=quotes.filter(i=>i.status==='won'||i.status==='lost');
+  const winRate=decided.length?Math.round(won.length/decided.length*100):0;
+  const avg=quotes.length?Math.round(quotes.reduce((s,i)=>s+i.grand,0)/quotes.length):0;
+  const wip=quotes.filter(i=>i.status==='draft'||i.status==='review'||i.status==='sent').length;
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','今月の見積額',yen(tmSum),tm.length+'件 発行','up','前月比 +18%')}
+    ${kpi('#16b877','成約率',winRate+'<small>%</small>','','up','+6pt')}
+    ${kpi('#e3941f','平均単価',yen(avg),'','up','安定')}
+    ${kpi('#7c5cf0','作成中',wip+'<small>件</small>','下書き・検討中','warn','フォロー要')}`;
+  // trend
+  const months=[];for(let k=5;k>=0;k--){const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1);months.push(d);}
+  const sums=months.map(m=>quotes.filter(i=>i.issue.getMonth()===m.getMonth()&&i.issue.getFullYear()===m.getFullYear()).reduce((s,i)=>s+i.grand,0));
+  const mx=Math.max(...sums,1);
+  $('trendBars').innerHTML=months.map((m,i)=>`
+    <div class="bar-row"><span class="mlabel">${m.getMonth()+1}月</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(sums[i]/mx*100)}"></div></div>
+      <span class="mval">${yen(sums[i])}</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // funnel
+  const cAll=quotes.length, cSent=quotes.filter(i=>['sent','review','won','lost'].includes(i.status)).length,
+    cReview=quotes.filter(i=>['review','won','lost'].includes(i.status)).length, cWon=won.length;
+  const fnData=[['発行',cAll,'#2f6df0'],['送付済',cSent,'#0ea5b7'],['検討中',cReview,'#7c5cf0'],['成約',cWon,'#16b877']];
+  const fmx=Math.max(cAll,1);
+  $('funnel').innerHTML=fnData.map(f=>`<div class="fn-row"><span class="fn-l">${f[0]}</span>
+    <div class="fn-bar" style="background:${f[2]};width:0" data-w="${Math.max(Math.round(f[1]/fmx*100),12)}">${f[1]}件</div>
+    <span class="fn-n">${Math.round(f[1]/fmx*100)}%</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#funnel .fn-bar').forEach(b=>b.style.width=b.dataset.w+'%'),80);
+  // type win rate
+  const types=[...new Set(CUSTOMERS.map(c=>c.type))];
+  const typeRows=types.map(t=>{
+    const custs=CUSTOMERS.filter(c=>c.type===t).map(c=>c.name);
+    const dec=quotes.filter(i=>custs.includes(i.cust)&&(i.status==='won'||i.status==='lost'));
+    const w=dec.filter(i=>i.status==='won').length;
+    return {t,rate:dec.length?Math.round(w/dec.length*100):0,n:dec.length};
+  }).filter(r=>r.n>0).sort((a,b)=>b.rate-a.rate);
+  $('typeBars').innerHTML=typeRows.map(r=>`
+    <div class="bar-row"><span class="mlabel">${esc(r.t)}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0;background:linear-gradient(90deg,#16b877,#0ea5b7)" data-w="${r.rate}"></div></div>
+      <span class="mval">${r.rate}%</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#typeBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // activity
+  const acts=[
+    {i:'🎉',c:'#e6f8f0',t:'豊後おおいた青果 が見積を承認（成約 ¥946,000）',m:'5分前'},
+    {i:'📄',c:'#eaf1ff',t:'EST-2026021 を発行しました',m:'40分前'},
+    {i:'⚡',c:'#efeaff',t:'AI価格提案で「院内給食 野菜納品」の最適価格を算出',m:'今日 10:22'},
+    {i:'📨',c:'#eaf1ff',t:'みらい歯科医院 へ見積書を送付',m:'今日 9:05'},
+    {i:'⏰',c:'#fdf3e2',t:'さくら総合病院 の見積有効期限が3日後です',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${a.t}</div><div class="am">${a.m}</div></div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ LIST ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['won','成約'],['sent','送付済'],['review','検討中'],['draft','下書き'],['lost','失注']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=quotes.filter(i=>filterStatus==='all'||i.status===filterStatus)
+    .filter(i=>!q||(i.cust+i.subject+i.no).toLowerCase().includes(q))
+    .sort((a,b)=>b.issue-a.issue);
+  $('listRows').innerHTML=rows.length?rows.map(i=>`<tr>
+    <td class="mono" style="font-size:12px">${esc(i.no)}</td><td><b>${esc(i.cust)}</b></td><td style="color:var(--ink-2)">${esc(i.subject)}</td>
+    <td class="r tnum"><b>${yen(i.grand)}</b></td><td style="color:var(--ink-2)">${fmtSlash(i.issue)}</td>
+    <td style="color:var(--ink-2)">${fmtSlash(i.valid)}</td><td>${stBadge(i.status)}</td></tr>`).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する見積がありません</td></tr>';
+}
+$('q').addEventListener('input',renderList);
+
+/* ============ CONVERT ============ */
+let convSel=null;
+function renderConvert(){
+  const wins=quotes.filter(i=>i.status==='won');
+  $('navWin').textContent=wins.filter(i=>!i.converted).length;
+  $('convList').innerHTML=wins.length?wins.map((i,idx)=>`
+    <div class="conv-card ${convSel===i.no?'sel':''}" data-no="${esc(i.no)}">
+      <div class="ch"><b>${esc(i.cust)}</b>${i.converted?'<span class="win-tag w">受注済</span>':stBadge('won')}</div>
+      <div class="meta">${esc(i.no)} ・ ${esc(i.subject)} ・ 発行 ${fmtSlash(i.issue)}</div>
+      <div class="amt">${yen(i.grand)}</div>
+    </div>`).join('')
+    :'<div class="conv-empty">成約済みの見積がまだありません</div>';
+  $('convList').querySelectorAll('.conv-card').forEach(card=>card.onclick=()=>{convSel=card.dataset.no;renderConvert();renderConvDetail();});
+  if(convSel)renderConvDetail();
+}
+function renderConvDetail(){
+  const i=quotes.find(x=>x.no===convSel);
+  if(!i){$('convDetail').innerHTML='<div class="conv-empty">← 左から成約済みの見積を選んでください</div>';return;}
+  $('convDetail').innerHTML=`
+    <div class="conv-card sel" style="cursor:default">
+      <div class="ch"><b>${esc(i.cust)} 御中</b></div>
+      <div class="meta" style="margin-bottom:10px">見積番号 ${esc(i.no)} ／ ${esc(i.subject)}</div>
+      <table class="pv" style="margin-bottom:10px"><thead><tr><th>品名</th><th class="r" style="width:46px">数量</th><th class="r" style="width:90px">金額</th></tr></thead>
+      <tbody>${i.lines.map(l=>`<tr><td>${esc(l.n)}</td><td class="r">${l.q}</td><td class="r">${yen(l.q*l.p)}</td></tr>`).join('')}</tbody></table>
+      <div class="pv-sums" style="width:100%"><div class="r g"><span>受注金額（税込）</span><span>${yen(i.grand)}</span></div></div>
+    </div>
+    <div class="arrow-flow" style="font-size:24px;color:var(--green)">⬇</div>
+    <div class="flow-card">
+      <div style="font-size:13px;font-weight:800;margin-bottom:6px">この見積を受注データに変換します</div>
+      <div style="font-size:12px;color:var(--ink-2);margin-bottom:14px">受注番号の発番・売上計上・請求マシン連携を自動で行います</div>
+      <button class="btn green" id="convDo" ${i.converted?'disabled style="opacity:.5"':''}>${i.converted?'✓ 受注済み':'🔄 受注に変換する'}</button>
+    </div>`;
+  const btn=$('convDo');
+  if(btn&&!i.converted)btn.onclick=async()=>{
+    btn.textContent='🔄 変換中…';btn.disabled=true;
+    await new Promise(r=>setTimeout(r,800));
+    i.converted=true;
+    showToast(i.no+' を受注に変換しました（請求マシンへ連携）');
+    renderConvert();
+  };
+}
+
+/* ============ CUSTOMERS ============ */
+function renderCust(){
+  $('custRows').innerHTML=CUSTOMERS.map(c=>{
+    const q=quotes.filter(i=>i.cust===c.name);
+    const dec=q.filter(i=>i.status==='won'||i.status==='lost');
+    const w=dec.filter(i=>i.status==='won').length;
+    const rate=dec.length?Math.round(w/dec.length*100):0;
+    const all=q.reduce((s,i)=>s+i.grand,0);
+    return `<tr><td><b>${esc(c.name)}</b></td><td><span class="st" style="background:var(--soft);color:var(--ink-2)">${esc(c.type)}</span></td>
+      <td class="r tnum">${q.length}件</td><td class="r tnum" style="font-weight:700;color:${rate>=50?'var(--green)':'var(--ink-2)'}">${dec.length?rate+'%':'—'}</td>
+      <td class="r tnum" style="color:var(--ink-2)">${yen(all)}</td><td style="color:var(--ink-2)">${esc(c.staff)}</td></tr>`;
+  }).join('');
+}
+
+/* ============ CREATE ============ */
+let cLines=[{n:'',q:1,p:''},{n:'',q:1,p:''}];
+function renderCustSelect(){$('cCust').innerHTML='<option value="">選択してください</option>'+CUSTOMERS.map(c=>`<option>${esc(c.name)}</option>`).join('');}
+function todayISO(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function renderLines(){
+  $('cLines').innerHTML=cLines.map((l,i)=>`<div class="line-row" data-i="${i}">
+    <input class="ln" list="cItemList" placeholder="品名" value="${esc(l.n)}">
+    <input class="lq" type="number" min="0" value="${esc(l.q)}">
+    <input class="lp" type="number" min="0" placeholder="0" value="${esc(l.p)}">
+    <button class="x">✕</button></div>`).join('');
+  $('cLines').querySelectorAll('.line-row').forEach(row=>{
+    const i=+row.dataset.i;
+    const ln=row.querySelector('.ln'),lq=row.querySelector('.lq'),lp=row.querySelector('.lp');
+    ln.oninput=()=>{cLines[i].n=ln.value;const h=ITEMS.find(x=>x.n===ln.value);if(h&&!cLines[i].p){cLines[i].p=h.p;lp.value=h.p;$('cAiHint').classList.add('show');setTimeout(()=>$('cAiHint').classList.remove('show'),2200);}renderPaper();};
+    lq.oninput=()=>{cLines[i].q=+lq.value||0;renderPaper();};
+    lp.oninput=()=>{cLines[i].p=+lp.value||0;renderPaper();};
+    row.querySelector('.x').onclick=()=>{cLines.splice(i,1);if(!cLines.length)cLines.push({n:'',q:1,p:''});renderLines();renderPaper();};
+  });
+}
+function renderPaper(){
+  $('pCust').textContent=($('cCust').value||'')+'　御中';
+  $('pSubj').textContent='件名：'+($('cSubject').value||'—');
+  // dates
+  const di=$('cDate').value?new Date($('cDate').value):new Date();
+  if(!isNaN(di)){
+    $('pDate').textContent=fmtDL(di);
+    const days=+$('cValid').value||30;
+    const dv=new Date(di.getFullYear(),di.getMonth(),di.getDate()+days);
+    $('pDue').textContent=fmtDL(dv);
+  }
+  const valid=cLines.filter(l=>l.n||+l.p>0);
+  $('pRows').innerHTML=valid.length?valid.map(l=>`<tr><td>${esc(l.n)||'（品名）'}</td><td class="r">${+l.q||0}</td><td class="r">${yen(+l.p||0)}</td><td class="r">${yen((+l.q||0)*(+l.p||0))}</td></tr>`).join('')
+    :'<tr><td colspan="4" style="text-align:center;color:#aab2c4;padding:14px">← 明細を入力してください</td></tr>';
+  const sub=valid.reduce((s,l)=>s+(+l.q||0)*(+l.p||0),0);const tax=Math.round(sub*0.1);
+  $('pSub').textContent=yen(sub);$('pTax').textContent=yen(tax);$('pGrand').textContent=yen(sub+tax);$('pGrand2').textContent=yen(sub+tax);
+}
+$('cCust').addEventListener('change',renderPaper);
+$('cSubject').addEventListener('input',renderPaper);
+$('cDate').addEventListener('change',renderPaper);
+$('cValid').addEventListener('change',renderPaper);
+$('cAdd').addEventListener('click',()=>{cLines.push({n:'',q:1,p:''});renderLines();renderPaper();});
+$('cSample').addEventListener('click',()=>{
+  $('cCust').value='大分中央クリニック';$('cSubject').value='院内給食 野菜納品 ご導入';
+  cLines=[{n:'院内給食 野菜納品（月額）',q:1,p:86000},{n:'配送サービス（月額）',q:1,p:24000}];
+  renderLines();renderPaper();
+});
+$('cIssue').addEventListener('click',async()=>{
+  const valid=cLines.filter(l=>l.n||+l.p>0);
+  if(!$('cCust').value||!valid.length){showToast('取引先と明細を入力してください');return;}
+  const btn=$('cIssue');btn.textContent='⚡ AIが仕上げ中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,800));
+  const issue=$('cDate').value&&!isNaN(new Date($('cDate').value))?new Date($('cDate').value):new Date();
+  const no='EST-'+(2026000+quotes.length+1);
+  const days=+$('cValid').value||30;
+  const validDate=new Date(issue.getFullYear(),issue.getMonth(),issue.getDate()+days);
+  const sub=valid.reduce((s,l)=>s+(+l.q||0)*(+l.p||0),0);const tax=Math.round(sub*0.1);
+  quotes.push({no,cust:$('cCust').value,subject:$('cSubject').value||'お見積り',lines:valid.map(l=>({n:l.n,q:+l.q,p:+l.p})),sub,tax,grand:sub+tax,issue,valid:validDate,status:'sent',converted:false});
+  $('pNo').textContent=no;
+  btn.textContent='⚡ AIで仕上げて発行';btn.disabled=false;
+  showToast('見積書 '+no+' を発行しました（一覧に追加）');
+  setTimeout(()=>go('list'),700);
+});
+
+/* ============ AI PRICE ============ */
+function renderAiItems(){$('aiItem').innerHTML=ITEMS.map(i=>`<option>${esc(i.n)}</option>`).join('');}
+let lastProposal=null;
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 算出中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';$('genList').classList.remove('show');
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent=Math.min(s,9)+'秒';},120);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);$('baAfterT').textContent='10秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // compute proposal
+  const itName=$('aiItem').value;const it=ITEMS.find(x=>x.n===itName)||ITEMS[0];
+  const qty=Math.max(+$('aiQty').value||1,1);
+  const base=it.p*qty;
+  const hasComp=$('aiComp').value.indexOf('あり')>=0;
+  // AI logic: competition pushes price down a bit, recommend within market band
+  const factor=hasComp?0.94:1.02;
+  const rec=Math.round(base*factor/100)*100;
+  const recTax=Math.round(rec*1.1);
+  const lo=Math.round(base*0.85),hi=Math.round(base*1.18);
+  const markPct=Math.max(8,Math.min(92,Math.round((rec-lo)/(hi-lo)*100)));
+  const winRate=hasComp?(58+Math.round(rnd()*12)):(74+Math.round(rnd()*14));
+  const margin=Math.round((1-it.cost)*100);
+  lastProposal={cust:'',type:$('aiType').value,item:itName,qty,price:rec,priceTax:recTax};
+  $('propPrice').textContent=yen(recTax);
+  $('propRange').textContent='想定の相場レンジ：'+yen(Math.round(lo*1.1))+' 〜 '+yen(Math.round(hi*1.1))+'（税込）';
+  $('scaleLo').textContent=yen(Math.round(lo*1.1));$('scaleHi').textContent=yen(Math.round(hi*1.1));
+  $('propMark').style.left='50%';
+  setTimeout(()=>{$('propMark').style.left=markPct+'%';},80);
+  $('propWin').textContent=winRate+'%';
+  $('propMargin').textContent=margin+'%';
+  // reference cases
+  const refs=[];
+  const pool=quotes.filter(q=>q.lines.some(l=>l.n===itName));
+  const cust2=CUSTOMERS.filter(c=>c.type===$('aiType').value);
+  for(let i=0;i<3;i++){
+    const won=rnd()>0.35;
+    const c=cust2.length?pick(cust2):pick(CUSTOMERS);
+    const amt=Math.round(base*(0.85+rnd()*0.3)/100)*100;
+    refs.push({cust:c.name,amt:Math.round(amt*1.1),won,month:1+Math.floor(rnd()*12)});
+  }
+  $('refItems').innerHTML=refs.map((r,i)=>`<div class="ref-item" data-i="${i}">
+    <span class="rk">${i+1}</span>
+    <b style="flex:1">${esc(r.cust)}</b>
+    <span style="color:var(--ink-3);font-size:11.5px">${r.month}月の類似案件</span>
+    <span class="tnum" style="font-weight:800">${yen(r.amt)}</span>
+    <span class="win-tag ${r.won?'w':'l'}">${r.won?'成約':'失注'}</span></div>`).join('');
+  $('genList').classList.add('show');
+  const items=[...$('refItems').querySelectorAll('.ref-item')];
+  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,160));items[i].classList.add('in');}
+  btn.disabled=false;btn.textContent='⚡ もう一度算出する';
+  showToast('AIが最適な見積価格を算出しました（'+yen(recTax)+'）');
+});
+$('propUse').addEventListener('click',()=>{
+  if(!lastProposal){showToast('先にAIで価格を算出してください');return;}
+  // find a customer matching type, else first
+  const match=CUSTOMERS.find(c=>c.type===lastProposal.type)||CUSTOMERS[0];
+  go('create');
+  $('cCust').value=match.name;
+  $('cSubject').value=lastProposal.item+' ご導入';
+  $('cDate').value=todayISO();
+  cLines=[{n:lastProposal.item,q:lastProposal.qty,p:lastProposal.price}];
+  renderLines();renderPaper();
+  showToast('AI提案の価格で見積を下書きしました');
+});
+
+/* ============ INIT ============ */
+(()=>{const dl=document.createElement('datalist');dl.id='cItemList';dl.innerHTML=ITEMS.map(i=>`<option value="${esc(i.n)}">`).join('');document.body.appendChild(dl);})();
+renderCustSelect();renderAiItems();
+$('cDate').value=todayISO();
+renderLines();renderPaper();renderChips();renderDash();
+$('navWin').textContent=quotes.filter(i=>i.status==='won'&&!i.converted).length;
+</script>
+</body>
+</html>
