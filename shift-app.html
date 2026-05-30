@@ -6,261 +6,420 @@
 <title>技マシン｜シフト最適化マシン（シフト自動作成システム）</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
-  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
-  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
-  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
-  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;
-  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
-  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
-  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+  /* surfaces */
+  --bg:#f6f7f9;--bg-grad:radial-gradient(1200px 600px at 100% -10%,#eef2fb 0%,transparent 55%),radial-gradient(900px 500px at -10% 0%,#eef9f4 0%,transparent 50%),#f6f7f9;
+  --card:#ffffff;--soft:#f3f5f9;--soft-2:#eef1f6;--line:#ebeef3;--line-2:#dfe4ec;
+  /* ink */
+  --ink:#10151d;--ink-2:#4a5365;--ink-3:#8a93a4;--ink-4:#aab2c0;
+  /* brand */
+  --brand:#3b6ef5;--brand-dk:#2a55d8;--brand-soft:#ecf2ff;--brand-ring:rgba(59,110,245,.28);
+  --green:#11a874;--green-soft:#e6f7f0;--amber:#dd8a16;--amber-soft:#fdf3e0;
+  --red:#e2484a;--red-soft:#fdebeb;--sky:#0fa3b8;--violet:#7c5cff;
+  /* sidebar */
+  --sb:#0c1426;--sb-2:#111c34;--sb-ink:#c8d0e2;--sb-ink-2:#79849f;--sb-line:rgba(255,255,255,.07);
+  /* shadows — multi-layer, subtle */
+  --sh-xs:0 1px 1px rgba(13,20,33,.04);
+  --sh-sm:0 1px 2px rgba(13,20,33,.05),0 2px 6px rgba(13,20,33,.04);
+  --sh-md:0 1px 2px rgba(13,20,33,.05),0 6px 16px rgba(13,20,33,.06);
+  --sh-lg:0 2px 4px rgba(13,20,33,.05),0 16px 44px rgba(13,20,33,.13);
+  --sh-pop:0 8px 30px rgba(13,20,33,.16);
+  --r-sm:9px;--r:13px;--r-lg:18px;
+}
+[data-theme="dark"]{
+  --bg:#0a0e16;--bg-grad:radial-gradient(1200px 600px at 100% -10%,#13203b 0%,transparent 55%),radial-gradient(900px 500px at -10% 0%,#0e2620 0%,transparent 50%),#0a0e16;
+  --card:#121927;--soft:#161f30;--soft-2:#1b2536;--line:#222c3f;--line-2:#2c3850;
+  --ink:#eef1f7;--ink-2:#aeb8c9;--ink-3:#7e899e;--ink-4:#5d6986;
+  --brand-soft:#16243f;--green-soft:#13261f;--amber-soft:#2a2113;--red-soft:#2a1718;
+  --sb:#070b13;--sb-2:#0b1322;
+  --sh-sm:0 1px 2px rgba(0,0,0,.4);--sh-md:0 1px 2px rgba(0,0,0,.4),0 6px 16px rgba(0,0,0,.35);
+  --sh-lg:0 2px 4px rgba(0,0,0,.4),0 16px 44px rgba(0,0,0,.55);--sh-pop:0 8px 30px rgba(0,0,0,.55);
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
-  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+html{scroll-behavior:smooth}
+body{background:var(--bg-grad);background-attachment:fixed;color:var(--ink);
+  font-family:'Zen Kaku Gothic New','Noto Sans JP','Inter',sans-serif;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;line-height:1.6;font-feature-settings:"palt" 1;
+  transition:background .4s,color .25s}
+.num{font-family:'Inter','Zen Kaku Gothic New',sans-serif}
 .mono{font-family:'Orbitron',sans-serif}
 .tnum{font-variant-numeric:tabular-nums}
-button{font-family:inherit}
+button{font-family:inherit;color:inherit}
+::selection{background:var(--brand-ring)}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:99px;border:2px solid var(--card)}
+::-webkit-scrollbar-thumb:hover{background:var(--ink-4)}
 
 /* layout */
-.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
-@media(max-width:860px){.app{grid-template-columns:1fr}}
+.app{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
+@media(max-width:900px){.app{grid-template-columns:1fr}}
 
 /* ===== sidebar ===== */
-.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
-@media(max-width:860px){.side{position:static;height:auto}}
-.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
-.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
-  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
-.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
-.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
-.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
-.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
-  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
-.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.scrim{display:none;position:fixed;inset:0;background:rgba(8,12,20,.5);z-index:90;backdrop-filter:blur(2px);opacity:0;transition:opacity .25s}
+.scrim.show{display:block;opacity:1}
+.side{background:linear-gradient(170deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:18px 14px;
+  position:sticky;top:0;height:100vh;overflow-y:auto;z-index:100;border-right:1px solid var(--sb-line)}
+.side::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-color:transparent}
+@media(max-width:900px){
+  .side{position:fixed;left:0;top:0;width:264px;transform:translateX(-104%);transition:transform .3s cubic-bezier(.4,0,.2,1);box-shadow:var(--sh-lg)}
+  .side.open{transform:none}
+}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 16px;border-bottom:1px solid var(--sb-line);margin-bottom:12px}
+.logo .mk{width:40px;height:40px;border-radius:12px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#7c5cff,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:19px;box-shadow:0 4px 14px rgba(79,209,230,.3)}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.25}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.03em;margin-top:1px}
+.nav-sec{font-size:10px;letter-spacing:.14em;color:var(--sb-ink-2);font-weight:700;padding:14px 12px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:background .16s,color .16s,box-shadow .2s;margin-bottom:2px;position:relative}
+.nav a .i{width:20px;text-align:center;font-size:16px;opacity:.92;transition:transform .2s}
 .nav a:hover{background:rgba(255,255,255,.06);color:#fff}
-.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
-.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.nav a:hover .i{transform:scale(1.12)}
+.nav a.on{background:linear-gradient(100deg,var(--brand),#5a82ff);color:#fff;box-shadow:0 8px 20px rgba(59,110,245,.4)}
+.nav a.on::before{content:"";position:absolute;left:-14px;top:50%;transform:translateY(-50%);width:3px;height:18px;background:#fff;border-radius:0 3px 3px 0}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px;min-width:20px;text-align:center;transition:transform .2s}
 .nav a .badge.g{background:var(--green)}
-.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
-.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.nav a.on .badge{background:rgba(255,255,255,.25)}
+.side .org{margin-top:16px;padding:12px;border-radius:12px;background:rgba(255,255,255,.045);font-size:12px;display:flex;align-items:center;gap:10px;border:1px solid var(--sb-line)}
+.side .org .av{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--brand),#5a82ff);display:grid;place-items:center;color:#fff;font-weight:800}
 .side .org b{color:#fff;display:block;font-size:12.5px}
 .side .org span{color:var(--sb-ink-2);font-size:10.5px}
+.side .foot{margin-top:12px;padding:0 8px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.backlink{font-size:11.5px;color:var(--sb-ink-2);text-decoration:none;font-weight:600;transition:color .15s}
+.backlink:hover{color:#fff}
 
 /* ===== main ===== */
-.main{min-width:0}
-.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
-  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
-.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
-.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
-.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
-.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
-.topbar .actions{margin-left:auto;display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-end}
-.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
-  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
-.btn:hover{border-color:var(--brand);color:var(--brand)}
-.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
-.btn.primary:hover{background:var(--brand-dk);color:#fff}
-.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.main{min-width:0;display:flex;flex-direction:column}
+.demobar{background:linear-gradient(90deg,#fff6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:8px 26px;display:flex;align-items:center;gap:10px}
+[data-theme="dark"] .demobar{background:linear-gradient(90deg,#241d0c,#2a2310);border-color:#3a3016;color:#e0b964}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:6px;letter-spacing:.05em}
+.demobar .dismiss{margin-left:auto;background:none;border:none;cursor:pointer;color:inherit;opacity:.6;font-size:15px;padding:2px 6px;border-radius:6px}
+.demobar .dismiss:hover{opacity:1;background:rgba(0,0,0,.06)}
+.topbar{display:flex;align-items:center;gap:14px;padding:18px 26px 0;position:sticky;top:0;z-index:40}
+.topbar .burger{display:none;width:38px;height:38px;border-radius:10px;border:1px solid var(--line-2);background:var(--card);cursor:pointer;font-size:17px;align-items:center;justify-content:center;flex-shrink:0}
+@media(max-width:900px){.topbar .burger{display:inline-flex}.topbar{padding-left:16px;padding-right:16px}}
+.topbar h1{font-size:23px;font-weight:900;letter-spacing:-.02em;line-height:1.15}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:3px;font-weight:500}
+.topbar .actions{margin-left:auto;display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
+.iconbtn{width:38px;height:38px;border-radius:10px;border:1px solid var(--line-2);background:var(--card);cursor:pointer;
+  display:inline-grid;place-items:center;font-size:16px;transition:all .16s;flex-shrink:0;box-shadow:var(--sh-xs)}
+.iconbtn:hover{border-color:var(--brand);color:var(--brand);transform:translateY(-1px)}
+.btn{padding:10px 16px;border-radius:var(--r-sm);border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .16s;display:inline-flex;align-items:center;gap:7px;box-shadow:var(--sh-xs);white-space:nowrap}
+.btn:hover{border-color:var(--brand);color:var(--brand);transform:translateY(-1px);box-shadow:var(--sh-sm)}
+.btn:active{transform:translateY(0)}
+.btn.primary{background:linear-gradient(100deg,var(--brand),#5a82ff);border-color:transparent;color:#fff;box-shadow:0 4px 14px rgba(59,110,245,.32)}
+.btn.primary:hover{filter:brightness(1.06);color:#fff;box-shadow:0 6px 20px rgba(59,110,245,.42)}
+.btn.green{background:linear-gradient(100deg,var(--green),#1fc488);border-color:transparent;color:#fff;box-shadow:0 4px 14px rgba(17,168,116,.3)}
 .btn.green:hover{filter:brightness(1.06);color:#fff}
-.btn:disabled{opacity:.65;cursor:not-allowed}
-.content{padding:22px 26px 60px}
-.view{display:none;animation:fade .35s}
-.view.on{display:block}
-@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.btn.sm{padding:8px 12px;font-size:12.5px}
+.btn:disabled{opacity:.6;cursor:not-allowed;transform:none!important;box-shadow:none}
+.content{padding:22px 26px 64px;flex:1}
+@media(max-width:900px){.content{padding:18px 16px 56px}}
+.view{display:none}
+.view.on{display:block;animation:fade .4s cubic-bezier(.2,.7,.3,1)}
+@keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.stg>*{opacity:0;animation:stg .5s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes stg{to{opacity:1;transform:none}}
+.stg>*{transform:translateY(12px)}
+.stg>*:nth-child(1){animation-delay:.02s}.stg>*:nth-child(2){animation-delay:.07s}
+.stg>*:nth-child(3){animation-delay:.12s}.stg>*:nth-child(4){animation-delay:.17s}
+.stg>*:nth-child(5){animation-delay:.22s}.stg>*:nth-child(6){animation-delay:.27s}
+
+/* section heading inside views */
+.sec-h{display:flex;align-items:center;gap:10px;margin:2px 0 14px}
+.sec-h h3{font-size:15px;font-weight:800;letter-spacing:-.01em}
+.sec-h .hint{font-size:12px;color:var(--ink-3);font-weight:500}
+.sec-h .sp{margin-left:auto}
 
 /* KPI cards */
-.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:20px}
 @media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:520px){.kpis{grid-template-columns:1fr}}
-.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
-.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
-.kpi .l .dot{width:8px;height:8px;border-radius:3px}
-.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
-.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
-.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+@media(max-width:480px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:17px 18px;box-shadow:var(--sh-sm);
+  position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s}
+.kpi:hover{transform:translateY(-3px);box-shadow:var(--sh-md)}
+.kpi::after{content:"";position:absolute;right:-30px;top:-30px;width:90px;height:90px;border-radius:50%;background:var(--accent,var(--brand));opacity:.06}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:11px}
+.kpi .l .dot{width:9px;height:9px;border-radius:4px}
+.kpi .v{font-size:28px;font-weight:900;letter-spacing:-.025em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700;margin-left:1px}
+.kpi .d{font-size:11.5px;margin-top:10px;font-weight:600;display:inline-flex;align-items:center;gap:5px}
 .kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
 
 /* panels */
-.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:15px}
 @media(max-width:980px){.cols{grid-template-columns:1fr}}
-.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh-sm);overflow:hidden;transition:box-shadow .2s}
+.panel:hover{box-shadow:var(--sh-md)}
 .panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
-.panel .ph h3{font-size:14.5px;font-weight:800}
-.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .ph h3{font-size:14px;font-weight:800;letter-spacing:-.01em}
+.panel .ph .more{margin-left:auto;font-size:11.5px;color:var(--ink-3);font-weight:700;background:var(--soft);padding:4px 10px;border-radius:7px}
 .panel .pb{padding:16px 18px}
 
 /* bar chart */
-.bars{display:flex;flex-direction:column;gap:13px}
-.bar-row{display:grid;grid-template-columns:62px 1fr 64px;align-items:center;gap:11px;font-size:12.5px}
-.bar-row .mlabel{color:var(--ink-2);font-weight:600}
-.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
-.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bars{display:flex;flex-direction:column;gap:14px}
+.bar-row{display:grid;grid-template-columns:64px 1fr 56px;align-items:center;gap:12px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{height:9px;border-radius:99px;background:var(--soft);overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),#5a9bff);width:0;transition:width 1.1s cubic-bezier(.2,.8,.25,1)}
 .bar-fill.g{background:linear-gradient(90deg,var(--green),#3fd6a0)}
 .bar-fill.a{background:linear-gradient(90deg,var(--amber),#f2b54e)}
-.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+.bar-row .mval{text-align:right;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ink);font-family:'Inter'}
 
 /* activity */
 .acts{display:flex;flex-direction:column}
-.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
-.act:last-child{border-bottom:0}
-.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
-.act .at{color:var(--ink);font-weight:600}
-.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+.act{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px;transition:transform .15s}
+.act:last-child{border-bottom:0;padding-bottom:0}
+.act:hover{transform:translateX(3px)}
+.act .ai{width:32px;height:32px;border-radius:9px;flex-shrink:0;display:grid;place-items:center;font-size:15px}
+.act .at{color:var(--ink);font-weight:600;line-height:1.4}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:2px}
 
-/* table */
-.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+/* table generic */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
 .search{flex:1;min-width:200px;position:relative}
-.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
-.search input:focus{outline:none;border-color:var(--brand)}
-.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.search input{width:100%;padding:10px 13px 10px 38px;border:1px solid var(--line-2);border-radius:var(--r-sm);font-family:inherit;font-size:13.5px;background:var(--card);color:var(--ink);transition:all .16s;box-shadow:var(--sh-xs)}
+.search input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-ring)}
+.search .ic{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--ink-3);pointer-events:none}
 .chips{display:flex;gap:6px;flex-wrap:wrap}
-.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
-.chip:hover{border-color:var(--brand)}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .16s;box-shadow:var(--sh-xs)}
+.chip:hover{border-color:var(--brand);color:var(--brand)}
 .chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
-table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
-table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+
+/* tables */
+.tbl-wrap{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh-sm)}
+table.tbl{width:100%;border-collapse:collapse}
+table.tbl thead th{background:var(--soft);font-size:11px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap;letter-spacing:.02em;user-select:none}
 table.tbl th.r,table.tbl td.r{text-align:right}
 table.tbl th.c,table.tbl td.c{text-align:center}
+table.tbl th.sortable{cursor:pointer;transition:color .15s}
+table.tbl th.sortable:hover{color:var(--brand)}
+table.tbl th.sortable .ar{opacity:.3;font-size:10px;margin-left:3px}
+table.tbl th.sortable.asc .ar,table.tbl th.sortable.desc .ar{opacity:1;color:var(--brand)}
 table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
-table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr{transition:background .12s}
 table.tbl tbody tr:hover{background:var(--soft)}
-.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;padding:4px 10px;border-radius:99px}
 .st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
 .st.ok{background:var(--green-soft);color:var(--green)}
 .st.warn{background:var(--amber-soft);color:var(--amber)}
 .st.short{background:var(--red-soft);color:var(--red)}
-.st.draft{background:var(--soft);color:var(--ink-3)}
-.st.fixed{background:var(--brand-soft);color:var(--brand)}
 .tag-s{display:inline-flex;font-size:11px;font-weight:800;padding:3px 9px;border-radius:7px;background:var(--soft);color:var(--ink-2)}
 .tag-s.ns{background:#eef0fb;color:#5b63d6}
 .tag-s.day{background:#fdf6e6;color:#b88318}
 .tag-s.eve{background:#eef7fb;color:#1187a3}
-.av-s{width:28px;height:28px;border-radius:8px;display:inline-grid;place-items:center;color:#fff;font-weight:800;font-size:12px;flex-shrink:0}
+[data-theme="dark"] .tag-s.ns{background:#1c1f33;color:#9da4e8}
+[data-theme="dark"] .tag-s.day{background:#2a2310;color:#e0b964}
+[data-theme="dark"] .tag-s.eve{background:#12262d;color:#5cc6dc}
+.av-s{width:28px;height:28px;border-radius:8px;display:inline-grid;place-items:center;color:#fff;font-weight:800;font-size:12px;flex-shrink:0;box-shadow:var(--sh-xs)}
 
 /* shift grid */
-.gridwrap{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:auto}
-table.shift{border-collapse:collapse;width:100%;min-width:760px;font-size:12px}
-table.shift th,table.shift td{border:1px solid var(--line);padding:0;text-align:center}
-table.shift thead th{background:var(--soft);font-weight:700;color:var(--ink-2);padding:8px 4px;font-size:11px;position:sticky;top:0}
+.gridwrap{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh-sm);overflow:auto;max-height:72vh}
+table.shift{border-collapse:separate;border-spacing:0;width:100%;min-width:780px;font-size:12px}
+table.shift th,table.shift td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:0;text-align:center}
+table.shift thead th{background:var(--soft);font-weight:700;color:var(--ink-2);padding:8px 4px;font-size:11px;position:sticky;top:0;z-index:3}
 table.shift thead th.we{color:var(--red)}
 table.shift thead th.sa{color:var(--brand)}
-table.shift .nameC{background:var(--card);text-align:left;padding:9px 12px;font-weight:700;white-space:nowrap;position:sticky;left:0;z-index:1;display:flex;align-items:center;gap:8px}
-table.shift td.cell{cursor:pointer;height:38px;transition:all .12s;position:relative}
-table.shift td.cell:hover{outline:2px solid var(--brand);outline-offset:-2px;z-index:2}
-.sft{display:inline-block;font-size:10.5px;font-weight:800;padding:3px 0;width:100%;height:100%;line-height:30px}
+table.shift thead th.today{background:var(--brand-soft);color:var(--brand)}
+table.shift .nameC{background:var(--card);text-align:left;padding:9px 12px;font-weight:700;white-space:nowrap;position:sticky;left:0;z-index:2;display:flex;align-items:center;gap:8px;min-width:128px}
+table.shift thead .nameC{z-index:4;background:var(--soft)}
+table.shift td.cell{cursor:pointer;height:38px;transition:box-shadow .12s;position:relative}
+table.shift td.cell:hover{box-shadow:inset 0 0 0 2px var(--brand);z-index:1}
+table.shift td.col-today{background:rgba(59,110,245,.05)}
+.sft{display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800;width:100%;height:38px;transition:transform .1s}
 .sft.D{background:#fdf6e6;color:#b88318}
 .sft.E{background:#eef7fb;color:#1187a3}
 .sft.N{background:#eef0fb;color:#5b63d6}
-.sft.O{background:#fff;color:#c2cad6}
+.sft.O{background:var(--card);color:var(--ink-4)}
+[data-theme="dark"] .sft.D{background:#2a2310;color:#e0b964}
+[data-theme="dark"] .sft.E{background:#12262d;color:#5cc6dc}
+[data-theme="dark"] .sft.N{background:#1c1f33;color:#9da4e8}
 .sft.req{box-shadow:inset 0 0 0 2px var(--green)}
-.glegend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--ink-2);margin-bottom:12px;align-items:center}
+.sft.pop{animation:pop .25s}
+@keyframes pop{50%{transform:scale(1.18)}}
+.glegend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--ink-2);margin-bottom:14px;align-items:center}
 .glegend .lg{display:inline-flex;align-items:center;gap:6px;font-weight:600}
-.glegend .sw{width:16px;height:16px;border-radius:4px}
+.glegend .sw{width:16px;height:16px;border-radius:5px}
 
 /* heatmap */
-.hm-wrap{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:auto;padding:16px}
-table.hm{border-collapse:separate;border-spacing:3px;width:100%;min-width:760px}
+.hm-wrap{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh-sm);overflow:auto;padding:16px}
+table.hm{border-collapse:separate;border-spacing:3px;width:100%;min-width:780px}
 table.hm th{font-size:11px;color:var(--ink-2);font-weight:700;padding:4px}
-table.hm td.lbl{font-size:12px;font-weight:700;color:var(--ink-2);white-space:nowrap;padding-right:8px;text-align:left}
-table.hm td.hc{height:34px;border-radius:6px;text-align:center;font-size:11px;font-weight:800;color:#fff;cursor:pointer;transition:transform .1s}
-table.hm td.hc:hover{transform:scale(1.12);position:relative;z-index:2}
-.hm-scale{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--ink-2);margin-top:12px}
+table.hm thead th:first-child,table.hm td.lbl{position:sticky;left:0;background:var(--card);z-index:2}
+table.hm td.lbl{font-size:12px;font-weight:700;color:var(--ink-2);white-space:nowrap;padding-right:8px;text-align:left;box-shadow:6px 0 8px -6px rgba(13,20,33,.12)}
+table.hm td.hc{height:34px;border-radius:7px;text-align:center;font-size:11px;font-weight:800;color:#fff;cursor:pointer;transition:transform .12s,box-shadow .12s}
+@media(max-width:900px){
+  table.hm{min-width:620px;border-spacing:2px}
+  table.hm td.hc{height:28px;font-size:10px;border-radius:5px}
+  table.hm th{font-size:10px;padding:2px}
+  table.hm td.lbl{font-size:11px}
+  .hm-wrap{padding:12px}
+}
+table.hm td.hc:hover{transform:scale(1.18);box-shadow:var(--sh-pop);position:relative;z-index:2}
+.hm-scale{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--ink-2);margin-top:14px;flex-wrap:wrap}
 .hm-scale .sg{display:flex;height:12px;border-radius:6px;overflow:hidden;width:160px}
 .hm-scale .sg i{flex:1}
 
 /* request management */
-.req-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:16px;align-items:start}
+.req-grid{display:grid;grid-template-columns:1.05fr 1fr;gap:16px;align-items:start}
 @media(max-width:980px){.req-grid{grid-template-columns:1fr}}
-.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
-.fg{margin-bottom:13px}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px;box-shadow:var(--sh-sm)}
+.card-t{font-size:14px;font-weight:800;margin-bottom:16px;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
+.fg{margin-bottom:14px}
 .fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
-.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
-.fg textarea{resize:vertical;min-height:62px}
-.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:var(--r-sm);font-family:inherit;font-size:13.5px;background:var(--card);color:var(--ink);transition:all .16s}
+.fg textarea{resize:vertical;min-height:64px}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-ring)}
 .fg-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.daypick{display:flex;gap:6px;flex-wrap:wrap}
-.daypick .dp{flex:1;min-width:42px;padding:9px 0;text-align:center;border:1px solid var(--line-2);border-radius:8px;font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .12s}
-.daypick .dp.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
-.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
-.aihint.show{opacity:1}
+.fhelp{font-size:11px;color:var(--ink-3);margin-top:4px}
+.aihint{font-size:11.5px;color:var(--green);margin-top:10px;opacity:0;transform:translateY(-4px);transition:all .3s;display:flex;align-items:center;gap:6px;font-weight:700}
+.aihint.show{opacity:1;transform:none}
 .req-list{display:flex;flex-direction:column;gap:9px}
-.req-item{display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--line);border-radius:11px;font-size:13px;background:var(--card)}
-.req-item .rt{flex:1}
+.req-item{display:flex;align-items:center;gap:11px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;font-size:13px;background:var(--card);box-shadow:var(--sh-xs);transition:all .18s;animation:slideIn .35s cubic-bezier(.2,.8,.3,1)}
+@keyframes slideIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
+.req-item:hover{border-color:var(--line-2);box-shadow:var(--sh-sm);transform:translateX(2px)}
+.req-item .rt{flex:1;min-width:0}
 .req-item .rt b{font-weight:700}
-.req-item .rt .rm{color:var(--ink-3);font-size:11.5px;margin-top:1px}
-.req-item .x{border:1px solid var(--line-2);background:var(--red-soft);color:var(--red);border-radius:7px;cursor:pointer;width:30px;height:30px;font-weight:800}
+.req-item .rt .rm{color:var(--ink-3);font-size:11.5px;margin-top:2px}
+.req-item .x{border:1px solid var(--line-2);background:var(--card);color:var(--ink-3);border-radius:8px;cursor:pointer;width:30px;height:30px;font-weight:800;transition:all .15s;flex-shrink:0}
+.req-item .x:hover{background:var(--red-soft);color:var(--red);border-color:var(--red)}
 
 /* staff cards */
 .staff-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 @media(max-width:980px){.staff-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:600px){.staff-grid{grid-template-columns:1fr}}
-.staff-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow)}
-.staff-card .sh{display:flex;align-items:center;gap:11px;margin-bottom:12px}
-.staff-card .sh .av{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;color:#fff;font-weight:900;font-size:16px}
-.staff-card .sh b{font-size:14.5px;font-weight:800}
-.staff-card .sh .role{font-size:11.5px;color:var(--ink-3)}
-.staff-meta{display:flex;flex-direction:column;gap:7px;font-size:12.5px}
+.staff-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:17px;box-shadow:var(--sh-sm);transition:transform .2s,box-shadow .2s,border-color .2s;position:relative}
+.staff-card:hover{transform:translateY(-3px);box-shadow:var(--sh-md);border-color:var(--line-2)}
+.staff-card .fav{position:absolute;top:13px;right:13px;background:none;border:none;cursor:pointer;font-size:18px;line-height:1;opacity:.35;transition:all .18s}
+.staff-card .fav:hover{transform:scale(1.2)}
+.staff-card .fav.on{opacity:1;filter:drop-shadow(0 2px 4px rgba(221,138,22,.4))}
+.staff-card .sh{display:flex;align-items:center;gap:12px;margin-bottom:13px;padding-right:24px}
+.staff-card .sh .av{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:#fff;font-weight:900;font-size:16px;box-shadow:var(--sh-sm)}
+.staff-card .sh b{font-size:14.5px;font-weight:800;letter-spacing:-.01em}
+.staff-card .sh .role{font-size:11.5px;color:var(--ink-3);margin-top:1px}
+.staff-meta{display:flex;flex-direction:column;gap:8px;font-size:12.5px}
 .staff-meta .mr{display:flex;justify-content:space-between;color:var(--ink-2)}
 .staff-meta .mr b{color:var(--ink);font-weight:700}
-.minibar{height:6px;border-radius:99px;background:var(--soft);overflow:hidden;margin-top:3px}
-.minibar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky))}
+.minibar{height:6px;border-radius:99px;background:var(--soft);overflow:hidden;margin-top:4px}
+.minibar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width .9s cubic-bezier(.2,.8,.25,1)}
 
 /* AI generate */
-.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
-.ai-conds{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 4px}
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:24px;box-shadow:var(--sh-md);position:relative;overflow:hidden}
+.ai-stage::before{content:"";position:absolute;top:-80px;right:-80px;width:260px;height:260px;border-radius:50%;
+  background:radial-gradient(circle,rgba(59,110,245,.1),transparent 70%);pointer-events:none}
+.ai-head{display:flex;align-items:center;gap:15px;margin-bottom:6px;position:relative;flex-wrap:wrap}
+.ai-head .ttl{font-size:17px;font-weight:900;letter-spacing:-.01em}
+.ai-head .sub2{font-size:12.5px;color:var(--ink-3);margin-top:2px}
+.ai-head .btn{margin-left:auto}
+@media(max-width:620px){.ai-head .btn{margin-left:0;width:100%;justify-content:center}}
+.ai-conds{display:flex;gap:9px;flex-wrap:wrap;margin:16px 0 4px}
 .ai-cond{font-size:12px;font-weight:700;color:var(--ink-2);background:var(--soft);border:1px solid var(--line);border-radius:9px;padding:8px 12px;display:flex;align-items:center;gap:7px}
 .ai-cond .ck{color:var(--green);font-weight:900}
 .ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
 @media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
-.ba .col{padding:18px;border-radius:12px}
-.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
-.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .col{padding:20px;border-radius:14px}
+.ba .before{background:linear-gradient(180deg,var(--soft),var(--soft-2));border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),rgba(17,168,116,.04));border:1px solid #bdebd4}
+[data-theme="dark"] .ba .after{border-color:#1d4a39}
 .ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
 @media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
-.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
-.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.02em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:8px}
+.ba .before .ct{background:var(--soft-2);color:var(--ink-2)}
 .ba .after .ct{background:#cdeedd;color:var(--green)}
-.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
-.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+[data-theme="dark"] .ba .after .ct{background:#16352a}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0;letter-spacing:-.01em}
+.ba .before .big{color:var(--ink-3)}.ba .after .big{color:var(--green)}
 .ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
 .ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
-.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list{margin-top:20px;border-top:1px solid var(--line);padding-top:18px;display:none}
 .gen-list.show{display:block;animation:fade .4s}
-.gen-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.gen-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
 @media(max-width:680px){.gen-stats{grid-template-columns:repeat(2,1fr)}}
-.gen-stat{background:var(--soft);border-radius:11px;padding:12px 14px;text-align:center}
-.gen-stat .gv{font-size:22px;font-weight:900;color:var(--brand);line-height:1}
-.gen-stat .gl{font-size:11px;color:var(--ink-3);font-weight:700;margin-top:5px}
-.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-stat{background:var(--soft);border-radius:12px;padding:14px;text-align:center;border:1px solid var(--line)}
+.gen-stat .gv{font-size:23px;font-weight:900;color:var(--brand);line-height:1;font-family:'Inter'}
+.gen-stat .gl{font-size:11px;color:var(--ink-3);font-weight:700;margin-top:6px}
+.gen-item{display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;font-size:13px;opacity:0;transform:translateX(-10px);transition:all .4s;background:var(--card)}
 .gen-item.in{opacity:1;transform:none}
-.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+
+/* skeleton */
+.skel{position:relative;overflow:hidden;background:var(--soft);border-radius:8px}
+.skel::after{content:"";position:absolute;inset:0;transform:translateX(-100%);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);animation:shimmer 1.3s infinite}
+[data-theme="dark"] .skel::after{background:linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent)}
+@keyframes shimmer{100%{transform:translateX(100%)}}
 
 /* AI orb */
-.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto;flex-shrink:0}
+.orb{width:60px;height:60px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#11a874);display:grid;place-items:center;font-size:25px;flex-shrink:0;box-shadow:0 6px 20px rgba(17,168,116,.3)}
 .orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(17,168,116,.4)}50%{box-shadow:0 0 42px rgba(79,209,230,.6)}}
+
+/* empty state */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:46px 20px;
+  background:var(--card);border:1.5px dashed var(--line-2);border-radius:var(--r)}
+.empty .ei{width:64px;height:64px;border-radius:18px;background:var(--soft);display:grid;place-items:center;font-size:30px;margin-bottom:14px}
+.empty .et{font-size:14.5px;font-weight:800;margin-bottom:5px}
+.empty .em{font-size:12.5px;color:var(--ink-3);max-width:300px;margin-bottom:16px;line-height:1.6}
 
 /* toast */
-.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
-  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast-wrap{position:fixed;right:22px;bottom:22px;z-index:300;display:flex;flex-direction:column;gap:10px;align-items:flex-end}
+@media(max-width:520px){.toast-wrap{left:16px;right:16px;align-items:stretch}}
+.toast{background:var(--ink);color:#fff;padding:13px 18px;border-radius:12px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--sh-lg);opacity:0;transform:translateY(16px) scale(.96);transition:all .32s cubic-bezier(.2,.8,.3,1);display:flex;align-items:center;gap:11px}
+[data-theme="dark"] .toast{background:#1f2a3d;border:1px solid var(--line-2)}
 .toast.show{opacity:1;transform:none}
-.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900;flex-shrink:0;font-size:12px}
+.toast.info .ck{background:var(--brand)}
 
-.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
-.linkrow{display:flex;gap:8px;margin-top:6px}
-.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
-.backlink:hover{color:var(--brand)}
+/* right-click cell menu */
+.cellmenu{position:fixed;z-index:350;background:var(--card);border:1px solid var(--line-2);border-radius:12px;
+  box-shadow:var(--sh-pop);padding:6px;min-width:148px;opacity:0;transform:scale(.95);transform-origin:top left;
+  transition:opacity .14s,transform .14s}
+.cellmenu.show{opacity:1;transform:none}
+.cellmenu .cm-h{font-size:11px;font-weight:800;color:var(--ink-3);padding:6px 9px 7px;border-bottom:1px solid var(--line);margin-bottom:4px}
+.cellmenu .cm-i{display:flex;align-items:center;gap:10px;width:100%;border:none;background:none;cursor:pointer;
+  padding:8px 9px;border-radius:8px;font-size:13px;font-weight:700;color:var(--ink);text-align:left;transition:background .12s}
+.cellmenu .cm-i:hover{background:var(--soft)}
+.cellmenu .cm-i .sft{font-size:11px;box-shadow:none;flex-shrink:0}
+
+/* keyboard help modal */
+.modal-scrim{display:none;position:fixed;inset:0;background:rgba(8,12,20,.45);backdrop-filter:blur(3px);z-index:400;
+  align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity .22s}
+.modal-scrim.show{display:flex;opacity:1}
+.modal{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh-lg);
+  width:min(440px,100%);max-height:88vh;overflow:auto;transform:translateY(14px) scale(.97);transition:transform .26s cubic-bezier(.2,.8,.3,1)}
+.modal-scrim.show .modal{transform:none}
+.modal-h{display:flex;align-items:center;gap:10px;padding:18px 20px;border-bottom:1px solid var(--line)}
+.modal-h h3{font-size:15px;font-weight:800;letter-spacing:-.01em}
+.modal-h .iconbtn{margin-left:auto;width:32px;height:32px;font-size:14px}
+.modal-b{padding:18px 20px 22px}
+.modal-lead{font-size:12.5px;color:var(--ink-2);margin-bottom:14px}
+.modal-lead b{background:var(--soft);border:1px solid var(--line-2);border-radius:6px;padding:1px 7px;font-family:'Inter';font-weight:700}
+.kb-list{display:flex;flex-direction:column;gap:2px}
+.kb-row{display:flex;align-items:center;gap:12px;padding:9px 4px;border-bottom:1px solid var(--line);font-size:13px;color:var(--ink-2)}
+.kb-row:last-child{border-bottom:0}
+.kb-row .keys{display:flex;gap:5px;min-width:78px}
+kbd{font-family:'Inter';font-size:11.5px;font-weight:700;background:var(--soft);border:1px solid var(--line-2);
+  border-bottom-width:2px;border-radius:6px;padding:3px 8px;color:var(--ink);box-shadow:var(--sh-xs);min-width:24px;text-align:center}
+@media print{
+  .side,.demobar,.topbar .actions,.toolbar,.scrim,.toast-wrap,.glegend span:last-child{display:none!important}
+  .app{grid-template-columns:1fr}.view{display:none!important}.view.on{display:block!important}
+  body{background:#fff}.panel,.kpi,.gridwrap,.hm-wrap{box-shadow:none;border-color:#ccc}
+  .topbar{padding-top:0}
+}
 </style>
 </head>
 <body>
 <div class="app">
+  <div class="scrim" id="scrim"></div>
   <!-- ===== SIDEBAR ===== -->
-  <aside class="side">
+  <aside class="side" id="side">
     <div class="logo">
       <div class="mk">技</div>
       <div class="nm">シフト最適化マシン<small>技マシン｜シフト自動作成</small></div>
@@ -281,25 +440,33 @@ table.hm td.hc:hover{transform:scale(1.12);position:relative;z-index:2}
       <div class="av">つ</div>
       <div><b>つくし介護センター</b><span>デモ環境 / 管理者</span></div>
     </div>
-    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="./">← 技マシン ショールームへ</a></div>
+    <div class="foot">
+      <a class="backlink" href="./">← ショールームへ</a>
+      <button class="backlink" id="themeBtnSide" style="background:none;border:none;cursor:pointer">🌙 ダーク</button>
+    </div>
   </aside>
 
   <!-- ===== MAIN ===== -->
   <div class="main">
-    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。スタッフ名・シフトはサンプルです。自由に触ってお試しください。</div>
+    <div class="demobar" id="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。スタッフ名・シフトはサンプルです。自由に触ってお試しください。<button class="dismiss" id="demoX" aria-label="このお知らせを閉じる" title="閉じる">✕</button></div>
     <div class="topbar">
+      <button class="burger" id="burger" aria-label="メニューを開く" title="メニュー">☰</button>
       <div>
         <h1 id="pgTitle">ダッシュボード</h1>
         <div class="sub" id="pgSub">2026年6月のシフト状況</div>
       </div>
-      <div class="actions" id="pgActions"></div>
+      <div class="actions">
+        <div id="pgActions" style="display:contents"></div>
+        <button class="iconbtn" id="themeBtnTop" aria-label="ライト・ダークの切り替え" title="テーマ切替">🌙</button>
+        <button class="iconbtn" id="helpBtn" aria-label="キーボードショートカットのヘルプを開く" title="ショートカット (?)">？</button>
+      </div>
     </div>
     <div class="content">
 
       <!-- DASHBOARD -->
       <section class="view on" id="v-dash">
-        <div class="kpis" id="kpis"></div>
-        <div class="cols">
+        <div class="kpis stg" id="kpis"></div>
+        <div class="cols stg">
           <div class="panel">
             <div class="ph"><h3>勤務区分ごとの充足率</h3><span class="more">今週</span></div>
             <div class="pb"><div class="bars" id="fillBars"></div></div>
@@ -309,7 +476,7 @@ table.hm td.hc:hover{transform:scale(1.12);position:relative;z-index:2}
             <div class="pb"><div class="acts" id="acts"></div></div>
           </div>
         </div>
-        <div class="cols" style="margin-top:16px">
+        <div class="cols stg" style="margin-top:15px">
           <div class="panel">
             <div class="ph"><h3>スタッフ別 勤務時間バランス</h3><span class="more">今月見込</span></div>
             <div class="pb"><div class="bars" id="hourBars"></div></div>
@@ -327,9 +494,9 @@ table.hm td.hc:hover{transform:scale(1.12);position:relative;z-index:2}
           <span class="lg"><span class="sw" style="background:#fdf6e6"></span>日勤(D)</span>
           <span class="lg"><span class="sw" style="background:#eef7fb"></span>遅番(E)</span>
           <span class="lg"><span class="sw" style="background:#eef0fb"></span>夜勤(N)</span>
-          <span class="lg"><span class="sw" style="background:#fff;border:1px solid var(--line-2)"></span>休み(O)</span>
-          <span class="lg"><span class="sw" style="box-shadow:inset 0 0 0 2px var(--green);background:#fff"></span>本人希望どおり</span>
-          <span style="margin-left:auto;color:var(--ink-3);font-size:11.5px">セルをクリックで勤務区分を変更できます</span>
+          <span class="lg"><span class="sw" style="background:var(--card);border:1px solid var(--line-2)"></span>休み(O)</span>
+          <span class="lg"><span class="sw" style="box-shadow:inset 0 0 0 2px var(--green);background:var(--card)"></span>本人希望どおり</span>
+          <span class="sp" style="margin-left:auto;color:var(--ink-3);font-size:11.5px">クリックで切替・右クリックで直接指定・Ctrl+Zで取り消し</span>
         </div>
         <div class="gridwrap"><table class="shift" id="shiftTable"></table></div>
       </section>
@@ -338,7 +505,7 @@ table.hm td.hc:hover{transform:scale(1.12);position:relative;z-index:2}
       <section class="view" id="v-req">
         <div class="req-grid">
           <div class="formcard">
-            <div style="font-size:14px;font-weight:800;margin-bottom:14px">希望シフトを登録</div>
+            <div class="card-t">📝 希望シフトを登録</div>
             <div class="fg"><label>スタッフ</label><select id="rStaff"></select></div>
             <div class="fg-row">
               <div class="fg"><label>希望の種類</label>
@@ -348,14 +515,14 @@ table.hm td.hc:hover{transform:scale(1.12);position:relative;z-index:2}
                   <option value="eve">遅番希望</option>
                   <option value="night">夜勤NG</option>
                 </select></div>
-              <div class="fg"><label>対象日</label><input id="rDate" type="number" min="1" max="30" value="15"><span style="font-size:11px;color:var(--ink-3)">6月の日付</span></div>
+              <div class="fg"><label>対象日</label><input id="rDate" type="number" min="1" max="30" value="15"><div class="fhelp">6月の日付（1〜30）</div></div>
             </div>
             <div class="fg"><label>理由・メモ（任意）</label><textarea id="rMemo" placeholder="例：通院のため／子どもの行事 など"></textarea></div>
             <button class="btn primary" id="rAdd" style="width:100%;justify-content:center">＋ 希望を登録する</button>
-            <div class="aihint" id="rHint">✨ 労務ルールに抵触しないか自動チェックしました</div>
+            <div class="aihint" id="rHint"><span>✨</span>労務ルールに抵触しないか自動チェックしました</div>
           </div>
           <div>
-            <div style="font-size:14px;font-weight:800;margin-bottom:14px">登録済みの希望（<span id="reqCount">0</span>件）</div>
+            <div class="card-t">登録済みの希望（<span id="reqCount">0</span>件）</div>
             <div class="req-list" id="reqList"></div>
           </div>
         </div>
@@ -363,13 +530,13 @@ table.hm td.hc:hover{transform:scale(1.12);position:relative;z-index:2}
 
       <!-- FILL / HEATMAP -->
       <section class="view" id="v-fill">
-        <div class="kpis" id="fillKpis"></div>
-        <div style="font-size:14px;font-weight:800;margin:4px 0 12px">日付 × 勤務区分の充足状況ヒートマップ</div>
+        <div class="kpis stg" id="fillKpis"></div>
+        <div class="sec-h"><h3>日付 × 勤務区分の充足状況ヒートマップ</h3><span class="hint sp">緑＝充足／赤＝不足</span></div>
         <div class="hm-wrap">
           <table class="hm" id="heatmap"></table>
           <div class="hm-scale">
             <span>不足</span>
-            <div class="sg"><i style="background:#e24a4a"></i><i style="background:#e3941f"></i><i style="background:#e7c84a"></i><i style="background:#7fce8e"></i><i style="background:#16b877"></i></div>
+            <div class="sg"><i style="background:#e2484a"></i><i style="background:#dd8a16"></i><i style="background:#e7c84a"></i><i style="background:#7fce8e"></i><i style="background:#11a874"></i></div>
             <span>充足</span>
             <span style="margin-left:auto;color:var(--ink-3)">セルにマウスを乗せると配置人数が出ます</span>
           </div>
@@ -381,6 +548,7 @@ table.hm td.hc:hover{transform:scale(1.12);position:relative;z-index:2}
         <div class="toolbar">
           <div class="search"><span class="ic">🔍</span><input id="sq" placeholder="スタッフ名・資格・役割で検索"></div>
           <div class="chips" id="staffChips"></div>
+          <button class="chip" id="favOnly" title="お気に入りだけ表示">★ お気に入り</button>
         </div>
         <div class="staff-grid" id="staffGrid"></div>
       </section>
@@ -388,11 +556,13 @@ table.hm td.hc:hover{transform:scale(1.12);position:relative;z-index:2}
       <!-- AI AUTO -->
       <section class="view" id="v-ai">
         <div class="ai-stage">
-          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+          <div class="ai-head">
             <div class="orb" id="aiOrb">🤖</div>
-            <div><div style="font-size:16px;font-weight:900">希望と労務ルールから、最適なシフトを自動作成</div>
-            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">スタッフ <b>10名</b>・希望 <b id="aiReqN">0</b>件・30日分の勤務を、AIが数秒で組み上げます。</div></div>
-            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIでシフトを自動生成する</button>
+            <div>
+              <div class="ttl">希望と労務ルールから、最適なシフトを自動作成</div>
+              <div class="sub2" id="aiSub">スタッフ <b id="aiStaffN">14</b>名・希望 <b id="aiReqN">0</b>件・30日分の勤務を、AIが数秒で組み上げます。</div>
+            </div>
+            <button class="btn primary" id="aiRun">⚡ AIでシフトを自動生成する</button>
           </div>
           <div class="ai-conds">
             <span class="ai-cond"><span class="ck">✓</span>夜勤の翌日は必ず休み</span>
@@ -405,25 +575,25 @@ table.hm td.hc:hover{transform:scale(1.12);position:relative;z-index:2}
             <div class="col before">
               <span class="ct">😓 今までの手作業</span>
               <div class="big" id="baBeforeT">丸1日（約8時間）</div>
-              <ul>
+              <ul id="baBeforeList">
                 <li>📋 紙の希望表を1枚ずつ突き合わせ</li>
-                <li>🤯 労務ルールと夜勤明けを手計算</li>
-                <li>🔁 不足が出るたびに何度も組み直し</li>
+                <li>📉 充足率 <b id="baBeforeFill">—</b>・人員不足 <b id="baBeforeShort">—</b>日</li>
+                <li>⚠️ 有資格者がいないシフトが <b id="baBeforeQ">—</b>枠</li>
               </ul>
             </div>
             <div class="arrow">→</div>
             <div class="col after">
               <span class="ct">⚡ 技マシン</span>
-              <div class="big" id="baAfterT">— </div>
+              <div class="big" id="baAfterT">—</div>
               <ul id="baAfterList" style="opacity:.4">
                 <li>🤖 希望と労務ルールを自動で解析</li>
-                <li>🧮 充足と公平性を最適化して配置</li>
-                <li>✅ 不足ゼロのシフト表を即生成</li>
+                <li>📈 充足率 <b id="baAfterFill">100</b>%・人員不足 <b id="baAfterShort">0</b>日</li>
+                <li>✅ 全シフトに有資格者を1名以上配置</li>
               </ul>
             </div>
           </div>
           <div class="gen-list" id="genList">
-            <div style="font-size:13px;font-weight:800;margin-bottom:12px">✅ AIが生成したシフトの結果</div>
+            <div class="card-t" style="margin-bottom:14px">✅ AIが生成したシフトの結果</div>
             <div class="gen-stats" id="genStats"></div>
             <div id="genItems"></div>
           </div>
@@ -434,11 +604,34 @@ table.hm td.hc:hover{transform:scale(1.12);position:relative;z-index:2}
   </div>
 </div>
 
-<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+<!-- ===== KEYBOARD HELP MODAL ===== -->
+<div class="modal-scrim" id="kbScrim" role="dialog" aria-modal="true" aria-labelledby="kbTitle">
+  <div class="modal">
+    <div class="modal-h">
+      <h3 id="kbTitle">⌨️ キーボードショートカット</h3>
+      <button class="iconbtn" id="kbClose" aria-label="ヘルプを閉じる" title="閉じる">✕</button>
+    </div>
+    <div class="modal-b">
+      <p class="modal-lead"><b>g</b> を押してから次のキーで画面を移動できます。</p>
+      <div class="kb-list">
+        <div class="kb-row"><span class="keys"><kbd>g</kbd><kbd>d</kbd></span><span>ダッシュボード</span></div>
+        <div class="kb-row"><span class="keys"><kbd>g</kbd><kbd>s</kbd></span><span>シフト表</span></div>
+        <div class="kb-row"><span class="keys"><kbd>g</kbd><kbd>r</kbd></span><span>希望管理</span></div>
+        <div class="kb-row"><span class="keys"><kbd>g</kbd><kbd>f</kbd></span><span>充足状況</span></div>
+        <div class="kb-row"><span class="keys"><kbd>g</kbd><kbd>t</kbd></span><span>スタッフ</span></div>
+        <div class="kb-row"><span class="keys"><kbd>g</kbd><kbd>a</kbd></span><span>AI自動生成</span></div>
+        <div class="kb-row"><span class="keys"><kbd>?</kbd></span><span>このヘルプを開く</span></div>
+        <div class="kb-row"><span class="keys"><kbd>Esc</kbd></span><span>閉じる</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap" aria-live="polite" aria-atomic="false"></div>
 
 <script>
 /* ============ DATA ============ */
-const COLORS=['#2f6df0','#16b877','#e3941f','#0ea5b7','#7c5cff','#e24a4a','#1187a3','#b88318','#5b63d6','#d6453f'];
+const COLORS=['#3b6ef5','#11a874','#dd8a16','#0fa3b8','#7c5cff','#e2484a','#1187a3','#b88318','#5b63d6','#d6453f'];
 const STAFF=[
   {id:1,name:'佐藤 美咲',role:'介護福祉士',qual:true,emp:'常勤',avoidNight:false},
   {id:2,name:'田中 健太',role:'介護職員',qual:false,emp:'常勤',avoidNight:false},
@@ -450,20 +643,22 @@ const STAFF=[
   {id:8,name:'中村 大輔',role:'介護職員',qual:false,emp:'常勤',avoidNight:false},
   {id:9,name:'小林 あや',role:'介護職員',qual:false,emp:'パート',avoidNight:true},
   {id:10,name:'加藤 涼介',role:'介護福祉士',qual:true,emp:'常勤',avoidNight:false},
+  {id:11,name:'松本 結衣',role:'看護師',qual:true,emp:'常勤',avoidNight:false},
+  {id:12,name:'井上 蓮',role:'介護職員',qual:false,emp:'常勤',avoidNight:false},
+  {id:13,name:'木村 桃子',role:'介護福祉士',qual:true,emp:'常勤',avoidNight:false},
+  {id:14,name:'林 颯太',role:'介護職員',qual:false,emp:'パート',avoidNight:false},
 ];
 const DAYS=30; // June
 const FIRST_DOW=1; // 2026-06-01 = Monday
+const TODAY=12; // demo "current" day for highlighting
 const DOW=['日','月','火','水','木','金','土'];
-// required headcount per shift type
 const NEED={D:4,E:3,N:2};
 const SHIFTS=['D','E','N','O'];
 const SFT_LABEL={D:'日勤',E:'遅番',N:'夜勤',O:'休'};
 
 // PRNG
 let SEED=20260601;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
-function pick(a){return a[Math.floor(rnd()*a.length)];}
 
-// requests: {staffId, type:'off'|'day'|'eve'|'night', date, memo}
 let requests=[
   {staffId:5,type:'off',date:7,memo:'通院のため'},
   {staffId:9,type:'off',date:12,memo:'子どもの行事'},
@@ -472,53 +667,133 @@ let requests=[
   {staffId:3,type:'day',date:3,memo:'研修参加'},
 ];
 
-// schedule[staffIndex][day-1] = 'D'|'E'|'N'|'O'
 let schedule=[];
 let lastGen={fill:0,short:0,reqRate:0,minutes:0};
+let favorites=new Set();
+/* operation activity log (newest first) */
+let activityLog=[
+  {i:'📝',c:'#ecf2ff',t:'渡辺 さおり さんの休み希望（6/7）を反映',at:Date.now()-3600*1000},
+  {i:'🔄',c:'#fdf3e0',t:'小林 あや さんと中村 大輔 さんのシフトを交換',at:Date.now()-26*3600*1000},
+  {i:'✅',c:'#e6f7f0',t:'労務ルール（夜勤明け休み）を全件クリア',at:Date.now()-27*3600*1000},
+];
+function logActivity(icon,color,text){activityLog.unshift({i:icon,c:color,t:text,at:Date.now()});if(activityLog.length>12)activityLog.length=12;}
+function relTime(ts){
+  const s=Math.floor((Date.now()-ts)/1000);
+  if(s<60)return 'たった今';
+  if(s<3600)return Math.floor(s/60)+'分前';
+  if(s<86400)return Math.floor(s/3600)+'時間前';
+  if(s<172800)return '昨日';
+  return Math.floor(s/86400)+'日前';
+}
 
 function reqFor(staffId,date){return requests.find(r=>r.staffId===staffId&&r.date===date);}
 
-/* build an initial (imperfect) schedule so the app has data before AI run */
+/* ---- shift "minutes"(hours) per type for fairness balancing ---- */
+const SFT_HOURS={D:8,E:8,N:16,O:0};
+/* Eligibility check for assigning staff si shift t on day d (hard labour rules). */
+function canAssign(sch,si,d,t){
+  const s=STAFF[si];
+  if(t==='O')return true;
+  if(t==='N'&&s.avoidNight)return false;                 // 夜勤NGスタッフ
+  if(d>0&&sch[si][d-1]==='N')return false;               // 夜勤明けは休み
+  const req=reqFor(s.id,d+1);
+  if(req){
+    if(req.type==='off')return false;                    // 休み希望は厳守
+    if(req.type==='night'&&t==='N')return false;          // 夜勤NG希望
+  }
+  // 連続勤務5日まで（このdを勤務にすると6連勤になる場合は不可）
+  let consec=0;for(let k=d-1;k>=0&&sch[si][k]!=='O';k--)consec++;
+  if(consec>=5)return false;
+  // 週休: 直近7日窓に休みが1日も無ければ勤務させない
+  let offIn6=0;for(let k=Math.max(0,d-6);k<d;k++)if(sch[si][k]==='O')offIn6++;
+  if(d>=6&&offIn6===0)return false;
+  return true;
+}
+/*
+  AI最適化シフト生成。
+  perfect=true : 制約充足アルゴリズムで「不足ゼロ・全シフト有資格者1名以上・労務ルール遵守」を保証して組む。
+  perfect=false: 手作業を模した、わざと不足・偏りのある初期シフト（Before表示用）。
+*/
 function buildBaseSchedule(perfect){
+  SEED=perfect?20260615:20260601;
   const sch=STAFF.map(()=>new Array(DAYS).fill('O'));
-  for(let d=0;d<DAYS;d++){
-    // assign by rotating with respect to constraints
-    const order=[...STAFF.keys()].sort(()=>rnd()-0.5);
-    const counts={D:0,E:0,N:0};
-    for(const si of order){
-      const s=STAFF[si];const day=d+1;
-      const req=reqFor(s.id,day);
-      // honor off requests
-      if(req&&req.type==='off'){sch[si][d]='O';continue;}
-      // no work day after night
-      if(d>0&&sch[si][d-1]==='N'){sch[si][d]='O';continue;}
-      // limit consecutive 5
-      let consec=0;for(let k=d-1;k>=0&&sch[si][k]!=='O';k--)consec++;
-      if(consec>=5){sch[si][d]='O';continue;}
-      // weekly rest: roughly 2 off per 7
-      let offIn7=0;for(let k=Math.max(0,d-6);k<d;k++)if(sch[si][k]==='O')offIn7++;
-      if(offIn7===0&&d>=6&&rnd()<0.5){sch[si][d]='O';continue;}
-      // choose shift
-      let want=null;
-      if(req&&req.type==='day')want='D';
-      else if(req&&req.type==='eve')want='E';
-      // fill needs
-      const order2=['N','E','D'];
-      for(const t of (want?[want]:order2)){
-        if(t==='N'&&s.avoidNight)continue;
-        if(t==='N'&&req&&req.type==='night')continue;
-        const cap=perfect?NEED[t]:NEED[t]+(rnd()<0.3?-1:0);
-        if(counts[t]<cap){sch[si][d]=t;counts[t]++;want=null;break;}
-      }
-      if(sch[si][d]==='O'&&!want&&rnd()<0.55){
-        // leave as rest if not needed
-      }else if(sch[si][d]==='O'&&want){
-        if(want!=='N'||!s.avoidNight){sch[si][d]=want;counts[want]=(counts[want]||0)+1;}
+  const loadH=STAFF.map(()=>0);     // 累積勤務時間（公平性）
+  const qualIdx=STAFF.map((s,i)=>i).filter(i=>STAFF[i].qual);
+
+  if(!perfect){
+    // ---- Before: 手作業っぽい、不足や偏りの出る雑なシフト ----
+    for(let d=0;d<DAYS;d++){
+      const order=[...STAFF.keys()].sort(()=>rnd()-0.5);
+      const counts={D:0,E:0,N:0};
+      for(const si of order){
+        const s=STAFF[si];const req=reqFor(s.id,d+1);
+        if(req&&req.type==='off'){continue;}
+        if(d>0&&sch[si][d-1]==='N'){continue;}
+        if(rnd()<0.30){continue;} // 気まぐれに休ませる→不足発生
+        for(const t of ['N','E','D']){
+          if(t==='N'&&(s.avoidNight||(req&&req.type==='night')))continue;
+          // 必要数を満たさないことが多い雑な配置（有資格者も考慮しない）
+          const cap=Math.max(1,NEED[t]-(rnd()<0.55?1:0));
+          if(counts[t]<cap){sch[si][d]=t;counts[t]++;break;}
+        }
       }
     }
-    if(!perfect){
-      // randomly create some shortages by turning a worker off
-      for(const si of order){if(sch[si][d]!=='O'&&rnd()<0.12){sch[si][d]='O';}}
+    return sch;
+  }
+
+  // ====== perfect=true : 制約充足で確実に充足させる ======
+  for(let d=0;d<DAYS;d++){
+    const counts={D:0,E:0,N:0};
+    const qualOn={D:0,E:0,N:0}; // 各シフトの有資格者数
+    // 必要数の多い順 + 有資格者確保が難しい夜勤を先に埋める
+    const fillOrder=['N','D','E'];
+
+    // (1) まず各シフトに有資格者を1名ずつ確保（人員配置基準）
+    for(const t of fillOrder){
+      // 有資格者を、勤務時間が少ない順に選ぶ
+      const cands=qualIdx
+        .filter(si=>sch[si][d]==='O'&&canAssign(sch,si,d,t))
+        .sort((a,b)=>loadH[a]-loadH[b]);
+      if(cands.length){
+        const si=cands[0];sch[si][d]=t;counts[t]++;qualOn[t]++;loadH[si]+=SFT_HOURS[t];
+      }
+    }
+
+    // (2) 希望（日勤/遅番）をできるだけ叶える
+    for(const t of ['D','E']){
+      const wishers=STAFF.map((s,i)=>i).filter(si=>{
+        const req=reqFor(STAFF[si].id,d+1);
+        return req&&((t==='D'&&req.type==='day')||(t==='E'&&req.type==='eve'))
+          &&sch[si][d]==='O'&&counts[t]<NEED[t]&&canAssign(sch,si,d,t);
+      });
+      for(const si of wishers){if(counts[t]>=NEED[t])break;sch[si][d]=t;counts[t]++;if(STAFF[si].qual)qualOn[t]++;loadH[si]+=SFT_HOURS[t];}
+    }
+
+    // (3) 残りの必要数を、勤務時間が少ない人から埋める（公平性）
+    for(const t of fillOrder){
+      while(counts[t]<NEED[t]){
+        const cands=STAFF.map((s,i)=>i)
+          .filter(si=>sch[si][d]==='O'&&canAssign(sch,si,d,t))
+          .sort((a,b)=>loadH[a]-loadH[b]);
+        if(!cands.length)break; // 物理的に不可能（理論上は起きない設計）
+        const si=cands[0];sch[si][d]=t;counts[t]++;if(STAFF[si].qual)qualOn[t]++;loadH[si]+=SFT_HOURS[t];
+      }
+    }
+
+    // (4) フェイルセーフ：もし有資格者ゼロのシフトがあれば、
+    //     そのシフトの非有資格者と、休み中の有資格者を入れ替える
+    for(const t of fillOrder){
+      if(counts[t]>0&&qualOn[t]===0){
+        const swapIn=qualIdx
+          .filter(si=>sch[si][d]==='O'&&canAssign(sch,si,d,t))
+          .sort((a,b)=>loadH[a]-loadH[b])[0];
+        const swapOut=STAFF.map((s,i)=>i).find(si=>sch[si][d]===t&&!STAFF[si].qual);
+        if(swapIn!=null&&swapOut!=null){
+          sch[swapIn][d]=t;loadH[swapIn]+=SFT_HOURS[t];
+          sch[swapOut][d]='O';loadH[swapOut]-=SFT_HOURS[t];
+          qualOn[t]++;
+        }
+      }
     }
   }
   return sch;
@@ -533,51 +808,137 @@ function computeMetrics(sch){
     if(dayShort)shortDays++;
   }
   const fill=Math.round(have/need*100);
-  // request reflection
   let met=0;for(const r of requests){const si=STAFF.findIndex(s=>s.id===r.staffId);if(si<0)continue;const v=sch[si][r.date-1];
-    if(r.type==='off'&&v==='O')met++;else if(r.type==='day'&&v==='D')met++;else if(r.type==='eve'&&v==='E')met++;else if(r.type==='night'&&v!=='N')met++;}
+    if(r.type==='off'&&v==='O')met++;
+    else if(r.type==='day'&&v==='D')met++;
+    else if(r.type==='eve'&&v==='E')met++;
+    // 夜勤NGは「実際に勤務に入っていて、それが夜勤でない」場合のみ達成とみなす（休みでの水増しを排除）
+    else if(r.type==='night'&&(v==='D'||v==='E'))met++;}
   const reqRate=requests.length?Math.round(met/requests.length*100):100;
-  return {fill,shortDays,reqRate};
+  // 有資格者ゼロのシフト枠数（労務基準チェック）
+  let qualGaps=0;
+  for(let d=0;d<DAYS;d++){const c=dayCounts(sch,d);for(const t of ['D','E','N']){
+    if(c[t]>0){let q=0;for(let si=0;si<STAFF.length;si++)if(sch[si][d]===t&&STAFF[si].qual)q++;if(q===0)qualGaps++;}}}
+  return {fill,shortDays,reqRate,qualGaps};
+}
+
+/* ============ PERSISTENCE (localStorage) ============ */
+const LS_KEY='shiftMachine.v1';
+function loadState(){
+  try{
+    const raw=localStorage.getItem(LS_KEY);if(!raw)return;
+    const s=JSON.parse(raw);
+    if(s.theme)themeState=s.theme;
+    if(Array.isArray(s.favorites))favorites=new Set(s.favorites);
+    if(Array.isArray(s.requests)&&s.requests.length)requests=s.requests;
+  }catch(e){console.error('状態の読み込みに失敗',e);}
+}
+function saveState(){
+  try{
+    localStorage.setItem(LS_KEY,JSON.stringify({
+      theme:themeState,favorites:[...favorites],requests
+    }));
+  }catch(e){console.error('状態の保存に失敗',e);}
 }
 
 /* ============ HELPERS ============ */
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function showToast(m,info){
+  const w=$('toastWrap');const el=document.createElement('div');
+  el.className='toast'+(info?' info':'');el.innerHTML='<span class="ck">'+(info?'i':'✓')+'</span><span></span>';
+  el.querySelector('span:last-child').textContent=m;
+  w.appendChild(el);requestAnimationFrame(()=>el.classList.add('show'));
+  setTimeout(()=>{el.classList.remove('show');setTimeout(()=>el.remove(),350);},2800);
+}
 function initials(name){return name.replace(/\s/g,'').slice(0,1);}
 function dowOf(day){return (FIRST_DOW+day-1)%7;}
 function staffColor(i){return COLORS[i%COLORS.length];}
+/* animate a number from 0 to target inside an element (keeps a small <small> suffix) */
+function countUp(el,target,suffix,dur){
+  dur=dur||900;const start=performance.now();
+  function step(now){
+    const p=Math.min(1,(now-start)/dur);const e=1-Math.pow(1-p,3);
+    const val=Math.round(target*e);
+    el.innerHTML=val+(suffix?'<small>'+suffix+'</small>':'');
+    if(p<1)requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
 
 /* ============ ROUTING ============ */
-const TITLES={dash:['ダッシュボード','2026年6月のシフト状況'],shift:['シフト表','日付×スタッフの勤務割（クリックで編集）'],
+const TITLES={dash:['ダッシュボード','2026年6月のシフト状況をひと目で把握'],shift:['シフト表','日付×スタッフの勤務割（クリックで編集）'],
   req:['希望管理','スタッフの希望シフトを登録・反映します'],fill:['充足状況','日付ごとの人員の過不足をひと目で確認'],
-  staff:['スタッフ','スタッフ情報と勤務状況'],ai:['AI自動生成','希望と労務ルールから最適なシフトを自動作成']};
+  staff:['スタッフ','スタッフ情報と勤務状況を一覧で管理'],ai:['AI自動生成','希望と労務ルールから最適なシフトを自動作成']};
 function go(v){
   document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
   document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
   $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
-  $('pgActions').innerHTML = v==='shift'?'<button class="btn" onclick="go(\'fill\')">🌡️ 充足を確認</button><button class="btn primary" onclick="go(\'ai\')">⚡ AIで再生成</button>'
+  $('pgActions').innerHTML =
+      v==='shift'?'<button class="btn sm" id="undoBtn" onclick="undoEdit()" aria-label="直前の編集を元に戻す" title="元に戻す (Ctrl+Z)" disabled>↩ 元に戻す</button><button class="btn sm" onclick="exportCSV()">⬇ CSV</button><button class="btn sm" onclick="window.print()">🖨 印刷</button><button class="btn" onclick="go(\'fill\')">🌡️ 充足を確認</button><button class="btn primary" onclick="go(\'ai\')">⚡ AIで再生成</button>'
     : v==='dash'?'<button class="btn" onclick="go(\'shift\')">📅 シフト表</button><button class="btn primary" onclick="go(\'ai\')">⚡ AI自動生成</button>'
-    : v==='req'?'<button class="btn primary" onclick="go(\'ai\')">⚡ 希望を反映して生成</button>':'';
+    : v==='fill'?'<button class="btn sm" onclick="window.print()">🖨 印刷</button><button class="btn primary" onclick="go(\'ai\')">⚡ 不足を解消</button>'
+    : v==='req'?'<button class="btn primary" onclick="go(\'ai\')">⚡ 希望を反映して生成</button>'
+    : v==='staff'?'<button class="btn sm" onclick="exportStaffCSV()">⬇ CSV出力</button>':'';
   if(v==='dash')renderDash();
   if(v==='shift')renderShift();
   if(v==='req')renderReq();
   if(v==='fill')renderFill();
   if(v==='staff')renderStaff();
-  if(v==='ai')$('aiReqN').textContent=requests.length;
+  if(v==='ai'){
+    $('aiReqN').textContent=requests.length;
+    // Beforeサンプル（手作業相当）の実測値を表示
+    const bm=computeMetrics(buildBaseSchedule(false));
+    $('baBeforeFill').textContent=bm.fill+'%';
+    $('baBeforeShort').textContent=bm.shortDays;
+    $('baBeforeQ').textContent=bm.qualGaps;
+  }
+  closeSidebar();
+  document.querySelector('.content').scrollTo?.(0,0);
 }
 document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
 window.go=go;
+
+/* mobile sidebar */
+function openSidebar(){$('side').classList.add('open');$('scrim').classList.add('show');}
+function closeSidebar(){$('side').classList.remove('open');$('scrim').classList.remove('show');}
+$('burger').addEventListener('click',openSidebar);
+$('scrim').addEventListener('click',closeSidebar);
+
+/* theme */
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');
+  $('themeBtnSide').textContent=t==='dark'?'☀️ ライト':'🌙 ダーク';
+  const tt=$('themeBtnTop');if(tt)tt.textContent=t==='dark'?'☀️':'🌙';
+  themeState=t;
+}
+let themeState='light';
+function toggleTheme(){applyTheme(themeState==='dark'?'light':'dark');saveState();showToast(themeState==='dark'?'ダークモードに切り替えました':'ライトモードに切り替えました',true);}
+$('themeBtnSide').addEventListener('click',toggleTheme);
+$('themeBtnTop').addEventListener('click',toggleTheme);
+
+/* demobar dismiss */
+$('demoX').addEventListener('click',()=>$('demobar').style.display='none');
+
+/* keyboard help modal */
+function openHelp(){$('kbScrim').classList.add('show');$('kbClose').focus();}
+function closeHelp(){$('kbScrim').classList.remove('show');}
+$('helpBtn').addEventListener('click',openHelp);
+$('kbClose').addEventListener('click',closeHelp);
+$('kbScrim').addEventListener('click',e=>{if(e.target===$('kbScrim'))closeHelp();});
 
 /* ============ DASHBOARD ============ */
 function renderDash(){
   const m=computeMetrics(schedule);
   $('kpis').innerHTML=`
-    ${kpi('#16b877','充足率',m.fill+'<small>%</small>','必要人員に対し',m.fill>=98?'up':'warn',m.fill>=98?'ほぼ満たせています':'一部不足あり')}
-    ${kpi('#e24a4a','未充足の日数',m.shortDays+'<small>日</small>','30日中',m.shortDays?'down':'up',m.shortDays?'要対応':'問題なし')}
-    ${kpi('#2f6df0','希望反映率',m.reqRate+'<small>%</small>',requests.length+'件の希望',m.reqRate>=90?'up':'warn',m.reqRate>=90?'高水準':'調整余地あり')}
-    ${kpi('#e3941f','作成時間',lastGen.minutes?lastGen.minutes+'<small>秒</small>':'—','AI最終生成',lastGen.minutes?'up':'warn',lastGen.minutes?'手作業比 99%短縮':'未生成')}`;
-  // fill bars per shift type (today/this week aggregate)
+    ${kpi('#11a874','充足率',m.fill,'%','必要人員に対し',m.fill>=98?'up':'warn',m.fill>=100?'すべて充足':m.fill>=98?'ほぼ充足':'一部不足あり')}
+    ${kpi('#e2484a','未充足の日数',m.shortDays,'日','30日中',m.shortDays?'down':'up',m.shortDays?'要対応':'問題なし')}
+    ${kpi('#3b6ef5','希望反映率',m.reqRate,'%',requests.length+'件の希望',m.reqRate>=90?'up':'warn',m.reqRate>=90?'高水準':'調整余地あり')}
+    ${kpi('#dd8a16','作成時間',lastGen.minutes?lastGen.minutes:0,lastGen.minutes?'秒':'','AI最終生成',lastGen.minutes?'up':'warn',lastGen.minutes?'手作業比 99%短縮':'未生成')}`;
+  // count-up KPI values
+  document.querySelectorAll('#kpis .v[data-cv]').forEach(el=>{
+    countUp(el,+el.dataset.cv,el.dataset.suf||'');
+  });
   const agg={D:{n:0,c:0},E:{n:0,c:0},N:{n:0,c:0}};
   for(let d=0;d<7;d++){const c=dayCounts(schedule,d);for(const t of ['D','E','N']){agg[t].n+=NEED[t];agg[t].c+=Math.min(c[t],NEED[t]);}}
   const fb=[['D','日勤'],['E','遅番'],['N','夜勤']].map(([t,lb])=>{
@@ -586,37 +947,33 @@ function renderDash(){
       <div class="bar-track"><div class="bar-fill ${cls}" data-w="${pct}"></div></div><span class="mval">${pct}%</span></div>`;
   }).join('');
   $('fillBars').innerHTML=fb;
-  // hours balance per staff
   const hours=STAFF.map((s,i)=>{let h=0;for(let d=0;d<DAYS;d++){const v=schedule[i][d];if(v==='D')h+=8;else if(v==='E')h+=8;else if(v==='N')h+=16;}return {name:s.name,h};});
   const mxh=Math.max(...hours.map(x=>x.h),1);
   $('hourBars').innerHTML=hours.slice(0,6).map(x=>`<div class="bar-row"><span class="mlabel">${esc(x.name.split(' ')[0])}</span>
     <div class="bar-track"><div class="bar-fill" data-w="${Math.round(x.h/mxh*100)}"></div></div><span class="mval">${x.h}h</span></div>`).join('');
-  // summary
   const sm=[
     {i:'☀️',c:'#fdf6e6',t:'日勤：必要4名／配置 '+dayCounts(schedule,0).D+'名',m:'今日'},
     {i:'🌆',c:'#eef7fb',t:'遅番：必要3名／配置 '+dayCounts(schedule,0).E+'名',m:'今日'},
     {i:'🌙',c:'#eef0fb',t:'夜勤：必要2名／配置 '+dayCounts(schedule,0).N+'名',m:'今日'},
-    {i:'👩‍⚕️',c:'#e6f8f0',t:'有資格者（看護師・介護福祉士）'+STAFF.filter(s=>s.qual).length+'名 在籍',m:'各シフト1名以上を確保'},
+    {i:'👩‍⚕️',c:'#e6f7f0',t:'有資格者（看護師・介護福祉士）'+STAFF.filter(s=>s.qual).length+'名 在籍',m:'各シフト1名以上を確保'},
   ];
   $('summary').innerHTML=sm.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
-  // activity
-  const acts=[
-    {i:'⚡',c:'#e6f8f0',t:lastGen.minutes?('AI自動生成でシフトを作成（充足率'+lastGen.fill+'％）'):'初期シフトを読み込みました',m:'たった今'},
-    {i:'📝',c:'#eaf1ff',t:'渡辺 さおり さんの休み希望（6/7）を反映',m:'1時間前'},
-    {i:'⚠️',c:'#fdeaea',t:'6/12 の夜勤が1名不足しています',m:'今日 9:20'},
-    {i:'🔄',c:'#fdf3e2',t:'小林 あや さんと中村 大輔 さんのシフトを交換',m:'昨日'},
-    {i:'✅',c:'#e6f8f0',t:'労務ルール（夜勤明け休み）を全件クリア',m:'昨日'},
-  ];
-  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
-  setTimeout(()=>document.querySelectorAll('#v-dash .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  $('acts').innerHTML=activityLog.length
+    ? activityLog.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(relTime(a.at))}</div></div></div>`).join('')
+    : `<div class="empty" style="border:none;padding:24px 8px"><div class="ei">🕒</div><div class="et">まだ操作履歴がありません</div><div class="em">シフト編集やAI生成を行うと、ここに記録されます。</div></div>`;
+  setTimeout(()=>document.querySelectorAll('#v-dash .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),80);
 }
-function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
-  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?esc(sub)+' ・ ':''}${esc(d)}</div></div>`;}
+function kpi(color,l,val,suf,sub,cls,d){
+  const arrow=cls==='up'?'↑':cls==='down'?'↓':cls==='warn'?'!':'';
+  return `<div class="kpi" style="--accent:${color}"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum num" data-cv="${val}" data-suf="${suf}">0${suf?'<small>'+suf+'</small>':''}</div>
+  <div class="d ${cls}">${arrow?'<span>'+arrow+'</span>':''}<span>${sub?esc(sub)+' ・ ':''}${esc(d)}</span></div></div>`;
+}
 
 /* ============ SHIFT TABLE ============ */
 function renderShift(){
   let head='<thead><tr><th class="nameC" style="text-align:left">スタッフ</th>';
-  for(let d=1;d<=DAYS;d++){const dw=dowOf(d);const cls=dw===0?'we':dw===6?'sa':'';
+  for(let d=1;d<=DAYS;d++){const dw=dowOf(d);let cls=dw===0?'we':dw===6?'sa':'';if(d===TODAY)cls+=' today';
     head+=`<th class="${cls}">${d}<br><span style="font-size:9px">${DOW[dw]}</span></th>`;}
   head+='</tr></thead>';
   let body='<tbody>';
@@ -626,7 +983,7 @@ function renderShift(){
       const v=schedule[i][d];
       const req=reqFor(s.id,d+1);
       const isReq=req&&((req.type==='off'&&v==='O')||(req.type==='day'&&v==='D')||(req.type==='eve'&&v==='E'));
-      body+=`<td class="cell" data-si="${i}" data-d="${d}"><span class="sft ${v}${isReq?' req':''}">${v}</span></td>`;
+      body+=`<td class="cell${d+1===TODAY?' col-today':''}" data-si="${i}" data-d="${d}"><span class="sft ${v}${isReq?' req':''}">${v}</span></td>`;
     }
     body+='</tr>';
   });
@@ -636,12 +993,59 @@ function renderShift(){
     td.onclick=()=>{
       const si=+td.dataset.si,d=+td.dataset.d;
       const cur=schedule[si][d];const next=SHIFTS[(SHIFTS.indexOf(cur)+1)%SHIFTS.length];
-      schedule[si][d]=next;renderShift();
-      showToast(esc(STAFF[si].name)+' '+(d+1)+'日を「'+SFT_LABEL[next]+'」に変更');
-      updateBadges();
+      applyCell(si,d,next,true);
     };
+    td.oncontextmenu=(e)=>{e.preventDefault();openCellMenu(e,+td.dataset.si,+td.dataset.d);};
   });
+  updateUndoBtn();
 }
+/* paint a single cell's content (no state change) */
+function paintCell(si,d,pop){
+  const td=$('shiftTable')&&$('shiftTable').querySelector(`td.cell[data-si="${si}"][data-d="${d}"]`);
+  if(!td)return;
+  const v=schedule[si][d];const req=reqFor(STAFF[si].id,d+1);
+  const isReq=req&&((req.type==='off'&&v==='O')||(req.type==='day'&&v==='D')||(req.type==='eve'&&v==='E'));
+  td.innerHTML=`<span class="sft ${v}${isReq?' req':''}${pop?' pop':''}">${v}</span>`;
+}
+/* edit stack for Undo */
+let undoStack=[];
+function applyCell(si,d,val,record){
+  const prev=schedule[si][d];
+  if(prev===val){return;}
+  if(record)undoStack.push({si,d,prev});
+  if(undoStack.length>100)undoStack.shift();
+  schedule[si][d]=val;
+  paintCell(si,d,true);
+  logActivity('✏️','#ecf2ff',STAFF[si].name+' さんの6/'+(d+1)+'を「'+SFT_LABEL[val]+'」に変更');
+  showToast(STAFF[si].name+' '+(d+1)+'日を「'+SFT_LABEL[val]+'」に変更');
+  updateBadges();updateUndoBtn();
+}
+function undoEdit(){
+  const last=undoStack.pop();
+  if(!last){showToast('元に戻す操作はありません',true);return;}
+  schedule[last.si][last.d]=last.prev;
+  paintCell(last.si,last.d,true);
+  showToast(STAFF[last.si].name+' '+(last.d+1)+'日の変更を元に戻しました',true);
+  updateBadges();updateUndoBtn();
+}
+function updateUndoBtn(){const b=$('undoBtn');if(b)b.disabled=undoStack.length===0;}
+window.undoEdit=undoEdit;
+/* right-click cell menu */
+function openCellMenu(e,si,d){
+  closeCellMenu();
+  const m=document.createElement('div');m.className='cellmenu';m.id='cellMenu';
+  m.innerHTML=`<div class="cm-h">${esc(STAFF[si].name.split(' ')[0])}・6/${d+1}</div>`+
+    SHIFTS.map(t=>`<button class="cm-i" data-t="${t}"><span class="sft ${t}" style="width:22px;height:22px;border-radius:5px">${t}</span>${SFT_LABEL[t]}</button>`).join('');
+  document.body.appendChild(m);
+  const vw=window.innerWidth,vh=window.innerHeight,r=m.getBoundingClientRect();
+  let x=Math.min(e.clientX,vw-r.width-8),y=Math.min(e.clientY,vh-r.height-8);
+  m.style.left=Math.max(8,x)+'px';m.style.top=Math.max(8,y)+'px';
+  requestAnimationFrame(()=>m.classList.add('show'));
+  m.querySelectorAll('.cm-i').forEach(b=>b.onclick=()=>{applyCell(si,d,b.dataset.t,true);closeCellMenu();});
+}
+function closeCellMenu(){const m=$('cellMenu');if(m)m.remove();}
+document.addEventListener('click',e=>{if(!e.target.closest('#cellMenu'))closeCellMenu();});
+document.addEventListener('scroll',closeCellMenu,true);
 
 /* ============ REQUEST MANAGEMENT ============ */
 const RTYPE_LABEL={off:'休み希望',day:'日勤希望',eve:'遅番希望',night:'夜勤NG'};
@@ -654,39 +1058,68 @@ function renderReq(){
     return `<div class="req-item"><span class="av-s" style="background:${staffColor(si)}">${esc(initials(s.name))}</span>
       <div class="rt"><b>${esc(s.name)}</b> <span class="tag-s ${r.type==='off'?'':r.type==='day'?'day':r.type==='eve'?'eve':'ns'}">${RTYPE_ICON[r.type]} ${RTYPE_LABEL[r.type]}</span>
       <div class="rm">6月${r.date}日${r.memo?' ・ '+esc(r.memo):''}</div></div>
-      <button class="x" data-idx="${idx}">✕</button></div>`;
+      <button class="x" data-idx="${idx}" aria-label="${esc(s.name)}の希望（6/${r.date}）を削除" title="削除">✕</button></div>`;
   }).join('')
-  :'<div class="empty-cell" style="border:1px dashed var(--line-2);border-radius:11px">まだ希望が登録されていません</div>';
-  $('reqList').querySelectorAll('.x').forEach(b=>b.onclick=()=>{requests.splice(+b.dataset.idx,1);renderReq();updateBadges();showToast('希望を削除しました');});
+  :`<div class="empty"><div class="ei">📭</div><div class="et">まだ希望が登録されていません</div>
+      <div class="em">左のフォームからスタッフの希望シフトを登録すると、AI自動生成のときに優先的に反映されます。</div></div>`;
+  $('reqList').querySelectorAll('.x').forEach(b=>b.onclick=()=>{requests.splice(+b.dataset.idx,1);renderReq();updateBadges();saveState();showToast('希望を削除しました');});
+}
+const MAX_REQ_PER_STAFF=8;
+/* 実際の労務チェック：登録前にルール抵触・重複・件数上限を検証 */
+function validateRequest(sid,type,date){
+  if(!Number.isFinite(date)||date<1||date>DAYS)return{ok:false,msg:'対象日は1〜30の範囲で入力してください'};
+  // 重複（同一スタッフ・同日・同種別）
+  if(requests.some(r=>r.staffId===sid&&r.date===date&&r.type===type))
+    return{ok:false,msg:'同じ希望がすでに登録されています'};
+  // 同一日に相反する希望（休み希望と勤務希望の同居）
+  const sameDay=requests.filter(r=>r.staffId===sid&&r.date===date);
+  if(sameDay.length){
+    if(type==='off'&&sameDay.some(r=>r.type==='day'||r.type==='eve'))
+      return{ok:false,msg:'同じ日に勤務希望があるため、休み希望と両立できません'};
+    if((type==='day'||type==='eve')&&sameDay.some(r=>r.type==='off'))
+      return{ok:false,msg:'同じ日に休み希望があるため、勤務希望と両立できません'};
+    if((type==='day'||type==='eve')&&sameDay.some(r=>(r.type==='day'||r.type==='eve')))
+      return{ok:false,msg:'同じ日に別の勤務希望がすでにあります'};
+  }
+  // 上限件数
+  if(requests.filter(r=>r.staffId===sid).length>=MAX_REQ_PER_STAFF)
+    return{ok:false,msg:'このスタッフの希望は上限（'+MAX_REQ_PER_STAFF+'件）に達しています'};
+  return{ok:true};
 }
 $('rAdd').addEventListener('click',()=>{
-  const sid=+$('rStaff').value;const type=$('rType').value;const date=Math.max(1,Math.min(DAYS,+$('rDate').value||1));
+  const sid=+$('rStaff').value;const type=$('rType').value;const date=Math.floor(+$('rDate').value);
   const memo=$('rMemo').value.trim();
+  const v=validateRequest(sid,type,date);
+  if(!v.ok){showToast('⚠️ '+v.msg,true);return;}
   requests.push({staffId:sid,type,date,memo});
   $('rMemo').value='';
-  $('rHint').classList.add('show');setTimeout(()=>$('rHint').classList.remove('show'),2200);
-  renderReq();updateBadges();
-  showToast(esc(STAFF.find(s=>s.id===sid).name)+' の希望を登録しました');
+  $('rHint').textContent='';
+  $('rHint').innerHTML='<span>✨</span>労務ルール・重複・件数上限をチェックしました（問題なし）';
+  $('rHint').classList.add('show');setTimeout(()=>$('rHint').classList.remove('show'),2600);
+  const nm=STAFF.find(s=>s.id===sid).name;
+  logActivity('📝','#ecf2ff',nm+' さんの希望（6/'+date+'・'+RTYPE_LABEL[type]+'）を登録');
+  renderReq();updateBadges();saveState();
+  showToast(nm+' の希望を登録しました');
 });
 
 /* ============ FILL / HEATMAP ============ */
 function fillColor(ratio){
-  if(ratio>=1)return '#16b877';
+  if(ratio>=1)return '#11a874';
   if(ratio>=0.85)return '#7fce8e';
   if(ratio>=0.7)return '#e7c84a';
-  if(ratio>=0.5)return '#e3941f';
-  return '#e24a4a';
+  if(ratio>=0.5)return '#dd8a16';
+  return '#e2484a';
 }
 function renderFill(){
   const m=computeMetrics(schedule);
   let totalNeed=0,totalShort=0;
   for(let d=0;d<DAYS;d++){const c=dayCounts(schedule,d);for(const t of ['D','E','N']){totalNeed+=NEED[t];if(c[t]<NEED[t])totalShort+=(NEED[t]-c[t]);}}
   $('fillKpis').innerHTML=`
-    ${kpi('#16b877','全体充足率',m.fill+'<small>%</small>','','',m.fill>=98?'良好':'要改善')}
-    ${kpi('#e24a4a','延べ不足人数',totalShort+'<small>名</small>','30日合計','',totalShort?'埋める必要あり':'不足なし')}
-    ${kpi('#e3941f','未充足の日数',m.shortDays+'<small>日</small>','','',m.shortDays?'要対応':'問題なし')}
-    ${kpi('#2f6df0','必要延べ人数',totalNeed+'<small>名</small>','30日合計','','日勤4・遅番3・夜勤2')}`;
-  // heatmap rows = shift types, cols = days
+    ${kpi('#11a874','全体充足率',m.fill,'%','','',m.fill>=98?'良好':'要改善')}
+    ${kpi('#e2484a','延べ不足人数',totalShort,'名','30日合計','',totalShort?'埋める必要あり':'不足なし')}
+    ${kpi('#dd8a16','未充足の日数',m.shortDays,'日','','',m.shortDays?'要対応':'問題なし')}
+    ${kpi('#3b6ef5','必要延べ人数',totalNeed,'名','30日合計','','日勤4・遅番3・夜勤2')}`;
+  document.querySelectorAll('#fillKpis .v[data-cv]').forEach(el=>countUp(el,+el.dataset.cv,el.dataset.suf||''));
   const types=[['D','☀️ 日勤'],['E','🌆 遅番'],['N','🌙 夜勤']];
   let html='<thead><tr><th></th>';
   for(let d=1;d<=DAYS;d++){const dw=dowOf(d);html+=`<th style="${dw===0?'color:var(--red)':dw===6?'color:var(--brand)':''}">${d}</th>`;}
@@ -699,11 +1132,11 @@ function renderFill(){
   }
   html+='</tbody>';
   $('heatmap').innerHTML=html;
-  $('heatmap').querySelectorAll('.hc').forEach(td=>td.onclick=()=>showToast(td.getAttribute('title')));
+  $('heatmap').querySelectorAll('.hc').forEach(td=>td.onclick=()=>showToast(td.getAttribute('title'),true));
 }
 
 /* ============ STAFF ============ */
-let staffFilter='all';
+let staffFilter='all';let favOnly=false;
 function renderStaffChips(){
   const opts=[['all','すべて'],['qual','有資格者'],['常勤','常勤'],['パート','パート'],['看護師','看護師']];
   $('staffChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===staffFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
@@ -717,12 +1150,17 @@ function renderStaff(){
     if(staffFilter==='パート'&&s.emp!=='パート')return false;
     if(staffFilter==='看護師'&&s.role!=='看護師')return false;
     return true;
-  }).filter(({s})=>!q||(s.name+s.role+s.emp).toLowerCase().includes(q));
+  }).filter(({s})=>!q||(s.name+s.role+s.emp).toLowerCase().includes(q))
+    .filter(({s})=>!favOnly||favorites.has(s.id));
+  // favorites first
+  list.sort((a,b)=>(favorites.has(b.s.id)?1:0)-(favorites.has(a.s.id)?1:0));
   $('staffGrid').innerHTML=list.length?list.map(({s,i})=>{
     let work=0,nights=0,offs=0;for(let d=0;d<DAYS;d++){const v=schedule[i][d];if(v==='O')offs++;else{work++;if(v==='N')nights++;}}
     const myReq=requests.filter(r=>r.staffId===s.id).length;
     const balance=Math.round(work/DAYS*100);
+    const fav=favorites.has(s.id);
     return `<div class="staff-card">
+      <button class="fav ${fav?'on':''}" data-fav="${s.id}" aria-label="${esc(s.name)}を${fav?'お気に入りから外す':'お気に入りに追加'}" aria-pressed="${fav}" title="お気に入り">${fav?'★':'☆'}</button>
       <div class="sh"><div class="av" style="background:${staffColor(i)}">${esc(initials(s.name))}</div>
         <div><b>${esc(s.name)}</b><div class="role">${esc(s.role)} ・ ${esc(s.emp)}${s.qual?' ・ <span style="color:var(--green);font-weight:700">有資格</span>':''}</div></div></div>
       <div class="staff-meta">
@@ -730,17 +1168,55 @@ function renderStaff(){
         <div class="mr"><span>うち夜勤</span><b>${nights}回</b></div>
         <div class="mr"><span>休日</span><b>${offs}日</b></div>
         <div class="mr"><span>登録中の希望</span><b>${myReq}件</b></div>
-        <div><div style="font-size:11px;color:var(--ink-3);margin-bottom:2px">稼働バランス ${balance}%</div><div class="minibar"><i style="width:${balance}%"></i></div></div>
+        <div><div style="font-size:11px;color:var(--ink-3);margin-bottom:2px">稼働バランス ${balance}%</div><div class="minibar"><i data-w="${balance}"></i></div></div>
       </div>
-      <div style="margin-top:12px;display:flex;gap:7px">
-        <button class="btn" style="flex:1;justify-content:center;padding:8px" onclick="go('req')">📝 希望登録</button>
-        <button class="btn" style="flex:1;justify-content:center;padding:8px" onclick="go('shift')">📅 シフト確認</button>
+      <div style="margin-top:13px;display:flex;gap:7px">
+        <button class="btn sm" style="flex:1;justify-content:center" onclick="go('req')">📝 希望登録</button>
+        <button class="btn sm" style="flex:1;justify-content:center" onclick="go('shift')">📅 シフト確認</button>
       </div>
     </div>`;
   }).join('')
-  :'<div class="empty-cell" style="grid-column:1/-1;background:var(--card);border:1px solid var(--line);border-radius:14px">該当するスタッフがいません</div>';
+  :`<div class="empty" style="grid-column:1/-1"><div class="ei">🔍</div><div class="et">該当するスタッフがいません</div>
+      <div class="em">検索ワードや絞り込み条件を変えてみてください。</div>
+      <button class="btn" onclick="clearStaffFilters()">条件をクリア</button></div>`;
+  // fav handlers
+  $('staffGrid').querySelectorAll('.fav').forEach(b=>b.onclick=(e)=>{
+    e.stopPropagation();const id=+b.dataset.fav;
+    if(favorites.has(id)){favorites.delete(id);showToast('お気に入りから外しました');}
+    else{favorites.add(id);showToast('お気に入りに追加しました');}
+    saveState();renderStaff();
+  });
+  setTimeout(()=>$('staffGrid').querySelectorAll('.minibar i').forEach(b=>b.style.width=b.dataset.w+'%'),50);
 }
+function clearStaffFilters(){staffFilter='all';favOnly=false;$('sq').value='';$('favOnly').classList.remove('on');renderStaffChips();renderStaff();}
+window.clearStaffFilters=clearStaffFilters;
 $('sq').addEventListener('input',renderStaff);
+$('favOnly').addEventListener('click',()=>{favOnly=!favOnly;$('favOnly').classList.toggle('on',favOnly);renderStaff();});
+
+/* ============ CSV EXPORT ============ */
+function dl(filename,text){
+  const blob=new Blob(['﻿'+text],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');
+  a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function exportCSV(){
+  let rows=['スタッフ,'+Array.from({length:DAYS},(_,d)=>(d+1)+'日('+DOW[dowOf(d+1)]+')').join(',')];
+  STAFF.forEach((s,i)=>{rows.push([s.name].concat(schedule[i].map(v=>SFT_LABEL[v])).join(','));});
+  dl('シフト表_2026年6月.csv',rows.join('\n'));
+  showToast('シフト表をCSVで書き出しました',true);
+}
+function exportStaffCSV(){
+  let rows=['名前,役割,雇用,有資格,今月出勤,夜勤回数,休日,希望件数'];
+  STAFF.forEach((s,i)=>{
+    let work=0,nights=0,offs=0;for(let d=0;d<DAYS;d++){const v=schedule[i][d];if(v==='O')offs++;else{work++;if(v==='N')nights++;}}
+    const myReq=requests.filter(r=>r.staffId===s.id).length;
+    rows.push([s.name,s.role,s.emp,s.qual?'○':'',work,nights,offs,myReq].join(','));
+  });
+  dl('スタッフ一覧.csv',rows.join('\n'));
+  showToast('スタッフ一覧をCSVで書き出しました',true);
+}
+window.exportCSV=exportCSV;window.exportStaffCSV=exportStaffCSV;
 
 /* ============ AI AUTO ============ */
 $('aiRun').addEventListener('click',async()=>{
@@ -752,28 +1228,30 @@ $('aiRun').addEventListener('click',async()=>{
   await new Promise(r=>setTimeout(r,1300));
   clearInterval(t);$('baAfterT').textContent='30秒';
   $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
-  // generate optimal schedule
   schedule=buildBaseSchedule(true);
   const m=computeMetrics(schedule);
   lastGen={fill:m.fill,short:m.shortDays,reqRate:m.reqRate,minutes:30};
-  // stats
+  $('baAfterFill').textContent=m.fill;$('baAfterShort').textContent=m.shortDays;
   $('genStats').innerHTML=`
-    <div class="gen-stat"><div class="gv">${m.fill}%</div><div class="gl">充足率</div></div>
-    <div class="gen-stat"><div class="gv">${m.shortDays}日</div><div class="gl">未充足日数</div></div>
-    <div class="gen-stat"><div class="gv">${m.reqRate}%</div><div class="gl">希望反映率</div></div>
-    <div class="gen-stat"><div class="gv">30秒</div><div class="gl">作成時間</div></div>`;
+    <div class="gen-stat"><div class="gv" data-cv="${m.fill}" data-suf="%">0</div><div class="gl">充足率</div></div>
+    <div class="gen-stat"><div class="gv" data-cv="${m.shortDays}" data-suf="日">0</div><div class="gl">未充足日数</div></div>
+    <div class="gen-stat"><div class="gv" data-cv="${m.reqRate}" data-suf="%">0</div><div class="gl">希望反映率</div></div>
+    <div class="gen-stat"><div class="gv" data-cv="30" data-suf="秒">0</div><div class="gl">作成時間</div></div>`;
+  const metReq=Math.round(requests.length*m.reqRate/100);
   const results=[
-    {t:'希望シフトを反映',d:requests.length+'件中 '+Math.round(requests.length*m.reqRate/100)+'件を反映'},
-    {t:'労務ルールを適用',d:'夜勤明け休み・連続5日・週休をすべて充足'},
-    {t:'有資格者を各シフトに配置',d:'看護師・介護福祉士を全シフトに1名以上'},
+    {t:'希望シフトを反映',d:requests.length+'件中 '+metReq+'件を反映（反映率'+m.reqRate+'％）'},
+    {t:'労務ルールを適用',d:'夜勤明け休み・連続5日まで・週休を全件クリア'},
+    {t:'有資格者を各シフトに配置',d:m.qualGaps===0?'看護師・介護福祉士を全シフトに1名以上 ✓':'要確認：'+m.qualGaps+'枠で有資格者不足'},
     {t:'勤務時間を均等化',d:'スタッフ間の出勤日数のばらつきを最小化'},
-    {t:'30日分のシフト表を確定',d:'不足'+m.shortDays+'日まで自動で最適化'},
+    {t:'30日分のシフト表を確定',d:m.shortDays===0?'人員不足ゼロ・全'+(DAYS*3)+'枠を充足':'残り不足'+m.shortDays+'日'},
   ];
   $('genItems').innerHTML=results.map((r,i)=>`<div class="gen-item" data-i="${i}"><span class="ck">✓</span><b style="flex:1">${esc(r.t)}</b><span style="color:var(--ink-3);font-size:12px">${esc(r.d)}</span></div>`).join('');
   $('genList').classList.add('show');
+  document.querySelectorAll('#genStats .gv[data-cv]').forEach(el=>countUp(el,+el.dataset.cv,el.dataset.suf||'',700));
   const items=[...$('genItems').querySelectorAll('.gen-item')];
   for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,170));items[i].classList.add('in');}
   btn.disabled=false;btn.textContent='⚡ もう一度生成';
+  logActivity('⚡','#e6f7f0','AI自動生成でシフトを作成（充足率'+m.fill+'％・不足'+m.shortDays+'日）');
   updateBadges();
   showToast('シフトを自動生成しました（充足率'+m.fill+'％）');
 });
@@ -786,8 +1264,26 @@ function updateBadges(){
   const sb=$('navShort');sb.style.display=m.shortDays?'inline-block':'none';
 }
 
+/* keyboard shortcuts: g then d/s/r/f/t/a, ? for help, Esc to close */
+let gKey=false;
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){closeHelp();closeSidebar();closeCellMenu();return;}
+  if((e.ctrlKey||e.metaKey)&&(e.key==='z'||e.key==='Z')){
+    if(document.getElementById('v-shift').classList.contains('on')){e.preventDefault();undoEdit();return;}
+  }
+  if(e.target.matches('input,textarea,select'))return;
+  if(e.key==='?'||(e.shiftKey&&e.key==='/')){e.preventDefault();openHelp();return;}
+  if(e.key==='g'){gKey=true;setTimeout(()=>gKey=false,800);return;}
+  if(gKey){const map={d:'dash',s:'shift',r:'req',f:'fill',t:'staff',a:'ai'};if(map[e.key]){go(map[e.key]);gKey=false;}}
+});
+
 /* ============ INIT ============ */
-schedule=buildBaseSchedule(false);
+loadState();
+// 初期表示は最適化済みシフト（充足率100%・不足0）。Before/AfterはAI画面で比較。
+schedule=buildBaseSchedule(true);
+lastGen=(()=>{const m=computeMetrics(schedule);return{fill:m.fill,short:m.shortDays,reqRate:m.reqRate,minutes:30};})();
+applyTheme(themeState);
+const aiStaffEl=$('aiStaffN');if(aiStaffEl)aiStaffEl.textContent=STAFF.length;
 renderReqSelect();renderStaffChips();renderDash();updateBadges();
 </script>
 </body>
