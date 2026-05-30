@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜マルチSNS運用マシン</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;
+  --x:#1d2733;--ig:#d6356f;--ig-soft:#fdeaf2;--tt:#111;--yt:#e24a4a;
+  --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.nav a .badge.g{background:var(--green)}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn.sm{padding:6px 12px;font-size:12px}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:64px 1fr 86px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600;display:flex;align-items:center;gap:6px}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut */
+.donut-wrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.donut{width:130px;height:130px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;position:relative}
+.donut::after{content:"";position:absolute;inset:18px;background:var(--card);border-radius:50%}
+.donut .dc{position:relative;z-index:1;text-align:center}
+.donut .dc b{font-size:20px;font-weight:900;display:block;line-height:1}
+.donut .dc span{font-size:10px;color:var(--ink-3);font-weight:700}
+.legend{flex:1;min-width:140px}
+.legend .lr{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:4px 0}
+.legend .lr .sw{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.legend .lr .lv{margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.posted{background:var(--green-soft);color:var(--green)}
+.st.scheduled{background:var(--brand-soft);color:var(--brand)}
+.st.draft{background:var(--amber-soft);color:var(--amber)}
+.st.failed{background:var(--red-soft);color:var(--red)}
+.st.review{background:var(--soft);color:var(--ink-3)}
+
+/* sns chip / avatar */
+.sns{display:inline-flex;align-items:center;gap:7px;font-weight:700;font-size:12.5px}
+.snsi{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;color:#fff;font-size:11px;font-weight:900;flex-shrink:0}
+.snsi.X{background:var(--x)}.snsi.IG{background:linear-gradient(45deg,#f9a13a,#d6356f,#9b36b7)}
+.snsi.TT{background:#111}.snsi.YT{background:var(--yt)}
+.dotsns{width:9px;height:9px;border-radius:3px;display:inline-block}
+
+/* account cards */
+.acc-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+@media(max-width:760px){.acc-grid{grid-template-columns:1fr}}
+.acc{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px}
+.acc .top{display:flex;align-items:center;gap:11px}
+.acc .av{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;color:#fff;font-size:18px;font-weight:900;flex-shrink:0}
+.acc .nm{font-weight:800;font-size:14px}
+.acc .hd{font-size:11.5px;color:var(--ink-3)}
+.acc .conn{margin-left:auto;font-size:11px;font-weight:800;color:var(--green);display:flex;align-items:center;gap:5px}
+.acc .conn::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green)}
+.acc .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;border-top:1px solid var(--line);padding-top:12px}
+.acc .stats .s{text-align:center}
+.acc .stats .s b{font-size:16px;font-weight:900;display:block}
+.acc .stats .s span{font-size:10.5px;color:var(--ink-3);font-weight:700}
+
+/* calendar */
+.cal{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.cal-head{display:grid;grid-template-columns:repeat(7,1fr);background:var(--soft);border-bottom:1px solid var(--line)}
+.cal-head div{padding:9px;text-align:center;font-size:11.5px;font-weight:800;color:var(--ink-2)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr)}
+.cal-cell{min-height:104px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:6px 7px;font-size:11px}
+.cal-cell:nth-child(7n){border-right:0}
+.cal-cell.dim{background:#fbfcfe;color:var(--ink-3)}
+.cal-cell .dn{font-weight:800;font-size:12px;color:var(--ink-2);margin-bottom:4px}
+.cal-cell.today .dn{background:var(--brand);color:#fff;border-radius:6px;width:22px;height:22px;display:grid;place-items:center}
+.cal-ev{display:flex;align-items:center;gap:4px;background:var(--soft);border-radius:6px;padding:3px 5px;margin-bottom:3px;font-size:10.5px;font-weight:700;cursor:pointer;transition:.12s;white-space:nowrap;overflow:hidden}
+.cal-ev:hover{background:var(--brand-soft)}
+.cal-ev .dotsns{flex-shrink:0}
+.cal-ev .et{overflow:hidden;text-overflow:ellipsis}
+
+/* kanban */
+.kanban{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:860px){.kanban{grid-template-columns:1fr}}
+.kcol{background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:12px}
+.kcol .kh{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;margin-bottom:11px;padding:0 3px}
+.kcol .kh .cnt{margin-left:auto;background:var(--card);border:1px solid var(--line-2);font-size:11px;font-weight:800;color:var(--ink-2);padding:1px 9px;border-radius:99px}
+.kcard{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:12px;margin-bottom:9px;box-shadow:var(--shadow);cursor:pointer;transition:.15s}
+.kcard:hover{border-color:var(--brand);transform:translateY(-1px)}
+.kcard .kt{font-size:12.5px;font-weight:700;margin-bottom:8px;line-height:1.45}
+.kcard .kmeta{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--ink-3)}
+.kcard .kmeta .when{margin-left:auto;font-weight:700}
+
+/* create / compose form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,440px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{min-height:96px;resize:vertical;line-height:1.6}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.snspick{display:flex;gap:8px;flex-wrap:wrap}
+.snspick .opt{display:flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid var(--line-2);border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;transition:.15s;user-select:none}
+.snspick .opt.on{border-color:var(--brand);background:var(--brand-soft);color:var(--brand-dk)}
+.aihint{font-size:11px;color:var(--green);margin-top:6px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* preview cards (optimized per SNS) */
+.prev-card{background:#fff;border:1px solid var(--line);border-radius:13px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:14px;opacity:0;transform:translateY(8px);transition:all .4s}
+.prev-card.in{opacity:1;transform:none}
+.prev-card .pvh{display:flex;align-items:center;gap:10px;padding:12px 15px;border-bottom:1px solid var(--line)}
+.prev-card .pvh .nm{font-weight:800;font-size:13px}
+.prev-card .pvh .hd{font-size:11px;color:var(--ink-3)}
+.prev-card .pvh .tag{margin-left:auto;font-size:10.5px;font-weight:800;color:var(--green);background:var(--green-soft);padding:3px 9px;border-radius:6px}
+.prev-card .pvbody{padding:14px 15px;font-size:13px;line-height:1.7;white-space:pre-wrap;word-break:break-word}
+.prev-card .ph-img{height:110px;background:linear-gradient(135deg,#dbe6ff,#e9f6f3);display:grid;place-items:center;color:var(--ink-3);font-size:12px;font-weight:700;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.prev-card .tags{padding:0 15px 13px;font-size:12px;color:var(--brand);font-weight:700;word-break:break-word}
+.prev-card .pvfoot{display:flex;gap:18px;padding:10px 15px;border-top:1px solid var(--line);font-size:11.5px;color:var(--ink-3);font-weight:700}
+.placeholder{background:var(--card);border:1px dashed var(--line-2);border-radius:13px;padding:36px;text-align:center;color:var(--ink-3);font-size:13px}
+
+/* AI generate stage */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+.gen-item .src{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* source input box for AI */
+.srcbox{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:16px}
+.srcbox label{font-size:12px;font-weight:800;color:var(--ink-2);display:block;margin-bottom:7px}
+.srcbox textarea{width:100%;border:1px solid var(--line-2);border-radius:9px;padding:11px 13px;font-family:inherit;font-size:13px;background:#fff;min-height:64px;resize:vertical;line-height:1.6}
+.srcbox textarea:focus{outline:none;border-color:var(--brand)}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto;flex-shrink:0}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.muted{color:var(--ink-3)}
+.heat{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:6px}
+.heat .hc{aspect-ratio:1;border-radius:5px;display:grid;place-items:center;font-size:9px;font-weight:700;color:#fff}
+.heat-lab{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;font-size:10px;color:var(--ink-3);font-weight:700;text-align:center;margin-bottom:3px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">マルチSNS運用マシン<small>技マシン｜SNS自動運用</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="cal"><span class="i">🗓️</span>投稿カレンダー</a>
+      <a data-v="acc"><span class="i">👥</span>アカウント管理</a>
+      <a data-v="sched"><span class="i">⏰</span>予約投稿<span class="badge" id="navSched">0</span></a>
+      <a data-v="analytics"><span class="i">📈</span>分析</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI一括投稿</a>
+      <a data-v="compose"><span class="i">✏️</span>投稿を作成</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 運用代行チーム</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。アカウント・数値はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">今週のSNS運用状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>SNS別 リーチ（過去7日）</h3><span class="more">今週</span></div>
+            <div class="pb"><div class="bars" id="reachBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>エンゲージ構成比</h3></div>
+            <div class="pb"><div class="donut-wrap"><div class="donut" id="donut"></div><div class="legend" id="legend"></div></div></div>
+          </div>
+        </div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>今後の予約投稿</h3><span class="more" onclick="go('sched')">すべて見る →</span></div>
+            <div class="pb" style="padding:0">
+              <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+                <thead><tr><th>予定日時</th><th>SNS</th><th>件名</th><th>状態</th></tr></thead>
+                <tbody id="dashUpcoming"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CALENDAR -->
+      <section class="view" id="v-cal">
+        <div class="toolbar">
+          <div style="font-weight:900;font-size:16px" id="calTitle">　</div>
+          <div class="chips" style="margin-left:8px">
+            <button class="btn sm" id="calPrev">‹ 前月</button>
+            <button class="btn sm" id="calToday">今日</button>
+            <button class="btn sm" id="calNext">翌月 ›</button>
+          </div>
+          <div class="chips" id="calFilter" style="margin-left:auto"></div>
+        </div>
+        <div class="cal">
+          <div class="cal-head"><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div style="color:var(--brand)">土</div><div style="color:var(--red)">日</div></div>
+          <div class="cal-grid" id="calGrid"></div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-2)" id="calLegend"></div>
+      </section>
+
+      <!-- ACCOUNTS -->
+      <section class="view" id="v-acc">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="accQ" placeholder="アカウント名・クライアントで検索"></div>
+          <div class="chips" id="accFilter"></div>
+        </div>
+        <div class="acc-grid" id="accGrid"></div>
+      </section>
+
+      <!-- SCHEDULED -->
+      <section class="view" id="v-sched">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="schQ" placeholder="件名・アカウントで検索"></div>
+          <div class="chips" id="schChips"></div>
+        </div>
+        <div class="kanban" id="kanban"></div>
+      </section>
+
+      <!-- ANALYTICS -->
+      <section class="view" id="v-analytics">
+        <div class="kpis" id="anaKpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>フォロワー推移（過去6週）</h3><span class="more">合算</span></div>
+            <div class="pb"><div class="bars" id="followBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>投稿に最適な時間帯</h3><span class="more">AI分析</span></div>
+            <div class="pb">
+              <div class="heat-lab"><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div><div>日</div></div>
+              <div class="heat" id="heat"></div>
+              <div style="font-size:11.5px;color:var(--ink-3);margin-top:10px">色が濃いほどエンゲージが高い時間帯。AIは <b style="color:var(--brand)">金 20時 / 土 12時</b> の投稿を推奨しています。</div>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="ph"><h3>反応の良かった投稿 TOP5</h3></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>投稿</th><th>SNS</th><th class="r">リーチ</th><th class="r">いいね</th><th class="r">保存/RP</th><th class="r">エンゲージ率</th></tr></thead>
+              <tbody id="topPosts"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- COMPOSE -->
+      <section class="view" id="v-compose">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>クライアント / アカウント</label>
+              <select id="coClient"></select></div>
+            <div class="fg"><label>件名（社内管理用）</label><input id="coSubject" placeholder="例：金曜LIVE 来場告知"></div>
+            <div class="fg"><label>投稿する内容（元ネタを1つ書くだけでOK）</label>
+              <textarea id="coBody" placeholder="例：今週金曜21時から大分ROCK HALLでサクラバンドのワンマンLIVE！前売3000円・当日3500円。ドリンク別。"></textarea>
+              <div class="aihint" id="coHint">✨ AIが各SNS向けに最適化します（文字数・絵文字・ハッシュタグ・改行）</div>
+            </div>
+            <div class="fg"><label>配信するSNS</label>
+              <div class="snspick" id="coSns"></div>
+            </div>
+            <div class="fg"><label>予約日時</label><input id="coWhen" type="datetime-local"></div>
+            <div class="linkrow" style="margin-top:4px">
+              <button class="btn primary" id="coGen" style="flex:1;justify-content:center">⚡ AIで各SNSに最適化</button>
+              <button class="btn" id="coSample">サンプル</button>
+            </div>
+          </div>
+          <div>
+            <div id="coPreview"><div class="placeholder">左で内容を書いて「⚡ AIで各SNSに最適化」を押すと、<br>SNSごとに最適化されたプレビューがここに表示されます。</div></div>
+            <div class="linkrow" id="coScheduleRow" style="display:none">
+              <button class="btn green" id="coSchedule" style="flex:1;justify-content:center">⏰ この内容で一括予約する</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI BULK -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">1つのネタを、各SNSに最適化して一括予約</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">イベント告知などの<b>元ネタ1つ</b>から、X / Instagram / TikTok / YouTube 向けの文面をAIが作り分け、最適な時間にまとめて予約します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで一括最適化する</button>
+          </div>
+          <div class="srcbox">
+            <label>📝 元ネタ（このデモではサンプルが入っています。書き換えてもOK）</label>
+            <textarea id="aiSrc">大分ROCK HALL × 気持ち市場 presents「真夏のライブフェス2026」7/18(土) 開場16:00 / 開演17:00。出演：サクラバンド・夜光雲・THE灯台ほか全6組。前売4500円（ドリンク別）。チケットは公式サイトとローソンチケットで発売中！</textarea>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">1時間20分</div>
+              <ul>
+                <li>📱 SNSごとに文面を考え直す</li>
+                <li>🔤 文字数・ハッシュタグを手で調整</li>
+                <li>⏰ 4媒体に1件ずつログインして予約</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 媒体ごとに文面を自動最適化</li>
+                <li>#️⃣ ハッシュタグ・絵文字も自動生成</li>
+                <li>⏰ 最適時間にまとめて一括予約</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ 生成・予約された投稿</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const num=n=>Math.round(n).toLocaleString();
+const TODAY=new Date();
+let SEED=7788;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+const fmtDT=d=>(d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+const WD=['日','月','火','水','木','金','土'];
+
+/* ============ SNS META ============ */
+const SNS={
+  X:{label:'X',color:'#1d2733',name:'X (旧Twitter)'},
+  IG:{label:'IG',color:'#d6356f',name:'Instagram'},
+  TT:{label:'TT',color:'#111111',name:'TikTok'},
+  YT:{label:'YT',color:'#e24a4a',name:'YouTube'},
+};
+const SNSKEYS=Object.keys(SNS);
+function snsIcon(k){return `<span class="snsi ${k}">${SNS[k].label}</span>`;}
+function snsTag(k){return `<span class="sns">${snsIcon(k)}${SNS[k].name}</span>`;}
+function snsDot(k){return `<span class="dotsns" style="background:${SNS[k].color}"></span>`;}
+
+/* ============ DATA ============ */
+// 運用代行している3クライアント・複数アカ
+const CLIENTS=[
+  {client:'大分ROCK HALL',type:'ライブハウス'},
+  {client:'夏フェス実行委員会',type:'イベント運営'},
+  {client:'BAR 夜光雲',type:'音楽バー'},
+];
+const ACCOUNTS=[
+  {id:'a1',client:'大分ROCK HALL',type:'ライブハウス',sns:'X',  handle:'@oita_rockhall',  followers:18420,growth:'+3.2%',eng:'4.8%',posts:312},
+  {id:'a2',client:'大分ROCK HALL',type:'ライブハウス',sns:'IG', handle:'@oita.rockhall',  followers:24680,growth:'+5.1%',eng:'6.3%',posts:428},
+  {id:'a3',client:'大分ROCK HALL',type:'ライブハウス',sns:'TT', handle:'@rockhall_live',  followers:9870, growth:'+12.4%',eng:'9.1%',posts:96},
+  {id:'a4',client:'夏フェス実行委員会',type:'イベント運営',sns:'X', handle:'@oita_summerfes',followers:31200,growth:'+8.7%',eng:'5.4%',posts:540},
+  {id:'a5',client:'夏フェス実行委員会',type:'イベント運営',sns:'IG',handle:'@oita.summerfes',followers:27500,growth:'+6.0%',eng:'7.2%',posts:386},
+  {id:'a6',client:'夏フェス実行委員会',type:'イベント運営',sns:'YT',handle:'夏フェス公式ch',followers:8240, growth:'+4.3%',eng:'3.1%',posts:54},
+  {id:'a7',client:'BAR 夜光雲',type:'音楽バー',sns:'IG',handle:'@bar_yakouun',followers:6130,growth:'+2.8%',eng:'8.4%',posts:212},
+  {id:'a8',client:'BAR 夜光雲',type:'音楽バー',sns:'TT',handle:'@yakouun_bar',followers:4420,growth:'+15.2%',eng:'11.3%',posts:73},
+];
+
+// 予約・投稿データ
+const TITLES_POOL=[
+  '金曜LIVE 来場告知','今週末イベント告知','チケット販売開始のお知らせ','出演者インタビュー公開',
+  'リハ風景の裏側ショート','本日のセットリスト','次回イベントの予告','ご来場ありがとうフォロー投稿',
+  'コラボメニュー紹介','フード&ドリンク告知','フォロワー1万人感謝キャンペーン','新譜リリースパーティ告知',
+  '当日券販売中の速報','アクセス・駐車場のご案内','物販情報のまとめ',
+];
+const STATUSES=['scheduled','scheduled','posted','draft','review','scheduled','posted'];
+const STLABEL={posted:'投稿済',scheduled:'予約済',draft:'下書き',review:'承認待ち',failed:'失敗'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]}</span>`;}
+
+let posts=[];
+(function seed(){
+  for(let i=0;i<40;i++){
+    const acc=pick(ACCOUNTS);
+    // 過去〜未来14日に散らす
+    const off=Math.floor(rnd()*26)-12;
+    const d=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+off,9+Math.floor(rnd()*13),pick([0,15,30,0,30]));
+    let stt;
+    if(d<TODAY) stt=rnd()>0.15?'posted':'failed';
+    else stt=pick(['scheduled','scheduled','scheduled','review','draft']);
+    const reach=stt==='posted'?(1200+Math.floor(rnd()*42000)):0;
+    posts.push({
+      id:'P'+(1000+i),client:acc.client,acc:acc.handle,sns:acc.sns,
+      title:pick(TITLES_POOL),when:d,status:stt,
+      reach,likes:Math.floor(reach*(0.02+rnd()*0.06)),
+      saves:Math.floor(reach*(0.005+rnd()*0.02)),
+    });
+  }
+  posts.sort((a,b)=>a.when-b.when);
+})();
+
+/* ============ ROUTING ============ */
+const TITLES={
+  dash:['ダッシュボード','今週のSNS運用状況'],
+  cal:['投稿カレンダー','全アカウントの投稿予定を一覧で管理'],
+  acc:['アカウント管理','連携中のSNSアカウントとフォロワー状況'],
+  sched:['予約投稿','下書き・承認待ち・予約済をカンバンで管理'],
+  analytics:['分析','リーチ・エンゲージ・最適投稿時間'],
+  compose:['投稿を作成','1つの内容を各SNSに最適化して予約'],
+  ai:['AI一括投稿','元ネタ1つから各SNSへ自動で作り分け一括予約'],
+};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI一括投稿</button><button class="btn primary" onclick="go(\'compose\')">＋ 投稿を作成</button>'
+    : (v==='cal'||v==='sched')?'<button class="btn primary" onclick="go(\'compose\')">＋ 投稿を作成</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='cal')renderCal();
+  if(v==='acc')renderAcc();
+  if(v==='sched')renderKanban();
+  if(v==='analytics')renderAnalytics();
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+
+function renderDash(){
+  const conn=ACCOUNTS.length;
+  const wkStart=new Date(TODAY);wkStart.setDate(TODAY.getDate()-TODAY.getDay()+1);wkStart.setHours(0,0,0,0);
+  const wkEnd=new Date(wkStart);wkEnd.setDate(wkStart.getDate()+7);
+  const thisWeekSched=posts.filter(p=>(p.status==='scheduled'||p.status==='review')&&p.when>=TODAY).length;
+  const totalReach=posts.filter(p=>p.status==='posted').reduce((s,p)=>s+p.reach,0);
+  const avgEng=(ACCOUNTS.reduce((s,a)=>s+parseFloat(a.eng),0)/ACCOUNTS.length).toFixed(1);
+  $('kpis').innerHTML=`
+    ${kpi('#2f6df0','連携アカウント数',conn+'<small>件</small>','4媒体','up','すべて連携中')}
+    ${kpi('#0ea5b7','今週の予約',thisWeekSched+'<small>件</small>',CLIENTS.length+'社分','up','配信準備OK')}
+    ${kpi('#16b877','総リーチ（30日）',num(totalReach),'','up','前月比 +18%')}
+    ${kpi('#e3941f','平均エンゲージ率',avgEng+'<small>%</small>','業界平均1.8%','up','+0.6pt')}`;
+
+  // reach by sns (7days)
+  const byS={};SNSKEYS.forEach(k=>byS[k]=0);
+  posts.filter(p=>p.status==='posted').forEach(p=>byS[p.sns]+=p.reach);
+  const mx=Math.max(...Object.values(byS),1);
+  $('reachBars').innerHTML=SNSKEYS.map(k=>`
+    <div class="bar-row"><span class="mlabel">${snsIcon(k)}${SNS[k].label}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0;background:${SNS[k].color}" data-w="${Math.round(byS[k]/mx*100)}"></div></div>
+      <span class="mval">${num(byS[k])}</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#reachBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+
+  // donut engagement composition
+  const eng={X:24,IG:38,TT:28,YT:10};
+  let acc=0;const segs=SNSKEYS.map(k=>{const start=acc;acc+=eng[k];return `${SNS[k].color} ${start}% ${acc}%`;});
+  $('donut').style.background=`conic-gradient(${segs.join(',')})`;
+  $('donut').innerHTML=`<div class="dc"><b>${avgEng}%</b><span>平均</span></div>`;
+  $('legend').innerHTML=SNSKEYS.map(k=>`<div class="lr"><span class="sw" style="background:${SNS[k].color}"></span>${SNS[k].name}<span class="lv">${eng[k]}%</span></div>`).join('');
+
+  // upcoming
+  const up=posts.filter(p=>(p.status==='scheduled'||p.status==='review')&&p.when>=TODAY).sort((a,b)=>a.when-b.when).slice(0,6);
+  $('dashUpcoming').innerHTML=up.length?up.map(p=>`<tr onclick="go('sched')">
+    <td class="tnum" style="font-weight:700">${fmtDT(p.when)}</td>
+    <td>${snsTag(p.sns)}</td>
+    <td>${esc(p.title)}<div class="am muted" style="font-size:11px">${esc(p.acc)}</div></td>
+    <td>${stBadge(p.status)}</td></tr>`).join('')
+    :'<tr><td colspan="4" class="empty-cell">予約済の投稿はありません</td></tr>';
+
+  // activity
+  const acts=[
+    {i:'⚡',c:'#e6f8f0',t:'AI一括投稿で 4件（X/IG/TT/YT）を予約しました',m:'3分前'},
+    {i:'✅',c:'#e6f8f0',t:'@oita.rockhall「今週末イベント告知」が投稿されました',m:'42分前'},
+    {i:'📈',c:'#eaf1ff',t:'@rockhall_live のショート動画が1.2万リーチを突破',m:'1時間前'},
+    {i:'🕐',c:'#fdf3e2',t:'@bar_yakouun の投稿が承認待ちです',m:'今日 10:05'},
+    {i:'❤️',c:'#fdeaf2',t:'@oita.summerfes フォロワーが27,500人を突破',m:'今日 9:00'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${a.m}</div></div></div>`).join('');
+}
+
+/* ============ CALENDAR ============ */
+let calCursor=new Date(TODAY.getFullYear(),TODAY.getMonth(),1);
+let calSns='all';
+function renderCalFilter(){
+  const opts=[['all','すべて']].concat(SNSKEYS.map(k=>[k,SNS[k].name]));
+  $('calFilter').innerHTML=opts.map(o=>`<button class="chip ${o[0]===calSns?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('calFilter').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{calSns=c.dataset.s;renderCal();});
+}
+function renderCal(){
+  renderCalFilter();
+  const y=calCursor.getFullYear(),m=calCursor.getMonth();
+  $('calTitle').textContent=y+'年'+(m+1)+'月';
+  const first=new Date(y,m,1);
+  let startDow=(first.getDay()+6)%7; // mon=0
+  const daysInMonth=new Date(y,m+1,0).getDate();
+  const cells=[];
+  for(let i=0;i<startDow;i++){const d=new Date(y,m,1-startDow+i);cells.push({d,dim:true});}
+  for(let i=1;i<=daysInMonth;i++)cells.push({d:new Date(y,m,i),dim:false});
+  while(cells.length%7!==0||cells.length<35){const last=cells[cells.length-1].d;cells.push({d:new Date(last.getFullYear(),last.getMonth(),last.getDate()+1),dim:true});}
+  $('calGrid').innerHTML=cells.map(c=>{
+    const isToday=c.d.toDateString()===TODAY.toDateString();
+    const dayPosts=posts.filter(p=>p.when.toDateString()===c.d.toDateString()&&(calSns==='all'||p.sns===calSns));
+    const evs=dayPosts.slice(0,3).map(p=>`<div class="cal-ev" title="${esc(p.title)}" onclick="event.stopPropagation();go('sched')">${snsDot(p.sns)}<span class="et">${String(p.when.getHours()).padStart(2,'0')}:${String(p.when.getMinutes()).padStart(2,'0')} ${esc(p.title)}</span></div>`).join('');
+    const more=dayPosts.length>3?`<div class="muted" style="font-size:10px;font-weight:700">+${dayPosts.length-3}件</div>`:'';
+    return `<div class="cal-cell ${c.dim?'dim':''} ${isToday?'today':''}"><div class="dn">${c.d.getDate()}</div>${evs}${more}</div>`;
+  }).join('');
+  $('calLegend').innerHTML=SNSKEYS.map(k=>`<span style="display:inline-flex;align-items:center;gap:6px">${snsDot(k)}${SNS[k].name}</span>`).join('');
+}
+$('calPrev').onclick=()=>{calCursor=new Date(calCursor.getFullYear(),calCursor.getMonth()-1,1);renderCal();};
+$('calNext').onclick=()=>{calCursor=new Date(calCursor.getFullYear(),calCursor.getMonth()+1,1);renderCal();};
+$('calToday').onclick=()=>{calCursor=new Date(TODAY.getFullYear(),TODAY.getMonth(),1);renderCal();};
+
+/* ============ ACCOUNTS ============ */
+let accClient='all';
+function renderAccFilter(){
+  const opts=[['all','すべて']].concat(CLIENTS.map(c=>[c.client,c.client]));
+  $('accFilter').innerHTML=opts.map(o=>`<button class="chip ${o[0]===accClient?'on':''}" data-c="${esc(o[0])}">${esc(o[1])}</button>`).join('');
+  $('accFilter').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{accClient=c.dataset.c;renderAccFilter();renderAcc();});
+}
+function renderAcc(){
+  renderAccFilter();
+  const q=($('accQ').value||'').toLowerCase();
+  const list=ACCOUNTS.filter(a=>accClient==='all'||a.client===accClient)
+    .filter(a=>!q||(a.client+a.handle+a.type).toLowerCase().includes(q));
+  $('accGrid').innerHTML=list.length?list.map(a=>`
+    <div class="acc">
+      <div class="top">
+        <div class="av" style="background:${SNS[a.sns].color}">${SNS[a.sns].label}</div>
+        <div><div class="nm">${esc(a.handle)}</div><div class="hd">${SNS[a.sns].name} ・ ${esc(a.client)}</div></div>
+        <div class="conn">連携中</div>
+      </div>
+      <div class="stats">
+        <div class="s"><b class="tnum">${num(a.followers)}</b><span>フォロワー</span></div>
+        <div class="s"><b class="tnum" style="color:var(--green)">${a.growth}</b><span>30日伸び</span></div>
+        <div class="s"><b class="tnum">${a.eng}</b><span>エンゲージ率</span></div>
+      </div>
+    </div>`).join('')
+    :'<div class="placeholder">該当するアカウントがありません</div>';
+}
+$('accQ').addEventListener('input',renderAcc);
+
+/* ============ SCHEDULED (KANBAN) ============ */
+let schFilterSns='all';
+function renderSchChips(){
+  const opts=[['all','すべて']].concat(SNSKEYS.map(k=>[k,SNS[k].name]));
+  $('schChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===schFilterSns?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('schChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{schFilterSns=c.dataset.s;renderKanban();});
+}
+function renderKanban(){
+  renderSchChips();
+  const q=($('schQ').value||'').toLowerCase();
+  const cols=[
+    {k:'draft',  t:'📝 下書き',     color:'var(--amber)'},
+    {k:'review', t:'🕐 承認待ち',   color:'var(--ink-3)'},
+    {k:'scheduled',t:'⏰ 予約済',   color:'var(--brand)'},
+  ];
+  const filtered=posts.filter(p=>(schFilterSns==='all'||p.sns===schFilterSns)
+    &&(!q||(p.title+p.acc+p.client).toLowerCase().includes(q)));
+  $('kanban').innerHTML=cols.map(col=>{
+    const items=filtered.filter(p=>p.status===col.k).sort((a,b)=>a.when-b.when);
+    const cards=items.map(p=>`
+      <div class="kcard" onclick="openCard('${p.id}')">
+        <div class="kt">${esc(p.title)}</div>
+        <div class="kmeta">${snsIcon(p.sns)}<span>${esc(p.acc)}</span><span class="when tnum">${fmtDT(p.when)}</span></div>
+      </div>`).join('') || `<div class="muted" style="font-size:12px;padding:8px 3px">この列に投稿はありません</div>`;
+    return `<div class="kcol"><div class="kh"><span style="color:${col.color}">${col.t}</span><span class="cnt">${items.length}</span></div>${cards}</div>`;
+  }).join('');
+  const schedCount=posts.filter(p=>p.status==='scheduled'&&p.when>=TODAY).length;
+  $('navSched').textContent=schedCount;
+}
+window.openCard=id=>{const p=posts.find(x=>x.id===id);if(!p)return;
+  if(p.status==='draft'){p.status='review';showToast('「'+p.title+'」を承認待ちに進めました');}
+  else if(p.status==='review'){p.status='scheduled';showToast('「'+p.title+'」を承認し予約済にしました');}
+  else{showToast('「'+p.title+'」は '+STLABEL[p.status]+' です（'+fmtDT(p.when)+'）');}
+  renderKanban();};
+$('schQ').addEventListener('input',renderKanban);
+
+/* ============ ANALYTICS ============ */
+function renderAnalytics(){
+  const totalF=ACCOUNTS.reduce((s,a)=>s+a.followers,0);
+  const totalReach=posts.filter(p=>p.status==='posted').reduce((s,p)=>s+p.reach,0);
+  const totalLikes=posts.filter(p=>p.status==='posted').reduce((s,p)=>s+p.likes,0);
+  const avgEng=(ACCOUNTS.reduce((s,a)=>s+parseFloat(a.eng),0)/ACCOUNTS.length).toFixed(1);
+  $('anaKpis').innerHTML=`
+    ${kpi('#2f6df0','総フォロワー',num(totalF),'4媒体合算','up','+9.4% / 月')}
+    ${kpi('#16b877','総リーチ（30日）',num(totalReach),'','up','+18%')}
+    ${kpi('#d6356f','総いいね（30日）',num(totalLikes),'','up','+22%')}
+    ${kpi('#e3941f','平均エンゲージ率',avgEng+'<small>%</small>','','up','好調')}`;
+
+  // follower trend 6 weeks
+  const base=totalF*0.78;
+  const vals=[];for(let i=0;i<6;i++)vals.push(Math.round(base*(1+i*0.045+rnd()*0.01)));
+  vals[5]=totalF;
+  const mx=Math.max(...vals);
+  $('followBars').innerHTML=vals.map((v,i)=>`
+    <div class="bar-row"><span class="mlabel">${i===5?'今週':(6-i)+'週前'}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(v/mx*100)}"></div></div>
+      <span class="mval">${num(v)}</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#followBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+
+  // heatmap 7x4 (weekday x time-band)
+  const bands=4;const cells=[];
+  for(let b=0;b<bands;b++)for(let d=0;d<7;d++){
+    let base=rnd();
+    if((d===4&&b>=2)||(d===5&&b>=1))base=0.7+rnd()*0.3; // 金夜・土
+    cells.push(base);
+  }
+  $('heat').innerHTML=cells.map(v=>{
+    const g=Math.round(60+v*180);
+    const bg=`rgb(${Math.round(47+(1-v)*120)},${Math.round(109+v*40)},${Math.round(240-v*40)})`;
+    return `<div class="hc" style="background:rgba(47,109,240,${0.12+v*0.85})">${v>0.7?'★':''}</div>`;
+  }).join('');
+
+  // top posts
+  const top=posts.filter(p=>p.status==='posted').sort((a,b)=>b.reach-a.reach).slice(0,5);
+  $('topPosts').innerHTML=top.map(p=>{
+    const er=((p.likes+p.saves)/p.reach*100).toFixed(1);
+    return `<tr><td>${esc(p.title)}<div class="am muted" style="font-size:11px">${esc(p.acc)}</div></td>
+      <td>${snsTag(p.sns)}</td><td class="r tnum">${num(p.reach)}</td><td class="r tnum">${num(p.likes)}</td>
+      <td class="r tnum">${num(p.saves)}</td><td class="r tnum"><b style="color:var(--green)">${er}%</b></td></tr>`;
+  }).join('');
+}
+
+/* ============ COMPOSE ============ */
+let coSelected={X:true,IG:true,TT:true,YT:false};
+function renderClientSelect(){
+  $('coClient').innerHTML=CLIENTS.map(c=>`<option>${esc(c.client)}</option>`).join('');
+}
+function renderSnsPick(){
+  $('coSns').innerHTML=SNSKEYS.map(k=>`<div class="opt ${coSelected[k]?'on':''}" data-k="${k}">${snsIcon(k)}${SNS[k].name}</div>`).join('');
+  $('coSns').querySelectorAll('.opt').forEach(o=>o.onclick=()=>{coSelected[o.dataset.k]=!coSelected[o.dataset.k];renderSnsPick();});
+}
+$('coBody').addEventListener('input',()=>{$('coHint').classList.add('show');});
+
+// AI optimize per SNS — returns {body, tags}
+function optimizeFor(k,raw,client){
+  const r=raw.trim();
+  if(k==='X'){
+    let t=r.length>110?r.slice(0,108)+'…':r;
+    return {body:'🎸 '+t+'\n\n▶ 詳細・チケットはプロフィールのリンクから',tags:'#大分 #ライブ #'+client.replace(/\s/g,'')+' #音楽好きと繋がりたい',foot:'文字数最適化 / リンク誘導'};
+  }
+  if(k==='IG'){
+    return {body:'✨ '+r+'\n\n📍 会場・アクセスはストーリーズのハイライトをチェック！\n保存して忘れないでね🔖',tags:'#大分イベント #ライブハウス #'+client.replace(/\s/g,'')+' #おおいたグルメ #週末の過ごし方 #ライブ好きな人と繋がりたい',foot:'ビジュアル前提 / 保存促進'};
+  }
+  if(k==='TT'){
+    return {body:'これは行くしかない🔥\n'+ (r.length>70?r.slice(0,68)+'…':r) +'\n\nコメントで一緒に行く人タグして👇',tags:'#fyp #おすすめ #大分 #ライブ #バンド',foot:'短尺・テンポ重視 / コメント誘導',video:true};
+  }
+  // YT
+  return {body:'【'+client+'】'+r+'\n\nチャンネル登録＆通知ONで最新情報をお届けします🔔\nタイムスタンプは概要欄に記載。',tags:'#ライブ #LIVE #大分 #'+client.replace(/\s/g,''),foot:'説明文・登録誘導 / 長文OK',video:true};
+}
+function renderPreviews(animate){
+  const raw=$('coBody').value.trim();
+  const client=$('coClient').value;
+  const sel=SNSKEYS.filter(k=>coSelected[k]);
+  if(!raw||!sel.length){
+    $('coPreview').innerHTML='<div class="placeholder">左で内容を書いて「⚡ AIで各SNSに最適化」を押すと、<br>SNSごとに最適化されたプレビューがここに表示されます。</div>';
+    $('coScheduleRow').style.display='none';return;
+  }
+  $('coPreview').innerHTML=sel.map(k=>{
+    const o=optimizeFor(k,raw,client);
+    return `<div class="prev-card" data-k="${k}">
+      <div class="pvh"><span class="snsi ${k}">${SNS[k].label}</span>
+        <div><div class="nm">${SNS[k].name}</div><div class="hd">${esc(client)}</div></div>
+        <span class="tag">AI最適化済</span></div>
+      <div class="pvbody">${esc(o.body)}</div>
+      ${o.video?'<div class="ph-img">🎬 動画/ショート（縦型）プレースホルダ</div>':'<div class="ph-img">🖼️ 画像プレースホルダ</div>'}
+      <div class="tags">${esc(o.tags)}</div>
+      <div class="pvfoot"><span>📐 ${esc(o.foot)}</span></div>
+    </div>`;
+  }).join('');
+  $('coScheduleRow').style.display='flex';
+  if(animate){
+    const cards=[...$('coPreview').querySelectorAll('.prev-card')];
+    cards.forEach((c,i)=>setTimeout(()=>c.classList.add('in'),120+i*160));
+  }else{
+    $('coPreview').querySelectorAll('.prev-card').forEach(c=>c.classList.add('in'));
+  }
+}
+$('coGen').addEventListener('click',async()=>{
+  const raw=$('coBody').value.trim();
+  const sel=SNSKEYS.filter(k=>coSelected[k]);
+  if(!raw){showToast('投稿する内容を入力してください');return;}
+  if(!sel.length){showToast('配信するSNSを1つ以上選んでください');return;}
+  const btn=$('coGen');btn.disabled=true;btn.textContent='⚡ AIが最適化中…';
+  await new Promise(r=>setTimeout(r,800));
+  btn.disabled=false;btn.textContent='⚡ AIで各SNSに最適化';
+  renderPreviews(true);
+  showToast(sel.length+'媒体の文面をAIが最適化しました');
+});
+$('coSample').addEventListener('click',()=>{
+  $('coClient').value='大分ROCK HALL';
+  $('coSubject').value='金曜LIVE 来場告知';
+  $('coBody').value='今週金曜21時から大分ROCK HALLでサクラバンドのワンマンLIVE！前売3000円・当日3500円（ドリンク別）。アクセスは都町電停から徒歩3分。';
+  const dt=new Date(TODAY.getTime()+3*86400000);dt.setHours(20,0,0,0);
+  $('coWhen').value=dt.toISOString().slice(0,16);
+  coSelected={X:true,IG:true,TT:true,YT:false};renderSnsPick();
+  renderPreviews(true);$('coHint').classList.add('show');
+});
+$('coSchedule').addEventListener('click',()=>{
+  const raw=$('coBody').value.trim();
+  const sel=SNSKEYS.filter(k=>coSelected[k]);
+  if(!raw||!sel.length)return;
+  const client=$('coClient').value;
+  const title=$('coSubject').value.trim()||'新規投稿';
+  let when=$('coWhen').value?new Date($('coWhen').value):new Date(TODAY.getTime()+86400000);
+  if(isNaN(when))when=new Date(TODAY.getTime()+86400000);
+  sel.forEach(k=>{
+    const a=ACCOUNTS.find(x=>x.client===client&&x.sns===k);
+    posts.push({id:'P'+(2000+posts.length),client,acc:a?a.handle:('@'+client),sns:k,title,when:new Date(when),status:'scheduled',reach:0,likes:0,saves:0});
+  });
+  showToast(sel.length+'件を予約しました（'+fmtDT(when)+'）');
+  setTimeout(()=>go('sched'),700);
+});
+
+/* ============ AI BULK ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const raw=($('aiSrc').value||'').trim();
+  if(!raw){showToast('元ネタを入力してください');return;}
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 最適化中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},110);
+  await new Promise(r=>setTimeout(r,1200));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+
+  const client='夏フェス実行委員会';
+  const targets=SNSKEYS.map(k=>({k,acc:ACCOUNTS.find(a=>a.client===client&&a.sns===k)})).filter(x=>x.acc);
+  const times={X:'金 20:00',IG:'土 12:00',TT:'金 21:30',YT:'土 18:00'};
+  $('genItems').innerHTML=targets.map((tg,i)=>{
+    const o=optimizeFor(tg.k,raw,client);
+    const preview=o.body.replace(/\n/g,' ').slice(0,42)+'…';
+    return `<div class="gen-item" data-i="${i}"><span class="ck">✓</span>
+      <span class="snsi ${tg.k}">${SNS[tg.k].label}</span>
+      <span class="src">${esc(preview)}</span>
+      <span class="muted" style="font-size:11px;flex-shrink:0">${times[tg.k]} に予約</span></div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){
+    await new Promise(r=>setTimeout(r,200));
+    items[i].classList.add('in');
+    const tg=targets[i];
+    const when=new Date(TODAY.getTime()+(2+i)*86400000);when.setHours(20,0,0,0);
+    posts.push({id:'P'+(3000+posts.length),client,acc:tg.acc.handle,sns:tg.k,title:'真夏のライブフェス2026 告知',when,status:'scheduled',reach:0,likes:0,saves:0});
+  }
+  btn.disabled=false;btn.textContent='⚡ もう一度生成';
+  renderKanban();
+  showToast(items.length+'媒体に最適化して一括予約しました');
+});
+
+/* ============ INIT ============ */
+renderClientSelect();renderSnsPick();
+(function initWhen(){const dt=new Date(TODAY.getTime()+86400000);dt.setHours(20,0,0,0);$('coWhen').value=dt.toISOString().slice(0,16);})();
+renderDash();
+$('navSched').textContent=posts.filter(p=>p.status==='scheduled'&&p.when>=TODAY).length;
+go('dash');
+</script>
+</body>
+</html>

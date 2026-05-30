@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜出演アーティスト管理マシン</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#7b3ff0;--brand-dk:#5e26cf;--brand-soft:#f0eaff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--pink:#e23a86;
+  --sb:#150f2e;--sb-2:#1f1640;--sb-ink:#cdc4e0;--sb-ink-2:#897da6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#a06bff,#e23a86,#f0a93f,#a06bff);
+  display:grid;place-items:center;color:#1a0a2a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(123,63,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--pink));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* genre donut */
+.donut-wrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.donut{width:130px;height:130px;border-radius:50%;flex-shrink:0}
+.legend{display:flex;flex-direction:column;gap:8px;font-size:12.5px}
+.legend .lg{display:flex;align-items:center;gap:8px}
+.legend .lg .sw{width:11px;height:11px;border-radius:3px}
+.legend .lg b{margin-left:auto;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px;vertical-align:middle}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.active{background:var(--green-soft);color:var(--green)}
+.st.nego{background:var(--brand-soft);color:var(--brand)}
+.st.pending{background:var(--amber-soft);color:var(--amber)}
+.st.inactive{background:var(--soft);color:var(--ink-3)}
+.st.confirmed{background:var(--green-soft);color:var(--green)}
+.st.offered{background:var(--brand-soft);color:var(--brand)}
+.st.adjusting{background:var(--amber-soft);color:var(--amber)}
+.st.declined{background:var(--red-soft);color:var(--red)}
+
+/* genre pill */
+.gpill{display:inline-block;font-size:11px;font-weight:800;padding:3px 9px;border-radius:7px}
+
+/* artist cell */
+.acell{display:flex;align-items:center;gap:10px}
+.avt{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;color:#fff;font-weight:900;font-size:14px;flex-shrink:0}
+
+/* create form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,400px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:64px}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* profile card preview */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:0;box-shadow:var(--shadow);overflow:hidden}
+.pv-banner{height:96px;background:linear-gradient(120deg,var(--brand),var(--pink));position:relative}
+.pv-av{width:72px;height:72px;border-radius:16px;border:4px solid #fff;display:grid;place-items:center;color:#fff;font-weight:900;font-size:28px;position:absolute;left:28px;bottom:-30px;box-shadow:var(--shadow)}
+.pv-body{padding:42px 28px 26px}
+.pv-name{font-size:21px;font-weight:900;letter-spacing:-.01em}
+.pv-sub{color:var(--ink-3);font-size:12.5px;margin-top:2px}
+.pv-tags{display:flex;gap:7px;margin:14px 0;flex-wrap:wrap}
+.pv-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.pv-stat{background:var(--soft);border-radius:10px;padding:12px 14px}
+.pv-stat .pl{font-size:11px;color:var(--ink-3);font-weight:700}
+.pv-stat .pv-v{font-size:18px;font-weight:900;margin-top:2px}
+.pv-note{margin-top:14px;font-size:12px;color:var(--ink-2);border-top:1px solid var(--line);padding-top:12px;line-height:1.7}
+
+/* calendar */
+.cal{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.cal-head{display:grid;grid-template-columns:repeat(7,1fr);background:var(--soft);font-size:11px;font-weight:800;color:var(--ink-2);text-align:center}
+.cal-head div{padding:10px 0}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr)}
+.cal-cell{min-height:92px;border-top:1px solid var(--line);border-right:1px solid var(--line);padding:6px 7px;font-size:12px}
+.cal-cell:nth-child(7n){border-right:0}
+.cal-cell .dn{font-weight:800;color:var(--ink-2);font-size:12px}
+.cal-cell.dim{background:#fafbfd;color:var(--ink-3)}
+.cal-cell.today .dn{background:var(--brand);color:#fff;border-radius:6px;padding:1px 7px;display:inline-block}
+.cal-ev{margin-top:4px;font-size:10.5px;font-weight:700;padding:3px 6px;border-radius:6px;color:#fff;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* kanban */
+.kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+@media(max-width:980px){.kanban{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.kanban{grid-template-columns:1fr}}
+.kcol{background:var(--soft);border-radius:14px;padding:12px;min-height:120px}
+.kcol .kh{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:800;margin-bottom:11px;padding:0 4px}
+.kcol .kh .cnt{margin-left:auto;background:var(--card);color:var(--ink-2);font-size:11px;font-weight:800;padding:1px 8px;border-radius:99px}
+.kcard{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:12px;margin-bottom:9px;box-shadow:var(--shadow);cursor:pointer;transition:transform .12s}
+.kcard:hover{transform:translateY(-2px)}
+.kcard .kn{font-weight:800;font-size:13px}
+.kcard .km{font-size:11px;color:var(--ink-3);margin-top:3px}
+.kcard .kf{display:flex;align-items:center;gap:6px;margin-top:8px}
+.kcard .kf .ka{margin-left:auto;font-size:11px;font-weight:800;color:var(--brand)}
+
+/* contact / message */
+.msg-grid{display:grid;grid-template-columns:300px 1fr;gap:16px;align-items:start}
+@media(max-width:860px){.msg-grid{grid-template-columns:1fr}}
+.thread{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.thr{display:flex;gap:11px;padding:13px 15px;border-bottom:1px solid var(--line);cursor:pointer;transition:background .12s}
+.thr:last-child{border-bottom:0}
+.thr:hover,.thr.on{background:var(--soft)}
+.thr .tn{font-weight:800;font-size:13px}
+.thr .tx{font-size:11.5px;color:var(--ink-3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+.thr .tt{margin-left:auto;font-size:10.5px;color:var(--ink-3);white-space:nowrap}
+.thr .udot{width:8px;height:8px;border-radius:50%;background:var(--red);align-self:center}
+.chat{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);display:flex;flex-direction:column;min-height:440px}
+.chat-h{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:11px;font-weight:800}
+.chat-b{flex:1;padding:18px;display:flex;flex-direction:column;gap:12px;overflow-y:auto}
+.bub{max-width:74%;padding:11px 14px;border-radius:14px;font-size:13px;line-height:1.6}
+.bub.them{background:var(--soft);align-self:flex-start;border-bottom-left-radius:4px}
+.bub.me{background:var(--brand);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.bub .bt{font-size:10px;opacity:.7;margin-top:4px}
+.chat-f{border-top:1px solid var(--line);padding:12px;display:flex;gap:9px;align-items:flex-end}
+.chat-f textarea{flex:1;border:1px solid var(--line-2);border-radius:10px;padding:10px 12px;font-family:inherit;font-size:13px;resize:none;height:42px;max-height:120px}
+.chat-f textarea:focus{outline:none;border-color:var(--brand)}
+.ai-suggest{font-size:11px;color:var(--brand);font-weight:700;cursor:pointer;padding:4px 0}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#a06bff,#e23a86);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(123,63,240,.4)}50%{box-shadow:0 0 40px rgba(226,58,134,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">アーティスト管理<small>技マシン｜出演管理</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="artists"><span class="i">🎤</span>アーティスト一覧</a>
+      <a data-v="bookings"><span class="i">🎫</span>出演管理</a>
+      <a data-v="contact"><span class="i">💬</span>連絡<span class="badge" id="navUnread">0</span></a>
+      <a data-v="payout"><span class="i">💴</span>ギャラ精算<span class="badge" id="navPayout">0</span></a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI出演調整</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。アーティスト・イベントはサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">出演アーティストの状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>月別の出演ステージ数</h3><span class="more">過去6ヶ月</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>ジャンル別 登録数</h3></div>
+            <div class="pb"><div class="donut-wrap"><div class="donut" id="donut"></div><div class="legend" id="legend"></div></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>直近の出演スケジュール</h3><span class="more" onclick="go('bookings')">出演管理へ</span></div>
+            <div class="pb" style="padding:0">
+              <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+                <thead><tr><th>公演日</th><th>アーティスト</th><th>イベント</th><th>状態</th></tr></thead>
+                <tbody id="dashSched"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ARTISTS -->
+      <section class="view" id="v-artists">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="アーティスト名・ジャンル・担当で検索"></div>
+          <div class="chips" id="genreChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>アーティスト</th><th>ジャンル</th><th class="r">出演回数</th><th>連絡先</th><th>担当</th><th>状態</th></tr></thead>
+          <tbody id="artistRows"></tbody>
+        </table>
+      </section>
+
+      <!-- BOOKINGS -->
+      <section class="view" id="v-bookings">
+        <div class="toolbar">
+          <div class="chips" id="bookTabs"></div>
+        </div>
+        <div id="bookCalView">
+          <div class="cal">
+            <div class="cal-head"><div>日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div></div>
+            <div class="cal-grid" id="calGrid"></div>
+          </div>
+        </div>
+        <div id="bookKanView" style="display:none">
+          <div class="kanban" id="kanban"></div>
+        </div>
+      </section>
+
+      <!-- CONTACT -->
+      <section class="view" id="v-contact">
+        <div class="msg-grid">
+          <div class="thread" id="threadList"></div>
+          <div class="chat">
+            <div class="chat-h" id="chatHead"><span>💬</span><span id="chatName">スレッドを選択</span></div>
+            <div class="chat-b" id="chatBody"></div>
+            <div class="chat-f">
+              <textarea id="chatInput" placeholder="メッセージを入力…"></textarea>
+              <button class="btn" id="chatAi" title="AIが返信文を提案" style="padding:10px 12px">✨</button>
+              <button class="btn primary" id="chatSend" style="padding:10px 14px">送信</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PAYOUT -->
+      <section class="view" id="v-payout">
+        <div class="kpis" id="payKpis"></div>
+        <div class="panel">
+          <div class="ph"><h3>精算待ちのギャラ</h3>
+            <button class="btn green" id="autoPay" style="margin-left:auto">⚡ AIで一括精算書を作成</button></div>
+          <div class="pb" style="padding:0">
+            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+              <thead><tr><th>公演日</th><th>アーティスト</th><th>イベント</th><th class="r">ギャラ</th><th>状態</th><th></th></tr></thead>
+              <tbody id="payRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">出演依頼からスケジュール調整・契約・ギャラ案内を自動化</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">次回イベント <b>大分ライブナイト Vol.12</b> の出演候補 <b>6組</b> に、AIが日程打診・契約書送付・ギャラ案内をまとめて行います。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで出演調整を実行</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">3時間20分</div>
+              <ul>
+                <li>📞 1組ずつ電話・DMで日程を打診</li>
+                <li>📝 出演承諾後に契約書を手作成</li>
+                <li>💴 ギャラ条件を個別にメールで案内</li>
+                <li>📅 返事を待ってスケジュール表に転記</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 候補アーティストへ日程を一斉打診</li>
+                <li>📄 承諾者に出演契約書を自動生成・送付</li>
+                <li>💴 ランク別ギャラを自動計算して案内</li>
+                <li>📅 スケジュール表へ自動反映</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ 自動調整した出演オファー</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const GENRES=[
+  {n:'ロック',c:'#e24a4a'},{n:'ポップス',c:'#e23a86'},{n:'ジャズ',c:'#0ea5b7'},
+  {n:'アコースティック',c:'#16b877'},{n:'エレクトロ',c:'#7b3ff0'},{n:'弾き語り',c:'#e3941f'},
+];
+function gColor(n){const g=GENRES.find(x=>x.n===n);return g?g.c:'#8a94a6';}
+
+const STAFF=['佐藤','田中','鈴木','高橋'];
+const ARTIST_NAMES=[
+  'The Midnight Echoes','蒼月インディゴ','Velvet Sunrise','大分ソウルブラザーズ','カノン・リリィ',
+  'スカイハイ・トリオ','RED LANTERN','和音アコースティック','Neon Drift','花鳥風月',
+  'GROOVE TANK','りんね','Silent Harbor','別府ビートメイカーズ','灯火（ともしび）',
+  'PIXEL WAVES','三日月セレナーデ','Coastline','陽だまりカルテット','MONO TONE',
+  '都町ストリングス','ブルースカイ・ランナーズ','夜想曲','EchoLab','春告げ鳥',
+  'Crimson Tide','まどろみ','Sound Garden大分','風待ち','LUMINA',
+];
+const EVENTS=[
+  '大分ライブナイト','別府ロックフェス','都町ミュージックバー','OITA夜の音楽祭','アコースティックの夕べ',
+  'インディーズショーケース','週末ジャズセッション','春の音楽カーニバル','ライブハウスZEAL','深夜のセッション',
+];
+
+const TODAY=new Date();
+let SEED=4242;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+const A_STATUS=['active','active','active','nego','pending','active','inactive'];
+let artists=[];
+(function seedArtists(){
+  for(let i=0;i<30;i++){
+    const g=pick(GENRES).n;
+    const plays=Math.floor(rnd()*42);
+    const tel='080-'+(1000+Math.floor(rnd()*8999))+'-'+(1000+Math.floor(rnd()*8999));
+    artists.push({
+      id:'A'+(i+1),
+      name:ARTIST_NAMES[i],
+      genre:g,
+      plays,
+      tel,
+      mail:'artist'+(i+1)+'@example.jp',
+      staff:pick(STAFF),
+      status:pick(A_STATUS),
+      rank: plays>=25?'A':plays>=12?'B':'C',
+    });
+  }
+})();
+
+// bookings (出演) seeded across calendar month + statuses
+const B_STATUS=['confirmed','confirmed','offered','adjusting','confirmed','declined'];
+let bookings=[];
+(function seedBookings(){
+  for(let i=0;i<26;i++){
+    const a=pick(artists);
+    const day=1+Math.floor(rnd()*28);
+    const date=new Date(TODAY.getFullYear(),TODAY.getMonth(),day,18+Math.floor(rnd()*4),0);
+    const fee= a.rank==='A'?60000+Math.floor(rnd()*4)*10000 : a.rank==='B'?35000+Math.floor(rnd()*3)*5000 : 18000+Math.floor(rnd()*3)*4000;
+    let st=pick(B_STATUS);
+    bookings.push({
+      id:'BK'+(i+1),
+      artist:a.name,
+      genre:a.genre,
+      event:pick(EVENTS)+' Vol.'+(8+Math.floor(rnd()*8)),
+      date,
+      fee,
+      status:st,
+      paid: st==='confirmed' ? (rnd()>0.5) : false,
+    });
+  }
+})();
+
+// contact threads
+let threads=[
+  {id:'T1',name:'The Midnight Echoes',unread:true,genre:'ロック',msgs:[
+    {who:'them',t:'お世話になっております。来月の出演の件、日程いかがでしょうか？',ts:'昨日 19:20'},
+    {who:'them',t:'土曜であれば調整できそうです！',ts:'昨日 19:21'},
+  ]},
+  {id:'T2',name:'カノン・リリィ',unread:true,genre:'ポップス',msgs:[
+    {who:'me',t:'大分ライブナイト Vol.12 への出演オファーです。6/14(土) 19:30〜でいかがでしょう？',ts:'2日前 14:00'},
+    {who:'them',t:'ぜひ出演させてください！ギャラ条件も確認させていただけますか？',ts:'2日前 21:45'},
+  ]},
+  {id:'T3',name:'スカイハイ・トリオ',unread:true,genre:'ジャズ',msgs:[
+    {who:'them',t:'機材の搬入時間を教えてください。',ts:'今日 10:05'},
+  ]},
+  {id:'T4',name:'和音アコースティック',unread:false,genre:'アコースティック',msgs:[
+    {who:'me',t:'先日はありがとうございました！次回もぜひお願いします。',ts:'3日前'},
+    {who:'them',t:'こちらこそ！また声かけてください。',ts:'3日前'},
+  ]},
+  {id:'T5',name:'Neon Drift',unread:false,genre:'エレクトロ',msgs:[
+    {who:'them',t:'契約書を確認しました。問題ありません。',ts:'4日前'},
+    {who:'me',t:'ありがとうございます。当日よろしくお願いします！',ts:'4日前'},
+  ]},
+];
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const yen=n=>'¥'+Math.round(n).toLocaleString();
+const fmtMD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtT=d=>('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const A_STLABEL={active:'稼働中',nego:'交渉中',pending:'保留',inactive:'休止'};
+const B_STLABEL={confirmed:'確定',offered:'打診中',adjusting:'日程調整',declined:'辞退'};
+function aBadge(s){return `<span class="st ${s}">${A_STLABEL[s]}</span>`;}
+function bBadge(s){return `<span class="st ${s}">${B_STLABEL[s]}</span>`;}
+function initials(name){return name.replace(/[^A-Za-z぀-ヿ一-龯]/g,'').slice(0,2)||name.slice(0,2);}
+function gpill(g){const c=gColor(g);return `<span class="gpill" style="background:${c}1a;color:${c}">${esc(g)}</span>`;}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+
+/* ============ ROUTING ============ */
+const TITLES={
+  dash:['ダッシュボード','出演アーティストの状況（'+(TODAY.getMonth()+1)+'月）'],
+  artists:['アーティスト一覧','登録アーティストを管理します'],
+  bookings:['出演管理','カレンダー・カンバンで出演状況を確認'],
+  contact:['連絡','アーティストとのやり取り'],
+  payout:['ギャラ精算','公演ごとのギャラ精算を管理します'],
+  ai:['AI出演調整','出演依頼〜契約〜ギャラ案内を自動で行います'],
+};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML =
+    v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI出演調整</button><button class="btn primary" onclick="go(\'artists\')">🎤 アーティスト</button>'
+    : v==='artists'?'<button class="btn primary" onclick="showToast(\'デモ環境のため新規登録は省略しています\')">＋ アーティスト登録</button>'
+    : v==='bookings'?'<button class="btn primary" onclick="go(\'ai\')">⚡ 出演を自動調整</button>'
+    : '';
+  if(v==='dash')renderDash();
+  if(v==='artists')renderArtists();
+  if(v==='bookings')renderBookings();
+  if(v==='contact')renderThreads();
+  if(v==='payout')renderPay();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+function thisMonthB(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function renderDash(){
+  const reg=artists.length;
+  const tmShows=bookings.filter(b=>thisMonthB(b.date)&&b.status==='confirmed').length;
+  const unread=threads.filter(t=>t.unread).length + bookings.filter(b=>b.status==='adjusting').length;
+  const payWait=bookings.filter(b=>b.status==='confirmed'&&!b.paid).length;
+  $('kpis').innerHTML=`
+    ${kpi('#7b3ff0','登録アーティスト',reg+'<small>組</small>','うち稼働中 '+artists.filter(a=>a.status==='active').length+'組','up','前月比 +4組')}
+    ${kpi('#e23a86','今月の出演',tmShows+'<small>ステージ</small>','',tmShows?'up':'warn','スケジュール確定')}
+    ${kpi('#e3941f','連絡 未対応',unread+'<small>件</small>','','warn','要返信')}
+    ${kpi('#16b877','精算待ち',payWait+'<small>件</small>',yen(bookings.filter(b=>b.status==='confirmed'&&!b.paid).reduce((s,b)=>s+b.fee,0)),'warn','支払処理待ち')}`;
+  // trend bars (past 6 months stage count)
+  const months=[];for(let k=5;k>=0;k--){months.push(new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1));}
+  // synth counts: current month from data, others pseudo
+  const counts=months.map((m,idx)=>{
+    if(m.getMonth()===TODAY.getMonth()&&m.getFullYear()===TODAY.getFullYear())
+      return bookings.filter(b=>b.status!=='declined'&&b.date.getMonth()===m.getMonth()&&b.date.getFullYear()===m.getFullYear()).length;
+    return 8+Math.floor((Math.sin(idx*1.7)+1)*7)+ (idx*2);
+  });
+  const mx=Math.max(...counts,1);
+  $('trendBars').innerHTML=months.map((m,i)=>`
+    <div class="bar-row"><span class="mlabel">${m.getMonth()+1}月</span>
+      <div class="bar-track"><div class="bar-fill" data-w="${Math.round(counts[i]/mx*100)}"></div></div>
+      <span class="mval">${counts[i]} 公演</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // donut by genre
+  const gc=GENRES.map(g=>({g,n:artists.filter(a=>a.genre===g.n).length}));
+  const total=gc.reduce((s,x)=>s+x.n,0)||1;
+  let acc=0;const segs=gc.map(x=>{const start=acc/total*360;acc+=x.n;const end=acc/total*360;return `${x.g.c} ${start}deg ${end}deg`;});
+  $('donut').style.background=`conic-gradient(${segs.join(',')})`;
+  $('donut').style.webkitMask='radial-gradient(circle 40px at center,transparent 39px,#000 40px)';
+  $('donut').style.mask='radial-gradient(circle 40px at center,transparent 39px,#000 40px)';
+  $('legend').innerHTML=gc.map(x=>`<div class="lg"><span class="sw" style="background:${x.g.c}"></span>${x.g.n}<b>${x.n}組</b></div>`).join('');
+  // schedule
+  const sched=bookings.filter(b=>b.status!=='declined').sort((a,b)=>a.date-b.date).slice(0,6);
+  $('dashSched').innerHTML=sched.map(b=>`<tr onclick="go('bookings')">
+    <td class="tnum" style="color:var(--ink-2)">${fmtMD(b.date)} ${fmtT(b.date)}</td>
+    <td><b>${esc(b.artist)}</b></td><td style="color:var(--ink-2)">${esc(b.event)}</td><td>${bBadge(b.status)}</td></tr>`).join('');
+  // activity
+  const acts=[
+    {i:'⚡',c:'#f0eaff',t:'AI出演調整で 6組へオファーを自動送信（承諾4組）',m:'今日 9:14'},
+    {i:'🎫',c:'#e6f8f0',t:'カノン・リリィ の出演が確定しました',m:'1時間前'},
+    {i:'💬',c:'#fdf3e2',t:'スカイハイ・トリオ から機材の問い合わせ',m:'今日 10:05'},
+    {i:'💴',c:'#e6f8f0',t:'和音アコースティック へギャラ ¥38,000 を精算',m:'昨日'},
+    {i:'⚠️',c:'#fdeaea',t:'RED LANTERN の出演返答が未着（2日経過）',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${a.m}</div></div></div>`).join('');
+}
+
+/* ============ ARTISTS ============ */
+let filterGenre='all';
+function renderChips(){
+  const opts=[['all','すべて']].concat(GENRES.map(g=>[g.n,g.n]));
+  $('genreChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterGenre?'on':''}" data-g="${esc(o[0])}">${esc(o[1])}</button>`).join('');
+  $('genreChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterGenre=c.dataset.g;renderChips();renderArtists();});
+}
+function renderArtists(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=artists.filter(a=>filterGenre==='all'||a.genre===filterGenre)
+    .filter(a=>!q||(a.name+a.genre+a.staff).toLowerCase().includes(q))
+    .sort((a,b)=>b.plays-a.plays);
+  $('artistRows').innerHTML=rows.length?rows.map(a=>`<tr onclick="openArtist('${a.id}')">
+    <td><div class="acell"><div class="avt" style="background:${gColor(a.genre)}">${esc(initials(a.name))}</div>
+      <div><b>${esc(a.name)}</b><div style="font-size:11px;color:var(--ink-3)">ランク ${a.rank}</div></div></div></td>
+    <td>${gpill(a.genre)}</td>
+    <td class="r tnum"><b>${a.plays}</b><span style="color:var(--ink-3);font-size:11px"> 回</span></td>
+    <td style="color:var(--ink-2);font-size:12px">${esc(a.tel)}<br><span style="color:var(--ink-3)">${esc(a.mail)}</span></td>
+    <td style="color:var(--ink-2)">${esc(a.staff)}</td>
+    <td>${aBadge(a.status)}</td></tr>`).join('')
+    :'<tr><td colspan="6" class="empty-cell">該当するアーティストがいません</td></tr>';
+}
+$('q').addEventListener('input',renderArtists);
+window.openArtist=id=>{const a=artists.find(x=>x.id===id);if(a)showToast(a.name+' のプロフィールを開きます（デモ）');};
+
+/* ============ BOOKINGS ============ */
+let bookTab='cal';
+function renderBookings(){
+  $('bookTabs').innerHTML=[['cal','📅 カレンダー'],['kan','🗂 進行ボード']].map(o=>
+    `<button class="chip ${o[0]===bookTab?'on':''}" data-t="${o[0]}">${o[1]}</button>`).join('');
+  $('bookTabs').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{bookTab=c.dataset.t;renderBookings();});
+  $('bookCalView').style.display=bookTab==='cal'?'block':'none';
+  $('bookKanView').style.display=bookTab==='kan'?'block':'none';
+  if(bookTab==='cal')renderCalendar();else renderKanban();
+}
+function renderCalendar(){
+  const y=TODAY.getFullYear(),m=TODAY.getMonth();
+  const first=new Date(y,m,1);const startDow=first.getDay();
+  const daysInM=new Date(y,m+1,0).getDate();
+  const prevDays=new Date(y,m,0).getDate();
+  let cells=[];
+  for(let i=0;i<startDow;i++)cells.push({d:prevDays-startDow+1+i,dim:true});
+  for(let d=1;d<=daysInM;d++)cells.push({d,dim:false});
+  while(cells.length%7!==0)cells.push({d:cells.length-(startDow+daysInM)+1,dim:true});
+  $('calGrid').innerHTML=cells.map(c=>{
+    const isToday=!c.dim&&c.d===TODAY.getDate();
+    const evs=c.dim?[]:bookings.filter(b=>b.status!=='declined'&&b.date.getDate()===c.d).sort((a,b)=>a.date-b.date);
+    const evHtml=evs.slice(0,3).map(b=>`<div class="cal-ev" style="background:${gColor(b.genre)}" onclick="event.stopPropagation();showToast('${esc(b.artist)}／${esc(b.event)}／'+'${bBadge(b.status).replace(/<[^>]+>/g,'').trim()}')" title="${esc(b.artist)} - ${esc(b.event)}">${esc(b.artist)}</div>`).join('')
+      + (evs.length>3?`<div style="font-size:10px;color:var(--ink-3);margin-top:2px">+${evs.length-3}件</div>`:'');
+    return `<div class="cal-cell ${c.dim?'dim':''} ${isToday?'today':''}"><div class="dn">${c.d}</div>${evHtml}</div>`;
+  }).join('');
+}
+function renderKanban(){
+  const cols=[
+    {k:'offered',t:'打診中',i:'📨'},
+    {k:'adjusting',t:'日程調整',i:'🗓'},
+    {k:'confirmed',t:'出演確定',i:'✅'},
+    {k:'declined',t:'辞退',i:'🚫'},
+  ];
+  $('kanban').innerHTML=cols.map(col=>{
+    const items=bookings.filter(b=>b.status===col.k).sort((a,b)=>a.date-b.date);
+    return `<div class="kcol"><div class="kh">${col.i} ${col.t}<span class="cnt">${items.length}</span></div>
+      ${items.map(b=>`<div class="kcard" onclick="moveCard('${b.id}')">
+        <div class="kn">${esc(b.artist)}</div>
+        <div class="km">${esc(b.event)}</div>
+        <div class="kf">${gpill(b.genre)}<span class="ka">${fmtMD(b.date)} ・ ${yen(b.fee)}</span></div></div>`).join('')
+        || '<div style="font-size:11px;color:var(--ink-3);padding:8px 4px">なし</div>'}</div>`;
+  }).join('');
+}
+window.moveCard=id=>{
+  const b=bookings.find(x=>x.id===id);if(!b)return;
+  const flow={offered:'adjusting',adjusting:'confirmed',confirmed:'confirmed',declined:'offered'};
+  const next=flow[b.status];
+  if(b.status==='confirmed'){showToast(b.artist+' は既に出演確定です');return;}
+  b.status=next;renderKanban();
+  showToast(b.artist+' を「'+B_STLABEL[next]+'」へ進めました');
+};
+
+/* ============ CONTACT ============ */
+let activeThread=null;
+function renderThreads(){
+  $('threadList').innerHTML=threads.map(t=>{
+    const last=t.msgs[t.msgs.length-1];
+    return `<div class="thr ${activeThread===t.id?'on':''}" data-id="${t.id}">
+      <div class="avt" style="background:${gColor(t.genre)}">${esc(initials(t.name))}</div>
+      <div style="min-width:0;flex:1"><div class="tn">${esc(t.name)}</div><div class="tx">${esc(last?last.t:'')}</div></div>
+      <div style="text-align:right"><div class="tt">${esc(last?last.ts:'')}</div>${t.unread?'<div class="udot" style="margin-left:auto;margin-top:6px"></div>':''}</div>
+    </div>`;
+  }).join('');
+  $('threadList').querySelectorAll('.thr').forEach(el=>el.onclick=()=>openThread(el.dataset.id));
+  if(!activeThread&&threads.length)openThread(threads[0].id);
+  else if(activeThread)renderChat();
+  updateUnread();
+}
+function openThread(id){activeThread=id;const t=threads.find(x=>x.id===id);if(t)t.unread=false;renderThreads();}
+function renderChat(){
+  const t=threads.find(x=>x.id===activeThread);if(!t)return;
+  $('chatName').textContent=t.name+'（'+t.genre+'）';
+  $('chatBody').innerHTML=t.msgs.map(m=>`<div class="bub ${m.who}">${esc(m.t)}<div class="bt">${esc(m.ts)}</div></div>`).join('');
+  $('chatBody').scrollTop=$('chatBody').scrollHeight;
+}
+function updateUnread(){
+  const u=threads.filter(t=>t.unread).length;
+  $('navUnread').textContent=u;
+  $('navUnread').style.display=u?'inline-block':'none';
+}
+function sendMsg(text){
+  const t=threads.find(x=>x.id===activeThread);if(!t||!text.trim())return;
+  t.msgs.push({who:'me',t:text.trim(),ts:'たった今'});
+  $('chatInput').value='';renderChat();renderThreads();
+  // auto reply
+  setTimeout(()=>{
+    const reply=pick(['承知しました！ありがとうございます。','その日程で大丈夫です。','確認して折り返します！','よろしくお願いします🙏']);
+    t.msgs.push({who:'them',t:reply,ts:'たった今'});
+    if(activeThread!==t.id)t.unread=true;
+    renderChat();renderThreads();
+  },1100);
+}
+$('chatSend').addEventListener('click',()=>sendMsg($('chatInput').value));
+$('chatInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg($('chatInput').value);}});
+$('chatAi').addEventListener('click',()=>{
+  const t=threads.find(x=>x.id===activeThread);if(!t){showToast('スレッドを選択してください');return;}
+  const suggest='ご連絡ありがとうございます。次回「大分ライブナイト Vol.12」（6/14 土 19:30〜）への出演をご相談させてください。ギャラはランク別の規定でご案内いたします。ご都合いかがでしょうか？';
+  $('chatInput').value=suggest;$('chatInput').focus();
+  showToast('✨ AIが返信文を提案しました');
+});
+
+/* ============ PAYOUT ============ */
+function renderPay(){
+  const wait=bookings.filter(b=>b.status==='confirmed'&&!b.paid);
+  const sumW=wait.reduce((s,b)=>s+b.fee,0);
+  const paidThis=bookings.filter(b=>b.status==='confirmed'&&b.paid&&thisMonthB(b.date)).reduce((s,b)=>s+b.fee,0);
+  const confirmed=bookings.filter(b=>b.status==='confirmed');
+  $('payKpis').innerHTML=`
+    ${kpi('#e3941f','精算待ち 合計',yen(sumW),wait.length+'件','warn','支払処理待ち')}
+    ${kpi('#16b877','今月精算済',yen(paidThis),bookings.filter(b=>b.paid&&thisMonthB(b.date)).length+'件','up','処理完了')}
+    ${kpi('#7b3ff0','確定公演',confirmed.length+'<small>件</small>','','up','今月')}
+    ${kpi('#e23a86','平均ギャラ',yen(confirmed.length?confirmed.reduce((s,b)=>s+b.fee,0)/confirmed.length:0),'','up','1公演あたり')}`;
+  $('payRows').innerHTML=wait.length?wait.sort((a,b)=>a.date-b.date).map(b=>`<tr>
+    <td class="tnum" style="color:var(--ink-2)">${fmtMD(b.date)}</td>
+    <td><b>${esc(b.artist)}</b></td><td style="color:var(--ink-2)">${esc(b.event)}</td>
+    <td class="r tnum"><b>${yen(b.fee)}</b></td><td>${bBadge(b.status)}</td>
+    <td class="r"><button class="btn green" style="padding:6px 12px" onclick="payOne('${b.id}')">精算する</button></td></tr>`).join('')
+    : '<tr><td colspan="6" class="empty-cell">精算待ちはありません 🎉</td></tr>';
+  $('navPayout').textContent=wait.length;
+  $('navPayout').style.display=wait.length?'inline-block':'none';
+}
+window.payOne=id=>{const b=bookings.find(x=>x.id===id);if(b){b.paid=true;renderPay();showToast(b.artist+' へ '+yen(b.fee)+' を精算しました');}};
+$('autoPay').addEventListener('click',async()=>{
+  const btn=$('autoPay');btn.textContent='⚡ 精算書を作成中…';btn.disabled=true;
+  const wait=bookings.filter(b=>b.status==='confirmed'&&!b.paid);
+  await new Promise(r=>setTimeout(r,950));
+  let n=0,sum=0;wait.forEach(b=>{b.paid=true;n++;sum+=b.fee;});
+  btn.textContent='⚡ AIで一括精算書を作成';btn.disabled=false;
+  renderPay();showToast(n+'件の精算書を自動作成しました（計'+yen(sum)+'）');
+});
+
+/* ============ AI ADJUST ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 調整中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:'+('0'+Math.min(s,9)).slice(-2);},120);
+  await new Promise(r=>setTimeout(r,1150));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  const targets=artists.filter(a=>a.status!=='inactive').slice(0,6);
+  const results=['offered','offered','adjusting'];
+  $('genItems').innerHTML=targets.map((a,i)=>{
+    const fee= a.rank==='A'?60000+i*5000 : a.rank==='B'?40000 : 22000;
+    const accepted = i<4;
+    const tag = accepted ? '<span style="color:var(--green);font-size:11px;font-weight:800">承諾・契約送付済</span>'
+                         : '<span style="color:var(--amber);font-size:11px;font-weight:800">日程調整中</span>';
+    return `<div class="gen-item" data-i="${i}"><span class="ck">${accepted?'✓':'…'}</span>
+      <b style="flex:1">${esc(a.name)}</b>${gpill(a.genre)}
+      <span class="tnum" style="font-weight:800;min-width:78px;text-align:right">${yen(fee)}</span>${tag}</div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){
+    await new Promise(r=>setTimeout(r,200));items[i].classList.add('in');
+    const a=targets[i];const accepted=i<4;
+    const fee= a.rank==='A'?60000+i*5000 : a.rank==='B'?40000 : 22000;
+    bookings.push({
+      id:'BK-AI'+i,artist:a.name,genre:a.genre,event:'大分ライブナイト Vol.12',
+      date:new Date(TODAY.getFullYear(),TODAY.getMonth(),14,19,30),
+      fee,status:accepted?'confirmed':'adjusting',paid:false,
+    });
+  }
+  btn.disabled=false;btn.textContent='⚡ もう一度実行';
+  showToast('6組へ出演オファーを自動送信（承諾4組・契約書送付済）');
+});
+
+/* ============ INIT ============ */
+renderChips();renderDash();
+$('navUnread').textContent=threads.filter(t=>t.unread).length;
+$('navPayout').textContent=bookings.filter(b=>b.status==='confirmed'&&!b.paid).length;
+</script>
+</body>
+</html>

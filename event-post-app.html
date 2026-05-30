@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜告知マシン（イベント告知文自動生成）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#7c3aed;--brand-dk:#6322d4;--brand-soft:#f1eafe;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#e0419a;--pink-soft:#fdeaf5;
+  --sb:#160c2e;--sb-2:#1f1140;--sb-ink:#cfc6e6;--sb-ink-2:#8a7fb0;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#a855f7,#e0419a,#fbbf24,#a855f7);
+  display:grid;place-items:center;color:#1a0530;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(124,58,237,.4)}
+.nav a .badge{margin-left:auto;background:var(--sky);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut / channel */
+.chan{display:flex;flex-direction:column;gap:11px}
+.chan-row{display:flex;align-items:center;gap:11px;font-size:12.5px}
+.chan-row .nm{width:78px;color:var(--ink-2);font-weight:600;display:flex;align-items:center;gap:6px}
+.chan-row .tk{flex:1;height:8px;border-radius:99px;background:var(--soft);overflow:hidden}
+.chan-row .fl{height:100%;border-radius:99px;width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.chan-row .pc{width:40px;text-align:right;font-weight:800;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.published{background:var(--green-soft);color:var(--green)}
+.st.scheduled{background:var(--brand-soft);color:var(--brand)}
+.st.draft{background:var(--amber-soft);color:var(--amber)}
+.st.closed{background:var(--soft);color:var(--ink-3)}
+.st.soldout{background:var(--red-soft);color:var(--red)}
+
+/* tag pills */
+.tag-pill{display:inline-block;font-size:10.5px;font-weight:800;padding:2px 9px;border-radius:99px;background:var(--soft);color:var(--ink-2);margin-right:4px}
+.tag-pill.live{background:var(--pink-soft);color:#c0297f}
+.tag-pill.dj{background:var(--brand-soft);color:var(--brand)}
+.tag-pill.talk{background:var(--amber-soft);color:var(--amber)}
+.tag-pill.fes{background:var(--green-soft);color:var(--green)}
+
+/* create form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:62px;line-height:1.55}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.tonerow{display:flex;gap:7px;flex-wrap:wrap}
+.tone{padding:7px 12px;border:1px solid var(--line-2);border-radius:8px;font-size:12px;font-weight:700;color:var(--ink-2);background:var(--card);cursor:pointer;transition:all .15s}
+.tone:hover{border-color:var(--brand)}
+.tone.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* post preview (SNS card style) */
+.post-wrap{display:flex;flex-direction:column;gap:14px}
+.post-tabs{display:flex;gap:6px}
+.post-tab{padding:7px 14px;border:1px solid var(--line-2);border-radius:8px;font-size:12.5px;font-weight:700;color:var(--ink-2);background:var(--card);cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s}
+.post-tab.on{background:var(--brand);border-color:var(--brand);color:#fff}
+.snscard{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.sns-head{display:flex;align-items:center;gap:10px;padding:13px 15px;border-bottom:1px solid var(--line)}
+.sns-head .av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#a855f7,#e0419a);display:grid;place-items:center;color:#fff;font-weight:900}
+.sns-head b{font-size:13.5px;display:block}
+.sns-head span{font-size:11.5px;color:var(--ink-3)}
+.sns-body{padding:15px;font-size:13.5px;white-space:pre-wrap;line-height:1.7;color:#1a2233;min-height:120px}
+.sns-tags{padding:0 15px 14px;font-size:12.5px;color:var(--brand);font-weight:700}
+.sns-foot{display:flex;gap:22px;padding:11px 15px;border-top:1px solid var(--line);color:var(--ink-3);font-size:12.5px}
+.sns-foot span{display:flex;align-items:center;gap:5px}
+.copybar{display:flex;gap:8px}
+
+/* outline / notes blocks */
+.docblock{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+.docblock .dh{padding:13px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px;font-weight:800;font-size:14px}
+.docblock .db{padding:16px 18px;font-size:13.5px;color:var(--ink-2);white-space:pre-wrap;line-height:1.75}
+.notes li{margin-left:18px;padding:3px 0}
+
+/* template cards */
+.tpl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.tplcard{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:18px;cursor:pointer;transition:all .15s;position:relative}
+.tplcard:hover{border-color:var(--brand);transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.tplcard .ic{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;font-size:20px;margin-bottom:11px}
+.tplcard h4{font-size:14.5px;font-weight:800;margin-bottom:5px}
+.tplcard p{font-size:12px;color:var(--ink-3);line-height:1.5;min-height:36px}
+.tplcard .use{margin-top:12px;font-size:12px;font-weight:800;color:var(--brand)}
+
+/* kanban (告知一覧 board option) */
+.calwrap{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:18px}
+.cal-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.cal-head b{font-size:15px;font-weight:900}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal-dow{text-align:center;font-size:11px;font-weight:800;color:var(--ink-3);padding:4px 0}
+.cal-cell{min-height:74px;border:1px solid var(--line);border-radius:9px;padding:5px 6px;font-size:11px}
+.cal-cell.dim{background:var(--soft);opacity:.5}
+.cal-cell.today{border-color:var(--brand);box-shadow:0 0 0 2px var(--brand-soft) inset}
+.cal-cell .dn{font-weight:800;color:var(--ink-2);font-size:11px}
+.cal-ev{margin-top:3px;font-size:10px;font-weight:700;padding:2px 5px;border-radius:5px;background:var(--brand-soft);color:var(--brand);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cal-ev.fes{background:var(--green-soft);color:var(--green)}
+.cal-ev.live{background:var(--pink-soft);color:#c0297f}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-input{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:18px}
+@media(max-width:680px){.gen-input{grid-template-columns:1fr}}
+.gen-input .fg{margin:0}
+.gen-out{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-out.show{display:block;animation:fade .4s}
+.gen-tabwrap{display:flex;gap:6px;margin-bottom:12px}
+.gen-panel{display:none}
+.gen-panel.on{display:block;animation:fade .3s}
+.gen-line{padding:11px 13px;border:1px solid var(--line);border-radius:9px;margin-bottom:8px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s;white-space:pre-wrap;line-height:1.7}
+.gen-line.in{opacity:1;transform:none}
+.gen-line .lab{font-size:10.5px;font-weight:800;color:var(--brand);display:block;margin-bottom:4px;letter-spacing:.04em}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#c084fc,#7c3aed);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(124,58,237,.4)}50%{box-shadow:0 0 40px rgba(224,65,154,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">告知マシン<small>技マシン｜イベント告知文</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">📣</span>告知一覧</a>
+      <a data-v="create"><span class="i">✏️</span>新規作成</a>
+      <a data-v="notes"><span class="i">📋</span>概要・注意事項</a>
+      <a data-v="tpl"><span class="i">🗂️</span>テンプレ</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI告知文生成<span class="badge">NEW</span></a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。イベント・数値はすべてサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">今月のイベント告知状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>月次の告知公開数の推移</h3><span class="more">過去6ヶ月</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>媒体別の反応シェア</h3></div>
+            <div class="pb"><div class="chan" id="chanBars"></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>近日開催のイベント</h3><span class="more" onclick="go('list')">一覧へ</span></div>
+            <div class="pb" style="padding:0">
+              <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+                <thead><tr><th>イベント</th><th>開催日</th><th>会場</th><th>状態</th></tr></thead>
+                <tbody id="upcomingRows"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="イベント名・会場・出演で検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>イベント名</th><th>区分</th><th>開催日</th><th>会場</th><th class="r">チケット</th><th>反応率</th><th>状態</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- CREATE -->
+      <section class="view" id="v-create">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>イベント名</label><input id="cTitle" placeholder="例：MIDNIGHT GROOVE vol.12"></div>
+            <div class="fg row2">
+              <div><label>区分</label>
+                <select id="cType">
+                  <option value="live">ライブ</option>
+                  <option value="dj">DJ / クラブ</option>
+                  <option value="fes">フェス</option>
+                  <option value="talk">トーク / 配信</option>
+                </select></div>
+              <div><label>開催日</label><input id="cDate" type="date"></div>
+            </div>
+            <div class="fg row2">
+              <div><label>開場 / 開演</label><input id="cTime" placeholder="例：18:00 / 19:00"></div>
+              <div><label>料金</label><input id="cPrice" placeholder="例：前売¥3,500"></div>
+            </div>
+            <div class="fg"><label>会場</label><input id="cVenue" placeholder="例：大分 LIVE HOUSE T.O.P.S"></div>
+            <div class="fg"><label>出演 / ラインナップ</label><input id="cLineup" placeholder="例：The Midnights / 佐伯ユウキ / DJ NAO"></div>
+            <div class="fg"><label>伝えたいポイント（箇条書きでOK）</label><textarea id="cPoints" placeholder="例：1stアルバム発売記念、限定グッズあり、ドリンク付き"></textarea></div>
+            <div class="fg"><label>トーン（AIが文体を合わせます）</label>
+              <div class="tonerow" id="toneRow"></div>
+            </div>
+            <div class="aihint" id="cAiHint">✨ AIがハッシュタグと絵文字を自動で補いました</div>
+            <div class="linkrow" style="margin-top:16px">
+              <button class="btn primary" id="cGen" style="flex:1;justify-content:center">⚡ AIで告知文を作る</button>
+              <button class="btn" id="cSample">サンプル</button>
+            </div>
+            <div class="linkrow" style="margin-top:8px">
+              <button class="btn" id="cPublish" style="flex:1;justify-content:center">📣 この内容で告知を公開</button>
+            </div>
+          </div>
+          <div class="post-wrap">
+            <div class="post-tabs" id="postTabs"></div>
+            <div class="snscard">
+              <div class="sns-head">
+                <div class="av">気</div>
+                <div><b>気持ち市場 イベント情報</b><span id="snsHandle">@kimochi_events</span></div>
+              </div>
+              <div class="sns-body" id="snsBody">左でイベント情報を入力すると、ここに告知文がリアルタイムで組み上がります。「AIで告知文を作る」を押すと、絵文字とハッシュタグまで自動で仕上げます。</div>
+              <div class="sns-tags" id="snsTags"></div>
+              <div class="sns-foot"><span>💬 0</span><span>🔁 0</span><span>❤️ 0</span><span style="margin-left:auto">プレビュー</span></div>
+            </div>
+            <div class="copybar">
+              <button class="btn" id="cCopy" style="flex:1;justify-content:center">📋 告知文をコピー</button>
+              <button class="btn" id="cRegen">🔄 言い回しを変える</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- NOTES (概要・注意事項) -->
+      <section class="view" id="v-notes">
+        <div class="toolbar">
+          <div class="search" style="max-width:360px"><span class="ic">🎫</span>
+            <select id="noteSel" style="width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card);-webkit-appearance:none"></select>
+          </div>
+          <button class="btn primary" id="noteGen" style="margin-left:auto">⚡ AIで概要・注意事項を生成</button>
+        </div>
+        <div class="docblock">
+          <div class="dh">📝 イベント概要</div>
+          <div class="db" id="noteSummary">上のイベントを選び「AIで概要・注意事項を生成」を押すと、開催概要・タイムテーブル・注意事項をまとめて作成します。</div>
+        </div>
+        <div class="docblock">
+          <div class="dh">⏱️ タイムテーブル</div>
+          <div class="db" id="noteTimetable">—</div>
+        </div>
+        <div class="docblock">
+          <div class="dh">⚠️ ご来場の注意事項</div>
+          <div class="db"><ul class="notes" id="noteCautions" style="list-style:disc">—</ul></div>
+        </div>
+      </section>
+
+      <!-- TEMPLATES -->
+      <section class="view" id="v-tpl">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="tplQ" placeholder="テンプレを検索（ライブ / 物販 / 中止 など）"></div>
+        </div>
+        <div class="tpl-grid" id="tplGrid"></div>
+      </section>
+
+      <!-- AI GENERATE -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div style="min-width:200px"><div style="font-size:16px;font-weight:900">イベント情報から告知文・概要・注意事項をまとめて生成</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">イベント名と日時を入れるだけ。SNS告知文・開催概要・来場注意事項をAIが一気に作成します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで一括生成する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">約50分</div>
+              <ul>
+                <li>📝 告知文を媒体ごとに書き分け</li>
+                <li>🔖 ハッシュタグや絵文字を毎回調整</li>
+                <li>⚠️ 注意事項を過去分からコピペ修正</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 X / Instagram 向けを同時生成</li>
+                <li>📋 開催概要・タイムテーブルも自動</li>
+                <li>⚠️ 注意事項テンプレを自動反映</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-input">
+            <div class="fg"><label>イベント名</label><input id="aiTitle" value="NEON NIGHTS 2026 -初夏編-"></div>
+            <div class="fg"><label>開催日 / 会場</label><input id="aiWhen" value="6/14(日) 大分 club SPACE"></div>
+            <div class="fg"><label>出演</label><input id="aiWho" value="SAKURA BEAT / 緑川リオ / DJ HARU"></div>
+          </div>
+          <div class="gen-out" id="genOut">
+            <div class="gen-tabwrap" id="genTabs"></div>
+            <div class="gen-panel on" id="gp-x" data-p="x"></div>
+            <div class="gen-panel" id="gp-ig" data-p="ig"></div>
+            <div class="gen-panel" id="gp-doc" data-p="doc"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const TODAY=new Date();
+const VENUES=['大分 LIVE HOUSE T.O.P.S','大分 club SPACE','別府 B-PASSAGE','大分市 iichiko総合文化センター','大分 DRUM Be-0','中津 the cave','大分 STAGE OASIS'];
+const ACTS=['The Midnights','SAKURA BEAT','佐伯ユウキ','緑川リオ','DJ NAO','DJ HARU','ルミナス・トーキョー','宮崎セッションズ','灯火バンド','Velvet Echo','南風オーケストラ','クレナイ少女隊'];
+const TYPES=['live','dj','fes','talk'];
+const TYPE_LABEL={live:'ライブ',dj:'DJ/クラブ',fes:'フェス',talk:'トーク/配信'};
+const TYPE_TAGCLS={live:'live',dj:'dj',fes:'fes',talk:'talk'};
+const STATUSES=['published','published','scheduled','published','soldout','draft','published'];
+
+/* deterministic pseudo-random for stable demo data */
+let SEED=4821;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+function pickN(a,n){const c=[...a];const o=[];for(let k=0;k<n&&c.length;k++){o.push(c.splice(Math.floor(rnd()*c.length),1)[0]);}return o;}
+
+const EVENT_NAMES=['MIDNIGHT GROOVE','NEON NIGHTS','音波祭','大分ベイサイドフェス','SUNSET SESSION','深夜の交差点','LIVE HOUSE NIGHT','春風アコースティック','クロスビート','BPM OVERDRIVE','宵闇ライブ','OITA SOUND WAVE'];
+let events=[];
+(function seed(){
+  for(let i=0;i<20;i++){
+    const type=pick(TYPES);
+    const base=pick(EVENT_NAMES);
+    const title=base+(rnd()>0.5?' vol.'+(2+Math.floor(rnd()*18)):' '+(2026)+'');
+    const offset=Math.floor(rnd()*120)-40; // -40 .. +80 days
+    const date=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+offset);
+    const venue=pick(VENUES);
+    const lineup=pickN(ACTS,1+Math.floor(rnd()*3));
+    const cap=Math.round((80+rnd()*420)/10)*10;
+    const sold=Math.round(cap*(0.2+rnd()*0.85));
+    let status=pick(STATUSES);
+    if(date<TODAY) status='closed';
+    if(sold>=cap) status='soldout';
+    const reach=Math.round(800+rnd()*9000);
+    const eng=+(1.4+rnd()*7.2).toFixed(1); // engagement %
+    events.push({id:'EV-'+(1001+i),title,type,date,venue,lineup,cap,sold:Math.min(sold,cap),status,reach,eng,
+      price:'前売¥'+( (2+Math.floor(rnd()*5))*1000).toLocaleString(), time:(17+Math.floor(rnd()*3))+':00 OPEN / '+(18+Math.floor(rnd()*3))+':00 START'});
+  }
+})();
+
+const TONES=[['pop','ポップ・元気'],['cool','クール・洗練'],['polite','丁寧・きちんと'],['hype','煽り・盛り上げ']];
+let curTone='pop';
+let curPostTab='x';
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmtD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const DOW=['日','月','火','水','木','金','土'];
+const fmtDJ=d=>(d.getMonth()+1)+'月'+d.getDate()+'日('+DOW[d.getDay()]+')';
+const fmtDL=d=>d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate();
+const STLABEL={published:'公開中',scheduled:'予約投稿',draft:'下書き',closed:'終了',soldout:'SOLD OUT'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]||s}</span>`;}
+function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function typePill(t){return `<span class="tag-pill ${TYPE_TAGCLS[t]}">${TYPE_LABEL[t]}</span>`;}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+
+/* ============ ROUTING ============ */
+const TITLES={
+  dash:['ダッシュボード','今月のイベント告知状況'],
+  list:['告知一覧','公開・予約した告知を管理します'],
+  create:['新規作成','入力するとリアルタイムで告知文が組み上がります'],
+  notes:['概要・注意事項','イベントの開催概要と来場注意事項を作成します'],
+  tpl:['テンプレ','よく使う告知フォーマットを呼び出せます'],
+  ai:['AI告知文生成','イベント情報から告知文・概要・注意事項を自動で作ります']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn primary" onclick="go(\'create\')">＋ 新規作成</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI告知文生成</button><button class="btn primary" onclick="go(\'create\')">＋ 新規作成</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='notes')renderNoteSelect();
+  if(v==='tpl')renderTpl();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const tm=events.filter(e=>thisMonth(e.date));
+  const published=events.filter(e=>e.status==='published'||e.status==='soldout');
+  const avgEng=(events.reduce((s,e)=>s+e.eng,0)/events.length).toFixed(1);
+  const upcoming=events.filter(e=>e.date>=TODAY).length;
+  $('kpis').innerHTML=`
+    ${kpi('#7c3aed','今月の告知',tm.length+'<small>件</small>','公開・予約','up','前月比 +4件')}
+    ${kpi('#e0419a','平均 反応率',avgEng+'<small>%</small>','SNS全媒体','up','業界平均の約2倍')}
+    ${kpi('#16b877','作成時間','8<small>秒/件</small>','AI生成','up','手作業比 −98%')}
+    ${kpi('#e3941f','近日開催',upcoming+'<small>件</small>',' ','warn','告知強化中')}`;
+  // trend (published count per month)
+  const months=[];for(let k=5;k>=0;k--){const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1);months.push(d);}
+  const counts=months.map(m=>{const c=events.filter(e=>e.date.getMonth()===m.getMonth()&&e.date.getFullYear()===m.getFullYear()).length;return c+ (m.getMonth()%3)+2;});
+  const mx=Math.max(...counts,1);
+  $('trendBars').innerHTML=months.map((m,i)=>`
+    <div class="bar-row"><span class="mlabel">${m.getMonth()+1}月</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(counts[i]/mx*100)}"></div></div>
+      <span class="mval">${counts[i]}件</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // channel share
+  const chans=[['X (旧Twitter)','🐦','#1d2733',42],['Instagram','📷','#e0419a',31],['LINE公式','💬','#16b877',16],['Threads','🧵','#7c3aed',11]];
+  $('chanBars').innerHTML=chans.map(c=>`<div class="chan-row"><span class="nm">${c[1]} ${c[0].split(' ')[0]}</span>
+    <span class="tk"><span class="fl" data-w="${c[3]}" style="background:${c[2]}"></span></span><span class="pc">${c[3]}%</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#chanBars .fl').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // upcoming table
+  const up=events.filter(e=>e.date>=TODAY).sort((a,b)=>a.date-b.date).slice(0,5);
+  $('upcomingRows').innerHTML=up.map(e=>`<tr onclick="openNote('${e.id}')">
+    <td><b>${esc(e.title)}</b> ${typePill(e.type)}</td><td style="color:var(--ink-2)">${fmtDJ(e.date)}</td>
+    <td style="color:var(--ink-2)">${esc(e.venue)}</td><td>${stBadge(e.status)}</td></tr>`).join('')
+    || '<tr><td colspan="4" class="empty-cell">近日開催の予定はありません</td></tr>';
+  // activity
+  const acts=[
+    {i:'⚡',c:'#f1eafe',t:'AIが「NEON NIGHTS 2026」の告知文を3媒体ぶん生成',m:'たった今'},
+    {i:'❤️',c:'#fdeaf5',t:'「MIDNIGHT GROOVE vol.12」の投稿が 1,240 いいね',m:'25分前'},
+    {i:'📣',c:'#f1eafe',t:'X へ告知を公開（予約投稿 → 自動配信）',m:'今日 12:00'},
+    {i:'🎫',c:'#e6f8f0',t:'「音波祭 2026」が SOLD OUT に到達',m:'今日 10:42'},
+    {i:'⚠️',c:'#fdeaea',t:'雨天時の注意事項テンプレを自動で追記',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${a.m}</div></div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub&&sub.trim()?sub+' ・ ':''}${d}</div></div>`;}
+
+/* ============ LIST ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['published','公開中'],['scheduled','予約投稿'],['draft','下書き'],['soldout','SOLD OUT'],['closed','終了']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=events.filter(e=>filterStatus==='all'||e.status===filterStatus)
+    .filter(e=>!q||(e.title+e.venue+e.lineup.join('')).toLowerCase().includes(q))
+    .sort((a,b)=>b.date-a.date);
+  $('listRows').innerHTML=rows.length?rows.map(e=>`<tr onclick="openNote('${e.id}')">
+    <td><b>${esc(e.title)}</b><div style="font-size:11px;color:var(--ink-3);margin-top:2px">${esc(e.lineup.join(' / '))}</div></td>
+    <td>${typePill(e.type)}</td>
+    <td style="color:var(--ink-2)">${fmtDJ(e.date)}</td>
+    <td style="color:var(--ink-2)">${esc(e.venue)}</td>
+    <td class="r tnum"><b>${e.sold}</b><span style="color:var(--ink-3)">/${e.cap}</span></td>
+    <td class="tnum"><b style="color:${e.eng>4?'var(--green)':'var(--ink)'}">${e.eng}%</b></td>
+    <td>${stBadge(e.status)}</td></tr>`).join('')
+    :'<tr><td colspan="7" class="empty-cell">該当する告知がありません</td></tr>';
+}
+$('q').addEventListener('input',renderList);
+
+/* ============ NOTES ============ */
+function renderNoteSelect(){
+  $('noteSel').innerHTML=events.filter(e=>e.date>=new Date(TODAY.getFullYear(),TODAY.getMonth()-1,1))
+    .sort((a,b)=>a.date-b.date)
+    .map(e=>`<option value="${e.id}">${esc(e.title)}（${fmtDJ(e.date)}）</option>`).join('');
+}
+window.openNote=id=>{go('notes');setTimeout(()=>{$('noteSel').value=id;},30);};
+$('noteGen').addEventListener('click',async()=>{
+  const e=events.find(x=>x.id===$('noteSel').value)||events[0];
+  if(!e)return;
+  const btn=$('noteGen');btn.textContent='⚡ 生成中…';btn.disabled=true;
+  $('noteSummary').textContent='…AIが概要を作成しています';
+  $('noteTimetable').textContent='…';
+  $('noteCautions').innerHTML='<li>…</li>';
+  await new Promise(r=>setTimeout(r,900));
+  $('noteSummary').textContent=
+`本イベント「${e.title}」は、${fmtDJ(e.date)} に ${e.venue} にて開催する${TYPE_LABEL[e.type]}公演です。
+出演は ${e.lineup.join(' / ')}。${e.price}（ドリンク代別）にて、定員 ${e.cap} 名での開催を予定しております。
+当日は ${e.time} の進行となります。皆さまのご来場を心よりお待ちしております。`;
+  $('noteTimetable').textContent=
+`17:30　開場前ロビー開放・グッズ先行販売
+${e.time.split(' / ')[0]}　開場（整理番号順にご入場）
+${(e.time.split(' / ')[1]||'19:00 START')}　開演
+20:30　アンコール（予定）
+21:00　終演・物販／お見送り`;
+  const cautions=[
+    '入場時に整理番号順でのご案内となります。番号札を必ずご提示ください。',
+    'ドリンク代として別途 ¥600 を会場受付にて頂戴いたします。',
+    '会場内の撮影・録音・録画は固くお断りいたします（指定タイムを除く）。',
+    '再入場は当日に限り可能です。スタッフの押印をお受けください。',
+    '体調のすぐれない方、強い香水・リュック等は周囲へのご配慮をお願いします。',
+    e.type==='fes'?'雨天決行・荒天中止。中止の場合は公式X／LINEにて開演2時間前までに告知します。':'公演内容は予告なく変更となる場合がございます。'
+  ];
+  $('noteCautions').innerHTML=cautions.map(c=>`<li>${esc(c)}</li>`).join('');
+  btn.textContent='⚡ AIで概要・注意事項を生成';btn.disabled=false;
+  showToast(e.title+' の概要・注意事項を生成しました');
+});
+
+/* ============ TEMPLATES ============ */
+const TEMPLATES=[
+  {ic:'🎤',c:'#fdeaf5',t:'ワンマンライブ告知',d:'バンド・ソロのワンマン公演向け。熱量高めの本文＋チケット導線。',kw:'ライブ ワンマン バンド'},
+  {ic:'🪩',c:'#f1eafe',t:'DJ / クラブナイト',d:'深夜帯クラブイベント向け。ラインナップとタイムテーブルを強調。',kw:'dj クラブ クラブナイト 深夜'},
+  {ic:'🎪',c:'#e6f8f0',t:'野外フェス',d:'複数アーティスト・物販・飲食を含む大型イベント向け。',kw:'フェス 野外 物販'},
+  {ic:'🎫',c:'#fdf3e2',t:'チケット先行受付',d:'最速先行・抽選・一般発売の各フェーズの告知に。',kw:'チケット 先行 受付 発売'},
+  {ic:'🛍️',c:'#f1eafe',t:'グッズ・物販案内',d:'会場限定グッズ／通販開始の告知。販売時間と数量も。',kw:'物販 グッズ 限定'},
+  {ic:'📅',c:'#fdeaf5',t:'リマインド（前日告知）',d:'開催前日・当日朝のリマインド投稿テンプレ。',kw:'リマインド 前日 当日'},
+  {ic:'🙏',c:'#e6f8f0',t:'御礼・レポート',d:'公演後のお礼とライブレポート。次回告知への導線つき。',kw:'御礼 お礼 レポート 終演'},
+  {ic:'⚠️',c:'#fdeaea',t:'中止・延期のお知らせ',d:'荒天・体調不良等による中止・延期の丁寧な案内文。',kw:'中止 延期 荒天 お知らせ'},
+];
+function renderTpl(){
+  const q=($('tplQ').value||'').toLowerCase();
+  const rows=TEMPLATES.filter(t=>!q||(t.t+t.d+t.kw).toLowerCase().includes(q));
+  $('tplGrid').innerHTML=rows.length?rows.map(t=>`<div class="tplcard" data-t="${esc(t.t)}">
+    <div class="ic" style="background:${t.c}">${t.ic}</div>
+    <h4>${esc(t.t)}</h4><p>${esc(t.d)}</p>
+    <div class="use">このテンプレで作成 →</div></div>`).join('')
+    :'<div class="empty-cell" style="grid-column:1/-1">該当するテンプレがありません</div>';
+  $('tplGrid').querySelectorAll('.tplcard').forEach(c=>c.onclick=()=>{
+    showToast('「'+c.dataset.t+'」テンプレを読み込みました');
+    go('create');
+  });
+}
+$('tplQ').addEventListener('input',renderTpl);
+
+/* ============ CREATE (live preview) ============ */
+function renderTones(){
+  $('toneRow').innerHTML=TONES.map(t=>`<button class="tone ${t[0]===curTone?'on':''}" data-t="${t[0]}">${t[1]}</button>`).join('');
+  $('toneRow').querySelectorAll('.tone').forEach(b=>b.onclick=()=>{curTone=b.dataset.t;renderTones();buildPost(false);});
+}
+function renderPostTabs(){
+  const tabs=[['x','🐦 X'],['ig','📷 Instagram'],['line','💬 LINE']];
+  $('postTabs').innerHTML=tabs.map(t=>`<button class="post-tab ${t[0]===curPostTab?'on':''}" data-p="${t[0]}">${t[1]}</button>`).join('');
+  $('postTabs').querySelectorAll('.post-tab').forEach(b=>b.onclick=()=>{curPostTab=b.dataset.p;renderPostTabs();buildPost(false);});
+}
+const TONE_OPEN={pop:'🎉 ',cool:'',polite:'【ご案内】 ',hype:'🔥🔥 '};
+const TONE_CLOSE={pop:'みんなで踊って騒ごう！会場で待ってるよ〜✨',cool:'特別な一夜を、ぜひ。',polite:'皆さまのご来場を心よりお待ち申し上げます。',hype:'この夜を見逃すな!!! 全員集合だ🔥'};
+function buildPost(withAI){
+  const title=$('cTitle').value.trim()||'（イベント名）';
+  const type=$('cType').value;
+  const dateV=$('cDate').value;
+  const dateStr=dateV?fmtDJ(new Date(dateV+'T00:00:00')):'（開催日）';
+  const time=$('cTime').value.trim();
+  const price=$('cPrice').value.trim();
+  const venue=$('cVenue').value.trim()||'（会場）';
+  const lineup=$('cLineup').value.trim();
+  const points=$('cPoints').value.trim();
+  const emo=withAI||curTone!=='polite';
+  let body='';
+  if(curPostTab==='x'){
+    body=`${TONE_OPEN[curTone]}${title}\n\n`;
+    body+=`📅 ${dateStr}${time?'  '+time:''}\n`;
+    body+=`📍 ${venue}\n`;
+    if(lineup)body+=`🎤 ${lineup}\n`;
+    if(price)body+=`🎫 ${price}\n`;
+    if(points)body+=`\n${emo?'✨ ':''}${points.replace(/\n/g,'｜')}\n`;
+    body+=`\n${TONE_CLOSE[curTone]}`;
+  }else if(curPostTab==='ig'){
+    body=`${TONE_OPEN[curTone]}${title}\n`;
+    body+=`──────────\n`;
+    body+=`DATE｜${dateStr}\n${time?'TIME｜'+time+'\n':''}PLACE｜${venue}\n`;
+    if(lineup)body+=`LIVE｜${lineup}\n`;
+    if(price)body+=`TICKET｜${price}\n`;
+    body+=`──────────\n`;
+    if(points)body+=`\n${points}\n`;
+    body+=`\nプロフィールのリンクからチケット予約受付中🎫`;
+  }else{ // LINE
+    body=`${title} 開催のお知らせ📣\n\n`;
+    body+=`いつもありがとうございます！下記の通り開催いたします。\n\n`;
+    body+=`▼開催日\n${dateStr}${time?'（'+time+'）':''}\n`;
+    body+=`▼会場\n${venue}\n`;
+    if(lineup)body+=`▼出演\n${lineup}\n`;
+    if(price)body+=`▼料金\n${price}\n`;
+    if(points)body+=`\n${points}\n`;
+    body+=`\nこのトークから予約・お問い合わせいただけます🙆`;
+  }
+  $('snsBody').textContent=body;
+  $('snsHandle').textContent=curPostTab==='ig'?'@kimochi_events':curPostTab==='line'?'気持ち市場 公式LINE':'@kimochi_events';
+  // tags
+  const baseTags=['#'+title.replace(/\s+/g,'').replace(/vol\.\d+/i,''),'#大分イベント','#'+(TYPE_LABEL[type]).replace(/[\/]/g,'')];
+  if(lineup)lineup.split(/[\/／,、]/).slice(0,2).forEach(a=>{const t=a.trim().replace(/\s+/g,'');if(t)baseTags.push('#'+t);});
+  baseTags.push('#ライブ告知','#今夜はここで');
+  $('snsTags').textContent=(emo?baseTags:baseTags.slice(0,3)).join(' ');
+  $('cCurrentBody')&&($('cCurrentBody').value=body);
+  window._curPostBody=body+'\n\n'+$('snsTags').textContent;
+}
+['cTitle','cTime','cPrice','cVenue','cLineup','cPoints'].forEach(id=>$(id).addEventListener('input',()=>buildPost(false)));
+$('cType').addEventListener('change',()=>buildPost(false));
+$('cDate').addEventListener('change',()=>buildPost(false));
+$('cSample').addEventListener('click',()=>{
+  $('cTitle').value='MIDNIGHT GROOVE vol.12';
+  $('cType').value='live';
+  const d=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+18);
+  $('cDate').value=d.toISOString().slice(0,10);
+  $('cTime').value='18:30 OPEN / 19:00 START';
+  $('cPrice').value='前売¥3,500 / 当日¥4,000（D別）';
+  $('cVenue').value='大分 LIVE HOUSE T.O.P.S';
+  $('cLineup').value='The Midnights / 佐伯ユウキ / DJ NAO';
+  $('cPoints').value='1stアルバム「夜光」発売記念ワンマン\n会場限定グッズ＆サイン会あり';
+  curTone='pop';renderTones();buildPost(false);
+  showToast('サンプルのイベント情報を入力しました');
+});
+$('cGen').addEventListener('click',async()=>{
+  if(!$('cTitle').value.trim()){showToast('イベント名を入力してください');return;}
+  const btn=$('cGen');btn.textContent='⚡ AIが執筆中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,800));
+  buildPost(true);
+  $('cAiHint').classList.add('show');setTimeout(()=>$('cAiHint').classList.remove('show'),2200);
+  btn.textContent='⚡ AIで告知文を作る';btn.disabled=false;
+  showToast('AIが告知文（'+ (curPostTab==='x'?'X':curPostTab==='ig'?'Instagram':'LINE') +'）を仕上げました');
+});
+$('cRegen').addEventListener('click',()=>{
+  const order=['pop','cool','hype','polite'];curTone=order[(order.indexOf(curTone)+1)%order.length];
+  renderTones();buildPost(true);showToast('文体を「'+TONES.find(t=>t[0]===curTone)[1]+'」に変えました');
+});
+$('cCopy').addEventListener('click',()=>{
+  const txt=window._curPostBody||$('snsBody').textContent;
+  navigator.clipboard&&navigator.clipboard.writeText(txt).catch(()=>{});
+  showToast('告知文をクリップボードにコピーしました');
+});
+$('cPublish').addEventListener('click',async()=>{
+  if(!$('cTitle').value.trim()||!$('cDate').value){showToast('イベント名と開催日を入力してください');return;}
+  const btn=$('cPublish');btn.textContent='📣 公開処理中…';btn.disabled=true;
+  await new Promise(r=>setTimeout(r,700));
+  const d=new Date($('cDate').value+'T00:00:00');
+  events.unshift({id:'EV-'+(1001+events.length),title:$('cTitle').value.trim(),type:$('cType').value,date:d,
+    venue:$('cVenue').value.trim()||'未定',lineup:($('cLineup').value.trim()||'').split(/[\/／]/).map(s=>s.trim()).filter(Boolean),
+    cap:200,sold:0,status:'published',reach:0,eng:0,price:$('cPrice').value.trim()||'未定',time:$('cTime').value.trim()||'18:00 OPEN / 19:00 START'});
+  btn.textContent='📣 この内容で告知を公開';btn.disabled=false;
+  showToast('告知「'+$('cTitle').value.trim()+'」を公開しました（一覧に追加）');
+  setTimeout(()=>go('list'),700);
+});
+
+/* ============ AI BULK GENERATE ============ */
+let genActiveTab='x';
+function renderGenTabs(){
+  const tabs=[['x','🐦 X 告知文'],['ig','📷 Instagram'],['doc','📋 概要・注意事項']];
+  $('genTabs').innerHTML=tabs.map(t=>`<button class="post-tab ${t[0]===genActiveTab?'on':''}" data-p="${t[0]}">${t[1]}</button>`).join('');
+  $('genTabs').querySelectorAll('.post-tab').forEach(b=>b.onclick=()=>{
+    genActiveTab=b.dataset.p;renderGenTabs();
+    document.querySelectorAll('.gen-panel').forEach(p=>p.classList.toggle('on',p.dataset.p===genActiveTab));
+  });
+}
+$('aiRun').addEventListener('click',async()=>{
+  const title=$('aiTitle').value.trim()||'（イベント名）';
+  const when=$('aiWhen').value.trim()||'（日時・会場）';
+  const who=$('aiWho').value.trim()||'（出演）';
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 生成中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,8);},120);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);$('baAfterT').textContent='8秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+
+  const xText=`🎉 ${title} 開催決定！\n\n📅 ${when}\n🎤 ${who}\n🎫 チケット好評発売中\n\n夏のはじまりを、最高の音で。\nみんなで会場を揺らそう✨\n\n#${title.replace(/\s+/g,'').replace(/-.+-/,'')} #大分イベント #ライブ告知`;
+  const igText=`${title}\n──────────\nDATE｜${when}\nLIVE｜${who}\nTICKET｜好評発売中🎫\n──────────\n\nネオンに照らされる初夏の夜。\n体の芯まで響くサウンドを、一緒に。\n\nプロフィールのリンクからご予約ください📲\n#大分 #livemusic #clubevent`;
+  const docPanel=
+`<div class="gen-line"><span class="lab">■ 開催概要</span>「${esc(title)}」を ${esc(when)} にて開催します。出演は ${esc(who)}。前売券好評発売中・当日券は状況により販売します。</div>
+<div class="gen-line"><span class="lab">■ タイムテーブル</span>17:30 開場前ロビー開放／18:00 開場／19:00 開演／20:45 アンコール／21:15 終演・物販</div>
+<div class="gen-line"><span class="lab">■ ご来場の注意事項</span>・整理番号順でのご入場です／・ドリンク代¥600を別途頂戴します／・撮影/録音はお断りします／・再入場は当日のみ可（押印必須）／・雨天決行・荒天中止（中止時は開演2時間前までに公式SNSで告知）</div>`;
+
+  $('gp-x').innerHTML=`<div class="gen-line"><span class="lab">🐦 X / 旧Twitter（140字最適化）</span>${esc(xText)}</div>`;
+  $('gp-ig').innerHTML=`<div class="gen-line"><span class="lab">📷 Instagram（ビジュアル投稿向け）</span>${esc(igText)}</div>`;
+  $('gp-doc').innerHTML=docPanel;
+  $('genOut').classList.add('show');
+  genActiveTab='x';renderGenTabs();
+  document.querySelectorAll('.gen-panel').forEach(p=>p.classList.toggle('on',p.dataset.p==='x'));
+  // stagger reveal across all panels
+  const lines=[...document.querySelectorAll('#genOut .gen-line')];
+  for(let i=0;i<lines.length;i++){await new Promise(r=>setTimeout(r,160));lines[i].classList.add('in');}
+  btn.disabled=false;btn.textContent='⚡ もう一度生成';
+  showToast('告知文・概要・注意事項をまとめて生成しました');
+});
+
+/* ============ INIT ============ */
+renderTones();renderPostTabs();buildPost(false);renderChips();renderDash();renderGenTabs();
+</script>
+</body>
+</html>

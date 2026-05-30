@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜告知画像生成マシン（バナー・サムネ自動デザイン）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#7c3aed;--brand-dk:#6024c7;--brand-soft:#f1ebfe;
+  --pink:#ec4899;--cyan:#06b6d4;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;
+  --sb:#16111f;--sb-2:#211733;--sb-ink:#cdc4e0;--sb-ink-2:#8a82a6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#a78bfa,#ec4899,#06b6d4,#a78bfa);
+  display:grid;place-items:center;color:#160d22;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(124,58,237,.4)}
+.nav a .badge{margin-left:auto;background:var(--pink);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:64px 1fr 58px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--pink));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut (media share) */
+.donut-wrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.donut{width:128px;height:128px;border-radius:50%;flex-shrink:0;position:relative;transition:background 1s ease}
+.donut::after{content:"";position:absolute;inset:22px;background:var(--card);border-radius:50%}
+.donut .dc{position:absolute;inset:0;display:grid;place-items:center;z-index:1;text-align:center}
+.donut .dc b{font-size:22px;font-weight:900;line-height:1}
+.donut .dc span{font-size:10px;color:var(--ink-3);font-weight:700}
+.legend{display:flex;flex-direction:column;gap:9px;font-size:12.5px;flex:1;min-width:140px}
+.legend .lr{display:flex;align-items:center;gap:9px}
+.legend .lr .sw{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.legend .lr .ln{color:var(--ink-2);font-weight:600}
+.legend .lr .lv{margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* toolbar / search */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+
+/* table */
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.published{background:var(--green-soft);color:var(--green)}
+.st.scheduled{background:var(--brand-soft);color:var(--brand)}
+.st.draft{background:var(--amber-soft);color:var(--amber)}
+.st.review{background:var(--soft);color:var(--ink-3)}
+.st.archived{background:var(--red-soft);color:var(--red)}
+
+/* ===== banner preview (CSS-drawn) ===== */
+.bnr{width:100%;aspect-ratio:16/9;border-radius:11px;overflow:hidden;position:relative;display:flex;flex-direction:column;
+  justify-content:center;color:#fff;padding:8% 9%;text-shadow:0 2px 10px rgba(0,0,0,.35);isolation:isolate}
+.bnr.sq{aspect-ratio:1/1}
+.bnr.st{aspect-ratio:9/16}
+.bnr .deco{position:absolute;inset:0;z-index:-1;opacity:.9}
+.bnr .tag{align-self:flex-start;font-size:.62em;font-weight:900;letter-spacing:.12em;background:rgba(255,255,255,.22);
+  backdrop-filter:blur(4px);padding:3px 11px;border-radius:99px;margin-bottom:7%}
+.bnr .ttl{font-size:1.7em;font-weight:900;line-height:1.15;letter-spacing:.01em}
+.bnr .sub{font-size:.78em;font-weight:700;opacity:.95;margin-top:5%}
+.bnr .meta{font-size:.66em;font-weight:700;margin-top:auto;display:flex;gap:12px;flex-wrap:wrap;opacity:.96}
+.bnr .meta span{display:inline-flex;align-items:center;gap:4px}
+.bnr .pill{align-self:flex-start;margin-top:6%;font-size:.72em;font-weight:900;background:#fff;color:#111;padding:5px 14px;border-radius:99px}
+/* themes */
+.th-neon{background:linear-gradient(135deg,#3b0764,#7c3aed 50%,#ec4899)}
+.th-neon .deco{background:radial-gradient(circle at 80% 15%,rgba(6,182,212,.55),transparent 45%),radial-gradient(circle at 10% 90%,rgba(236,72,153,.5),transparent 40%)}
+.th-sunset{background:linear-gradient(135deg,#7c2d12,#ea580c 45%,#facc15)}
+.th-sunset .deco{background:radial-gradient(circle at 70% 80%,rgba(255,255,255,.3),transparent 40%)}
+.th-mid{background:linear-gradient(160deg,#0f172a,#1e3a8a 60%,#0ea5e9)}
+.th-mid .deco{background:radial-gradient(circle at 85% 20%,rgba(56,189,248,.5),transparent 42%),repeating-linear-gradient(45deg,rgba(255,255,255,.04) 0 12px,transparent 12px 24px)}
+.th-mono{background:linear-gradient(135deg,#111827,#374151)}
+.th-mono .deco{background:radial-gradient(circle at 15% 20%,rgba(250,204,21,.35),transparent 40%)}
+.th-bubble{background:linear-gradient(135deg,#db2777,#f472b6 55%,#fbcfe8)}
+.th-bubble .deco{background:radial-gradient(circle at 78% 28%,rgba(255,255,255,.5),transparent 30%),radial-gradient(circle at 25% 78%,rgba(255,255,255,.35),transparent 28%)}
+.th-forest{background:linear-gradient(150deg,#064e3b,#059669 60%,#a7f3d0)}
+.th-forest .deco{background:radial-gradient(circle at 80% 80%,rgba(255,255,255,.28),transparent 38%)}
+
+/* gallery grid */
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:16px}
+.gcard{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);transition:transform .15s,box-shadow .15s;cursor:pointer}
+.gcard:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+.gcard .gthumb{padding:10px 10px 0}
+.gcard .gbody{padding:11px 13px 14px}
+.gcard .gname{font-size:13.5px;font-weight:800;line-height:1.3}
+.gcard .gmeta{display:flex;align-items:center;gap:7px;margin-top:7px;font-size:11px;color:var(--ink-3);font-weight:600;flex-wrap:wrap}
+.gcard .gtag{background:var(--soft);color:var(--ink-2);padding:2px 8px;border-radius:6px;font-weight:700}
+.gfoot{display:flex;align-items:center;gap:7px;margin-top:11px}
+.gfoot .mini{flex:1;padding:7px;border:1px solid var(--line-2);border-radius:8px;background:var(--card);font-size:11.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s;text-align:center}
+.gfoot .mini:hover{border-color:var(--brand);color:var(--brand)}
+
+/* template grid */
+.tpls{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+.tpl{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);cursor:pointer;transition:all .15s}
+.tpl:hover{border-color:var(--brand);transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+.tpl.sel{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+.tpl .tthumb{padding:9px 9px 0}
+.tpl .tbody{padding:10px 12px 13px}
+.tpl .tn{font-size:13px;font-weight:800}
+.tpl .td{font-size:11px;color:var(--ink-3);margin-top:2px}
+
+/* size grid */
+.sizes{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px}
+.szc{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow);text-align:center}
+.szc .szframe{margin:0 auto 12px;border:2px dashed var(--line-2);border-radius:8px;background:var(--soft);display:grid;place-items:center;color:var(--ink-3);font-weight:800;font-size:11px}
+.szc .szn{font-size:13.5px;font-weight:800}
+.szc .szpx{font-size:11.5px;color:var(--ink-3);margin-top:2px}
+.szc .szu{font-size:11px;color:var(--brand);font-weight:700;margin-top:6px}
+
+/* create form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,400px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:62px;line-height:1.5}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.fg .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1;min-width:64px;padding:9px;border:1px solid var(--line-2);border-radius:8px;background:var(--card);font-size:12px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.seg button.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+.preview-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.proposals{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px}
+@media(max-width:620px){.proposals{grid-template-columns:1fr}}
+.pcard{border:1px solid var(--line);border-radius:12px;overflow:hidden;opacity:0;transform:translateY(10px);transition:all .45s}
+.pcard.in{opacity:1;transform:none}
+.pcard.sel{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+.pcard .pt{padding:8px}
+.pcard .pf{display:flex;align-items:center;gap:8px;padding:9px 11px;border-top:1px solid var(--line);font-size:12px}
+.pcard .pf b{font-weight:800}
+.pcard .pf .pick{margin-left:auto;font-size:11.5px;font-weight:800;color:var(--brand);cursor:pointer}
+.placeholder-stage{border:2px dashed var(--line-2);border-radius:12px;padding:46px 20px;text-align:center;color:var(--ink-3)}
+
+/* AI generate */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--brand-soft),#faf7ff);border:1px solid #ddd0fb}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#e2d6fb;color:var(--brand)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:900;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--brand)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:13px;margin-top:12px}
+.gen-item{border:1px solid var(--line);border-radius:11px;overflow:hidden;opacity:0;transform:translateY(8px) scale(.97);transition:all .4s;position:relative}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .gp{padding:7px 7px 0}
+.gen-item .gl{padding:8px 10px 10px;font-size:11.5px;font-weight:700;display:flex;align-items:center;gap:6px}
+.gen-item .gl .ck{width:17px;height:17px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:9px;font-weight:900;flex-shrink:0}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#a78bfa,#7c3aed);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(124,58,237,.45)}50%{box-shadow:0 0 40px rgba(236,72,153,.55)}}
+
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(15,12,25,.55);display:none;place-items:center;z-index:150;padding:24px;animation:fade .25s}
+.modal.show{display:grid}
+.modal .box{background:var(--card);border-radius:16px;max-width:480px;width:100%;box-shadow:var(--shadow-lg);overflow:hidden;animation:pop .3s}
+@keyframes pop{from{transform:scale(.94);opacity:.6}to{transform:none;opacity:1}}
+.modal .mh{display:flex;align-items:center;padding:15px 18px;border-bottom:1px solid var(--line)}
+.modal .mh h3{font-size:15px;font-weight:900}
+.modal .mh .x{margin-left:auto;border:0;background:var(--soft);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:15px;color:var(--ink-2)}
+.modal .mb{padding:18px}
+.modal .mrow{display:flex;justify-content:space-between;padding:8px 0;font-size:13px;border-bottom:1px solid var(--line)}
+.modal .mrow:last-child{border-bottom:0}
+.modal .mrow span{color:var(--ink-3);font-weight:600}
+.modal .mrow b{font-weight:800}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">告知画像生成マシン<small>技マシン｜AIバナー作成</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="gallery"><span class="i">🖼️</span>画像一覧</a>
+      <a data-v="create"><span class="i">✨</span>新規生成</a>
+      <a data-v="tpl"><span class="i">🎨</span>テンプレ</a>
+      <a data-v="size"><span class="i">📐</span>サイズ別</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AIデザイン<span class="badge">NEW</span></a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。数値・イベントはサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">今月の告知画像 生成状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>月別の生成枚数</h3><span class="more">過去6ヶ月</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>媒体別シェア</h3></div>
+            <div class="pb"><div class="donut-wrap">
+              <div class="donut" id="donut"><div class="dc"><b id="donutTotal">0</b><span>今月生成</span></div></div>
+              <div class="legend" id="donutLegend"></div>
+            </div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>最近の告知画像</h3><span class="more" onclick="go('gallery')">すべて見る</span></div>
+            <div class="pb"><div class="gal" id="dashGal" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr))"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- GALLERY -->
+      <section class="view" id="v-gallery">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="イベント名・出演者・会場で検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <div class="chips" id="mediaChips" style="margin-bottom:16px"></div>
+        <div class="gal" id="galGrid"></div>
+      </section>
+
+      <!-- CREATE -->
+      <section class="view" id="v-create">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>イベント名</label><input id="cTitle" placeholder="例：MIDNIGHT BASS vol.12"></div>
+            <div class="fg"><label>キャッチコピー / 出演</label><textarea id="cSub" placeholder="例：DJ HARUKA / kotone / the noise floor"></textarea></div>
+            <div class="fg row2">
+              <div><label>会場</label><input id="cVenue" placeholder="例：大分 club SPACE"></div>
+              <div><label>日付</label><input id="cDate" type="date"></div>
+            </div>
+            <div class="fg"><label>媒体（出力サイズ）</label>
+              <div class="seg" id="cMedia"></div>
+            </div>
+            <div class="fg"><label>デザインの雰囲気</label>
+              <div class="seg" id="cMood"></div>
+            </div>
+            <div class="aihint" id="cAiHint">✨ AIがイベント名から雰囲気を自動で推定しました</div>
+            <div style="display:flex;gap:8px;margin-top:16px">
+              <button class="btn primary" id="cGen" style="flex:1;justify-content:center">⚡ AIでデザイン案を生成</button>
+              <button class="btn" id="cSample">サンプル</button>
+            </div>
+          </div>
+          <div class="preview-stage">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+              <div class="orb" id="cOrb" style="width:40px;height:40px;font-size:18px">🎨</div>
+              <div><div style="font-size:14px;font-weight:900" id="cStageTitle">デザイン案プレビュー</div>
+              <div style="font-size:11.5px;color:var(--ink-3)" id="cStageSub">左で入力して「AIでデザイン案を生成」を押すと、AIが複数案を作ります。</div></div>
+            </div>
+            <div id="cProposalWrap">
+              <div class="placeholder-stage">
+                <div style="font-size:34px;margin-bottom:8px">🖼️</div>
+                <div style="font-weight:700;color:var(--ink-2)">ここにAIのデザイン案が表示されます</div>
+                <div style="font-size:12px;margin-top:4px">通常2〜3時間の手作業が、わずか数秒に。</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TEMPLATES -->
+      <section class="view" id="v-tpl">
+        <div class="tpls" id="tplGrid"></div>
+      </section>
+
+      <!-- SIZES -->
+      <section class="view" id="v-size">
+        <div class="sizes" id="sizeGrid"></div>
+      </section>
+
+      <!-- AI DESIGN -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🎨</div>
+            <div style="min-width:200px"><div style="font-size:16px;font-weight:900">イベント情報から告知画像を自動デザイン</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">今月の予定イベント <b>6件</b> から、AIがバナー・サムネのデザイン案を一括で作成します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで一括デザイン</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">2時間30分</div>
+              <ul>
+                <li>🖌️ デザインソフトで1枚ずつ作成</li>
+                <li>🔤 文字組み・色・写真選定に試行錯誤</li>
+                <li>📐 媒体ごとにサイズを作り直し</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 イベント情報から構図を自動設計</li>
+                <li>🎨 複数のデザイン案を同時に生成</li>
+                <li>📐 媒体別サイズも自動で書き出し</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:2px">✅ 生成されたデザイン案</div>
+            <div class="gen-grid" id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- detail modal -->
+<div class="modal" id="modal">
+  <div class="box">
+    <div class="mh"><h3 id="mTitle">画像の詳細</h3><button class="x" id="mClose">✕</button></div>
+    <div class="mb">
+      <div id="mThumb" style="margin-bottom:14px"></div>
+      <div class="mrow"><span>イベント</span><b id="mEv">—</b></div>
+      <div class="mrow"><span>会場</span><b id="mVenue">—</b></div>
+      <div class="mrow"><span>媒体 / サイズ</span><b id="mMedia">—</b></div>
+      <div class="mrow"><span>状態</span><b id="mStatus">—</b></div>
+      <div class="mrow"><span>作成日時 / 作成時間</span><b id="mTime">—</b></div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="btn primary" style="flex:1;justify-content:center" id="mDownload">⬇️ ダウンロード</button>
+        <button class="btn" id="mDup">複製して再生成</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const MEDIA=[
+  {k:'insta',label:'Instagram',ratio:'sq',px:'1080×1080',color:'#ec4899'},
+  {k:'story',label:'ストーリーズ',ratio:'st',px:'1080×1920',color:'#a855f7'},
+  {k:'x',label:'X(Twitter)',ratio:'',px:'1200×675',color:'#0ea5e9'},
+  {k:'yt',label:'YouTubeサムネ',ratio:'',px:'1280×720',color:'#ef4444'},
+  {k:'flyer',label:'Webフライヤー',ratio:'st',px:'1240×1754',color:'#16b877'},
+];
+const MEDIA_MAP=Object.fromEntries(MEDIA.map(m=>[m.k,m]));
+const THEMES=[
+  {k:'th-neon',label:'ネオン / クラブ',mood:'クラブ・EDM'},
+  {k:'th-sunset',label:'サンセット',mood:'フェス・野外'},
+  {k:'th-mid',label:'ミッドナイト',mood:'ライブハウス'},
+  {k:'th-mono',label:'モノトーン',mood:'ジャズ・アコースティック'},
+  {k:'th-bubble',label:'ポップ / アイドル',mood:'アイドル・ポップ'},
+  {k:'th-forest',label:'ナチュラル',mood:'マルシェ・物販'},
+];
+const THEME_MAP=Object.fromEntries(THEMES.map(t=>[t.k,t]));
+const MOODS=THEMES.map(t=>({k:t.k,label:t.mood}));
+
+const EVENTS=[
+  {title:'MIDNIGHT BASS vol.12',sub:'DJ HARUKA / kotone / the noise floor',venue:'大分 club SPACE',date:'2026-06-07',th:'th-neon',tag:'CLUB'},
+  {title:'OITA SUMMER FES 2026',sub:'40組以上のアーティストが集結',venue:'大分スポーツ公園 芝生広場',date:'2026-08-15',th:'th-sunset',tag:'FESTIVAL'},
+  {title:'深夜の轟音ナイト',sub:'凪ノ海 / GUMOON / 残響レコーズ',venue:'別府 LIVE HOUSE STORM',date:'2026-06-21',th:'th-mid',tag:'LIVE'},
+  {title:'Jazz at the Riverside',sub:'石川トリオ feat. 美咲',venue:'大分 BLUE NOTE 都町',date:'2026-06-14',th:'th-mono',tag:'JAZZ'},
+  {title:'きらめき☆アイドル祭',sub:'ぴゅあすまいる / 365LOVE / 他',venue:'大分iichikoグランシアタ 小',date:'2026-07-05',th:'th-bubble',tag:'IDOL'},
+  {title:'おおいたマルシェ＆ライブ',sub:'地元バンド × 青果マルシェ',venue:'若草公園 特設ステージ',date:'2026-06-28',th:'th-forest',tag:'MARKET'},
+  {title:'TECHNO RITUAL',sub:'guest: REIWA / floor B',venue:'大分 club SPACE',date:'2026-07-12',th:'th-neon',tag:'CLUB'},
+  {title:'弾き語りの夜 ～六月～',sub:'佐伯ゆう / 川宿田あかり',venue:'大分 カフェ&バー 月見',date:'2026-06-18',th:'th-mono',tag:'ACOUSTIC'},
+  {title:'PUNK NIGHT FEVER',sub:'THE 反骨 / ノイズメーカーズ',venue:'別府 LIVE HOUSE STORM',date:'2026-07-19',th:'th-mid',tag:'LIVE'},
+  {title:'夏のうた声フェスタ',sub:'ご当地アイドル合同ライブ',venue:'大分オアシスひろば21',date:'2026-08-02',th:'th-bubble',tag:'IDOL'},
+];
+
+const STATUSES=['published','published','scheduled','draft','published','review'];
+let SEED=4071;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+const TODAY=new Date();
+
+let images=[];
+(function seed(){
+  let id=1;
+  for(let k=0;k<28;k++){
+    const ev=pick(EVENTS);
+    const m=pick(MEDIA);
+    const monthBack=Math.floor(rnd()*4);
+    const created=new Date(TODAY.getFullYear(),TODAY.getMonth()-monthBack,1+Math.floor(rnd()*26),10+Math.floor(rnd()*9),Math.floor(rnd()*59));
+    let st=pick(STATUSES);
+    const secs=2+Math.floor(rnd()*7);
+    images.push({id:'IMG-'+(2600+id++),title:ev.title,sub:ev.sub,venue:ev.venue,date:ev.date,tag:ev.tag,
+      th:ev.th,media:m.k,status:st,created,secs});
+  }
+  // ensure plenty this month
+  for(let k=0;k<8;k++){
+    const ev=EVENTS[k%EVENTS.length];const m=MEDIA[k%MEDIA.length];
+    const created=new Date(TODAY.getFullYear(),TODAY.getMonth(),1+Math.floor(rnd()*26),9+Math.floor(rnd()*10),Math.floor(rnd()*59));
+    images.push({id:'IMG-'+(2600+id++),title:ev.title,sub:ev.sub,venue:ev.venue,date:ev.date,tag:ev.tag,
+      th:ev.th,media:m.k,status:pick(['published','published','scheduled']),created,secs:2+Math.floor(rnd()*6)});
+  }
+})();
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmtD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtDT=d=>(d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+const STLABEL={published:'公開済',scheduled:'予約投稿',draft:'下書き',review:'確認待ち',archived:'保管'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]||s}</span>`;}
+function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+
+// build a CSS banner preview from an image object
+function bannerHTML(o,opt){
+  opt=opt||{};
+  const m=MEDIA_MAP[o.media]||MEDIA[0];
+  const ratioCls=m.ratio;
+  const fs=opt.fs||14; // base em px controls overall scale
+  const dateStr=o.date?o.date.replaceAll('-','.'):'';
+  return `<div class="bnr ${esc(o.th)} ${ratioCls}" style="font-size:${fs}px">
+    <div class="deco"></div>
+    <div class="tag">${esc(o.tag)}</div>
+    <div class="ttl">${esc(o.title)}</div>
+    <div class="sub">${esc(o.sub)}</div>
+    <div class="meta"><span>📍 ${esc(o.venue)}</span><span>📅 ${esc(dateStr)}</span></div>
+    <div class="pill">${esc(m.label)}</div>
+  </div>`;
+}
+
+/* ============ ROUTING ============ */
+const TITLES={
+  dash:['ダッシュボード','今月の告知画像 生成状況'],
+  gallery:['画像一覧','生成した告知画像を管理します'],
+  create:['新規生成','イベント情報を入れるとAIが複数のデザイン案を作ります'],
+  tpl:['テンプレート','業種・雰囲気別のデザインテンプレート'],
+  size:['サイズ別出力','媒体ごとの最適サイズで自動書き出し'],
+  ai:['AIデザイン','イベント情報から告知画像を自動でデザインします']
+};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='gallery'?'<button class="btn primary" onclick="go(\'create\')">＋ 新規生成</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AIデザイン</button><button class="btn primary" onclick="go(\'create\')">＋ 新規生成</button>'
+    : v==='create'?'<button class="btn" onclick="go(\'tpl\')">🎨 テンプレから</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='gallery')renderGallery();
+  if(v==='tpl')renderTpl();
+  if(v==='size')renderSize();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const tm=images.filter(i=>thisMonth(i.created));
+  const prevD=new Date(TODAY.getFullYear(),TODAY.getMonth()-1,1);
+  const pm=images.filter(i=>i.created.getMonth()===prevD.getMonth()&&i.created.getFullYear()===prevD.getFullYear());
+  // 前月比は実データ連動：前月0なら新規扱い、それ以外は増減%を算出
+  const diffPct=pm.length?Math.round((tm.length-pm.length)/pm.length*100):null;
+  const diffText=diffPct===null?'前月比 新規':('前月比 '+(diffPct>=0?'+':'')+diffPct+'%');
+  const diffCls=diffPct===null?'up':(diffPct>=0?'up':'down');
+  const used=images.filter(i=>i.status==='published'||i.status==='scheduled');
+  const usedRate=images.length?Math.round(used.length/images.length*100):0;
+  const avgSec=Math.round(images.reduce((s,i)=>s+i.secs,0)/images.length*10)/10;
+  // top media this month
+  const byMedia={};tm.forEach(i=>byMedia[i.media]=(byMedia[i.media]||0)+1);
+  const topM=Object.entries(byMedia).sort((a,b)=>b[1]-a[1])[0];
+  const topLabel=topM?MEDIA_MAP[topM[0]].label:'—';
+  const topPct=topM&&tm.length?Math.round(topM[1]/tm.length*100):0;
+  $('kpis').innerHTML=`
+    ${kpi('#7c3aed','今月の生成枚数',tm.length+'<small>枚</small>',null,diffCls,diffText)}
+    ${kpi('#16b877','使用中（公開/予約）',used.length+'<small>枚</small>',null,'up','活用率 '+usedRate+'%')}
+    ${kpi('#ec4899','一番使われた媒体',topLabel,(topM?topM[1]+'枚':''),'up',topM?'今月シェア '+topPct+'%':'データなし')}
+    ${kpi('#0ea5b7','平均 作成時間',avgSec+'<small>秒</small>',null,'up','手作業比 99%短縮')}`;
+
+  // trend bars (枚数 over 6 months)
+  const months=[];for(let k=5;k>=0;k--){const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1);months.push(d);}
+  const counts=months.map(m=>images.filter(i=>i.created.getMonth()===m.getMonth()&&i.created.getFullYear()===m.getFullYear()).length);
+  const mx=Math.max(...counts,1);
+  $('trendBars').innerHTML=months.map((m,i)=>`
+    <div class="bar-row"><span class="mlabel">${m.getMonth()+1}月</span>
+      <div class="bar-track"><div class="bar-fill" data-w="${Math.round(counts[i]/mx*100)}"></div></div>
+      <span class="mval">${counts[i]}枚</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+
+  // donut media share (this month)
+  $('donutTotal').textContent=tm.length;
+  const shares=MEDIA.map(m=>({...m,n:tm.filter(i=>i.media===m.k).length})).filter(s=>s.n>0);
+  const total=shares.reduce((s,x)=>s+x.n,0)||1;
+  let acc=0;const segs=shares.map(s=>{const a=acc;acc+=s.n/total*360;return `${s.color} ${a}deg ${acc}deg`;});
+  $('donut').style.background=`conic-gradient(${segs.join(',')||'var(--soft) 0 360deg'})`;
+  $('donutLegend').innerHTML=shares.map(s=>`<div class="lr"><span class="sw" style="background:${s.color}"></span>
+    <span class="ln">${s.label}</span><span class="lv">${s.n}枚 (${Math.round(s.n/total*100)}%)</span></div>`).join('');
+
+  // recent gallery (latest 6)
+  const recent=[...images].sort((a,b)=>b.created-a.created).slice(0,6);
+  $('dashGal').innerHTML=recent.map(o=>`<div class="gcard" onclick="openImg('${o.id}')">
+    <div class="gthumb">${bannerHTML(o,{fs:11})}</div>
+    <div class="gbody"><div class="gname" style="font-size:12px">${esc(o.title)}</div>
+    <div class="gmeta"><span class="gtag">${esc(MEDIA_MAP[o.media].label)}</span>${stBadge(o.status)}</div></div></div>`).join('');
+
+  // activity（先頭は今月の実生成枚数に連動。一括生成で枚数が増えると反映される）
+  const latest=[...tm].sort((a,b)=>b.created-a.created)[0];
+  const acts=[
+    {i:'⚡',c:'#f1ebfe',t:'今月これまでに '+tm.length+'件の告知画像を生成（平均'+avgSec+'秒）',m:'たった今'},
+    {i:'🖼️',c:'#fce7f3',t:latest?'「'+latest.title+'」の'+MEDIA_MAP[latest.media].label+'告知を作成':'最初の告知画像を作成しましょう',m:latest?'最近':'—'},
+    {i:'📅',c:'#e0f2fe',t:'予約投稿 '+images.filter(i=>i.status==='scheduled').length+'件 / 公開済 '+images.filter(i=>i.status==='published').length+'件',m:'今日'},
+    {i:'🎨',c:'#f1ebfe',t:'テンプレ「ネオン / クラブ」から3案を生成',m:'今日 11:20'},
+    {i:'⬇️',c:'#e6f8f0',t:'YouTubeサムネ 2枚をダウンロード',m:'今日 9:05'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${a.t}</div><div class="am">${a.m}</div></div></div>`).join('');
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+window.kpiLabel=l=>l;
+
+/* ============ GALLERY ============ */
+let filterStatus='all',filterMedia='all';
+function renderChips(){
+  const opts=[['all','すべて'],['published','公開済'],['scheduled','予約投稿'],['draft','下書き'],['review','確認待ち']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderGallery();});
+  const mopts=[['all','全媒体']].concat(MEDIA.map(m=>[m.k,m.label]));
+  $('mediaChips').innerHTML=mopts.map(o=>`<button class="chip ${o[0]===filterMedia?'on':''}" data-m="${o[0]}">${o[1]}</button>`).join('');
+  $('mediaChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterMedia=c.dataset.m;renderChips();renderGallery();});
+}
+function renderGallery(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=images
+    .filter(i=>filterStatus==='all'||i.status===filterStatus)
+    .filter(i=>filterMedia==='all'||i.media===filterMedia)
+    .filter(i=>!q||(i.title+i.sub+i.venue+i.id).toLowerCase().includes(q))
+    .sort((a,b)=>b.created-a.created);
+  $('galGrid').innerHTML=rows.length?rows.map(o=>`<div class="gcard" onclick="openImg('${o.id}')">
+    <div class="gthumb">${bannerHTML(o,{fs:13})}</div>
+    <div class="gbody">
+      <div class="gname">${esc(o.title)}</div>
+      <div class="gmeta"><span class="gtag">${esc(MEDIA_MAP[o.media].label)}</span><span>${esc(MEDIA_MAP[o.media].px)}</span>${stBadge(o.status)}</div>
+      <div class="gfoot">
+        <div class="mini" onclick="event.stopPropagation();openImg('${o.id}')">詳細</div>
+        <div class="mini" onclick="event.stopPropagation();dlImg('${esc(o.id)}')">⬇️ DL</div>
+      </div>
+    </div></div>`).join('')
+    :'<div class="empty-cell" style="grid-column:1/-1">該当する告知画像がありません</div>';
+}
+window.dlImg=id=>showToast(id+' をダウンロードしました（PNG）');
+
+/* image detail modal */
+window.openImg=id=>{
+  const o=images.find(x=>x.id===id);if(!o)return;
+  const m=MEDIA_MAP[o.media];
+  $('mTitle').textContent=o.id;
+  $('mThumb').innerHTML=`<div style="max-width:${m.ratio==='st'?'200px':'100%'};margin:0 auto">${bannerHTML(o,{fs:m.ratio==='st'?12:15})}</div>`;
+  $('mEv').textContent=o.title;
+  $('mVenue').textContent=o.venue;
+  $('mMedia').textContent=m.label+' / '+m.px;
+  $('mStatus').innerHTML=stBadge(o.status);
+  $('mTime').textContent=fmtDT(o.created)+' / 約'+o.secs+'秒';
+  $('modal').dataset.id=id;
+  $('modal').classList.add('show');
+};
+$('mClose').onclick=()=>$('modal').classList.remove('show');
+$('modal').onclick=e=>{if(e.target===$('modal'))$('modal').classList.remove('show');};
+$('mDownload').onclick=()=>{$('modal').classList.remove('show');showToast($('modal').dataset.id+' をダウンロードしました（PNG）');};
+$('mDup').onclick=()=>{const o=images.find(x=>x.id===$('modal').dataset.id);if(o){const ni={...o,id:'IMG-'+(2600+images.length+1),status:'draft',created:new Date(),secs:3};images.unshift(ni);$('modal').classList.remove('show');go('gallery');showToast('複製して再生成しました（'+ni.id+'）');}};
+
+/* ============ TEMPLATES ============ */
+const TPL_SAMPLE={'th-neon':{title:'CLUB NIGHT',sub:'guest DJ ／ floor open 22:00',venue:'club SPACE',date:'2026-06-07',tag:'CLUB'},
+  'th-sunset':{title:'SUMMER FES',sub:'10組以上のアーティスト出演',venue:'芝生広場',date:'2026-08-15',tag:'FES'},
+  'th-mid':{title:'LIVE HOUSE NIGHT',sub:'4バンド対バン',venue:'LIVE HOUSE STORM',date:'2026-06-21',tag:'LIVE'},
+  'th-mono':{title:'JAZZ NIGHT',sub:'石川トリオ',venue:'BLUE NOTE 都町',date:'2026-06-14',tag:'JAZZ'},
+  'th-bubble':{title:'IDOL FESTIVAL',sub:'合同アイドルライブ',venue:'グランシアタ',date:'2026-07-05',tag:'IDOL'},
+  'th-forest':{title:'MARKET & LIVE',sub:'マルシェ × ライブ',venue:'若草公園',date:'2026-06-28',tag:'MARKET'}};
+function renderTpl(){
+  $('tplGrid').innerHTML=THEMES.map(t=>{
+    const s=TPL_SAMPLE[t.k];const o={...s,th:t.k,media:'x'};
+    return `<div class="tpl" onclick="useTpl('${t.k}')">
+      <div class="tthumb">${bannerHTML(o,{fs:11})}</div>
+      <div class="tbody"><div class="tn">${esc(t.label)}</div><div class="td">向き：${esc(t.mood)}</div></div></div>`;
+  }).join('');
+}
+window.useTpl=k=>{
+  go('create');
+  // preselect mood（media側も再描画して両セグメントの状態を同期）
+  curMood=k;renderMoodSeg();renderMediaSeg();
+  showToast('テンプレ「'+THEME_MAP[k].label+'」を選びました。イベント情報を入れて生成できます');
+};
+
+/* ============ SIZES ============ */
+function renderSize(){
+  $('sizeGrid').innerHTML=MEDIA.map(m=>{
+    const [w,h]=m.px.split('×').map(Number);
+    const maxW=150,maxH=110;const scale=Math.min(maxW/w,maxH/h);
+    const fw=Math.round(w*scale),fh=Math.round(h*scale);
+    const cnt=images.filter(i=>i.media===m.k).length;
+    return `<div class="szc">
+      <div class="szframe" style="width:${fw}px;height:${fh}px">${m.px.split('×')[0]}px</div>
+      <div class="szn">${esc(m.label)}</div>
+      <div class="szpx">${esc(m.px)} px</div>
+      <div class="szu">生成済 ${cnt}枚 ・ クリックで生成 →</div>
+    </div>`;
+  }).join('');
+  $('sizeGrid').querySelectorAll('.szc').forEach((c,i)=>c.onclick=()=>{curMedia=MEDIA[i].k;renderMediaSeg();renderMoodSeg();go('create');showToast('「'+MEDIA[i].label+'」サイズで作成します');});
+}
+
+/* ============ CREATE ============ */
+let curMedia='x',curMood='th-neon';
+function renderMediaSeg(){
+  $('cMedia').innerHTML=MEDIA.map(m=>`<button data-m="${m.k}" class="${m.k===curMedia?'on':''}">${m.label}</button>`).join('');
+  $('cMedia').querySelectorAll('button').forEach(b=>b.onclick=()=>{curMedia=b.dataset.m;renderMediaSeg();});
+}
+function renderMoodSeg(){
+  $('cMood').innerHTML=MOODS.map(m=>`<button data-m="${m.k}" class="${m.k===curMood?'on':''}">${m.label}</button>`).join('');
+  $('cMood').querySelectorAll('button').forEach(b=>b.onclick=()=>{curMood=b.dataset.m;renderMoodSeg();});
+}
+// auto-detect mood from title keywords
+function detectMood(title){
+  const t=(title||'').toLowerCase();
+  if(/jazz|ジャズ|弾き語り|アコース/.test(t))return 'th-mono';
+  if(/fes|フェス|summer|夏/.test(t))return 'th-sunset';
+  if(/idol|アイドル|きらめき|うた声/.test(t))return 'th-bubble';
+  if(/マルシェ|market|物販/.test(t))return 'th-forest';
+  if(/bass|techno|club|edm|ナイト|midnight/.test(t))return 'th-neon';
+  return 'th-mid';
+}
+$('cTitle').addEventListener('input',()=>{
+  const m=detectMood($('cTitle').value);
+  if(m!==curMood && $('cTitle').value.length>3){curMood=m;renderMoodSeg();$('cAiHint').classList.add('show');setTimeout(()=>$('cAiHint').classList.remove('show'),2000);}
+});
+$('cSample').addEventListener('click',()=>{
+  $('cTitle').value='MIDNIGHT BASS vol.12';
+  $('cSub').value='DJ HARUKA / kotone / the noise floor';
+  $('cVenue').value='大分 club SPACE';
+  $('cDate').value='2026-06-07';
+  curMedia='insta';curMood='th-neon';renderMediaSeg();renderMoodSeg();
+  showToast('サンプルのイベント情報を入れました');
+});
+
+const VARIANTS=[
+  {label:'案A：タイトル大きめ',thAlt:null},
+  {label:'案B：写真風グラデ',thAlt:'th-mid'},
+  {label:'案C：ポップ配色',thAlt:'th-bubble'},
+];
+let proposals=[],selProposal=0;
+$('cGen').addEventListener('click',async()=>{
+  const title=$('cTitle').value.trim();
+  if(!title){showToast('イベント名を入力してください');return;}
+  const btn=$('cGen');btn.disabled=true;btn.textContent='⚡ AIがデザイン中…';
+  $('cOrb').classList.add('spin');$('cOrb').textContent='⚡';
+  $('cStageSub').textContent='イベント情報を解析し、構図・配色・文字組みを設計しています…';
+  $('cProposalWrap').innerHTML='<div class="placeholder-stage"><div class="orb" style="margin-bottom:10px">🎨</div><div style="font-weight:700;color:var(--ink-2)">AIがデザイン案を作成中…</div></div>';
+  await new Promise(r=>setTimeout(r,1100));
+  $('cOrb').classList.remove('spin');$('cOrb').textContent='✅';
+  $('cStageTitle').textContent='AIが3案を提案しました';
+  $('cStageSub').textContent='気に入った案を選んで「この案を保存」を押すと画像一覧に追加されます。';
+  const base={title,sub:$('cSub').value.trim()||'詳細はプロフィールから',venue:$('cVenue').value.trim()||'会場調整中',
+    date:$('cDate').value||'',tag:THEME_MAP[curMood]? (THEME_MAP[curMood].mood.split('・')[0]).toUpperCase():'EVENT',media:curMedia};
+  proposals=VARIANTS.map((v,i)=>({...base,th:i===0?curMood:(v.thAlt||curMood),vlabel:v.label}));
+  selProposal=0;
+  $('cProposalWrap').innerHTML=`<div class="proposals" id="propGrid">${proposals.map((p,i)=>`
+    <div class="pcard ${i===0?'sel':''}" data-i="${i}">
+      <div class="pt">${bannerHTML(p,{fs:12})}</div>
+      <div class="pf"><b>${esc(p.vlabel)}</b><span class="pick" data-i="${i}">この案を保存</span></div>
+    </div>`).join('')}</div>`;
+  // animate in
+  const cards=[...$('propGrid').querySelectorAll('.pcard')];
+  for(let i=0;i<cards.length;i++){await new Promise(r=>setTimeout(r,160));cards[i].classList.add('in');}
+  cards.forEach(c=>c.onclick=()=>{selProposal=+c.dataset.i;cards.forEach(x=>x.classList.toggle('sel',x===c));});
+  $('propGrid').querySelectorAll('.pick').forEach(p=>p.onclick=e=>{e.stopPropagation();saveProposal(+p.dataset.i);});
+  btn.disabled=false;btn.textContent='⚡ 別の案を生成';
+  showToast('AIが3つのデザイン案を生成しました（'+'約5秒'+'）');
+});
+function saveProposal(i){
+  const p=proposals[i];if(!p)return;
+  const ni={id:'IMG-'+(2600+images.length+1),title:p.title,sub:p.sub,venue:p.venue,date:p.date,tag:p.tag,
+    th:p.th,media:p.media,status:'draft',created:new Date(),secs:4};
+  images.unshift(ni);
+  showToast('「'+p.title+'」を保存しました（'+ni.id+'）');
+  setTimeout(()=>go('gallery'),600);
+}
+
+/* ============ AI BULK DESIGN ============ */
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ デザイン中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,6);},120);
+  await new Promise(r=>setTimeout(r,1200));
+  clearInterval(t);$('baAfterT').textContent='6秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  const targets=EVENTS.slice(0,6);
+  $('genItems').innerHTML=targets.map((ev,i)=>{
+    const o={...ev,media:MEDIA[i%MEDIA.length].k};
+    return `<div class="gen-item" data-i="${i}"><div class="gp">${bannerHTML(o,{fs:10})}</div>
+      <div class="gl"><span class="ck">✓</span>${esc(ev.title)}</div></div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){
+    await new Promise(r=>setTimeout(r,200));items[i].classList.add('in');
+    const ev=targets[i];const o={...ev,media:MEDIA[i%MEDIA.length].k};
+    images.unshift({id:'IMG-'+(2600+images.length+1),title:ev.title,sub:ev.sub,venue:ev.venue,date:ev.date,tag:ev.tag,
+      th:ev.th,media:o.media,status:'review',created:new Date(),secs:5});
+  }
+  btn.disabled=false;btn.textContent='⚡ もう一度デザイン';
+  showToast(items.length+'件のデザイン案を一括生成しました');
+});
+
+/* ============ INIT ============ */
+// 検索ボックス：入力のたびに一覧を絞り込む（手本invoice-appの $('q').addEventListener('input',renderList) 相当）
+$('q').addEventListener('input',renderGallery);
+// Escキーでモーダル／トーストを閉じる（プロSaaS的な操作性）
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    if($('modal').classList.contains('show'))$('modal').classList.remove('show');
+    if($('toast').classList.contains('show'))$('toast').classList.remove('show');
+  }
+});
+renderMediaSeg();renderMoodSeg();renderChips();renderDash();
+</script>
+</body>
+</html>

@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜舞台図面・資料管理マシン</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#7c3aed;--brand-dk:#6326c9;--brand-soft:#f1ebff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--pink:#e8488b;
+  --sb:#160d2e;--sb-2:#1e1338;--sb-ink:#cdc4e6;--sb-ink-2:#897da6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#a78bfa,#e8488b,#e3b864,#a78bfa);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(124,58,237,.4)}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* progress ring */
+.ring{position:relative;width:54px;height:54px;flex-shrink:0}
+.ring svg{transform:rotate(-90deg)}
+.ring .rt{position:absolute;inset:0;display:grid;place-items:center;font-size:13px;font-weight:900;font-variant-numeric:tabular-nums}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:90px 1fr 60px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--pink));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut legend */
+.donut-wrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.donut{width:130px;height:130px;flex-shrink:0}
+.legend{display:flex;flex-direction:column;gap:9px;font-size:12.5px;flex:1;min-width:140px}
+.legend .lg{display:flex;align-items:center;gap:9px}
+.legend .lg .sw{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.legend .lg b{margin-left:auto;font-variant-numeric:tabular-nums}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.done{background:var(--green-soft);color:var(--green)}
+.st.req{background:var(--brand-soft);color:var(--brand)}
+.st.none{background:var(--soft);color:var(--ink-3)}
+.st.late{background:var(--red-soft);color:var(--red)}
+.st.review{background:var(--amber-soft);color:var(--amber)}
+.tagpill{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:7px;background:var(--soft);color:var(--ink-2)}
+
+/* request form */
+.create-grid{display:grid;grid-template-columns:minmax(320px,400px) 1fr;gap:18px;align-items:start}
+@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:64px}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.checkgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+.checkitem{display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--line-2);border-radius:9px;font-size:12.5px;font-weight:600;cursor:pointer;transition:all .15s;user-select:none}
+.checkitem:hover{border-color:var(--brand)}
+.checkitem.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+.checkitem .bx{width:16px;height:16px;border-radius:5px;border:1.5px solid var(--line-2);display:grid;place-items:center;font-size:10px;color:#fff;flex-shrink:0}
+.checkitem.on .bx{background:var(--brand);border-color:var(--brand)}
+.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
+.aihint.show{opacity:1}
+
+/* mail preview */
+.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:26px 30px;box-shadow:var(--shadow);font-size:13px;color:#1a2233}
+.mp-head{display:flex;align-items:center;gap:10px;border-bottom:2px solid var(--brand-dk);padding-bottom:12px;margin-bottom:16px}
+.mp-head .mk{width:34px;height:34px;border-radius:9px;background:conic-gradient(from 210deg,#a78bfa,#e8488b,#e3b864,#a78bfa);display:grid;place-items:center;color:#04101a;font-weight:900}
+.mp-head b{font-weight:900;font-size:15px}
+.mp-row{display:flex;gap:8px;font-size:12px;color:var(--ink-2);margin-bottom:5px}
+.mp-row .k{width:54px;color:var(--ink-3);font-weight:700;flex-shrink:0}
+.mp-body{margin-top:14px;white-space:pre-wrap;font-size:12.5px;line-height:1.9;color:#23303f}
+.mp-files{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.mp-files .ff{display:flex;align-items:center;gap:9px;font-size:12px;padding:6px 0;color:var(--ink-2)}
+.mp-files .ff .ic{width:24px;height:24px;border-radius:6px;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center;font-size:12px}
+
+/* kanban */
+.kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+@media(max-width:980px){.kanban{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.kanban{grid-template-columns:1fr}}
+.kcol{background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:12px;min-height:120px}
+.kcol .kh{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:800;margin-bottom:10px;padding:0 4px}
+.kcol .kh .cnt{margin-left:auto;background:var(--card);border:1px solid var(--line-2);border-radius:99px;font-size:11px;padding:1px 9px;color:var(--ink-2)}
+.kcol .kh .dot{width:9px;height:9px;border-radius:3px}
+.kcard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:11px 12px;margin-bottom:9px;box-shadow:var(--shadow);cursor:pointer;transition:all .15s}
+.kcard:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);border-color:var(--brand)}
+.kcard .kt{font-size:13px;font-weight:800;margin-bottom:3px}
+.kcard .ks{font-size:11.5px;color:var(--ink-3)}
+.kcard .kmeta{display:flex;align-items:center;gap:6px;margin-top:9px;font-size:11px;color:var(--ink-2)}
+.kcard .av{width:22px;height:22px;border-radius:6px;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center;font-size:10px;font-weight:800}
+
+/* PDF grid */
+.pdfgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:14px}
+.pdfcard{background:var(--card);border:1px solid var(--line);border-radius:13px;overflow:hidden;box-shadow:var(--shadow);cursor:pointer;transition:all .15s}
+.pdfcard:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);border-color:var(--brand)}
+.pdfcard .thumb{height:108px;background:linear-gradient(135deg,#efeafc,#fbeef5);display:grid;place-items:center;font-size:34px;position:relative}
+.pdfcard .thumb .ext{position:absolute;left:10px;bottom:8px;background:var(--red);color:#fff;font-size:9px;font-weight:900;padding:2px 7px;border-radius:5px;letter-spacing:.04em}
+.pdfcard .pi{padding:11px 12px}
+.pdfcard .pi .nm{font-size:12.5px;font-weight:800;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pdfcard .pi .me{font-size:11px;color:var(--ink-3);margin-top:5px;display:flex;align-items:center;gap:6px}
+
+/* calendar */
+.cal{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.cal .ch{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.cal .ch b{font-size:15px;font-weight:900}
+.cal .grid{display:grid;grid-template-columns:repeat(7,1fr)}
+.cal .dow{font-size:11px;font-weight:700;color:var(--ink-3);text-align:center;padding:9px 0;background:var(--soft);border-bottom:1px solid var(--line)}
+.cal .cell{min-height:84px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:6px 7px;font-size:12px}
+.cal .cell:nth-child(7n){border-right:0}
+.cal .cell .dn{font-weight:700;color:var(--ink-2);font-size:11.5px}
+.cal .cell.dim{background:#fafbfd}.cal .cell.dim .dn{color:var(--ink-3);opacity:.5}
+.cal .cell.today{background:var(--brand-soft)}
+.cal .ev{font-size:10.5px;font-weight:700;padding:2px 6px;border-radius:5px;margin-top:4px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.cal .ev.show{background:var(--brand);color:#fff}
+.cal .ev.due{background:var(--amber-soft);color:var(--amber)}
+.cal .ev.load{background:var(--green-soft);color:var(--green)}
+
+/* share */
+.sharecard{background:var(--card);border:1px solid var(--line);border-radius:13px;box-shadow:var(--shadow);padding:16px 18px;display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.sharecard .ic{width:42px;height:42px;border-radius:10px;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center;font-size:20px;flex-shrink:0}
+.sharecard .si{flex:1;min-width:0}
+.sharecard .si b{font-size:14px;font-weight:800}
+.sharecard .si .url{font-size:11.5px;color:var(--ink-3);font-family:'Orbitron',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px}
+.sharecard .si .mu{font-size:11px;color:var(--ink-2);margin-top:3px}
+
+/* AI stage */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item.in{opacity:1;transform:none}
+.gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900}
+.gen-item .ext{font-size:10px;font-weight:900;color:#fff;background:var(--brand);padding:1px 7px;border-radius:5px}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#a78bfa,#7c3aed);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(124,58,237,.4)}50%{box-shadow:0 0 40px rgba(232,72,139,.55)}}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.showcap{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:var(--ink-2);background:var(--soft);border:1px solid var(--line);padding:5px 11px;border-radius:8px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">図面マシン<small>技マシン｜舞台資料管理</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="shows"><span class="i">🎭</span>公演別資料</a>
+      <a data-v="req"><span class="i">📥</span>図面取り寄せ</a>
+      <a data-v="pdf"><span class="i">📄</span>PDF管理</a>
+      <a data-v="share"><span class="i">🔗</span>共有</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>AI整理<span class="badge" id="navUnsub">0</span></a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 制作管理</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。公演・出演者・資料はすべてサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">舞台資料の回収状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>公演別 図面・資料の回収率</h3><span class="more">進行中の公演</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>資料の種別内訳</h3><span class="more">全公演</span></div>
+            <div class="pb"><div class="donut-wrap"><svg class="donut" id="donut" viewBox="0 0 42 42"></svg><div class="legend" id="donutLegend"></div></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>提出期限ウォッチ</h3><span class="more" onclick="go('req')">取り寄せへ</span></div>
+            <div class="pb"><div class="acts" id="dueWatch"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SHOWS -->
+      <section class="view" id="v-shows">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="qShow" placeholder="公演名・会場・演出で検索"></div>
+          <div class="chips" id="showChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>公演</th><th>会場</th><th>公演日</th><th>提出状況</th><th class="r">回収率</th><th>状態</th></tr></thead>
+          <tbody id="showRows"></tbody>
+        </table>
+      </section>
+
+      <!-- REQUEST -->
+      <section class="view" id="v-req">
+        <div class="create-grid">
+          <div class="formcard">
+            <div class="fg"><label>対象の公演</label>
+              <select id="rShow"></select></div>
+            <div class="fg"><label>依頼先（出演者・スタッフ）</label>
+              <select id="rTo"></select></div>
+            <label style="font-size:12px;font-weight:700;color:var(--ink-2)">取り寄せる資料の種別（AIが文面を自動作成）</label>
+            <div class="checkgrid" id="rKinds" style="margin-top:7px;margin-bottom:13px"></div>
+            <div class="fg"><label>提出期限</label><input id="rDue" type="date"></div>
+            <div class="fg"><label>補足メッセージ（任意）</label><textarea id="rNote" placeholder="例：舞台図面はPDF、香盤表はExcelでお願いします。"></textarea></div>
+            <div class="aihint" id="rAiHint">✨ AIが依頼文と自動催促スケジュールを設定しました</div>
+            <div class="linkrow" style="margin-top:6px">
+              <button class="btn primary" id="rSend" style="flex:1;justify-content:center">⚡ AIで依頼を送る</button>
+              <button class="btn" id="rSample">サンプル</button>
+            </div>
+            <div style="margin-top:12px;font-size:11px;color:var(--ink-3);background:var(--soft);border-radius:9px;padding:10px 12px">
+              💡 送信後、未提出の相手にはAIが <b>3日前・前日・当日</b> に自動で催促メールを送ります。
+            </div>
+          </div>
+          <div>
+            <div class="paper" id="rPaper">
+              <div class="mp-head"><div class="mk">技</div><b>資料取り寄せのお願い</b></div>
+              <div class="mp-row"><span class="k">宛先</span><span id="mpTo">（依頼先を選択）</span></div>
+              <div class="mp-row"><span class="k">件名</span><span id="mpSubj">【ご依頼】舞台資料のご提出について</span></div>
+              <div class="mp-row"><span class="k">期限</span><span id="mpDue">—</span></div>
+              <div class="mp-body" id="mpBody">公演を選択し、取り寄せる資料を選ぶと、AIが依頼文を自動で組み立てます。</div>
+              <div class="mp-files" id="mpFiles" style="display:none">
+                <div style="font-size:11px;font-weight:800;color:var(--ink-3);margin-bottom:6px">提出いただく資料</div>
+                <div id="mpFileList"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:20px">
+          <div class="panel">
+            <div class="ph"><h3>取り寄せ進行ボード（カンバン）</h3><span class="showcap">📌 ステータスは自動更新</span></div>
+            <div class="pb"><div class="kanban" id="kanban"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PDF -->
+      <section class="view" id="v-pdf">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="qPdf" placeholder="資料名・公演・出演者で検索"></div>
+          <div class="chips" id="pdfChips"></div>
+        </div>
+        <div class="pdfgrid" id="pdfGrid"></div>
+      </section>
+
+      <!-- SHARE -->
+      <section class="view" id="v-share">
+        <div class="cols" style="align-items:start">
+          <div>
+            <div class="panel" style="margin-bottom:16px">
+              <div class="ph"><h3>共有リンクを発行</h3></div>
+              <div class="pb">
+                <div class="fg"><label>共有する公演フォルダ</label><select id="shShow"></select></div>
+                <div class="fg"><label>共有先の役割</label><select id="shRole">
+                  <option>照明スタッフ</option><option>音響スタッフ</option><option>舞台監督</option><option>制作チーム全体</option><option>会場担当</option>
+                </select></div>
+                <div class="fg"><label>権限</label><select id="shPerm">
+                  <option>閲覧のみ</option><option>閲覧＋ダウンロード</option><option>閲覧＋コメント</option>
+                </select></div>
+                <button class="btn primary" id="shCreate" style="width:100%;justify-content:center;margin-top:4px">🔗 共有リンクを発行</button>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:800;margin-bottom:11px">発行済みの共有リンク</div>
+            <div id="shareList"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI ORGANIZE -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">届いた資料をAIが種別分類して自動保管</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">未整理の受信資料 <b id="aiCnt">14件</b> を、AIが「舞台図面・香盤表・照明・音響・衣装」などに自動分類し、公演フォルダへ振り分けます。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで自動整理する</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">3時間20分</div>
+              <ul>
+                <li>📨 メール添付を1件ずつ開いて確認</li>
+                <li>🗂 種別を見分けてフォルダ分け</li>
+                <li>✏️ ファイル名を統一規則にリネーム</li>
+                <li>🔔 未提出者を表で追いかけて催促</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🤖 添付を自動でテキスト解析</li>
+                <li>📁 種別を判定し公演フォルダへ保管</li>
+                <li>🏷 命名規則で自動リネーム</li>
+                <li>📣 未提出者へ自動催促を予約</li>
+              </ul>
+            </div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">✅ AIが分類して保管した資料</div>
+            <div id="genItems"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ DATA ============ */
+const VENUES=['大分iichikoグランシアタ','ホルトホール大分','大分市平和市民公園能楽堂','別府ビーコンプラザ フィルハーモニアホール','OASISひろば21 ライブハウスDRUM','clubSPOT 大分'];
+const PEOPLE=[
+  {n:'佐伯 涼太',role:'主演俳優'},{n:'三浦 さくら',role:'女優'},{n:'宇佐美 健',role:'演出助手'},
+  {n:'日田 まり',role:'振付'},{n:'臼杵 隆司',role:'照明デザイナー'},{n:'竹田 葵',role:'音響'},
+  {n:'中津 一馬',role:'舞台監督'},{n:'杵築 美和',role:'衣装'},{n:'国東 拓海',role:'ギター/Vo'},{n:'豊後 ひかり',role:'キーボード'},
+];
+const KINDS=[
+  {k:'stage',n:'舞台図面',i:'📐',c:'#7c3aed'},
+  {k:'cue',n:'香盤表',i:'📋',c:'#0ea5b7'},
+  {k:'light',n:'照明プラン',i:'💡',c:'#e3941f'},
+  {k:'sound',n:'音響仕込み表',i:'🔊',c:'#16b877'},
+  {k:'costume',n:'衣装プラン',i:'👗',c:'#e8488b'},
+  {k:'set',n:'美術・大道具',i:'🪑',c:'#5b8def'},
+];
+const KINDMAP=Object.fromEntries(KINDS.map(k=>[k.k,k]));
+const TODAY=new Date();
+
+let SEED=4071;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+
+/* shows */
+const SHOWTITLES=[
+  'ミュージカル「海の見える劇場」','劇団おおいた 第28回公演「白詰草」','大分ロックフェス 2026 前夜祭',
+  'クラシックバレエ「くるみ割り人形」','ライブ「西日本ツアー -豊の国-」','こども舞台「うみのオーケストラ」',
+  '朗読劇「鶴と亀」','ジャズナイト at DRUM','吹奏楽定期演奏会 2026','現代ダンス公演「波紋」',
+];
+let shows=[];
+(function seedShows(){
+  for(let i=0;i<10;i++){
+    const dayOffset=Math.floor(rnd()*70)-15; // -15 .. +55 days
+    const date=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+dayOffset);
+    const total=4+Math.floor(rnd()*5);   // expected docs
+    let got=Math.floor(rnd()*(total+1));
+    if(dayOffset<0)got=total;             // past shows fully collected
+    shows.push({id:'SH'+(101+i),title:SHOWTITLES[i],venue:pick(VENUES),date,total,got});
+  }
+})();
+function showRate(s){return Math.round(s.got/s.total*100);}
+function showState(s){const r=showRate(s);if(r>=100)return 'done';if(s.date<TODAY)return 'late';if(r>0)return 'review';return 'none';}
+
+/* documents (PDF管理 + 種別内訳) */
+let docs=[];
+(function seedDocs(){
+  shows.forEach(s=>{
+    for(let j=0;j<s.got;j++){
+      const kd=pick(KINDS);const p=pick(PEOPLE);
+      const ext=kd.k==='cue'||kd.k==='sound'?'XLSX':kd.k==='costume'?'PNG':'PDF';
+      docs.push({show:s.title,showId:s.id,kind:kd.k,name:s.title.replace(/[「」]/g,'').slice(0,10)+'_'+kd.n,owner:p.n,role:p.role,ext,size:(0.3+rnd()*8).toFixed(1)+'MB',
+        date:new Date(s.date.getFullYear(),s.date.getMonth(),s.date.getDate()-(3+Math.floor(rnd()*20)))});
+    }
+  });
+})();
+
+/* requests (取り寄せ) - kanban */
+let requests=[];
+(function seedReq(){
+  const stt=['waiting','reminded','received','filed'];
+  shows.filter(s=>s.date>=TODAY).forEach(s=>{
+    const n=2+Math.floor(rnd()*3);
+    for(let j=0;j<n;j++){
+      const p=pick(PEOPLE);const kd=pick(KINDS);
+      const due=new Date(s.date.getFullYear(),s.date.getMonth(),s.date.getDate()-(5+Math.floor(rnd()*10)));
+      requests.push({id:'RQ'+(2600+requests.length),show:s.title,showId:s.id,to:p.n,role:p.role,kind:kd.k,due,status:pick(stt)});
+    }
+  });
+})();
+
+/* share links */
+let shares=[
+  {show:shows[0].title,role:'照明スタッフ',perm:'閲覧＋ダウンロード',views:42,by:'制作チーム',when:'2日前'},
+  {show:shows[2].title,role:'音響スタッフ',perm:'閲覧のみ',views:18,by:'制作チーム',when:'5日前'},
+  {show:shows[1].title,role:'舞台監督',perm:'閲覧＋コメント',views:9,by:'制作チーム',when:'1週間前'},
+];
+
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const fmtD=d=>(d.getMonth()+1)+'/'+d.getDate();
+const fmtDL=d=>d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const daysTo=d=>Math.ceil((d-TODAY)/(1000*60*60*24));
+const SHOWSTLABEL={done:'回収完了',late:'要確認(終了)',review:'回収中',none:'未着手'};
+const REQSTLABEL={waiting:'依頼中',reminded:'催促済',received:'受領',filed:'保管完了'};
+function showStBadge(s){const c={done:'done',late:'late',review:'review',none:'none'}[s];return `<span class="st ${c}">${SHOWSTLABEL[s]}</span>`;}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+
+/* ============ ROUTING ============ */
+const TITLES={
+  dash:['ダッシュボード','舞台図面・資料の回収状況'],
+  shows:['公演別資料','公演ごとの資料の集まり具合を管理'],
+  req:['図面取り寄せ','出演者・スタッフへ資料の提出を依頼'],
+  pdf:['PDF管理','届いた資料をまとめて保管・検索'],
+  share:['共有','公演フォルダをスタッフへ安全に共有'],
+  ai:['AI整理','届いた資料を種別分類して自動保管']
+};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='shows'?'<button class="btn primary" onclick="go(\'req\')">📥 資料を取り寄せる</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ AI整理</button><button class="btn primary" onclick="go(\'req\')">📥 取り寄せ</button>'
+    : v==='pdf'?'<button class="btn" onclick="go(\'share\')">🔗 共有する</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='shows')renderShows();
+  if(v==='req'){renderKanban();}
+  if(v==='pdf')renderPdf();
+  if(v==='share')renderShareList();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+function renderDash(){
+  const active=shows.filter(s=>s.date>=TODAY);
+  const totalDocs=shows.reduce((a,s)=>a+s.total,0);
+  const gotDocs=shows.reduce((a,s)=>a+s.got,0);
+  const rate=Math.round(gotDocs/totalDocs*100);
+  const unsub=shows.reduce((a,s)=>a+(s.total-s.got),0);
+  const shareCount=shares.length;
+  $('kpis').innerHTML=`
+    ${kpi('#7c3aed','管理中の公演',active.length+'<small>件</small>','全'+shows.length+'件','up','進行順調')}
+    ${kpi('#16b877','図面・資料の回収率',rate+'<small>%</small>',gotDocs+'/'+totalDocs+'点','up','前週比 +8pt')}
+    ${kpi('#e3941f','未提出',unsub+'<small>点</small>',active.length+'公演にまたがる','warn','要フォロー')}
+    ${kpi('#0ea5b7','共有リンク',shareCount+'<small>件</small>','閲覧'+shares.reduce((a,s)=>a+s.views,0)+'回','up','活用中')}`;
+  // bars: per active show rate
+  const rows=active.sort((a,b)=>a.date-b.date).slice(0,6);
+  $('trendBars').innerHTML=rows.map(s=>{const r=showRate(s);return `
+    <div class="bar-row"><span class="mlabel" title="${esc(s.title)}">${esc(s.title)}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${r}"></div></div>
+      <span class="mval">${r}%</span></div>`;}).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // activity
+  const acts=[
+    {i:'📐',c:'#f1ebff',t:'佐伯 涼太 さんが「舞台図面」を提出（海の見える劇場）',m:'8分前'},
+    {i:'🤖',c:'#e6f8f0',t:'AI整理が 14件の資料を種別分類して保管（充足率100%）',m:'今日 10:02'},
+    {i:'🔗',c:'#f1ebff',t:'照明スタッフへ「くるみ割り人形」フォルダを共有',m:'今日 9:20'},
+    {i:'📣',c:'#fdf3e2',t:'臼杵 さんへ自動催促メールを送信（提出期限3日前）',m:'今日 8:30'},
+    {i:'✅',c:'#e6f8f0',t:'「白詰草」公演の資料が回収完了しました',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${a.m}</div></div></div>`).join('');
+  // donut by kind
+  renderDonut();
+  // due watch
+  const due=requests.filter(r=>r.status!=='filed').map(r=>({...r,d:daysTo(r.due)})).sort((a,b)=>a.d-b.d).slice(0,5);
+  $('dueWatch').innerHTML=due.length?due.map(r=>{
+    const late=r.d<0;const soon=r.d<=3;
+    const ic=late?'⚠️':soon?'⏰':'📌';const bg=late?'#fdeaea':soon?'#fdf3e2':'#f1ebff';
+    const txt=late?'期限超過 '+(-r.d)+'日':r.d===0?'本日締切':'あと'+r.d+'日';
+    return `<div class="act"><div class="ai" style="background:${bg}">${ic}</div><div><div class="at">${esc(r.to)}（${esc(KINDMAP[r.kind].n)}）</div><div class="am">${esc(r.show)} ・ ${txt}</div></div></div>`;
+  }).join(''):'<div class="empty-cell">期限が近い依頼はありません 🎉</div>';
+}
+function renderDonut(){
+  const counts=KINDS.map(k=>({...k,v:docs.filter(d=>d.kind===k.k).length}));
+  const total=counts.reduce((a,c)=>a+c.v,0)||1;
+  let off=0;const segs=counts.map(c=>{const pct=c.v/total*100;const seg=`<circle r="15.915" cx="21" cy="21" fill="transparent" stroke="${c.c}" stroke-width="6" stroke-dasharray="${pct} ${100-pct}" stroke-dashoffset="${25-off}"></circle>`;off+=pct;return seg;}).join('');
+  $('donut').innerHTML=`<circle r="15.915" cx="21" cy="21" fill="#fff"></circle>${segs}<text x="21" y="20" text-anchor="middle" font-size="6" font-weight="900" fill="#1d2733">${total}</text><text x="21" y="26" text-anchor="middle" font-size="3" fill="#8a94a6">点</text>`;
+  $('donutLegend').innerHTML=counts.map(c=>`<div class="lg"><span class="sw" style="background:${c.c}"></span>${c.i} ${c.n}<b>${c.v}点</b></div>`).join('');
+}
+
+/* ============ SHOWS ============ */
+let showFilter='all';
+function renderShowChips(){
+  const opts=[['all','すべて'],['review','回収中'],['done','回収完了'],['none','未着手'],['late','要確認']];
+  $('showChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===showFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('showChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{showFilter=c.dataset.s;renderShowChips();renderShows();});
+}
+function renderShows(){
+  const q=($('qShow').value||'').toLowerCase();
+  let rows=shows.filter(s=>showFilter==='all'||showState(s)===showFilter)
+    .filter(s=>!q||(s.title+s.venue).toLowerCase().includes(q))
+    .sort((a,b)=>a.date-b.date);
+  $('showRows').innerHTML=rows.length?rows.map(s=>{
+    const r=showRate(s);
+    return `<tr>
+      <td><b>${esc(s.title)}</b><div style="font-size:11px;color:var(--ink-3);margin-top:2px">${esc(s.id)}</div></td>
+      <td style="color:var(--ink-2)">${esc(s.venue)}</td>
+      <td style="color:var(--ink-2)" class="tnum">${fmtDL(s.date).replace('年','/').replace('月','/').replace('日','')}</td>
+      <td style="color:var(--ink-2)" class="tnum">${s.got}/${s.total} 点</td>
+      <td class="r"><div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">
+        <div class="bar-track" style="width:70px"><div class="bar-fill" style="width:${r}%"></div></div><b class="tnum">${r}%</b></div></td>
+      <td>${showStBadge(showState(s))}</td></tr>`;
+  }).join(''):'<tr><td colspan="6" class="empty-cell">該当する公演がありません</td></tr>';
+  $('showRows').querySelectorAll('tr').forEach((tr,i)=>{if(rows[i])tr.onclick=()=>{$('qPdf').value=rows[i].title;go('pdf');};});
+}
+$('qShow').addEventListener('input',renderShows);
+
+/* ============ REQUEST ============ */
+let reqKinds=new Set(['stage','cue']);
+function renderReqForm(){
+  $('rShow').innerHTML=shows.filter(s=>s.date>=TODAY).map(s=>`<option value="${esc(s.id)}">${esc(s.title)}</option>`).join('');
+  $('rTo').innerHTML=PEOPLE.map(p=>`<option value="${esc(p.n)}">${esc(p.n)}（${esc(p.role)}）</option>`).join('');
+  $('rKinds').innerHTML=KINDS.map(k=>`<div class="checkitem ${reqKinds.has(k.k)?'on':''}" data-k="${k.k}"><span class="bx">${reqKinds.has(k.k)?'✓':''}</span>${k.i} ${k.n}</div>`).join('');
+  $('rKinds').querySelectorAll('.checkitem').forEach(el=>el.onclick=()=>{const k=el.dataset.k;reqKinds.has(k)?reqKinds.delete(k):reqKinds.add(k);renderReqForm();renderReqPaper();});
+  const d=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+7);
+  if(!$('rDue').value)$('rDue').value=d.toISOString().slice(0,10);
+}
+function renderReqPaper(){
+  const to=$('rTo').value;const p=PEOPLE.find(x=>x.n===to);
+  $('mpTo').textContent=to?(to+' 様'+(p?'（'+p.role+'）':'')):'（依頼先を選択）';
+  const showTitle=(shows.find(s=>s.id===$('rShow').value)||{}).title||'公演';
+  $('mpSubj').textContent='【ご依頼】'+showTitle+' 舞台資料のご提出について';
+  const due=$('rDue').value;$('mpDue').textContent=due?fmtDL(new Date(due)):'—';
+  const kinds=[...reqKinds].map(k=>KINDMAP[k]);
+  if(!to||!kinds.length){$('mpBody').textContent='公演を選択し、取り寄せる資料を選ぶと、AIが依頼文を自動で組み立てます。';$('mpFiles').style.display='none';return;}
+  const note=($('rNote').value||'').trim();
+  const body=`${esc(p?p.n:to)} 様\n\nいつもお世話になっております。株式会社気持ち市場 制作チームです。\n「${esc(showTitle)}」公演にあたり、下記の資料のご提出をお願いいたします。\n\n提出期限：${due?esc(fmtDL(new Date(due))):'別途ご連絡'}\nご提出方法：本メールにそのまま添付してご返信ください（AIが自動で受領・保管します）。${note?'\n\n'+esc(note):''}\n\nご多用のところ恐れ入りますが、よろしくお願いいたします。`;
+  $('mpBody').innerHTML=body;
+  $('mpFiles').style.display='block';
+  $('mpFileList').innerHTML=kinds.map(k=>`<div class="ff"><span class="ic">${k.i}</span>${esc(k.n)} <span style="margin-left:auto;color:var(--ink-3);font-size:11px">${k.k==='cue'||k.k==='sound'?'Excel':k.k==='costume'?'画像':'PDF'} 形式</span></div>`).join('');
+}
+['rShow','rTo','rDue','rNote'].forEach(id=>{$(id).addEventListener('input',renderReqPaper);$(id).addEventListener('change',renderReqPaper);});
+$('rSample').addEventListener('click',()=>{
+  const s=shows.find(x=>x.date>=TODAY);if(s)$('rShow').value=s.id;
+  $('rTo').value='臼杵 隆司';reqKinds=new Set(['stage','light','set']);
+  $('rNote').value='舞台図面はPDF、照明プランはお手持ちの形式で構いません。';
+  renderReqForm();renderReqPaper();
+});
+$('rSend').addEventListener('click',async()=>{
+  if(!$('rTo').value||!reqKinds.size){showToast('依頼先と資料の種別を選んでください');return;}
+  const btn=$('rSend');btn.textContent='⚡ AIが依頼文を作成中…';btn.disabled=true;
+  $('rAiHint').classList.add('show');
+  await new Promise(r=>setTimeout(r,850));
+  const showTitle=(shows.find(s=>s.id===$('rShow').value)||{}).title||'公演';
+  const to=$('rTo').value;const p=PEOPLE.find(x=>x.n===to);
+  const due=$('rDue').value?new Date($('rDue').value):new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+7);
+  [...reqKinds].forEach(k=>{requests.unshift({id:'RQ'+(2600+requests.length+1),show:showTitle,showId:$('rShow').value,to,role:p?p.role:'',kind:k,due,status:'waiting'});});
+  btn.textContent='⚡ AIで依頼を送る';btn.disabled=false;
+  setTimeout(()=>$('rAiHint').classList.remove('show'),1800);
+  $('navUnsub').textContent=shows.reduce((a,s)=>a+(s.total-s.got),0);
+  showToast(esc(to)+' さんへ '+reqKinds.size+'種別の依頼を送信（自動催促を予約）');
+  renderKanban();
+});
+
+/* ============ KANBAN ============ */
+function renderKanban(){
+  const cols=[
+    {s:'waiting',n:'依頼中',c:'#8a94a6'},
+    {s:'reminded',n:'催促済',c:'#e3941f'},
+    {s:'received',n:'受領',c:'#0ea5b7'},
+    {s:'filed',n:'保管完了',c:'#16b877'},
+  ];
+  $('kanban').innerHTML=cols.map(col=>{
+    const items=requests.filter(r=>r.status===col.s);
+    return `<div class="kcol"><div class="kh"><span class="dot" style="background:${col.c}"></span>${col.n}<span class="cnt">${items.length}</span></div>
+      ${items.map(r=>{const kd=KINDMAP[r.kind];const dd=daysTo(r.due);
+        return `<div class="kcard" data-id="${esc(r.id)}"><div class="kt">${kd.i} ${esc(kd.n)}</div>
+        <div class="ks">${esc(r.show)}</div>
+        <div class="kmeta"><span class="av">${esc(r.to.slice(0,1))}</span>${esc(r.to)}<span style="margin-left:auto;color:${dd<0?'var(--red)':dd<=2?'var(--amber)':'var(--ink-3)'}">${dd<0?'超過':dd===0?'本日':'〜'+dd+'日'}</span></div></div>`;}).join('')||'<div style="font-size:11.5px;color:var(--ink-3);text-align:center;padding:14px 0">なし</div>'}
+    </div>`;
+  }).join('');
+  // click to advance status (simulate progress)
+  $('kanban').querySelectorAll('.kcard').forEach(card=>card.onclick=()=>{
+    const r=requests.find(x=>x.id===card.dataset.id);if(!r)return;
+    const order=['waiting','reminded','received','filed'];
+    const i=order.indexOf(r.status);
+    if(i<order.length-1){r.status=order[i+1];renderKanban();showToast(esc(r.to)+'：'+REQSTLABEL[r.status]+' に進めました');}
+    else showToast('この依頼はすでに保管完了です');
+  });
+}
+
+/* ============ PDF ============ */
+let pdfFilter='all';
+function renderPdfChips(){
+  const opts=[['all','すべて']].concat(KINDS.map(k=>[k.k,k.n]));
+  $('pdfChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===pdfFilter?'on':''}" data-s="${o[0]}">${esc(o[1])}</button>`).join('');
+  $('pdfChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{pdfFilter=c.dataset.s;renderPdfChips();renderPdf();});
+}
+function renderPdf(){
+  const q=($('qPdf').value||'').toLowerCase();
+  let list=docs.filter(d=>pdfFilter==='all'||d.kind===pdfFilter)
+    .filter(d=>!q||(d.name+d.show+d.owner).toLowerCase().includes(q))
+    .sort((a,b)=>b.date-a.date);
+  $('pdfGrid').innerHTML=list.length?list.map(d=>{const kd=KINDMAP[d.kind];
+    return `<div class="pdfcard" data-n="${esc(d.name)}">
+      <div class="thumb" style="background:linear-gradient(135deg,${kd.c}22,${kd.c}0d)"><span style="font-size:34px">${kd.i}</span><span class="ext" style="background:${d.ext==='PDF'?'var(--red)':d.ext==='XLSX'?'var(--green)':'var(--sky)'}">${esc(d.ext)}</span></div>
+      <div class="pi"><div class="nm">${esc(d.name)}</div>
+        <div class="me"><span class="tagpill" style="background:${kd.c}1a;color:${kd.c}">${esc(kd.n)}</span></div>
+        <div class="me">📁 ${esc(d.show)}</div>
+        <div class="me">👤 ${esc(d.owner)} ・ ${esc(d.size)}</div></div></div>`;
+  }).join(''):'<div class="empty-cell" style="grid-column:1/-1">該当する資料がありません</div>';
+  $('pdfGrid').querySelectorAll('.pdfcard').forEach(c=>c.onclick=()=>showToast('「'+c.dataset.n+'」をプレビュー表示（デモ）'));
+}
+$('qPdf').addEventListener('input',renderPdf);
+
+/* ============ SHARE ============ */
+function renderShareSelect(){$('shShow').innerHTML=shows.map(s=>`<option>${esc(s.title)}</option>`).join('');}
+function renderShareList(){
+  $('shareList').innerHTML=shares.length?shares.map((s,i)=>`
+    <div class="sharecard"><div class="ic">🔗</div>
+      <div class="si"><b>${esc(s.show)}</b>
+        <div class="url">share.waza.jp/v/${(Math.abs(hashStr(s.show+s.role))).toString(16).slice(0,10)}</div>
+        <div class="mu">${esc(s.role)} ・ ${esc(s.perm)} ・ 閲覧 ${s.views}回 ・ ${esc(s.when)}</div></div>
+      <button class="btn" data-i="${i}">📋 コピー</button></div>`).join('')
+    :'<div class="empty-cell">まだ共有リンクはありません</div>';
+  $('shareList').querySelectorAll('.btn').forEach(b=>b.onclick=()=>showToast('共有リンクをコピーしました（デモ）'));
+}
+function hashStr(s){let h=0;for(let i=0;i<s.length;i++){h=(h*31+s.charCodeAt(i))&0x7fffffff;}return h;}
+$('shCreate').addEventListener('click',()=>{
+  shares.unshift({show:$('shShow').value,role:$('shRole').value,perm:$('shPerm').value,views:0,by:'制作チーム',when:'たった今'});
+  renderShareList();showToast('共有リンクを発行しました（'+$('shRole').value+'）');
+});
+
+/* ============ AI ORGANIZE ============ */
+const INCOMING=[
+  {who:'佐伯 涼太',kind:'stage',show:'海の見える劇場'},
+  {who:'臼杵 隆司',kind:'light',show:'くるみ割り人形'},
+  {who:'竹田 葵',kind:'sound',show:'西日本ツアー -豊の国-'},
+  {who:'中津 一馬',kind:'cue',show:'白詰草'},
+  {who:'杵築 美和',kind:'costume',show:'波紋'},
+  {who:'国東 拓海',kind:'set',show:'ジャズナイト at DRUM'},
+  {who:'三浦 さくら',kind:'stage',show:'うみのオーケストラ'},
+  {who:'日田 まり',kind:'cue',show:'くるみ割り人形'},
+];
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 整理中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:0'+Math.min(s,9);},110);
+  await new Promise(r=>setTimeout(r,1100));
+  clearInterval(t);$('baAfterT').textContent='9秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  $('genItems').innerHTML=INCOMING.map((it,i)=>{const kd=KINDMAP[it.kind];const ext=it.kind==='cue'||it.kind==='sound'?'XLSX':it.kind==='costume'?'PNG':'PDF';
+    return `<div class="gen-item" data-i="${i}"><span class="ck">✓</span>
+      <b style="flex:1">${esc(it.who)}<span style="color:var(--ink-3);font-weight:600;font-size:12px"> → ${esc(it.show)} フォルダ</span></b>
+      <span class="tagpill" style="background:${kd.c}1a;color:${kd.c}">${kd.i} ${esc(kd.n)}</span>
+      <span class="ext" style="background:${ext==='PDF'?'var(--red)':ext==='XLSX'?'var(--green)':'var(--sky)'}">${ext}</span></div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const items=[...$('genItems').querySelectorAll('.gen-item')];
+  for(let i=0;i<items.length;i++){
+    await new Promise(r=>setTimeout(r,170));items[i].classList.add('in');
+    const it=INCOMING[i];const sh=shows.find(x=>x.title.includes(it.show.slice(0,5)));
+    if(sh&&sh.got<sh.total)sh.got++;
+    const ext=it.kind==='cue'||it.kind==='sound'?'XLSX':it.kind==='costume'?'PNG':'PDF';
+    docs.unshift({show:it.show,showId:sh?sh.id:'',kind:it.kind,name:it.show.slice(0,10)+'_'+KINDMAP[it.kind].n,owner:it.who,role:'',ext,size:(0.5+Math.random()*6).toFixed(1)+'MB',date:new Date()});
+  }
+  btn.disabled=false;btn.textContent='⚡ もう一度整理';
+  $('navUnsub').textContent=shows.reduce((a,s)=>a+(s.total-s.got),0);
+  showToast(items.length+'件の資料を種別分類して自動保管しました');
+});
+
+/* ============ INIT ============ */
+renderReqForm();renderReqPaper();renderShowChips();renderPdfChips();renderShareSelect();renderDash();
+$('navUnsub').textContent=shows.reduce((a,s)=>a+(s.total-s.got),0);
+</script>
+</body>
+</html>

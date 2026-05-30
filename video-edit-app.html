@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技マシン｜動画編集マシン（AI動画自動編集システム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
+  --brand:#7b3ff0;--brand-dk:#6128cf;--brand-soft:#f1eaff;
+  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
+  --red:#e24a4a;--red-soft:#fdeaea;--sky:#e0489b;--pink-soft:#fdeaf4;
+  --sb:#160f30;--sb-2:#1f1640;--sb-ink:#cdc4e0;--sb-ink-2:#8a7da6;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+.mono{font-family:'Orbitron',sans-serif}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}}
+
+/* ===== sidebar ===== */
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:860px){.side{position:static;height:auto}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#9d6bff,#e0489b,#e3b864,#9d6bff);
+  display:grid;place-items:center;color:#0d0420;font-weight:900;font-size:18px}
+.logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
+.logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
+.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(123,63,240,.4)}
+.nav a .badge{margin-left:auto;background:var(--sky);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.side .org b{color:#fff;display:block;font-size:12.5px}
+.side .org span{color:var(--sb-ink-2);font-size:10.5px}
+
+/* ===== main ===== */
+.main{min-width:0}
+.demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
+.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
+.topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
+.topbar .actions{margin-left:auto;display:flex;gap:9px}
+.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--brand);color:var(--brand)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);color:#fff}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.06);color:#fff}
+.content{padding:22px 26px 60px}
+.view{display:none;animation:fade .35s}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* KPI cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+.kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
+.kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
+
+/* panels */
+.cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel .ph h3{font-size:14.5px;font-weight:800}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .pb{padding:16px 18px}
+
+/* bar chart */
+.bars{display:flex;flex-direction:column;gap:13px}
+.bar-row{display:grid;grid-template-columns:54px 1fr 78px;align-items:center;gap:11px;font-size:12.5px}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+
+/* donut */
+.donut-wrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.donut{width:128px;height:128px;border-radius:50%;flex-shrink:0}
+.legend{display:flex;flex-direction:column;gap:9px;font-size:12.5px}
+.legend .li{display:flex;align-items:center;gap:8px}
+.legend .sw{width:11px;height:11px;border-radius:3px}
+.legend b{margin-left:auto;font-variant-numeric:tabular-nums;padding-left:14px}
+
+/* activity */
+.acts{display:flex;flex-direction:column}
+.act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.act:last-child{border-bottom:0}
+.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .at{color:var(--ink);font-weight:600}
+.act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
+
+/* table */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;position:relative}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
+table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr:hover{background:var(--soft)}
+.thumb{width:54px;height:32px;border-radius:6px;display:grid;place-items:center;font-size:15px;color:#fff;flex-shrink:0}
+.cellv{display:flex;align-items:center;gap:11px}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+.st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.done{background:var(--green-soft);color:var(--green)}
+.st.published{background:var(--brand-soft);color:var(--brand)}
+.st.editing{background:var(--amber-soft);color:var(--amber)}
+.st.queue{background:var(--soft);color:var(--ink-3)}
+.st.review{background:var(--pink-soft);color:var(--sky)}
+.tag-s{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:6px;background:var(--soft);color:var(--ink-2)}
+
+/* AI generate / before-after */
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
+@media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
+.ba .col{padding:18px;border-radius:12px}
+.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
+@media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
+.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
+.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
+
+/* AI pipeline */
+.pipe{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.pipe.show{display:block;animation:fade .4s}
+.pstep{display:flex;align-items:center;gap:11px;padding:10px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:.45;transition:all .35s}
+.pstep.in{opacity:1;border-color:var(--brand-soft);background:var(--brand-soft)}
+.pstep.fin{opacity:1;border-color:#bdebd4;background:var(--green-soft)}
+.pstep .pi{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;font-size:13px;flex-shrink:0;background:#fff;border:1px solid var(--line)}
+.pstep.in .pi{background:var(--brand);color:#fff;border-color:var(--brand);animation:pulse 1s infinite}
+.pstep.fin .pi{background:var(--green);color:#fff;border-color:var(--green)}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+.pstep b{flex:1}
+.pstep .pt{font-size:11px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+
+/* generated short clips */
+.gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
+.gen-list.show{display:block;animation:fade .4s}
+.clips{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:10px}
+.clip{border:1px solid var(--line);border-radius:11px;overflow:hidden;opacity:0;transform:translateY(10px);transition:all .4s}
+.clip.in{opacity:1;transform:none}
+.clip .pv{aspect-ratio:9/16;display:grid;place-items:center;position:relative;color:#fff}
+.clip .pv .play{position:absolute;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.92);color:#1d2733;display:grid;place-items:center;font-size:14px}
+.clip .pv .dur{position:absolute;right:6px;bottom:6px;background:rgba(0,0,0,.6);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:5px}
+.clip .pv .cap{position:absolute;left:6px;right:6px;bottom:26px;background:rgba(0,0,0,.55);color:#fff;font-size:9.5px;font-weight:700;padding:3px 5px;border-radius:5px;text-align:center;line-height:1.3}
+.clip .ci{padding:8px 10px}
+.clip .ci .t{font-size:11.5px;font-weight:700;line-height:1.35}
+.clip .ci .m{font-size:10px;color:var(--ink-3);margin-top:3px;display:flex;gap:6px}
+
+/* AI orb */
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#9d6bff,#e0489b);display:grid;place-items:center;font-size:26px;flex-shrink:0}
+.orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes glow{0%,100%{box-shadow:0 0 22px rgba(123,63,240,.4)}50%{box-shadow:0 0 40px rgba(224,72,155,.55)}}
+
+/* kanban */
+.kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+@media(max-width:1080px){.kanban{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.kanban{grid-template-columns:1fr}}
+.kcol{background:var(--soft);border:1px solid var(--line);border-radius:13px;padding:12px;min-height:120px}
+.kcol .kh{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:800;margin-bottom:11px;padding:0 2px}
+.kcol .kh .cnt{margin-left:auto;background:var(--card);border:1px solid var(--line-2);font-size:11px;padding:1px 8px;border-radius:99px;color:var(--ink-2)}
+.kcard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:11px;margin-bottom:9px;box-shadow:var(--shadow);cursor:grab}
+.kcard:active{cursor:grabbing}
+.kcard.drag{opacity:.4}
+.kcol.over{border-color:var(--brand);background:var(--brand-soft)}
+.kcard .kt{font-size:12.5px;font-weight:700;line-height:1.4}
+.kcard .km{font-size:11px;color:var(--ink-3);margin-top:6px;display:flex;align-items:center;gap:7px}
+
+/* calendar */
+.cal{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:12px}
+.cal-grid .dow{text-align:center;font-size:11px;font-weight:700;color:var(--ink-3);padding-bottom:4px}
+.cal-cell{min-height:74px;border:1px solid var(--line);border-radius:9px;padding:6px;font-size:11px}
+.cal-cell.muted{background:var(--soft);opacity:.5}
+.cal-cell .dn{font-weight:700;color:var(--ink-2);font-size:11px}
+.cal-cell.today .dn{color:var(--brand)}
+.cal-cell.today{border-color:var(--brand)}
+.cal-ev{margin-top:4px;font-size:9.5px;font-weight:700;padding:2px 5px;border-radius:5px;line-height:1.3;color:#fff;overflow:hidden}
+
+/* subtitle editor */
+.sub-grid{display:grid;grid-template-columns:1fr minmax(300px,360px);gap:18px;align-items:start}
+@media(max-width:980px){.sub-grid{grid-template-columns:1fr}}
+.sub-line{display:grid;grid-template-columns:62px 1fr;gap:11px;padding:10px 0;border-bottom:1px solid var(--line);align-items:start}
+.sub-line:last-child{border-bottom:0}
+.sub-line .tc{font-family:'Orbitron';font-size:11px;color:var(--brand);font-weight:700;padding-top:9px}
+.sub-line input{width:100%;padding:9px 11px;border:1px solid var(--line-2);border-radius:8px;font-family:inherit;font-size:13px}
+.sub-line input:focus{outline:none;border-color:var(--brand)}
+.phone{background:#0d0420;border:8px solid #2a2140;border-radius:26px;aspect-ratio:9/16;position:relative;overflow:hidden;display:grid;place-items:end center;box-shadow:var(--shadow-lg)}
+.phone .scene{position:absolute;inset:0;display:grid;place-items:center;font-size:46px}
+.phone .scap{position:relative;z-index:2;margin-bottom:46px;background:rgba(0,0,0,.55);color:#fff;font-weight:900;font-size:15px;padding:6px 12px;border-radius:8px;text-align:center;max-width:84%;line-height:1.4;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+.phone .ui-top{position:absolute;top:14px;left:0;right:0;display:flex;justify-content:space-between;padding:0 14px;color:#fff;font-size:11px;z-index:2;opacity:.85}
+
+/* form */
+.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
+.fg textarea{resize:vertical;min-height:64px}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
+.fg .row{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.opt{border:1px solid var(--line-2);border-radius:10px;padding:11px 12px;cursor:pointer;font-size:12.5px;font-weight:700;transition:all .15s;display:flex;align-items:center;gap:8px}
+.opt:hover{border-color:var(--brand)}
+.opt.on{border-color:var(--brand);background:var(--brand-soft);color:var(--brand)}
+.opt .e{font-size:17px}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;transform:none}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+
+.empty-cell{text-align:center;color:var(--ink-3);padding:30px}
+.linkrow{display:flex;gap:8px;margin-top:6px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink:hover{color:var(--brand)}
+.sechead{font-size:13px;font-weight:800;color:var(--ink-2);margin:6px 0 12px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="side">
+    <div class="logo">
+      <div class="mk">技</div>
+      <div class="nm">動画編集マシン<small>技マシン｜AI動画編集</small></div>
+    </div>
+    <div class="nav-sec">管理メニュー</div>
+    <nav class="nav" id="nav">
+      <a data-v="dash" class="on"><span class="i">📊</span>ダッシュボード</a>
+      <a data-v="list"><span class="i">🎬</span>動画一覧</a>
+      <a data-v="auto"><span class="i">⚙️</span>自動編集<span class="badge" id="navQueue">0</span></a>
+      <a data-v="kanban"><span class="i">🗂️</span>制作進行</a>
+      <a data-v="calendar"><span class="i">📅</span>公開カレンダー</a>
+    </nav>
+    <div class="nav-sec">AIメニュー</div>
+    <nav class="nav">
+      <a data-v="ai"><span class="i">⚡</span>ショート切出し</a>
+      <a data-v="sub"><span class="i">💬</span>字幕</a>
+      <a data-v="aiedit"><span class="i">🤖</span>AI編集</a>
+    </nav>
+    <div class="org">
+      <div class="av">気</div>
+      <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
+    </div>
+    <div style="margin-top:14px;padding:0 8px"><a class="backlink" href="apps.html">← 技マシン ショールームへ</a></div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。動画・数値はサンプルです。自由に触ってお試しください。</div>
+    <div class="topbar">
+      <div>
+        <h1 id="pgTitle">ダッシュボード</h1>
+        <div class="sub" id="pgSub">2026年5月の編集状況</div>
+      </div>
+      <div class="actions" id="pgActions"></div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="kpis" id="kpis"></div>
+        <div class="cols">
+          <div class="panel">
+            <div class="ph"><h3>月次の編集本数推移</h3><span class="more">過去6ヶ月</span></div>
+            <div class="pb"><div class="bars" id="trendBars"></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>最近のアクティビティ</h3></div>
+            <div class="pb"><div class="acts" id="acts"></div></div>
+          </div>
+        </div>
+        <div class="cols" style="margin-top:16px">
+          <div class="panel">
+            <div class="ph"><h3>公開先プラットフォーム別の本数</h3></div>
+            <div class="pb"><div class="donut-wrap"><canvas class="donut" id="donut" width="128" height="128"></canvas><div class="legend" id="donutLegend"></div></div></div>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>再生数の多いショート Top5</h3></div>
+            <div class="pb"><div class="bars" id="topBars"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIST -->
+      <section class="view" id="v-list">
+        <div class="toolbar">
+          <div class="search"><span class="ic">🔍</span><input id="q" placeholder="タイトル・イベント名・出演者で検索"></div>
+          <div class="chips" id="statusChips"></div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>動画</th><th>イベント / 種別</th><th>長さ</th><th class="r">再生数</th><th>公開先</th><th>状態</th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </section>
+
+      <!-- AUTO EDIT (queue / setup form) -->
+      <section class="view" id="v-auto">
+        <div class="sub-grid">
+          <div>
+            <div class="panel">
+              <div class="ph"><h3>自動編集キュー</h3><span class="more" id="autoCnt">—</span></div>
+              <div class="pb" style="padding:0">
+                <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+                  <thead><tr><th>素材</th><th>テンプレート</th><th>進捗</th><th></th></tr></thead>
+                  <tbody id="autoRows"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="formcard">
+            <div class="sechead">⚙️ 自動編集を予約する</div>
+            <div class="fg"><label>素材（収録ライブ映像）</label>
+              <select id="aSrc"></select></div>
+            <div class="fg"><label>編集テンプレート</label>
+              <div class="opt-grid" id="aTpl"></div></div>
+            <div class="fg"><label>BGM</label>
+              <select id="aBgm">
+                <option>自動選曲（盛り上がりに合わせる）</option>
+                <option>アップテンポ / EDM</option>
+                <option>しっとり / アコースティック</option>
+                <option>BGMなし（原音のみ）</option>
+              </select></div>
+            <div class="fg row">
+              <div><label>仕上がり時間</label><select id="aLen"><option>60秒（ショート）</option><option>90秒</option><option>3分（ダイジェスト）</option><option>本編フル</option></select></div>
+              <div><label>テロップ</label><select id="aCap"><option>自動生成（推奨）</option><option>手動で後付け</option><option>なし</option></select></div>
+            </div>
+            <button class="btn primary" id="aQueue" style="width:100%;justify-content:center">⚙️ 自動編集をキューに追加</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- KANBAN -->
+      <section class="view" id="v-kanban">
+        <div class="sechead">カードをドラッグして進行状況を更新できます。</div>
+        <div class="kanban" id="kanban"></div>
+      </section>
+
+      <!-- CALENDAR -->
+      <section class="view" id="v-calendar">
+        <div class="cal">
+          <div style="display:flex;align-items:center;gap:10px">
+            <h3 style="font-size:15px;font-weight:900" id="calTitle">公開予定カレンダー</h3>
+            <div class="chips" style="margin-left:auto">
+              <span class="tag-s" style="background:var(--brand-soft);color:var(--brand)">YouTube</span>
+              <span class="tag-s" style="background:var(--pink-soft);color:var(--sky)">TikTok</span>
+              <span class="tag-s" style="background:var(--green-soft);color:var(--green)">Instagram</span>
+            </div>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+        </div>
+      </section>
+
+      <!-- AI SHORT CLIP -->
+      <section class="view" id="v-ai">
+        <div class="ai-stage">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+            <div class="orb" id="aiOrb">🤖</div>
+            <div><div style="font-size:16px;font-weight:900">ライブ映像から「見せ場」を自動でショート化</div>
+            <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">収録した <b>2時間18分</b> のライブ映像をAIが解析し、盛り上がりシーンを検出してショート動画＋字幕を自動生成します。</div></div>
+            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ 見せ場を検出して切り出す</button>
+          </div>
+          <div class="ba">
+            <div class="col before">
+              <span class="ct">😓 今までの手作業</span>
+              <div class="big" id="baBeforeT">4時間30分</div>
+              <ul>
+                <li>👀 2時間超の映像を全部見返す</li>
+                <li>✂️ 盛り上がり箇所を手で切り出す</li>
+                <li>⌨️ 1本ずつ字幕とテロップを打つ</li>
+                <li>📐 縦型(9:16)にリサイズして書き出し</li>
+              </ul>
+            </div>
+            <div class="arrow">→</div>
+            <div class="col after">
+              <span class="ct">⚡ 技マシン</span>
+              <div class="big" id="baAfterT">— </div>
+              <ul id="baAfterList" style="opacity:.4">
+                <li>🔊 歓声・盛り上がりをAIが自動検出</li>
+                <li>🎬 見せ場を縦型ショートに自動切出し</li>
+                <li>💬 字幕・テロップを自動生成</li>
+                <li>📤 各SNSへの投稿文まで自動作成</li>
+              </ul>
+            </div>
+          </div>
+          <div class="pipe" id="pipe">
+            <div style="font-size:13px;font-weight:800;margin-bottom:10px">🔍 AI解析パイプライン</div>
+            <div id="pipeSteps"></div>
+          </div>
+          <div class="gen-list" id="genList">
+            <div style="font-size:13px;font-weight:800;margin-bottom:4px">✅ 生成されたショート動画</div>
+            <div style="font-size:11.5px;color:var(--ink-3)">タップでプレビュー（デモ）。投稿文・ハッシュタグも自動生成済みです。</div>
+            <div class="clips" id="clips"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SUBTITLE -->
+      <section class="view" id="v-sub">
+        <div class="sub-grid">
+          <div class="panel">
+            <div class="ph"><h3>字幕エディタ</h3>
+              <button class="btn" id="subAi" style="margin-left:auto">✨ AIで自動文字起こし</button></div>
+            <div class="pb"><div id="subLines"></div></div>
+          </div>
+          <div>
+            <div class="phone" id="phone">
+              <div class="ui-top"><span id="phTime">0:00</span><span>9:16</span></div>
+              <div class="scene" id="phScene">🎤</div>
+              <div class="scap" id="phCap">字幕プレビュー</div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:12px">
+              <button class="btn primary" id="subPlay" style="flex:1;justify-content:center">▶ プレビュー再生</button>
+              <button class="btn green" id="subExport">書き出し</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI EDIT (chat-style instruct) -->
+      <section class="view" id="v-aiedit">
+        <div class="sub-grid">
+          <div class="formcard">
+            <div class="sechead">🤖 言葉で指示するだけのAI編集</div>
+            <div style="font-size:12.5px;color:var(--ink-3);margin-bottom:12px">「ここを切って」「テンポ良く」など日本語で指示すると、AIが編集内容に翻訳して反映します。</div>
+            <div class="fg"><label>編集する動画</label><select id="eSrc"></select></div>
+            <div class="fg"><label>やりたいことを言葉で</label>
+              <textarea id="ePrompt" placeholder="例：前半の話してる部分はテンポ良くカットして、サビの盛り上がりは残して。最後にチャンネル登録を促すテロップを入れて。"></textarea></div>
+            <div class="chips" style="margin-bottom:12px" id="ePresets"></div>
+            <button class="btn primary" id="eRun" style="width:100%;justify-content:center">🤖 この内容でAI編集を実行</button>
+          </div>
+          <div class="panel">
+            <div class="ph"><h3>AI編集ログ</h3></div>
+            <div class="pb"><div id="eLog" style="font-size:13px;color:var(--ink-3)">編集を実行すると、AIが行った処理がここに表示されます。</div></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============ HELPERS ============ */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const num=n=>Math.round(n).toLocaleString();
+const TODAY=new Date();
+function ym(d){return (d.getMonth()+1)}
+let SEED=7351;function rnd(){SEED=(SEED*1103515245+12345)&0x7fffffff;return SEED/0x7fffffff;}
+function pick(a){return a[Math.floor(rnd()*a.length)];}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function views(n){return n>=10000?(n/10000).toFixed(1)+'万':num(n);}
+
+/* ============ DATA ============ */
+const PLATFORMS=[
+  {k:'YouTube',c:'#7b3ff0',cs:'var(--brand-soft)',ic:'var(--brand)'},
+  {k:'TikTok',c:'#e0489b',cs:'var(--pink-soft)',ic:'var(--sky)'},
+  {k:'Instagram',c:'#16b877',cs:'var(--green-soft)',ic:'var(--green)'},
+];
+const THUMBS=['🎸','🎤','🎹','🥁','🎧','🎺','🎻','🎬','🪩','🎙️'];
+const THCOL=['#7b3ff0','#e0489b','#0ea5b7','#e3941f','#16b877','#e24a4a','#6128cf'];
+const EVENTS=[
+  {ev:'OITA LIVE NIGHT vol.12',kind:'ライブ',artist:'藍色サイダー'},
+  {ev:'別府ベイサイドフェス2026',kind:'フェス',artist:'The 温泉ロケッツ'},
+  {ev:'都町ジャズセッション',kind:'ライブ',artist:'大分ブラスカルテット'},
+  {ev:'OITA LIVE NIGHT vol.12',kind:'ライブ',artist:'夜更けのモラトリアム'},
+  {ev:'うみたまご音楽祭',kind:'フェス',artist:'シーサイドガールズ'},
+  {ev:'豊後高田レコードバー',kind:'DJ',artist:'DJ KABOSU'},
+  {ev:'リバーサイド弾き語り',kind:'弾き語り',artist:'川宿田あかり'},
+  {ev:'別府ベイサイドフェス2026',kind:'フェス',artist:'ネオン商店街'},
+  {ev:'大分駅前ストリートライブ',kind:'路上',artist:'まちかどシンガーズ'},
+  {ev:'OITA TECHNO WAVE',kind:'クラブ',artist:'DJ HARBOR'},
+];
+const TITLES_S=[
+  'サビ前の煽りが鳥肌','まさかのアカペラ転調','客席との大合唱','ギターソロ完全再現',
+  'MCで会場爆笑','感動のラストバラード','イントロドンで歓声','まさかのカバー曲',
+  'ダブルアンコール','照明演出が神','ドロップで大盛り上がり','弾き語りの神回',
+];
+const STATUSES=['published','published','done','editing','review','queue','published','done'];
+const STLABEL={published:'公開済',done:'編集完了',editing:'編集中',review:'確認待ち',queue:'待機中'};
+function stBadge(s){return `<span class="st ${s}">${STLABEL[s]}</span>`;}
+
+let videos=[];
+(function seed(){
+  for(let i=0;i<24;i++){
+    const e=pick(EVENTS);
+    const isShort=rnd()>0.45;
+    const secs=isShort?(20+Math.floor(rnd()*55)):(120+Math.floor(rnd()*5400));
+    const pf=pick(PLATFORMS);
+    let stt=pick(STATUSES);
+    const v=(stt==='published'||stt==='done')?(800+Math.floor(rnd()*240000)):0;
+    const dayOff=Math.floor(rnd()*40)-15;
+    const dt=new Date(TODAY.getFullYear(),TODAY.getMonth(),TODAY.getDate()+dayOff);
+    videos.push({
+      id:'VID-'+(2600+i+1),
+      title:isShort?pick(TITLES_S):(e.artist+' フルライブ'),
+      ev:e.ev,kind:e.kind,artist:e.artist,
+      short:isShort,secs,plat:pf.k,
+      views:v,status:stt,
+      thumb:pick(THUMBS),tcol:pick(THCOL),
+      date:dt,
+    });
+  }
+})();
+function fmtLen(s){const m=Math.floor(s/60),ss=s%60;return m>0?m+':'+String(ss).padStart(2,'0'):'0:'+String(ss).padStart(2,'0');}
+function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
+function platMeta(k){return PLATFORMS.find(p=>p.k===k)||PLATFORMS[0];}
+
+/* ============ ROUTING ============ */
+const TITLES={dash:['ダッシュボード','2026年'+ym(TODAY)+'月の編集状況'],list:['動画一覧','収録・編集した動画を管理します'],
+  auto:['自動編集','ライブ映像をテンプレートで一括自動編集'],kanban:['制作進行','編集タスクの進行をボードで管理'],
+  calendar:['公開カレンダー','各SNSへの公開予定を一覧'],ai:['ショート切出し','見せ場を検出してショートを自動生成'],
+  sub:['字幕','AIで自動文字起こし・テロップ編集'],aiedit:['AI編集','言葉で指示するだけのAI編集']};
+function go(v){
+  document.querySelectorAll('.nav a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on','v-'+v===s.id));
+  $('pgTitle').textContent=TITLES[v][0];$('pgSub').textContent=TITLES[v][1];
+  $('pgActions').innerHTML = v==='list'?'<button class="btn primary" onclick="go(\'auto\')">⚙️ 自動編集</button>'
+    : v==='dash'?'<button class="btn" onclick="go(\'ai\')">⚡ ショート切出し</button><button class="btn primary" onclick="go(\'auto\')">⚙️ 自動編集</button>':'';
+  if(v==='dash')renderDash();
+  if(v==='list')renderList();
+  if(v==='auto')renderAuto();
+  if(v==='kanban')renderKanban();
+  if(v==='calendar')renderCalendar();
+}
+document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
+window.go=go;
+
+/* ============ DASHBOARD ============ */
+function renderDash(){
+  const tm=videos.filter(v=>thisMonth(v.date));
+  const edited=tm.length;
+  const published=videos.filter(v=>v.status==='published').length;
+  const totalViews=videos.reduce((s,v)=>s+v.views,0);
+  $('kpis').innerHTML=`
+    ${kpi('#7b3ff0','今月の編集本数',edited+'<small>本</small>','うちショート '+tm.filter(v=>v.short).length+'本','up','前月比 +23%')}
+    ${kpi('#e0489b','公開済',published+'<small>本</small>','3プラットフォーム','up','+9本')}
+    ${kpi('#16b877','総再生数',views(totalViews),'','up','前月比 +41%')}
+    ${kpi('#e3941f','作業時間 削減',Math.round(edited*3.6)+'<small>h</small>','AI自動化による','up','月間換算')}`;
+  // trend (edited count per month)
+  const months=[];for(let k=5;k>=0;k--){const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1);months.push(d);}
+  const counts=months.map((m,idx)=>idx===5?edited:(6+Math.floor(rnd()*20)));
+  const mx=Math.max(...counts,1);
+  $('trendBars').innerHTML=months.map((m,i)=>`
+    <div class="bar-row"><span class="mlabel">${m.getMonth()+1}月</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(counts[i]/mx*100)}"></div></div>
+      <span class="mval">${counts[i]}本</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+  // activity
+  const acts=[
+    {i:'⚡',c:'#f1eaff',t:'OITA LIVE NIGHT vol.12 から 8本のショートを自動生成',m:'3分前'},
+    {i:'📤',c:'#fdeaf4',t:'「サビ前の煽りが鳥肌」を TikTok へ公開（再生 1.2万）',m:'42分前'},
+    {i:'💬',c:'#e6f8f0',t:'藍色サイダー フルライブ の字幕を自動文字起こし',m:'今日 10:20'},
+    {i:'🤖',c:'#f1eaff',t:'AI編集「テンポ良くカット」を実行（-14分短縮）',m:'今日 9:05'},
+    {i:'✅',c:'#e6f8f0',t:'別府ベイサイドフェス2026 ダイジェストの編集が完了',m:'昨日'},
+  ];
+  $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${a.m}</div></div></div>`).join('');
+  // donut: platform distribution
+  const dist=PLATFORMS.map(p=>({...p,n:videos.filter(v=>v.plat===p.k).length}));
+  drawDonut(dist);
+  $('donutLegend').innerHTML=dist.map(d=>`<div class="li"><span class="sw" style="background:${d.c}"></span>${d.k}<b>${d.n}本</b></div>`).join('');
+  // top5 views
+  const top=[...videos].filter(v=>v.views>0).sort((a,b)=>b.views-a.views).slice(0,5);
+  const tmx=top.length?top[0].views:1;
+  $('topBars').innerHTML=top.map(v=>`
+    <div class="bar-row"><span class="mlabel" style="font-size:11px">${esc(v.plat.slice(0,2))}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:0;background:linear-gradient(90deg,${platMeta(v.plat).c},#e3b864)" data-w="${Math.round(v.views/tmx*100)}"></div></div>
+      <span class="mval">${views(v.views)}</span></div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#topBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+}
+function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+function drawDonut(dist){
+  const cv=$('donut');if(!cv)return;const ctx=cv.getContext('2d');ctx.clearRect(0,0,128,128);
+  const total=dist.reduce((s,d)=>s+d.n,0)||1;let a=-Math.PI/2;
+  dist.forEach(d=>{const slice=d.n/total*Math.PI*2;ctx.beginPath();ctx.moveTo(64,64);ctx.arc(64,64,60,a,a+slice);ctx.closePath();ctx.fillStyle=d.c;ctx.fill();a+=slice;});
+  ctx.beginPath();ctx.arc(64,64,38,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
+  ctx.fillStyle='#1d2733';ctx.font='900 22px Orbitron, sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(total,64,60);
+  ctx.fillStyle='#8a94a6';ctx.font='700 9px sans-serif';ctx.fillText('本',64,78);
+}
+
+/* ============ LIST ============ */
+let filterStatus='all';
+function renderChips(){
+  const opts=[['all','すべて'],['published','公開済'],['done','編集完了'],['editing','編集中'],['review','確認待ち'],['queue','待機中']];
+  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
+}
+function renderList(){
+  const q=($('q').value||'').toLowerCase();
+  let rows=videos.filter(v=>filterStatus==='all'||v.status===filterStatus)
+    .filter(v=>!q||(v.title+v.ev+v.artist+v.id).toLowerCase().includes(q))
+    .sort((a,b)=>b.date-a.date);
+  $('listRows').innerHTML=rows.length?rows.map(v=>`<tr>
+    <td><div class="cellv"><div class="thumb" style="background:${v.tcol}">${v.thumb}</div>
+      <div><b>${esc(v.title)}</b><div style="font-size:11px;color:var(--ink-3)">${v.short?'ショート':'本編'} ・ ${esc(v.id)}</div></div></div></td>
+    <td><div>${esc(v.ev)}</div><span class="tag-s">${esc(v.kind)}</span></td>
+    <td class="tnum" style="color:var(--ink-2)">${fmtLen(v.secs)}</td>
+    <td class="r tnum"><b>${v.views?views(v.views):'—'}</b></td>
+    <td><span class="tag-s" style="background:${platMeta(v.plat).cs};color:${platMeta(v.plat).ic}">${esc(v.plat)}</span></td>
+    <td>${stBadge(v.status)}</td></tr>`).join('')
+    :'<tr><td colspan="6" class="empty-cell">該当する動画がありません</td></tr>';
+}
+$('q').addEventListener('input',renderList);
+
+/* ============ AUTO EDIT ============ */
+const TEMPLATES=[
+  {k:'ライブ盛り上がり',e:'🔥'},{k:'MC＆トーク中心',e:'🎙️'},
+  {k:'1曲まるごと',e:'🎵'},{k:'高速ダイジェスト',e:'⚡'},
+];
+let autoTpl='ライブ盛り上がり';
+let autoQueue=[
+  {src:'藍色サイダー フルライブ',tpl:'ライブ盛り上がり',prog:100,done:true},
+  {src:'別府ベイサイドフェス2026 1日目',tpl:'高速ダイジェスト',prog:62,done:false},
+  {src:'都町ジャズセッション 後半',tpl:'1曲まるごと',prog:18,done:false},
+];
+function renderAutoForm(){
+  $('aSrc').innerHTML=videos.filter(v=>!v.short).map(v=>`<option>${esc(v.artist)} ${v.kind}（${fmtLen(v.secs)}）</option>`).join('')
+    || '<option>豊後おおいたライブ収録（2:18:40）</option>';
+  $('aTpl').innerHTML=TEMPLATES.map(t=>`<div class="opt ${t.k===autoTpl?'on':''}" data-t="${esc(t.k)}"><span class="e">${t.e}</span>${esc(t.k)}</div>`).join('');
+  $('aTpl').querySelectorAll('.opt').forEach(o=>o.onclick=()=>{autoTpl=o.dataset.t;renderAutoForm();});
+}
+function renderAuto(){
+  renderAutoForm();
+  const pend=autoQueue.filter(q=>!q.done).length;
+  $('autoCnt').textContent=pend?pend+'件 処理中':'すべて完了';
+  $('navQueue').textContent=pend;
+  $('autoRows').innerHTML=autoQueue.map((q,i)=>`<tr>
+    <td><b>${esc(q.src)}</b></td>
+    <td><span class="tag-s">${esc(q.tpl)}</span></td>
+    <td style="min-width:130px"><div class="bar-track" style="margin-bottom:4px"><div class="bar-fill" style="width:${q.prog}%;background:${q.done?'var(--green)':'linear-gradient(90deg,var(--brand),var(--sky))'}"></div></div>
+      <span style="font-size:11px;color:var(--ink-3)">${q.done?'完了':q.prog+'%'}</span></td>
+    <td class="r">${q.done?'<span class="st done">編集完了</span>':`<button class="btn" style="padding:6px 12px" onclick="pushAuto(${i})">早送り</button>`}</td></tr>`).join('');
+}
+window.pushAuto=i=>{const q=autoQueue[i];if(!q)return;q.prog=Math.min(100,q.prog+30);if(q.prog>=100){q.done=true;showToast(q.src+' の自動編集が完了しました');}renderAuto();};
+$('aQueue').addEventListener('click',async()=>{
+  const btn=$('aQueue');btn.disabled=true;btn.textContent='⚙️ キューに追加中…';
+  await new Promise(r=>setTimeout(r,650));
+  const src=($('aSrc').value||'新規ライブ収録').replace(/（.*$/,'').trim();
+  autoQueue.unshift({src:src||'新規ライブ収録',tpl:autoTpl,prog:6,done:false});
+  btn.disabled=false;btn.textContent='⚙️ 自動編集をキューに追加';
+  renderAuto();showToast('自動編集をキューに追加しました（'+autoTpl+'）');
+});
+
+/* ============ KANBAN ============ */
+const KCOLS=[
+  {k:'queue',label:'📥 素材待ち',color:'#8a94a6'},
+  {k:'editing',label:'✂️ 編集中',color:'#e3941f'},
+  {k:'review',label:'👀 確認待ち',color:'#e0489b'},
+  {k:'published',label:'🚀 公開済',color:'#7b3ff0'},
+];
+function renderKanban(){
+  $('kanban').innerHTML=KCOLS.map(c=>{
+    const items=videos.filter(v=>v.status===c.k).slice(0,6);
+    return `<div class="kcol" data-k="${c.k}">
+      <div class="kh"><span style="width:9px;height:9px;border-radius:3px;background:${c.color}"></span>${c.label}<span class="cnt">${videos.filter(v=>v.status===c.k).length}</span></div>
+      ${items.map(v=>`<div class="kcard" draggable="true" data-id="${v.id}">
+        <div class="kt">${esc(v.title)}</div>
+        <div class="km"><span class="thumb" style="width:26px;height:18px;font-size:10px;background:${v.tcol}">${v.thumb}</span>${esc(v.artist)} ・ ${fmtLen(v.secs)}</div></div>`).join('')||'<div style="font-size:11.5px;color:var(--ink-3);padding:8px 2px">カードなし</div>'}
+    </div>`;
+  }).join('');
+  bindDnd();
+}
+let dragId=null;
+function bindDnd(){
+  document.querySelectorAll('.kcard').forEach(c=>{
+    c.addEventListener('dragstart',()=>{dragId=c.dataset.id;c.classList.add('drag');});
+    c.addEventListener('dragend',()=>{dragId=null;c.classList.remove('drag');});
+  });
+  document.querySelectorAll('.kcol').forEach(col=>{
+    col.addEventListener('dragover',e=>{e.preventDefault();col.classList.add('over');});
+    col.addEventListener('dragleave',()=>col.classList.remove('over'));
+    col.addEventListener('drop',e=>{e.preventDefault();col.classList.remove('over');
+      const v=videos.find(x=>x.id===dragId);if(v&&v.status!==col.dataset.k){v.status=col.dataset.k;
+        if(col.dataset.k==='published'&&!v.views)v.views=500+Math.floor(rnd()*50000);
+        renderKanban();showToast(v.title+' を「'+STLABEL[col.dataset.k]+'」へ移動');}});
+  });
+}
+
+/* ============ CALENDAR ============ */
+function renderCalendar(){
+  const y=TODAY.getFullYear(),m=TODAY.getMonth();
+  $('calTitle').textContent=y+'年'+(m+1)+'月 公開予定';
+  const first=new Date(y,m,1),startDow=first.getDay(),days=new Date(y,m+1,0).getDate();
+  const dows=['日','月','火','水','木','金','土'];
+  // events from videos with dates this month
+  const evMap={};
+  videos.filter(v=>thisMonth(v.date)&&(v.status==='published'||v.status==='done'||v.status==='review')).forEach(v=>{
+    const d=v.date.getDate();(evMap[d]=evMap[d]||[]).push(v);
+  });
+  let html=dows.map(d=>`<div class="dow">${d}</div>`).join('');
+  for(let i=0;i<startDow;i++)html+='<div class="cal-cell muted"></div>';
+  for(let d=1;d<=days;d++){
+    const evs=(evMap[d]||[]).slice(0,2);
+    const isToday=d===TODAY.getDate();
+    html+=`<div class="cal-cell ${isToday?'today':''}"><div class="dn">${d}</div>
+      ${evs.map(v=>`<div class="cal-ev" style="background:${platMeta(v.plat).c}">${esc(v.plat.slice(0,2))} ${esc(v.title.slice(0,5))}</div>`).join('')}
+      ${(evMap[d]||[]).length>2?`<div style="font-size:9px;color:var(--ink-3);margin-top:2px">+${evMap[d].length-2}件</div>`:''}</div>`;
+  }
+  $('calGrid').innerHTML=html;
+}
+
+/* ============ AI SHORT CLIP ============ */
+const PIPE=[
+  {i:'🎞️',t:'映像をシーンに分割中…',ms:'00:00 → 02:18'},
+  {i:'🔊',t:'音声から歓声・盛り上がりを検出中…',ms:'ピーク 14箇所'},
+  {i:'😀',t:'表情・動きのハイライトを解析中…',ms:'スコアリング'},
+  {i:'✂️',t:'見せ場を縦型(9:16)に自動切出し中…',ms:'8クリップ'},
+  {i:'💬',t:'字幕・テロップを自動生成中…',ms:'文字起こし'},
+  {i:'📤',t:'各SNSの投稿文・ハッシュタグを生成中…',ms:'3媒体'},
+];
+$('aiRun').addEventListener('click',async()=>{
+  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 解析中…';
+  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+  $('baAfterList').style.opacity='1';
+  $('genList').classList.remove('show');$('clips').innerHTML='';
+  // timer for after big number
+  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent='0:'+String(Math.min(s,58)).padStart(2,'0');},90);
+  // pipeline
+  $('pipe').classList.add('show');
+  $('pipeSteps').innerHTML=PIPE.map((p,i)=>`<div class="pstep" data-i="${i}"><div class="pi">${p.i}</div><b>${esc(p.t)}</b><span class="pt">${esc(p.ms)}</span></div>`).join('');
+  const steps=[...$('pipeSteps').querySelectorAll('.pstep')];
+  for(let i=0;i<steps.length;i++){
+    steps[i].classList.add('in');
+    await new Promise(r=>setTimeout(r,380));
+    steps[i].classList.remove('in');steps[i].classList.add('fin');
+    steps[i].querySelector('.pi').textContent='✓';
+  }
+  clearInterval(t);$('baAfterT').textContent='52秒';
+  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+  // generate clips
+  const caps=['ここ鳥肌','見て','神演奏','大合唱','まさかの','エモすぎ','最高潮','必見'];
+  const n=8;
+  $('clips').innerHTML=Array.from({length:n}).map((_,i)=>{
+    const title=pick(TITLES_S);const pf=pick(PLATFORMS);const dur=18+Math.floor(rnd()*42);
+    const score=82+Math.floor(rnd()*18);const cap=pick(caps);const th=pick(THUMBS);const col=pick(THCOL);
+    return `<div class="clip" data-i="${i}">
+      <div class="pv" style="background:linear-gradient(160deg,${col},#160f30)">
+        <span style="font-size:30px">${th}</span>
+        <div class="cap">${esc(cap)}</div>
+        <div class="play">▶</div><div class="dur">0:${String(dur).padStart(2,'0')}</div></div>
+      <div class="ci"><div class="t">${esc(title)}</div>
+        <div class="m"><span style="color:${platMeta(pf.k).ic}">${esc(pf.k)}</span><span>見せ場度 ${score}</span></div></div></div>`;
+  }).join('');
+  $('genList').classList.add('show');
+  const clips=[...$('clips').querySelectorAll('.clip')];
+  for(let i=0;i<clips.length;i++){await new Promise(r=>setTimeout(r,140));clips[i].classList.add('in');
+    clips[i].onclick=()=>showToast('プレビュー再生（デモ）：'+clips[i].querySelector('.t').textContent);
+    // add to library
+    const t=clips[i].querySelector('.t').textContent;
+    videos.unshift({id:'VID-'+(2600+videos.length+1),title:t,ev:'OITA LIVE NIGHT vol.12',kind:'ライブ',artist:'藍色サイダー',
+      short:true,secs:18+Math.floor(rnd()*42),plat:pick(PLATFORMS).k,views:0,status:'review',thumb:pick(THUMBS),tcol:pick(THCOL),date:new Date()});
+  }
+  btn.disabled=false;btn.textContent='⚡ もう一度切り出す';
+  showToast(n+'本のショート動画を自動生成しました（一覧に追加）');
+});
+
+/* ============ SUBTITLE ============ */
+let subData=[
+  {t:'00:00',x:'みんな〜！大分、最高か〜！！'},
+  {t:'00:03',x:'今日は来てくれて本当にありがとう'},
+  {t:'00:07',x:'次の曲、一緒に歌ってくれる？'},
+  {t:'00:11',x:'（イントロ）……いくよ、せーの！'},
+  {t:'00:15',x:'夜風に揺れる ネオンの街で'},
+  {t:'00:20',x:'君と見た 海の色を 忘れない'},
+];
+function renderSub(){
+  $('subLines').innerHTML=subData.map((l,i)=>`<div class="sub-line">
+    <div class="tc">${esc(l.t)}</div>
+    <input data-i="${i}" value="${esc(l.x)}"></div>`).join('');
+  $('subLines').querySelectorAll('input').forEach(inp=>inp.oninput=()=>{subData[+inp.dataset.i].x=inp.value;});
+}
+$('subAi').addEventListener('click',async()=>{
+  const btn=$('subAi');btn.disabled=true;btn.textContent='✨ 文字起こし中…';
+  await new Promise(r=>setTimeout(r,900));
+  btn.disabled=false;btn.textContent='✨ AIで自動文字起こし';
+  showToast('音声を解析し '+subData.length+'行の字幕を自動生成しました');
+});
+let subPlaying=false;
+$('subPlay').addEventListener('click',async()=>{
+  if(subPlaying)return;subPlaying=true;
+  const scenes=['🎤','🎸','🎹','🙌','🪩','🎧'];
+  for(let i=0;i<subData.length;i++){
+    $('phCap').textContent=subData[i].x;
+    $('phScene').textContent=scenes[i%scenes.length];
+    $('phTime').textContent=subData[i].t;
+    await new Promise(r=>setTimeout(r,750));
+  }
+  subPlaying=false;
+});
+$('subExport').addEventListener('click',()=>showToast('字幕付き動画を書き出しました（デモ・.mp4 / .srt）'));
+
+/* ============ AI EDIT ============ */
+const EPRESETS=['テンポ良くカット','間（ま）を詰める','サビだけ残す','BGMを足す','字幕を自動で','チャンネル登録テロップ'];
+function renderEdit(){
+  $('eSrc').innerHTML=videos.map(v=>`<option>${esc(v.title)}（${fmtLen(v.secs)}）</option>`).join('');
+  $('ePresets').innerHTML=EPRESETS.map(p=>`<button class="chip" data-p="${esc(p)}">＋ ${esc(p)}</button>`).join('');
+  $('ePresets').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
+    const ta=$('ePrompt');ta.value=(ta.value?ta.value+' / ':'')+c.dataset.p;ta.focus();
+  });
+}
+$('eRun').addEventListener('click',async()=>{
+  const prompt=$('ePrompt').value.trim();
+  if(!prompt){showToast('やりたいことを入力してください');return;}
+  const btn=$('eRun');btn.disabled=true;btn.textContent='🤖 AI編集を実行中…';
+  const src=$('eSrc').value;
+  const log=$('eLog');
+  const steps=[
+    '🧠 指示を解析：「'+prompt.slice(0,40)+(prompt.length>40?'…':'')+'」',
+    '🎞️ 「'+src+'」を読み込み、シーンを解析',
+    '✂️ 無音・言い淀みを検出して自動カット（-3:42 短縮）',
+    '🎵 盛り上がりに合わせてBGMとSEを配置',
+    '💬 テロップ・字幕を自動生成して配置',
+    '✅ 書き出し完了（プレビュー生成済み）',
+  ];
+  log.innerHTML='';
+  for(const s of steps){
+    await new Promise(r=>setTimeout(r,520));
+    const div=document.createElement('div');
+    div.style.cssText='padding:9px 0;border-bottom:1px solid var(--line);color:var(--ink);font-weight:600;animation:fade .3s';
+    div.innerHTML=esc(s);log.appendChild(div);log.scrollTop=log.scrollHeight;
+  }
+  btn.disabled=false;btn.textContent='🤖 この内容でAI編集を実行';
+  showToast('AI編集が完了しました（プレビュー生成済み）');
+});
+
+/* ============ INIT ============ */
+renderChips();renderSub();renderEdit();renderDash();
+$('navQueue').textContent=autoQueue.filter(q=>!q.done).length;
+</script>
+</body>
+</html>
