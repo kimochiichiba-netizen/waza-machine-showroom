@@ -389,6 +389,54 @@ html[data-theme="dark"] .toast{background:#2a3548;border:1px solid var(--line-2)
 .backlink:hover{color:#fff}
 .muted{color:var(--ink-2)}
 .fav-tag{font-size:10px;color:#f5b400;font-weight:800}
+
+/* ===== AUTO DEMO TOUR ===== */
+.demo-btn{position:relative;overflow:hidden}
+.demo-btn.playing{background:linear-gradient(100deg,var(--red),#f0625e)!important;border-color:var(--red)!important;color:#fff!important;box-shadow:0 4px 14px rgba(224,67,63,.4)!important}
+.demo-btn .pulse{display:none}
+.demo-btn.playing .pulse{display:inline-block;width:8px;height:8px;border-radius:50%;background:#fff;animation:demopulse 1s ease-in-out infinite}
+@keyframes demopulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+
+/* subtitle / narration bar */
+.demo-sub{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(140%);
+  z-index:400;max-width:min(680px,92vw);background:rgba(13,20,38,.96);color:#fff;
+  border-radius:16px;padding:15px 22px;box-shadow:var(--shadow-lg);backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:14px;
+  transition:transform .42s var(--ease),opacity .42s var(--ease);opacity:0;cursor:pointer}
+.demo-sub.show{transform:translateX(-50%) translateY(0);opacity:1}
+.demo-sub .ds-orb{width:38px;height:38px;border-radius:50%;flex-shrink:0;font-size:18px;
+  display:grid;place-items:center;background:radial-gradient(circle at 35% 30%,#4fd1e6,#7c54f0);
+  box-shadow:0 0 16px rgba(124,84,240,.5);animation:dsorb 1.4s ease-in-out infinite}
+@keyframes dsorb{0%,100%{box-shadow:0 0 14px rgba(124,84,240,.45)}50%{box-shadow:0 0 26px rgba(79,209,230,.6)}}
+.demo-sub .ds-txt{flex:1;min-width:0}
+.demo-sub .ds-step{font-size:10.5px;font-weight:800;letter-spacing:.06em;color:#7fe0ff;text-transform:uppercase;margin-bottom:2px}
+.demo-sub .ds-line{font-size:14.5px;font-weight:700;line-height:1.5}
+.demo-sub .ds-skip{flex-shrink:0;font-size:10.5px;color:rgba(255,255,255,.6);font-weight:700;
+  border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:5px 10px;white-space:nowrap}
+.demo-sub .ds-prog{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(255,255,255,.12);border-radius:0 0 16px 16px;overflow:hidden}
+.demo-sub .ds-prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,#4fd1e6,#37e29a);transition:width .4s linear}
+@media(max-width:560px){.demo-sub{bottom:14px;padding:12px 16px;gap:10px}.demo-sub .ds-line{font-size:13px}.demo-sub .ds-skip{display:none}}
+
+/* spotlight highlight on target elements */
+.demo-spot{position:relative;z-index:130;outline:3px solid var(--brand)!important;outline-offset:3px;
+  border-radius:12px;box-shadow:0 0 0 6px var(--brand-glow),0 0 28px var(--brand-glow)!important;
+  animation:demospot 1.2s ease-in-out infinite}
+@keyframes demospot{0%,100%{box-shadow:0 0 0 5px var(--brand-glow),0 0 22px var(--brand-glow)}50%{box-shadow:0 0 0 9px var(--brand-glow),0 0 38px var(--brand-glow)}}
+
+/* simulated cursor ring */
+.demo-cursor{position:fixed;z-index:420;width:30px;height:30px;border-radius:50%;
+  border:2.5px solid var(--brand);background:var(--brand-glow);pointer-events:none;
+  transform:translate(-50%,-50%) scale(.6);opacity:0;transition:left .6s var(--ease),top .6s var(--ease),opacity .3s,transform .2s;
+  box-shadow:0 0 14px var(--brand-glow)}
+.demo-cursor.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.demo-cursor.tap{transform:translate(-50%,-50%) scale(.7);background:rgba(47,109,240,.5)}
+
+@media(prefers-reduced-motion:reduce){
+  .demo-sub{transition:opacity .2s}
+  .demo-sub .ds-orb,.demo-spot,.demo-btn.playing .pulse{animation:none!important}
+  .demo-cursor{transition:opacity .2s}
+  .view.on{animation:none}
+}
 </style>
 </head>
 <body>
@@ -430,6 +478,7 @@ html[data-theme="dark"] .toast{background:#2a3548;border:1px solid var(--line-2)
         <div class="sub" id="pgSub">顧客のいまをひと目で</div>
       </div>
       <div class="actions">
+        <button class="btn primary demo-btn" id="demoBtn" title="アプリが自動で動いて使い方を見せます"><span class="pulse"></span><span id="demoBtnLabel">▶ 自動デモを見る</span></button>
         <button class="cmd-trigger" id="cmdTrigger">🔍 <span class="lbl">検索・移動</span> <kbd>⌘K</kbd></button>
         <button class="icon-btn" id="themeBtn" title="ライト／ダーク切替">🌙</button>
         <span id="pgActions" style="display:contents"></span>
@@ -609,6 +658,15 @@ html[data-theme="dark"] .toast{background:#2a3548;border:1px solid var(--line-2)
 </div>
 
 <div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<!-- auto demo narration bar + simulated cursor -->
+<div class="demo-sub" id="demoSub" role="status" aria-live="polite" title="タップでスキップ／停止">
+  <div class="ds-orb" id="demoOrb">🤖</div>
+  <div class="ds-txt"><div class="ds-step" id="demoStep">🔴 自動デモ再生中（タップでスキップ）</div><div class="ds-line" id="demoLine"></div></div>
+  <div class="ds-skip">タップでスキップ</div>
+  <div class="ds-prog"><i id="demoProg"></i></div>
+</div>
+<div class="demo-cursor" id="demoCursor"></div>
 
 <script>
 /* ============ HELPERS ============ */
@@ -1284,6 +1342,163 @@ updateFollowBadge();
 $('aiHistCount').textContent=history.length+'件';
 $('aiCustCount').textContent=customers.length+'社';
 $('pgActions').innerHTML='<button class="btn" onclick="go(\'ai\')">⚡ AI分析</button><button class="btn primary" onclick="go(\'hist\')">📝 履歴を記録</button>';
+
+/* ============ AUTO DEMO TOUR ============ */
+/* 商談相手の前で、実在のボタン・関数を使ってアプリが自動で動くガイドツアー。 */
+(function(){
+  const REDUCED=window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  // reduced-motion時は1ステップを短く＝過剰な待ちを避ける
+  const SPEED=REDUCED?0.62:1;
+  let running=false, cancelled=false, spotEl=null, stepIdx=0, totalSteps=0;
+  const sub=$('demoSub'), line=$('demoLine'), prog=$('demoProg'), curEl=$('demoCursor'), btn=$('demoBtn');
+
+  const sleep=ms=>new Promise(res=>{ if(cancelled)return res(); setTimeout(res, Math.max(0,ms*SPEED)); });
+  function guard(){ if(cancelled) throw 'cancelled'; }
+
+  function clearSpot(){ if(spotEl){spotEl.classList.remove('demo-spot');spotEl=null;} }
+  function spot(el){
+    clearSpot(); if(!el)return; spotEl=el; el.classList.add('demo-spot');
+    if(!REDUCED){ try{ el.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){ el.scrollIntoView(); } }
+  }
+  function moveCursorTo(el){
+    if(REDUCED||!el)return;
+    const r=el.getBoundingClientRect();
+    curEl.classList.add('show');
+    curEl.style.left=(r.left+r.width/2)+'px';
+    curEl.style.top=(r.top+r.height/2)+'px';
+  }
+  async function tapCursor(){
+    if(REDUCED)return;
+    curEl.classList.add('tap'); await sleep(160); curEl.classList.remove('tap');
+  }
+
+  // 字幕を出してナレーション。msだけ表示を保つ。
+  async function say(stepLabel, text, ms){
+    guard();
+    $('demoStep').textContent=stepLabel;
+    line.textContent=text;
+    sub.classList.add('show');
+    stepIdx++; prog.style.width=Math.min(100,Math.round(stepIdx/totalSteps*100))+'%';
+    await sleep(ms||1900);
+  }
+  // 要素にカーソルを当てて軽くハイライト→クリック（実在のclickを発火）
+  async function click(el, preMs){
+    guard(); if(!el)return;
+    spot(el); moveCursorTo(el); await sleep(preMs||650);
+    guard(); await tapCursor();
+    el.click();
+    await sleep(380);
+  }
+  // フォーム値を1文字ずつ風に投入（typeはまとめてセット＋inputイベント）
+  async function setField(el, val, ms){
+    guard(); if(!el)return;
+    spot(el); moveCursorTo(el);
+    if(el.tagName==='TEXTAREA'||el.tagName==='INPUT'){
+      el.focus(); el.value='';
+      if(REDUCED){ el.value=val; }
+      else{
+        for(let i=0;i<val.length;i++){ guard(); el.value=val.slice(0,i+1); el.dispatchEvent(new Event('input',{bubbles:true})); await sleep(26); }
+      }
+      el.value=val; el.dispatchEvent(new Event('input',{bubbles:true}));
+    }else{ // select
+      el.value=val; el.dispatchEvent(new Event('change',{bubbles:true}));
+    }
+    await sleep(ms||560);
+  }
+
+  function reset(){
+    running=false; cancelled=false; stepIdx=0;
+    clearSpot();
+    sub.classList.remove('show');
+    curEl.classList.remove('show','tap');
+    btn.classList.remove('playing');
+    $('demoBtnLabel').textContent='▶ 自動デモを見る';
+  }
+
+  function stop(silent){
+    if(!running)return;
+    cancelled=true; reset();
+    if(!silent)showToast('自動デモを停止しました');
+  }
+
+  async function run(){
+    if(running){ stop(); return; }
+    running=true; cancelled=false; stepIdx=0; totalSteps=11;
+    btn.classList.add('playing'); $('demoBtnLabel').textContent='■ 停止';
+    try{
+      // ① ダッシュボードを見せる
+      go('dash'); await sleep(500);
+      await say('STEP 1 / ダッシュボード','まずはトップ画面。顧客の数・今月の接触・離反リスクがひと目で分かります。',2300);
+      spot($('kpis')); await sleep(REDUCED?400:1300);
+
+      // ② サイドバーで顧客一覧へ切替
+      const navCust=document.querySelector('.nav a[data-v="cust"]');
+      await say('STEP 2 / 画面切替','左のメニューから「顧客一覧」を開きます。',1500);
+      await click(navCust,500);
+      await say('STEP 2 / 顧客一覧','登録された顧客が一覧表示。ランク・状態・取引額まで分かります。',2100);
+
+      // ③ 検索が動くところを見せる
+      const q=$('q');
+      await say('STEP 3 / かんたん検索','例えば「医療」と入れると、医療系の顧客だけにすぐ絞り込めます。',1700);
+      await setField(q,'医療',900); await sleep(1100);
+      await setField(q,'',300); // 検索をクリアして全件に戻す
+
+      // ④ 対応履歴フォームへ移動して自動入力
+      const navHist=document.querySelector('.nav a[data-v="hist"]');
+      await say('STEP 4 / 履歴を記録','次に「対応履歴」へ。お客様とのやりとりを記録する画面です。',1600);
+      await click(navHist,500);
+      await say('STEP 5 / 自動で入力','どの顧客に・どんな対応をしたかを入れていきます。ここは自動で入力します。',1900);
+      await setField($('hCust'),'大分中央クリニック',520);
+      await setField($('hType'),'オンライン商談',520);
+      await setField($('hStaff'),'佐藤',520);
+      await setField($('hMemo'),'AI予約対応の追加導入を相談。院長が前向きで、来週 提案書を提出することで合意。',300);
+
+      // ⑤ 履歴を記録ボタンを自動クリック（AIタグ付け）
+      await say('STEP 6 / AIが要約タグ','「履歴を記録」を押すと、AIが内容を読んでタグを自動で付けます。',1700);
+      await click($('hSave'),650);
+      await sleep(1400); // AI要約の演出待ち
+
+      // ⑥ フォロー画面：AIが連絡すべき顧客を抽出
+      const navFollow=document.querySelector('.nav a[data-v="follow"]');
+      await say('STEP 7 / フォロー提案','「フォロー」では、そろそろ連絡すべき顧客をAIが優先度順に並べます。',1800);
+      await click(navFollow,500);
+      const firstFollow=document.querySelector('#followGrid .fcard');
+      if(firstFollow){ spot(firstFollow); await sleep(REDUCED?400:1500); }
+
+      // ⑦ AI分析を自動実行（メインの自動処理ボタン）
+      const navAi=document.querySelector('.nav a[data-v="ai"]');
+      await say('STEP 8 / AI分析','最後に「AI分析」。全顧客のランクと“次の一手”をまとめて自動生成します。',1900);
+      await click(navAi,500);
+      await say('STEP 9 / 自動で分析','「AIで分析する」を押します。手作業3時間20分が、わずか数秒に。',1700);
+      await click($('aiRun'),700);
+      // 分析アニメ＋結果リスト生成を待つ
+      await say('STEP 10 / 結果が出ます','AIが履歴を読み込み、顧客ごとに最適な次アクションを提案中…',2600);
+      await sleep(1600);
+      const genFirst=document.querySelector('#genItems .gen-item');
+      if(genFirst){ spot($('genList')); await sleep(REDUCED?400:1800); }
+
+      // 完了
+      clearSpot(); curEl.classList.remove('show');
+      $('demoStep').textContent='✅ デモ完了';
+      await say('完了','デモ完了。ご自由にお試しください。気になる画面をそのまま触ってみてください。',2600);
+      sub.classList.remove('show');
+      await sleep(300);
+      reset();
+      showToast('自動デモが完了しました。ご自由にお試しください');
+    }catch(e){
+      // cancelled or any error → 手動操作に安全に戻す
+      reset();
+    }
+  }
+
+  // 起動・停止トグル
+  btn.addEventListener('click',run);
+  // 字幕バーをタップでスキップ（停止）
+  sub.addEventListener('click',()=>stop());
+  // Escで停止（既存のEscハンドラと共存：runningのときだけ反応）
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&running)stop(); },true);
+  window.__autoDemoStop=stop;
+})();
 </script>
 </body>
 </html>
