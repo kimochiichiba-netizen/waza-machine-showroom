@@ -14,44 +14,73 @@
 <title>技マシン｜不良分析マシン（品質管理システム）</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
+  --bg:#eef1f7;--bg-2:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--soft-2:#f7f9fc;--line:#e6eaf1;--line-2:#d8deea;
   --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
   --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
   --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
   --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cf0;--purple-soft:#efeafe;
   --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
   --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-md:0 8px 28px rgba(16,24,40,.10);
   --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+  --ring:0 0 0 3px rgba(47,109,240,.16);
+  --r-sm:8px;--r:11px;--r-lg:16px;
+}
+html[data-theme="dark"]{
+  --bg:#0b1020;--bg-2:#0f1830;--card:#151d33;--soft:#1b2440;--soft-2:#19223c;--line:#26314f;--line-2:#33405f;
+  --ink:#e8edf7;--ink-2:#a7b1c7;--ink-3:#76819c;
+  --brand:#5d8cf7;--brand-dk:#4a7af0;--brand-soft:#1c2a4d;
+  --green:#2bd08c;--green-soft:#13301f;--amber:#f0ad4a;--amber-soft:#33260f;
+  --red:#f06a6a;--red-soft:#341417;--purple:#a08cf7;--purple-soft:#241c40;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.35);
+  --shadow-md:0 10px 34px rgba(0,0,0,.5);
+  --shadow-lg:0 22px 60px rgba(0,0,0,.6);
+  --ring:0 0 0 3px rgba(93,140,247,.28);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
-  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
-.mono{font-family:'Orbitron',sans-serif}
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1;transition:background .35s,color .35s}
+.mono{font-family:'Orbitron',sans-serif;letter-spacing:.01em}
 .tnum{font-variant-numeric:tabular-nums}
 button{font-family:inherit}
+::selection{background:rgba(47,109,240,.22)}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:99px;border:2px solid var(--bg)}
+::-webkit-scrollbar-thumb:hover{background:var(--ink-3)}
 
 /* layout */
-.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+.app{display:grid;grid-template-columns:244px 1fr;min-height:100vh}
 @media(max-width:860px){.app{grid-template-columns:1fr}}
 
 /* ===== sidebar ===== */
-.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
-@media(max-width:860px){.side{position:static;height:auto}}
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto;z-index:30}
+@media(max-width:860px){
+  .side{position:fixed;left:0;top:0;width:244px;transform:translateX(-100%);transition:transform .3s cubic-bezier(.2,.8,.3,1);box-shadow:var(--shadow-lg)}
+  .side.open{transform:none}
+  .scrim{position:fixed;inset:0;background:rgba(8,12,24,.5);opacity:0;pointer-events:none;transition:opacity .3s;z-index:25}
+  .scrim.show{opacity:1;pointer-events:auto}
+}
+@media(min-width:861px){.scrim{display:none}}
 .logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
 .logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
-  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px;box-shadow:0 4px 14px rgba(79,209,230,.3)}
 .logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
 .logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
 .nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
 .nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
-  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
-.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:background .18s,color .18s,box-shadow .18s,transform .12s;margin-bottom:2px;position:relative}
+.nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9;transition:transform .2s}
 .nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a:hover .i{transform:scale(1.12)}
+.nav a:active{transform:scale(.985)}
 .nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
-.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
+.nav a.on .i{opacity:1}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px;min-width:20px;text-align:center}
+.nav a.demo-link{background:linear-gradient(90deg,rgba(22,184,119,.18),rgba(79,209,230,.12));color:#bff3da;border:1px solid rgba(43,208,140,.25)}
+.nav a.demo-link:hover{background:linear-gradient(90deg,rgba(22,184,119,.28),rgba(79,209,230,.2));color:#fff}
 .side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
 .side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
 .side .org b{color:#fff;display:block;font-size:12.5px}
@@ -61,19 +90,39 @@ button{font-family:inherit}
 .main{min-width:0}
 .demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
   font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
-.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
-.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+html[data-theme="dark"] .demobar{background:linear-gradient(90deg,#2a2310,#33280f);border-color:#5a4a1f;color:#e9c878}
+.demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em;flex-shrink:0}
+.demobar .dbtn{margin-left:auto;flex-shrink:0;border:1px solid #d9b864;background:rgba(255,255,255,.5);color:#8a6212;font-size:11.5px;font-weight:800;padding:5px 12px;border-radius:7px;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.demobar .dbtn:hover{background:#8a6212;color:#fff;border-color:#8a6212}
+html[data-theme="dark"] .demobar .dbtn{background:rgba(255,255,255,.06);border-color:#5a4a1f;color:#e9c878}
+html[data-theme="dark"] .demobar .dbtn:hover{background:#e9c878;color:#2a2310}
+.topbar{display:flex;align-items:center;gap:14px;padding:20px 26px 0}
+.topbar .ham{display:none;width:40px;height:40px;border-radius:10px;border:1px solid var(--line-2);background:var(--card);font-size:18px;cursor:pointer;align-items:center;justify-content:center;color:var(--ink);flex-shrink:0}
+@media(max-width:860px){.topbar .ham{display:inline-flex}.topbar{padding:16px 16px 0}}
 .topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
 .topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
-.topbar .actions{margin-left:auto;display:flex;gap:9px}
+@media(max-width:520px){.topbar h1{font-size:18px}.topbar .sub{font-size:11.5px}}
+.topbar .actions{margin-left:auto;display:flex;gap:9px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.iconbtn{width:40px;height:40px;border-radius:10px;border:1px solid var(--line-2);background:var(--card);font-size:16px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:var(--ink-2);transition:all .18s;flex-shrink:0}
+.iconbtn:hover{border-color:var(--brand);color:var(--brand);box-shadow:var(--shadow)}
+.iconbtn:active{transform:scale(.94)}
 .btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
-  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
-.btn:hover{border-color:var(--brand);color:var(--brand)}
-.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
-.btn.primary:hover{background:var(--brand-dk);color:#fff}
-.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .18s;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.btn:hover{border-color:var(--brand);color:var(--brand);box-shadow:var(--shadow)}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff;box-shadow:0 4px 14px rgba(47,109,240,.28)}
+.btn.primary:hover{background:var(--brand-dk);color:#fff;box-shadow:0 6px 20px rgba(47,109,240,.4)}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff;box-shadow:0 4px 14px rgba(22,184,119,.28)}
 .btn.green:hover{filter:brightness(1.06);color:#fff}
-.content{padding:22px 26px 60px}
+.btn.sm{padding:7px 12px;font-size:12px}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.btn.demo-cta{background:linear-gradient(90deg,var(--green),#16a89f);border:none;color:#fff;box-shadow:0 5px 18px rgba(22,184,119,.4);position:relative;overflow:hidden}
+.btn.demo-cta::after{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent 30%,rgba(255,255,255,.35),transparent 70%);transform:translateX(-120%)}
+.btn.demo-cta:hover{filter:brightness(1.05);color:#fff;box-shadow:0 8px 26px rgba(22,184,119,.5)}
+@media(prefers-reduced-motion:no-preference){.btn.demo-cta::after{animation:shine 3.4s ease-in-out infinite}}
+@keyframes shine{0%,72%{transform:translateX(-120%)}86%,100%{transform:translateX(120%)}}
+.content{padding:22px 26px 70px}
+@media(max-width:520px){.content{padding:18px 14px 70px}}
 .view{display:none;animation:fade .35s}
 .view.on{display:block}
 @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -81,29 +130,33 @@ button{font-family:inherit}
 /* KPI cards */
 .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
 @media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:520px){.kpis{grid-template-columns:1fr}}
-.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
+@media(max-width:520px){.kpis{grid-template-columns:1fr;gap:12px}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px;box-shadow:var(--shadow);transition:transform .2s,box-shadow .2s,border-color .2s;position:relative;overflow:hidden}
+.kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--kc,var(--brand));opacity:.85}
+.kpi:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);border-color:var(--line-2)}
 .kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
 .kpi .l .dot{width:8px;height:8px;border-radius:3px}
 .kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
 .kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
-.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600;display:flex;align-items:center;gap:4px}
 .kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
 
 /* panels */
 .cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
 @media(max-width:980px){.cols{grid-template-columns:1fr}}
-.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
-.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow);overflow:hidden}
+.panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .panel .ph h3{font-size:14.5px;font-weight:800}
-.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer;transition:opacity .15s}
+.panel .ph .more:hover{opacity:.7}
 .panel .pb{padding:16px 18px}
 .panel.full{margin-bottom:16px}
 
 /* bar chart */
 .bars{display:flex;flex-direction:column;gap:13px}
 .bar-row{display:grid;grid-template-columns:96px 1fr 70px;align-items:center;gap:11px;font-size:12.5px}
-.bar-row .mlabel{color:var(--ink-2);font-weight:600}
+@media(max-width:520px){.bar-row{grid-template-columns:80px 1fr 58px;gap:8px;font-size:11.5px}}
+.bar-row .mlabel{color:var(--ink-2);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
 .bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
 .bar-fill.red{background:linear-gradient(90deg,#e24a4a,#f08a4a)}
@@ -115,36 +168,61 @@ button{font-family:inherit}
 .act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
 .act:last-child{border-bottom:0}
 .act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
-.act .at{color:var(--ink);font-weight:600}
+.act .at{color:var(--ink);font-weight:600;line-height:1.45}
 .act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
 
 /* table */
 .toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
 .search{flex:1;min-width:200px;position:relative}
-.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
-.search input:focus{outline:none;border-color:var(--brand)}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card);color:var(--ink);transition:border-color .15s,box-shadow .15s}
+.search input:focus{outline:none;border-color:var(--brand);box-shadow:var(--ring)}
 .search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+select.sel{padding:9px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:12.5px;font-weight:700;background:var(--card);color:var(--ink-2);cursor:pointer;transition:border-color .15s}
+select.sel:focus{outline:none;border-color:var(--brand);box-shadow:var(--ring)}
 .chips{display:flex;gap:6px;flex-wrap:wrap}
 .chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
-.chip:hover{border-color:var(--brand)}
+.chip:hover{border-color:var(--brand);color:var(--brand)}
 .chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
-table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
-table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+.chip .cc{margin-left:5px;opacity:.7;font-variant-numeric:tabular-nums}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow)}
+.tblwrap{overflow-x:auto;border-radius:var(--r-lg)}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap;position:sticky;top:0}
+table.tbl th.sortable{cursor:pointer;user-select:none}
+table.tbl th.sortable:hover{color:var(--brand)}
+table.tbl th.sortable .ar{opacity:.4;font-size:10px;margin-left:3px}
+table.tbl th.sortable.act-sort .ar{opacity:1;color:var(--brand)}
 table.tbl th.r,table.tbl td.r{text-align:right}
+table.tbl th.c,table.tbl td.c{text-align:center}
 table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
-table.tbl tbody tr{transition:background .12s;cursor:pointer}
+table.tbl tbody tr{transition:background .12s}
+table.tbl tbody tr.clickable{cursor:pointer}
 table.tbl tbody tr:hover{background:var(--soft)}
-.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
+table.tbl tbody tr.sel{background:var(--brand-soft)}
+.fav{cursor:pointer;font-size:16px;line-height:1;color:var(--ink-3);transition:transform .15s,color .15s;display:inline-block}
+.fav:hover{transform:scale(1.25)}
+.fav.on{color:#f5b524}
+.cbx{width:16px;height:16px;cursor:pointer;accent-color:var(--brand)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px;white-space:nowrap}
 .st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
 .st.done{background:var(--green-soft);color:var(--green)}
 .st.analyzing{background:var(--brand-soft);color:var(--brand)}
 .st.open{background:var(--amber-soft);color:var(--amber)}
 .st.critical{background:var(--red-soft);color:var(--red)}
 .st.recur{background:var(--purple-soft);color:var(--purple)}
-.sev{display:inline-flex;align-items:center;font-size:11px;font-weight:800;padding:3px 9px;border-radius:6px}
+.sev{display:inline-flex;align-items:center;font-size:11px;font-weight:800;padding:3px 9px;border-radius:6px;white-space:nowrap}
 .sev.A{background:var(--red-soft);color:var(--red)}
 .sev.B{background:var(--amber-soft);color:var(--amber)}
 .sev.C{background:var(--soft);color:var(--ink-2)}
+
+/* bulk action bar */
+.bulkbar{display:none;align-items:center;gap:12px;background:var(--ink);color:#fff;border-radius:12px;padding:11px 16px;margin-bottom:12px;box-shadow:var(--shadow-md);animation:fade .25s}
+.bulkbar.show{display:flex}
+.bulkbar b{font-variant-numeric:tabular-nums}
+.bulkbar .sp{margin-left:auto;display:flex;gap:8px}
+.bulkbar .bb{border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;font-size:12px;font-weight:700;padding:7px 13px;border-radius:8px;cursor:pointer;transition:all .15s}
+.bulkbar .bb:hover{background:rgba(255,255,255,.2)}
+.bulkbar .bb.x{border-color:transparent;background:transparent;opacity:.7}
+.bulkbar .bb.x:hover{opacity:1;background:rgba(255,255,255,.12)}
 
 /* pareto chart */
 .pareto{position:relative;padding:10px 6px 4px}
@@ -155,64 +233,46 @@ table.tbl tbody tr:hover{background:var(--soft)}
 .pcol-val{position:absolute;top:-20px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:800;color:var(--ink-2);white-space:nowrap}
 .pcol-lab{font-size:10.5px;color:var(--ink-2);font-weight:600;text-align:center;margin-top:8px;line-height:1.3;height:30px;overflow:hidden}
 .pareto-line{position:absolute;left:0;right:0;top:10px;bottom:38px;pointer-events:none}
-.pareto-legend{display:flex;gap:18px;justify-content:center;margin-top:14px;font-size:11.5px;color:var(--ink-2);font-weight:600}
+.pareto-legend{display:flex;gap:18px;justify-content:center;margin-top:14px;font-size:11.5px;color:var(--ink-2);font-weight:600;flex-wrap:wrap}
 .pareto-legend .lg{display:inline-flex;align-items:center;gap:6px}
 .pareto-legend .sw{width:14px;height:4px;border-radius:2px}
 
 /* heat / factor */
 .factor-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
-.fcard{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--card)}
+.fcard{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--card);transition:transform .18s,box-shadow .18s}
+.fcard:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
 .fcard .ft{font-size:12.5px;font-weight:800;display:flex;align-items:center;gap:7px;margin-bottom:8px}
 .fcard .fp{font-family:'Orbitron';font-size:22px;font-weight:700}
 .fcard .fb{height:6px;border-radius:99px;background:var(--soft);margin-top:8px;overflow:hidden}
 .fcard .fb i{display:block;height:100%;border-radius:99px;width:0;transition:width .9s}
 
-/* create form */
-.create-grid{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;align-items:start}
-@media(max-width:980px){.create-grid{grid-template-columns:1fr}}
-.formcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
-.fg{margin-bottom:13px}
-.fg label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
-.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
-.fg textarea{resize:vertical;min-height:70px}
-.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--brand)}
-.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.aihint{font-size:11px;color:var(--green);margin-top:4px;opacity:0;transition:opacity .3s}
-.aihint.show{opacity:1}
-
 /* report card */
-.paper{background:#fff;border:1px solid var(--line);border-radius:10px;padding:28px 30px;box-shadow:var(--shadow);font-size:12.5px;color:#1a2233}
-.rpt-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;border-bottom:2px solid var(--brand-dk);padding-bottom:12px}
-.rpt-title{font-size:18px;font-weight:900;letter-spacing:.08em;color:var(--brand-dk)}
-.rpt-meta{text-align:right;font-size:11px;color:var(--ink-2)}
-.rpt-meta .no{font-family:'Orbitron';color:var(--ink);font-weight:700}
-.rpt-sec{margin:14px 0}
-.rpt-sec h4{font-size:12px;font-weight:800;color:var(--brand-dk);border-left:4px solid var(--brand-dk);padding-left:8px;margin-bottom:7px}
-.rpt-sec p{font-size:12.5px;color:var(--ink-2)}
-.rpt-fish{display:flex;flex-direction:column;gap:6px;margin-top:6px}
-.rpt-fish .fr{display:flex;gap:8px;font-size:12px;align-items:flex-start}
-.rpt-fish .fr b{min-width:46px;color:var(--ink);background:var(--soft);border-radius:5px;text-align:center;padding:1px 0;font-size:11px}
-.rpt-empty{text-align:center;color:#aab2c4;padding:40px 10px;font-size:12.5px}
+.paper{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:28px 30px;box-shadow:var(--shadow);font-size:12.5px;color:var(--ink)}
+.rpt-empty{text-align:center;color:var(--ink-3);padding:40px 10px;font-size:12.5px}
 
 /* AI generate / before-after */
-.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:24px;box-shadow:var(--shadow)}
+@media(max-width:520px){.ai-stage{padding:18px 16px}}
+.ai-head{display:flex;align-items:center;gap:14px;margin-bottom:14px;flex-wrap:wrap}
 .ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
 @media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
 .ba .col{padding:18px;border-radius:12px}
-.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
-.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .before{background:linear-gradient(180deg,var(--soft),var(--soft-2));border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),var(--card));border:1px solid #bdebd4}
+html[data-theme="dark"] .ba .after{border-color:#1d4d34}
 .ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
 @media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
 .ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
-.ba .before .ct{background:#e7e9ef;color:#6b7280}
-.ba .after .ct{background:#cdeedd;color:var(--green)}
+.ba .before .ct{background:var(--soft);color:var(--ink-2)}
+.ba .after .ct{background:#cdeedd;color:#0e7a52}
+html[data-theme="dark"] .ba .after .ct{background:#1d4d34;color:#5fe0a8}
 .ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
-.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba .before .big{color:var(--ink-3)}.ba .after .big{color:var(--green)}
 .ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
 .ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
 .gen-list{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
 .gen-list.show{display:block;animation:fade .4s}
-.gen-item{display:flex;align-items:center;gap:11px;padding:11px 14px;border:1px solid var(--line);border-radius:9px;margin-bottom:8px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s}
+.gen-item{display:flex;align-items:center;gap:11px;padding:11px 14px;border:1px solid var(--line);border-radius:9px;margin-bottom:8px;font-size:13px;opacity:0;transform:translateX(-8px);transition:all .4s;flex-wrap:wrap}
 .gen-item.in{opacity:1;transform:none}
 .gen-item .ck{width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
 .gen-item .gba{margin-left:auto;display:flex;gap:8px;align-items:center;font-size:11.5px}
@@ -220,15 +280,16 @@ table.tbl tbody tr:hover{background:var(--soft)}
 .gen-item .gba .af{color:var(--green);font-weight:800}
 
 /* AI orb */
-.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto;flex-shrink:0}
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0;flex-shrink:0;box-shadow:0 8px 22px rgba(22,184,119,.3)}
 .orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
 
 /* countermeasure list */
 .cm-list{display:flex;flex-direction:column;gap:10px}
-.cm-item{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--card);box-shadow:var(--shadow)}
-.cm-item .cmh{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.cm-item{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--card);box-shadow:var(--shadow);transition:box-shadow .18s,transform .18s}
+.cm-item:hover{box-shadow:var(--shadow-md)}
+.cm-item .cmh{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
 .cm-item .cmh b{font-size:13.5px;font-weight:800}
 .cm-item .cmh .prog{margin-left:auto;font-size:11.5px;color:var(--ink-3);font-weight:700}
 .cm-item .cmd{font-size:12.5px;color:var(--ink-2)}
@@ -236,21 +297,66 @@ table.tbl tbody tr:hover{background:var(--soft)}
 .cm-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--green),#5fd6a8);width:0;transition:width .9s}
 
 /* toast */
-.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
-  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:var(--bg);padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px;max-width:calc(100vw - 48px)}
+html[data-theme="dark"] .toast{background:#26314f;color:#fff}
 .toast.show{opacity:1;transform:none}
-.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900;color:#fff;flex-shrink:0}
+@media(max-width:520px){.toast{right:12px;left:12px;bottom:12px}}
 
+.empty{text-align:center;padding:46px 20px;color:var(--ink-3)}
+.empty .ico{font-size:40px;opacity:.5;margin-bottom:8px}
+.empty b{display:block;color:var(--ink-2);font-size:14px;margin-bottom:4px}
 .empty-cell{text-align:center;color:var(--ink-3);padding:30px}
-.linkrow{display:flex;gap:8px;margin-top:6px}
-.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none;transition:color .15s}
 .backlink:hover{color:var(--brand)}
+
+/* ===== auto demo overlay ===== */
+.demo-spot{position:absolute;border-radius:14px;box-shadow:0 0 0 9999px rgba(8,12,24,.62),0 0 0 3px var(--green),0 0 26px rgba(43,208,140,.65);
+  pointer-events:none;z-index:9000;transition:all .45s cubic-bezier(.2,.8,.3,1);opacity:0}
+.demo-spot.show{opacity:1}
+.demo-cap{position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(16px);z-index:9100;
+  background:rgba(13,18,32,.94);color:#fff;border:1px solid rgba(43,208,140,.4);border-radius:14px;padding:15px 20px;
+  width:min(560px,calc(100vw - 32px));box-shadow:var(--shadow-lg);opacity:0;transition:all .4s;backdrop-filter:blur(8px)}
+.demo-cap.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.demo-cap .dc-top{display:flex;align-items:center;gap:9px;margin-bottom:7px}
+.demo-cap .dc-badge{background:var(--green);color:#04130b;font-size:10px;font-weight:900;padding:2px 8px;border-radius:6px;letter-spacing:.05em}
+.demo-cap .dc-step{font-size:11px;color:#8fa0c0;font-weight:700;margin-left:auto;font-variant-numeric:tabular-nums}
+.demo-cap .dc-text{font-size:13.5px;font-weight:600;line-height:1.55}
+.demo-cap .dc-text .hl{color:#5fe0a8;font-weight:800}
+.demo-cap .dc-bar{height:3px;border-radius:99px;background:rgba(255,255,255,.14);margin-top:11px;overflow:hidden}
+.demo-cap .dc-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--green),#4fd1e6);width:0}
+.demo-cap .dc-ctrls{display:flex;gap:8px;margin-top:12px}
+.demo-cap .dc-ctrls button{flex:1;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#fff;font-size:12px;font-weight:700;padding:8px;border-radius:8px;cursor:pointer;transition:all .15s;font-family:inherit}
+.demo-cap .dc-ctrls button:hover{background:rgba(255,255,255,.16)}
+.demo-cap .dc-ctrls button.x{flex:0 0 auto;padding:8px 14px}
+.demo-cursor{position:fixed;z-index:9200;width:26px;height:26px;pointer-events:none;opacity:0;transition:opacity .3s,left .55s cubic-bezier(.3,.7,.3,1),top .55s cubic-bezier(.3,.7,.3,1);
+  font-size:24px;filter:drop-shadow(0 3px 5px rgba(0,0,0,.4))}
+.demo-cursor.show{opacity:1}
+.demo-cursor.click{animation:cursorClick .4s}
+@keyframes cursorClick{0%,100%{transform:scale(1)}45%{transform:scale(.7)}}
+@media(prefers-reduced-motion:reduce){
+  .demo-spot{transition:opacity .2s}
+  .demo-cap{transition:opacity .2s}
+  .demo-cursor{transition:opacity .2s}
+  .view{animation:none}
+  .bar-fill,.pcol-bar,.cm-bar i,.fcard .fb i{transition:none}
+  .btn.demo-cta::after{animation:none}
+}
+@media print{
+  .side,.scrim,.demobar,.topbar .actions,.topbar .ham,.toolbar,.bulkbar,.panel .ph .more,.demo-cap,.demo-spot,.demo-cursor,.btn{display:none!important}
+  .app{display:block}body{background:#fff}
+  .view{display:none!important}.view.on{display:block!important}
+  .kpi,.panel,table.tbl,.ai-stage{box-shadow:none;break-inside:avoid}
+  .content{padding:0}
+}
 </style>
 </head>
 <body>
+<div class="scrim" id="scrim"></div>
 <div class="app">
   <!-- ===== SIDEBAR ===== -->
-  <aside class="side">
+  <aside class="side" id="side">
     <div class="logo">
       <div class="mk">技</div>
       <div class="nm">不良分析マシン<small>技マシン｜品質管理</small></div>
@@ -276,13 +382,19 @@ table.tbl tbody tr:hover{background:var(--soft)}
 
   <!-- ===== MAIN ===== -->
   <div class="main">
-    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。不良データ・取引先はサンプルです。自由に触ってお試しください。</div>
+    <div class="demobar"><span class="tag">デモ環境</span><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">これは技マシンの体験用デモです。データはサンプルです。</span>
+      <button class="dbtn" id="demoStart2">▶ 自動デモ</button></div>
     <div class="topbar">
-      <div>
+      <button class="ham" id="ham" aria-label="メニュー">☰</button>
+      <div style="min-width:0">
         <h1 id="pgTitle">ダッシュボード</h1>
         <div class="sub" id="pgSub">2026年5月の品質状況</div>
       </div>
-      <div class="actions" id="pgActions"></div>
+      <div class="actions">
+        <button class="btn demo-cta" id="demoStart">▶ 自動デモを見る</button>
+        <button class="iconbtn" id="themeToggle" title="ライト/ダーク切替" aria-label="テーマ切替">🌙</button>
+        <span id="pgActions" style="display:contents"></span>
+      </div>
     </div>
     <div class="content">
 
@@ -315,19 +427,48 @@ table.tbl tbody tr:hover{background:var(--soft)}
       <section class="view" id="v-list">
         <div class="toolbar">
           <div class="search"><span class="ic">🔍</span><input id="q" placeholder="製品・要因・工程・番号で検索"></div>
-          <div class="chips" id="statusChips"></div>
+          <select class="sel" id="periodSel" title="期間で絞り込み">
+            <option value="all">全期間</option>
+            <option value="0">今月</option>
+            <option value="1">先月</option>
+            <option value="2">2ヶ月前</option>
+          </select>
+          <button class="btn sm" id="favFilter" title="お気に入りのみ表示">☆ お気に入り</button>
+          <button class="btn sm" id="csvBtn" title="CSVで書き出し">⬇ CSV</button>
+          <button class="btn sm" id="printBtn" title="印刷 / PDF保存">🖨 印刷</button>
         </div>
+        <div class="chips" id="statusChips" style="margin-bottom:14px"></div>
+        <div class="bulkbar" id="bulkbar">
+          <b id="bulkCount">0</b>件 選択中
+          <div class="sp">
+            <button class="bb" id="bulkAnalyze">⚡ AIで原因究明</button>
+            <button class="bb" id="bulkDone">✓ 対策済にする</button>
+            <button class="bb x" id="bulkClear">選択解除</button>
+          </div>
+        </div>
+        <div class="tblwrap">
         <table class="tbl">
-          <thead><tr><th>不良番号</th><th>発生日</th><th>製品</th><th>工程</th><th>不良要因</th><th class="r">件数</th><th>重大度</th><th>状態</th></tr></thead>
+          <thead><tr>
+            <th class="c"><input type="checkbox" class="cbx" id="selAll" title="全選択"></th>
+            <th class="c">★</th>
+            <th class="sortable" data-k="no">不良番号<span class="ar">↕</span></th>
+            <th class="sortable" data-k="issue">発生日<span class="ar">↕</span></th>
+            <th class="sortable" data-k="product">製品<span class="ar">↕</span></th>
+            <th>工程</th><th>不良要因</th>
+            <th class="r sortable" data-k="count">件数<span class="ar">↕</span></th>
+            <th class="c sortable" data-k="sev">重大度<span class="ar">↕</span></th>
+            <th>状態</th>
+          </tr></thead>
           <tbody id="listRows"></tbody>
         </table>
+        </div>
       </section>
 
       <!-- FACTOR ANALYSIS -->
       <section class="view" id="v-factor">
         <div class="kpis" id="factorKpis"></div>
         <div class="panel full">
-          <div class="ph"><h3>不良要因別の発生割合</h3><span class="more">クリックで内訳を表示</span></div>
+          <div class="ph"><h3>不良要因別の発生割合</h3><span class="more">件数の多い順</span></div>
           <div class="pb"><div class="bars" id="factorBars"></div></div>
         </div>
         <div class="panel full">
@@ -340,7 +481,7 @@ table.tbl tbody tr:hover{background:var(--soft)}
       <section class="view" id="v-pareto">
         <div class="panel full">
           <div class="ph"><h3>パレート図（不良要因 × 累積比率）</h3>
-            <button class="btn" id="paretoReplay" style="margin-left:auto">↻ 再生</button></div>
+            <button class="btn sm" id="paretoReplay" style="margin-left:auto">↻ 再生</button></div>
           <div class="pb">
             <div class="pareto">
               <div class="pareto-bars" id="paretoBars"></div>
@@ -355,10 +496,12 @@ table.tbl tbody tr:hover{background:var(--soft)}
             </div>
           </div>
         </div>
+        <div class="tblwrap">
         <table class="tbl">
           <thead><tr><th>順位</th><th>不良要因</th><th class="r">件数</th><th class="r">構成比</th><th class="r">累積比</th><th>主な工程</th></tr></thead>
           <tbody id="paretoRows"></tbody>
         </table>
+        </div>
       </section>
 
       <!-- COUNTERMEASURE -->
@@ -366,7 +509,7 @@ table.tbl tbody tr:hover{background:var(--soft)}
         <div class="kpis" id="cmKpis"></div>
         <div class="panel full">
           <div class="ph"><h3>対策の進捗</h3>
-            <button class="btn green" id="cmAdvance" style="margin-left:auto">▶ 全対策を一歩進める</button></div>
+            <button class="btn green sm" id="cmAdvance" style="margin-left:auto">▶ 全対策を一歩進める</button></div>
           <div class="pb"><div class="cm-list" id="cmList"></div></div>
         </div>
       </section>
@@ -374,11 +517,11 @@ table.tbl tbody tr:hover{background:var(--soft)}
       <!-- AI ROOT CAUSE -->
       <section class="view" id="v-ai">
         <div class="ai-stage">
-          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+          <div class="ai-head">
             <div class="orb" id="aiOrb">🤖</div>
-            <div><div style="font-size:16px;font-weight:900">不良データからAIが原因を究明し、対策まで提案</div>
+            <div style="min-width:0;flex:1"><div style="font-size:16px;font-weight:900">不良データからAIが原因を究明し、対策まで提案</div>
             <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">未分析の不良 <b id="aiOpenCnt">0</b>件 を、AIが要因分析・真因特定・対策案（Before/After）まで自動で作成します。</div></div>
-            <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで原因究明する</button>
+            <button class="btn primary" id="aiRun">⚡ AIで原因究明する</button>
           </div>
           <div class="ba">
             <div class="col before">
@@ -415,6 +558,19 @@ table.tbl tbody tr:hover{background:var(--soft)}
 
 <div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
 
+<!-- auto demo -->
+<div class="demo-spot" id="demoSpot"></div>
+<div class="demo-cursor" id="demoCursor">👆</div>
+<div class="demo-cap" id="demoCap">
+  <div class="dc-top"><span class="dc-badge">AUTO DEMO</span><span class="dc-step" id="dcStep"></span></div>
+  <div class="dc-text" id="dcText"></div>
+  <div class="dc-bar"><i id="dcBar"></i></div>
+  <div class="dc-ctrls">
+    <button id="dcSkip">スキップ ⏭</button>
+    <button class="x" id="dcStop">停止 ✕</button>
+  </div>
+</div>
+
 <script>
 /* ============ DATA ============ */
 const PRODUCTS=[
@@ -446,7 +602,7 @@ let defects=[];
     const lossPerUnit=3000+Math.floor(rnd()*22000);
     defects.push({
       no:'DF-'+(202600+i+1),product:p.n,process:proc,factor,count:cnt,sev,
-      loss:cnt*lossPerUnit,issue,status:stt,staff:pick(STAFF)
+      loss:cnt*lossPerUnit,issue,status:stt,staff:pick(STAFF),fav:false
     });
   }
 })();
@@ -467,8 +623,48 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;',
 const STLABEL={done:'対策済',analyzing:'分析中',open:'未対応',critical:'重大',recur:'再発'};
 function stBadge(s){return `<span class="st ${s}">${STLABEL[s]||s}</span>`;}
 function thisMonth(d){return d.getMonth()===TODAY.getMonth()&&d.getFullYear()===TODAY.getFullYear();}
-function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+function monthsAgo(d){return (TODAY.getFullYear()-d.getFullYear())*12+(TODAY.getMonth()-d.getMonth());}
+function showToast(m){$('toastMsg').textContent=m;$('toast').classList.add('show');clearTimeout(showToast._t);showToast._t=setTimeout(()=>$('toast').classList.remove('show'),2600);}
 function openCount(){return defects.filter(d=>d.status==='open'||d.status==='critical'||d.status==='analyzing').length;}
+
+/* count-up animation */
+const reduceMotion=()=>window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function countUp(el,to,opt){
+  opt=opt||{};const dur=opt.dur||900,dec=opt.dec||0,pre=opt.pre||'',suf=opt.suf||'';
+  if(reduceMotion()){el.textContent=pre+to.toLocaleString(undefined,{minimumFractionDigits:dec,maximumFractionDigits:dec})+suf;return;}
+  const t0=performance.now();
+  function step(t){
+    const k=Math.min(1,(t-t0)/dur);const e=1-Math.pow(1-k,3);const v=to*e;
+    el.textContent=pre+v.toLocaleString(undefined,{minimumFractionDigits:dec,maximumFractionDigits:dec})+suf;
+    if(k<1)requestAnimationFrame(step);else el.textContent=pre+to.toLocaleString(undefined,{minimumFractionDigits:dec,maximumFractionDigits:dec})+suf;
+  }
+  requestAnimationFrame(step);
+}
+function animateKpiCounters(scope){
+  (scope||document).querySelectorAll('.kpi .v[data-cnt]').forEach(el=>{
+    const to=parseFloat(el.dataset.cnt);
+    countUp(el.querySelector('.cv'),to,{dec:parseInt(el.dataset.dec||'0'),pre:el.dataset.pre||'',suf:''});
+  });
+}
+
+/* ============ THEME ============ */
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  $('themeToggle').textContent=t==='dark'?'☀️':'🌙';
+  document.querySelector('meta[name="theme-color"]').setAttribute('content',t==='dark'?'#0b1020':'#0f1830');
+  try{localStorage.setItem('waza-theme',t);}catch(e){}
+}
+(function initTheme(){let t='light';try{t=localStorage.getItem('waza-theme')||'light';}catch(e){}applyTheme(t);})();
+$('themeToggle').addEventListener('click',()=>{
+  const cur=document.documentElement.getAttribute('data-theme');
+  applyTheme(cur==='dark'?'light':'dark');
+  if($('v-pareto').classList.contains('on'))renderPareto();
+});
+
+/* mobile sidebar */
+function closeSide(){$('side').classList.remove('open');$('scrim').classList.remove('show');}
+$('ham').addEventListener('click',()=>{$('side').classList.toggle('open');$('scrim').classList.toggle('show');});
+$('scrim').addEventListener('click',closeSide);
 
 /* ============ ROUTING ============ */
 const TITLES={
@@ -492,6 +688,7 @@ function go(v){
   if(v==='pareto')renderPareto();
   if(v==='cm')renderCm();
   if(v==='ai')renderAiPanel();
+  if(window.innerWidth<=860)closeSide();
 }
 document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
 window.go=go;
@@ -509,18 +706,18 @@ function procAgg(){
 /* ============ DASHBOARD ============ */
 function renderDash(){
   const totalDefect=defects.reduce((s,d)=>s+d.count,0);
-  const produced=4200; // demo produced units this month
+  const produced=4200;
   const rate=(totalDefect/produced*100);
   const loss=defects.reduce((s,d)=>s+d.loss,0);
   const improved=defects.filter(d=>d.status==='done').length;
   const recur=defects.filter(d=>d.status==='recur').length;
   const recurRate=(recur/defects.length*100);
   $('kpis').innerHTML=`
-    ${kpi('#e24a4a','不良率',rate.toFixed(2)+'<small>%</small>',totalDefect+'件 / '+produced.toLocaleString()+'個','up','前月比 −0.31pt')}
-    ${kpi('#e3941f','損失額',yen(loss),'今月累計','down','要削減')}
-    ${kpi('#16b877','改善件数',improved+'<small>件</small>','対策完了','up','+'+improved+'件 今月')}
-    ${kpi('#7c5cf0','再発率',recurRate.toFixed(1)+'<small>%</small>',recur+'件 再発','warn','再発防止を強化')}`;
-  // trend (defect rate %)
+    ${kpi('#e24a4a','不良率',rate,'%',totalDefect+'件 / '+produced.toLocaleString()+'個','down','▼ 前月比 −0.31pt',2)}
+    ${kpiTxt('#e3941f','損失額',yen(loss),'今月累計','warn','要削減')}
+    ${kpi('#16b877','改善件数',improved,'件','対策完了','up','▲ +'+improved+'件 今月',0)}
+    ${kpi('#7c5cf0','再発率',recurRate,'%',recur+'件 再発','warn','再発防止を強化',1)}`;
+  animateKpiCounters($('kpis'));
   const months=[];for(let k=5;k>=0;k--){const d=new Date(TODAY.getFullYear(),TODAY.getMonth()-k,1);months.push(d);}
   const base=[1.42,1.31,1.18,1.05,0.96,rate];
   const mx=Math.max(...base,1);
@@ -529,73 +726,164 @@ function renderDash(){
       <div class="bar-track"><div class="bar-fill ${i===5?'red':''}" style="width:0" data-w="${Math.round(base[i]/mx*100)}"></div></div>
       <span class="mval">${base[i].toFixed(2)}%</span></div>`).join('');
   setTimeout(()=>document.querySelectorAll('#trendBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
-  // top factors
   const fa=factorAgg().slice(0,5);const fmx=fa[0]?fa[0].count:1;
   $('topBars').innerHTML=fa.map((f,i)=>`
     <div class="bar-row"><span class="mlabel">${esc(f.factor)}</span>
       <div class="bar-track"><div class="bar-fill ${i===0?'red':i===1?'amber':''}" style="width:0" data-w="${Math.round(f.count/fmx*100)}"></div></div>
       <span class="mval">${f.count}件</span></div>`).join('');
-  // process
   const pa=procAgg().slice(0,6);const pmx=pa[0]?pa[0].count:1;
   $('procBars').innerHTML=pa.map(p=>`
     <div class="bar-row"><span class="mlabel">${esc(p.proc)}</span>
       <div class="bar-track"><div class="bar-fill" style="width:0" data-w="${Math.round(p.count/pmx*100)}"></div></div>
       <span class="mval">${p.count}件</span></div>`).join('');
   setTimeout(()=>{document.querySelectorAll('#topBars .bar-fill,#procBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%');},60);
-  // activity
   const acts=[
-    {i:'🤖',c:'#e6f8f0',t:'AI原因究明で ジャンカ の真因（バイブ不足）を特定',m:'5分前'},
-    {i:'🛠️',c:'#eaf1ff',t:'対策「養生温度を自動記録」が80%まで進捗',m:'1時間前'},
-    {i:'⚠️',c:'#fdeaea',t:'U字溝 300型 で重大不良（A級）が発生',m:'今日 10:20'},
-    {i:'🔁',c:'#efeafe',t:'寸法不良 が再発として検知されました',m:'今日 9:05'},
-    {i:'✅',c:'#e6f8f0',t:'配合ミス の対策を完了（再発ゼロ達成）',m:'昨日'},
+    {i:'🤖',c:'var(--green-soft)',t:'AI原因究明で ジャンカ の真因（バイブ不足）を特定',m:'5分前'},
+    {i:'🛠️',c:'var(--brand-soft)',t:'対策「養生温度を自動記録」が80%まで進捗',m:'1時間前'},
+    {i:'⚠️',c:'var(--red-soft)',t:'U字溝 300型 で重大不良（A級）が発生',m:'今日 10:20'},
+    {i:'🔁',c:'var(--purple-soft)',t:'寸法不良 が再発として検知されました',m:'今日 9:05'},
+    {i:'✅',c:'var(--green-soft)',t:'配合ミス の対策を完了（再発ゼロ達成）',m:'昨日'},
   ];
   $('acts').innerHTML=acts.map(a=>`<div class="act"><div class="ai" style="background:${a.c}">${a.i}</div><div><div class="at">${esc(a.t)}</div><div class="am">${esc(a.m)}</div></div></div>`).join('');
 }
-function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
-  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+function kpi(color,l,val,suf,sub,cls,d,dec){
+  return `<div class="kpi" style="--kc:${color}"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+    <div class="v tnum" data-cnt="${val}" data-dec="${dec}"><span class="cv">0</span><small>${suf}</small></div>
+    <div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;
+}
+function kpiTxt(color,l,v,sub,cls,d){
+  return `<div class="kpi" style="--kc:${color}"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+    <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;
+}
 
 /* ============ LIST ============ */
 let filterStatus='all';
+let filterPeriod='all';
+let favOnly=false;
+let sortKey='issue', sortDir=-1;
+let selected=new Set();
+const SEV_ORDER={A:3,B:2,C:1};
 function renderChips(){
+  const counts={};defects.forEach(d=>counts[d.status]=(counts[d.status]||0)+1);
   const opts=[['all','すべて'],['open','未対応'],['analyzing','分析中'],['critical','重大'],['recur','再発'],['done','対策済']];
-  $('statusChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
+  $('statusChips').innerHTML=opts.map(o=>{
+    const c=o[0]==='all'?defects.length:(counts[o[0]]||0);
+    return `<button class="chip ${o[0]===filterStatus?'on':''}" data-s="${o[0]}">${o[1]}<span class="cc">${c}</span></button>`;
+  }).join('');
   $('statusChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{filterStatus=c.dataset.s;renderChips();renderList();});
 }
-function renderList(){
+function filteredList(){
   const q=($('q').value||'').toLowerCase();
   let rows=defects.filter(d=>filterStatus==='all'||d.status===filterStatus)
-    .filter(d=>!q||(d.product+d.factor+d.process+d.no).toLowerCase().includes(q))
-    .sort((a,b)=>b.issue-a.issue);
-  $('listRows').innerHTML=rows.length?rows.map(d=>`<tr onclick="go('ai')">
+    .filter(d=>filterPeriod==='all'||monthsAgo(d.issue)===parseInt(filterPeriod))
+    .filter(d=>!favOnly||d.fav)
+    .filter(d=>!q||(d.product+d.factor+d.process+d.no).toLowerCase().includes(q));
+  rows.sort((a,b)=>{
+    let av,bv;
+    if(sortKey==='issue'){av=a.issue.getTime();bv=b.issue.getTime();}
+    else if(sortKey==='count'){av=a.count;bv=b.count;}
+    else if(sortKey==='sev'){av=SEV_ORDER[a.sev];bv=SEV_ORDER[b.sev];}
+    else{av=a[sortKey];bv=b[sortKey];return sortDir*String(av).localeCompare(String(bv),'ja');}
+    return sortDir*(av-bv);
+  });
+  return rows;
+}
+function renderList(){
+  const rows=filteredList();
+  document.querySelectorAll('#v-list th.sortable').forEach(th=>{
+    th.classList.toggle('act-sort',th.dataset.k===sortKey);
+    th.querySelector('.ar').textContent=th.dataset.k===sortKey?(sortDir<0?'↓':'↑'):'↕';
+  });
+  $('listRows').innerHTML=rows.length?rows.map(d=>`<tr class="clickable ${selected.has(d.no)?'sel':''}" data-no="${esc(d.no)}">
+    <td class="c"><input type="checkbox" class="cbx rowcb" data-no="${esc(d.no)}" ${selected.has(d.no)?'checked':''}></td>
+    <td class="c"><span class="fav ${d.fav?'on':''}" data-no="${esc(d.no)}">${d.fav?'★':'☆'}</span></td>
     <td class="mono" style="font-size:12px">${esc(d.no)}</td>
     <td style="color:var(--ink-2)">${fmtD(d.issue)}</td>
     <td><b>${esc(d.product)}</b></td>
     <td style="color:var(--ink-2)">${esc(d.process)}</td>
     <td>${esc(d.factor)}</td>
     <td class="r tnum"><b>${d.count}</b></td>
-    <td><span class="sev ${d.sev}">${d.sev}級</span></td>
+    <td class="c"><span class="sev ${d.sev}">${d.sev}級</span></td>
     <td>${stBadge(d.status)}</td></tr>`).join('')
-    :'<tr><td colspan="8" class="empty-cell">該当する不良がありません</td></tr>';
+    :`<tr><td colspan="10"><div class="empty"><div class="ico">🔍</div><b>該当する不良がありません</b>検索条件・絞り込み・期間を見直してください</div></td></tr>`;
+  // events
+  $('listRows').querySelectorAll('tr.clickable').forEach(tr=>tr.addEventListener('click',e=>{
+    if(e.target.closest('.cbx')||e.target.closest('.fav'))return;go('ai');
+  }));
+  $('listRows').querySelectorAll('.fav').forEach(f=>f.addEventListener('click',e=>{
+    e.stopPropagation();const d=defects.find(x=>x.no===f.dataset.no);d.fav=!d.fav;
+    renderList();showToast(d.fav?'お気に入りに追加しました ★':'お気に入りを解除しました');
+  }));
+  $('listRows').querySelectorAll('.rowcb').forEach(cb=>cb.addEventListener('change',()=>{
+    if(cb.checked)selected.add(cb.dataset.no);else selected.delete(cb.dataset.no);updateBulk();
+    cb.closest('tr').classList.toggle('sel',cb.checked);
+  }));
+  const allCb=$('selAll');const visNos=rows.map(r=>r.no);
+  allCb.checked=visNos.length>0&&visNos.every(n=>selected.has(n));
+  updateBulk();
 }
+function updateBulk(){
+  $('bulkCount').textContent=selected.size;
+  $('bulkbar').classList.toggle('show',selected.size>0);
+}
+$('selAll').addEventListener('change',()=>{
+  const rows=filteredList();
+  if($('selAll').checked)rows.forEach(r=>selected.add(r.no));else rows.forEach(r=>selected.delete(r.no));
+  renderList();
+});
+$('bulkClear').addEventListener('click',()=>{selected.clear();renderList();});
+$('bulkDone').addEventListener('click',()=>{
+  let n=0;defects.forEach(d=>{if(selected.has(d.no)){d.status='done';n++;}});
+  selected.clear();renderChips();renderList();$('navOpen').textContent=openCount();
+  showToast(n+'件を「対策済」に一括更新しました');
+});
+$('bulkAnalyze').addEventListener('click',()=>{
+  defects.forEach(d=>{if(selected.has(d.no))d.status='analyzing';});
+  selected.clear();renderChips();renderList();$('navOpen').textContent=openCount();go('ai');
+  showToast('選択した不良をAI原因究明に送りました');
+});
 $('q').addEventListener('input',renderList);
+$('periodSel').addEventListener('change',()=>{filterPeriod=$('periodSel').value;renderList();});
+$('favFilter').addEventListener('click',()=>{
+  favOnly=!favOnly;$('favFilter').classList.toggle('primary',favOnly);
+  $('favFilter').innerHTML=favOnly?'★ お気に入り':'☆ お気に入り';renderList();
+});
+document.querySelectorAll('#v-list th.sortable').forEach(th=>th.addEventListener('click',()=>{
+  const k=th.dataset.k;if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=(k==='count'||k==='sev'||k==='issue')?-1:1;}
+  renderList();
+}));
+$('csvBtn').addEventListener('click',()=>{
+  const rows=filteredList();
+  const head=['不良番号','発生日','製品','工程','不良要因','件数','重大度','損失額','状態','担当','お気に入り'];
+  const lines=[head.join(',')];
+  rows.forEach(d=>{
+    const cells=[d.no,fmtD(d.issue),d.product,d.process,d.factor,d.count,d.sev+'級',Math.round(d.loss),STLABEL[d.status],d.staff,d.fav?'★':''];
+    lines.push(cells.map(c=>{const s=String(c);return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}).join(','));
+  });
+  const blob=new Blob(['﻿'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');
+  a.href=url;a.download='不良一覧_'+(TODAY.getFullYear())+('0'+(TODAY.getMonth()+1)).slice(-2)+'.csv';
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  showToast(rows.length+'件をCSVで書き出しました');
+});
+$('printBtn').addEventListener('click',()=>{showToast('印刷ダイアログを開きます');setTimeout(()=>window.print(),300);});
 
 /* ============ FACTOR ANALYSIS ============ */
 function renderFactor(){
   const fa=factorAgg();const total=fa.reduce((s,f)=>s+f.count,0);
   const top=fa[0];
   $('factorKpis').innerHTML=`
-    ${kpi('#e24a4a','最多要因',esc(top?top.factor:'-'),(top?top.count:0)+'件','up','重点対策候補')}
-    ${kpi('#2f6df0','要因の種類',fa.length+'<small>種</small>','分類済','up','網羅')}
-    ${kpi('#e3941f','上位3要因の占有',Math.round(fa.slice(0,3).reduce((s,f)=>s+f.count,0)/total*100)+'<small>%</small>','','warn','集中対策で効率化')}
-    ${kpi('#16b877','分析対象','合計 '+total+'<small>件</small>',defects.length+'記録','up','最新')}`;
+    ${kpiTxt('#e24a4a','最多要因',esc(top?top.factor:'-'),(top?top.count:0)+'件','up','重点対策候補')}
+    ${kpi('#2f6df0','要因の種類',fa.length,'種','分類済','up','網羅',0)}
+    ${kpi('#e3941f','上位3要因の占有',Math.round(fa.slice(0,3).reduce((s,f)=>s+f.count,0)/total*100),'%','','warn','集中対策で効率化',0)}
+    ${kpi('#16b877','分析対象 合計',total,'件',defects.length+'記録','up','最新',0)}`;
+  animateKpiCounters($('factorKpis'));
   const fmx=fa[0]?fa[0].count:1;
   $('factorBars').innerHTML=fa.map((f,i)=>`
     <div class="bar-row"><span class="mlabel" style="width:auto">${esc(f.factor)}</span>
       <div class="bar-track"><div class="bar-fill ${i===0?'red':i<3?'amber':''}" style="width:0" data-w="${Math.round(f.count/fmx*100)}"></div></div>
       <span class="mval">${f.count}件 (${Math.round(f.count/total*100)}%)</span></div>`).join('');
   setTimeout(()=>document.querySelectorAll('#factorBars .bar-fill').forEach(b=>b.style.width=b.dataset.w+'%'),60);
-  // factor cards (factor->main process)
   const fpMap={};
   defects.forEach(d=>{fpMap[d.factor]=fpMap[d.factor]||{};fpMap[d.factor][d.process]=(fpMap[d.factor][d.process]||0)+d.count;});
   $('factorCards').innerHTML=fa.slice(0,8).map((f,i)=>{
@@ -614,7 +902,6 @@ function renderFactor(){
 function renderPareto(){
   const fa=factorAgg();const total=fa.reduce((s,f)=>s+f.count,0);
   let cum=0;const data=fa.map(f=>{cum+=f.count;return {factor:f.factor,count:f.count,share:f.count/total*100,cum:cum/total*100};});
-  // find 80% point
   let idx80=data.findIndex(d=>d.cum>=80);if(idx80<0)idx80=data.length-1;
   $('pareto8020').textContent=idx80+1;
   $('pareto8020p').textContent=Math.round(data[idx80].cum)+'%';
@@ -622,14 +909,12 @@ function renderPareto(){
   const fpMap={};
   defects.forEach(d=>{fpMap[d.factor]=fpMap[d.factor]||{};fpMap[d.factor][d.process]=(fpMap[d.factor][d.process]||0)+d.count;});
   function mainProc(f){const e=Object.entries(fpMap[f]||{}).sort((a,b)=>b[1]-a[1]);return e[0]?e[0][0]:'-';}
-  // bars
   $('paretoBars').innerHTML=data.map((d,i)=>`
     <div class="pareto-col">
       <div class="pcol-bar ${i===0?'top':''}" data-h="${Math.round(d.count/mx*90)}"><span class="pcol-val">${d.count}</span></div>
       <div class="pcol-lab">${esc(d.factor)}</div>
     </div>`).join('');
   setTimeout(()=>{document.querySelectorAll('#paretoBars .pcol-bar').forEach(b=>b.style.height=b.dataset.h+'%');drawParetoLine(data);},80);
-  // table
   $('paretoRows').innerHTML=data.map((d,i)=>`<tr>
     <td><b>${i+1}</b></td><td><b>${esc(d.factor)}</b></td>
     <td class="r tnum">${d.count}件</td><td class="r tnum">${d.share.toFixed(1)}%</td>
@@ -638,7 +923,7 @@ function renderPareto(){
 }
 function drawParetoLine(data){
   const svg=$('paretoSvg');const bars=$('paretoBars');
-  const w=bars.clientWidth,h=bars.clientHeight-40; // minus label height area
+  const w=bars.clientWidth,h=bars.clientHeight-40;
   svg.setAttribute('viewBox',`0 0 ${w} ${bars.clientHeight}`);
   const n=data.length;const colW=w/n;
   const pts=data.map((d,i)=>{
@@ -659,10 +944,11 @@ function renderCm(){
   const done=measures.filter(m=>m.progress>=100).length;
   const avg=Math.round(measures.reduce((s,m)=>s+m.progress,0)/measures.length);
   $('cmKpis').innerHTML=`
-    ${kpi('#16b877','対策 完了',done+'<small>/'+measures.length+'</small>','','up','進行中')}
-    ${kpi('#2f6df0','平均進捗',avg+'<small>%</small>','','up','順調')}
-    ${kpi('#e3941f','対応中',(measures.length-done)+'<small>件</small>','','warn','フォロー中')}
-    ${kpi('#7c5cf0','再発防止 想定効果','−42<small>%</small>','不良削減','up','AI試算')}`;
+    ${kpiTxt('#16b877','対策 完了',done+'<small>/'+measures.length+'</small>','','up','進行中')}
+    ${kpi('#2f6df0','平均進捗',avg,'%','','up','順調',0)}
+    ${kpi('#e3941f','対応中',(measures.length-done),'件','','warn','フォロー中',0)}
+    ${kpiTxt('#7c5cf0','再発防止 想定効果','−42<small>%</small>','不良削減','up','AI試算')}`;
+  animateKpiCounters($('cmKpis'));
   $('cmList').innerHTML=measures.map((m,i)=>`
     <div class="cm-item">
       <div class="cmh"><span class="sev ${m.progress>=100?'C':'B'}" style="${m.progress>=100?'background:var(--green-soft);color:var(--green)':''}">${m.progress>=100?'完了':'進行中'}</span>
@@ -693,47 +979,165 @@ const ROOTCAUSES={
   '養生不足':{cause:'養生温度・期間が記録されず基準割れに気づけない',cm:'温度を自動記録し、基準割れを即アラート',man:'記録紙を後で集計',ai:'クラウドで自動記録・警告'},
   '配合ミス':{cause:'材料計量の人的ミス（ダブルチェック未実施）',cm:'計量値を自動記録し、レシピと自動照合・二重チェック',man:'手書き伝票で管理',ai:'計量を自動照合'},
 };
-$('aiRun').addEventListener('click',async()=>{
-  const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 究明中…';
-  $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
-  $('baAfterList').style.opacity='1';
-  let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent=(s<10?'0:0'+s:'0:'+s)+'';},120);
-  await new Promise(r=>setTimeout(r,1200));
-  clearInterval(t);$('baAfterT').textContent='12秒';
-  $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
-  // pick top factors to analyze
-  const fa=factorAgg().slice(0,5);
-  $('genItems').innerHTML=fa.map((f,i)=>{
-    const rc=ROOTCAUSES[f.factor]||{cause:'要因の偏りを検出',cm:'標準化と自動チェックを導入',man:'手作業',ai:'自動化'};
-    return `<div class="gen-item" data-i="${i}">
-      <span class="ck">✓</span>
-      <div style="flex:1;min-width:0">
-        <b style="font-size:13.5px">${esc(f.factor)}（${f.count}件）</b>
-        <div style="font-size:11.5px;color:var(--ink-3);margin-top:2px">🔬 真因：${esc(rc.cause)}</div>
-        <div style="font-size:11.5px;color:var(--brand);margin-top:2px;font-weight:700">🛠️ 対策案：${esc(rc.cm)}</div>
-      </div>
-      <div class="gba"><span class="bf">Before ${esc(rc.man)}</span><span style="color:var(--ink-3)">→</span><span class="af">After ${esc(rc.ai)}</span></div>
-    </div>`;
-  }).join('');
-  $('genSummary').innerHTML='';
-  $('genList').classList.add('show');
-  const items=[...$('genItems').querySelectorAll('.gen-item')];
-  for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,220));items[i].classList.add('in');}
-  // generate measures from analysis + mark analyzed defects done
-  fa.forEach(f=>{
-    const rc=ROOTCAUSES[f.factor];
-    if(rc&&!measures.some(m=>m.factor===f.factor)){
-      measures.push({title:rc.cm,factor:f.factor,progress:10,owner:'品質 佐藤',due:'7/'+(5+Math.floor(rnd()*20)),});
-    }
+let aiBusy=false;
+function runAi(){
+  return new Promise(async(resolve)=>{
+    const btn=$('aiRun');if(aiBusy){resolve();return;}aiBusy=true;
+    btn.disabled=true;btn.textContent='⚡ 究明中…';
+    $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
+    $('baAfterList').style.opacity='1';
+    let s=0;const t=setInterval(()=>{s++;$('baAfterT').textContent=(s<10?'0:0'+s:'0:'+s)+'';},120);
+    await new Promise(r=>setTimeout(r,1200));
+    clearInterval(t);$('baAfterT').textContent='12秒';
+    $('aiOrb').classList.remove('spin');$('aiOrb').textContent='✅';
+    const fa=factorAgg().slice(0,5);
+    $('genItems').innerHTML=fa.map((f,i)=>{
+      const rc=ROOTCAUSES[f.factor]||{cause:'要因の偏りを検出',cm:'標準化と自動チェックを導入',man:'手作業',ai:'自動化'};
+      return `<div class="gen-item" data-i="${i}">
+        <span class="ck">✓</span>
+        <div style="flex:1;min-width:0">
+          <b style="font-size:13.5px">${esc(f.factor)}（${f.count}件）</b>
+          <div style="font-size:11.5px;color:var(--ink-3);margin-top:2px">🔬 真因：${esc(rc.cause)}</div>
+          <div style="font-size:11.5px;color:var(--brand);margin-top:2px;font-weight:700">🛠️ 対策案：${esc(rc.cm)}</div>
+        </div>
+        <div class="gba"><span class="bf">Before ${esc(rc.man)}</span><span style="color:var(--ink-3)">→</span><span class="af">After ${esc(rc.ai)}</span></div>
+      </div>`;
+    }).join('');
+    $('genSummary').innerHTML='';
+    $('genList').classList.add('show');
+    const items=[...$('genItems').querySelectorAll('.gen-item')];
+    for(let i=0;i<items.length;i++){await new Promise(r=>setTimeout(r,reduceMotion()?40:220));items[i].classList.add('in');}
+    fa.forEach(f=>{
+      const rc=ROOTCAUSES[f.factor];
+      if(rc&&!measures.some(m=>m.factor===f.factor)){
+        measures.push({title:rc.cm,factor:f.factor,progress:10,owner:'品質 佐藤',due:'7/'+(5+Math.floor(rnd()*20)),});
+      }
+    });
+    defects.forEach(d=>{if(d.status==='analyzing')d.status='done';});
+    const totalLoss=defects.reduce((s,d)=>s+d.loss,0);
+    $('genSummary').innerHTML=`<div style="margin-top:14px;padding:14px 16px;background:var(--green-soft);border:1px solid #bdebd4;border-radius:11px;font-size:12.5px;color:#0e7a52;font-weight:600">
+      🎯 AIメタ分析：上位${fa.length}要因への集中対策で、想定損失 ${yen(totalLoss)} のうち <b>約42%</b> を削減見込み。対策タブに ${fa.length} 件の改善案を自動登録しました。</div>`;
+    $('navOpen').textContent=openCount();
+    btn.disabled=false;btn.textContent='⚡ もう一度究明する';
+    showToast(fa.length+'件の要因を究明し、対策案を自動登録しました');
+    aiBusy=false;resolve();
   });
-  defects.forEach(d=>{if(d.status==='analyzing')d.status='done';});
-  const totalLoss=defects.reduce((s,d)=>s+d.loss,0);
-  $('genSummary').innerHTML=`<div style="margin-top:14px;padding:14px 16px;background:var(--green-soft);border:1px solid #bdebd4;border-radius:11px;font-size:12.5px;color:#0e7a52;font-weight:600">
-    🎯 AIメタ分析：上位${fa.length}要因への集中対策で、想定損失 ${yen(totalLoss)} のうち <b>約42%</b> を削減見込み。対策タブに ${fa.length} 件の改善案を自動登録しました。</div>`;
-  $('navOpen').textContent=openCount();
-  btn.disabled=false;btn.textContent='⚡ もう一度究明する';
-  showToast(fa.length+'件の要因を究明し、対策案を自動登録しました');
+}
+$('aiRun').addEventListener('click',()=>runAi());
+
+/* ============ AUTO DEMO ============ */
+const demo={running:false,skip:false,stop:false,timer:null};
+function dWait(ms){
+  return new Promise(res=>{
+    const eff=reduceMotion()?Math.min(ms,500):ms;
+    const start=performance.now();
+    function tick(t){
+      if(demo.stop){res('stop');return;}
+      if(demo.skip){demo.skip=false;res('skip');return;}
+      const k=Math.min(1,(t-start)/eff);
+      $('dcBar').style.width=(k*100).toFixed(1)+'%';
+      if(k>=1)res('done');else demo.timer=requestAnimationFrame(tick);
+    }
+    demo.timer=requestAnimationFrame(tick);
+  });
+}
+function elCenter(el){const r=el.getBoundingClientRect();return {x:r.left+r.width/2,y:r.top+r.height/2,r};}
+function spotlight(el){
+  const sp=$('demoSpot');
+  if(!el){sp.classList.remove('show');return;}
+  const r=el.getBoundingClientRect();const pad=8;
+  sp.style.left=(window.scrollX+r.left-pad)+'px';
+  sp.style.top=(window.scrollY+r.top-pad)+'px';
+  sp.style.width=(r.width+pad*2)+'px';
+  sp.style.height=(r.height+pad*2)+'px';
+  sp.classList.add('show');
+}
+function moveCursor(el){
+  const c=$('demoCursor');if(!el){c.classList.remove('show');return;}
+  const ct=elCenter(el);c.classList.add('show');
+  c.style.left=(ct.x-4)+'px';c.style.top=(ct.y-2)+'px';
+}
+function clickPulse(){const c=$('demoCursor');c.classList.add('click');setTimeout(()=>c.classList.remove('click'),420);}
+function caption(html,stepIdx,total){
+  $('dcText').innerHTML=html;
+  $('dcStep').textContent='STEP '+stepIdx+' / '+total;
+  $('dcBar').style.width='0%';
+}
+const DEMO_STEPS=[
+  {ms:2200,run:async()=>{go('dash');},
+   cap:'まずは<span class="hl">ダッシュボード</span>。今月の不良率・損失額・改善件数が一目で分かります。数字はリアルタイムに集計されます。'},
+  {ms:2300,el:()=>$('nav').querySelector('[data-v="list"]'),run:async()=>{go('list');},
+   cap:'次に<span class="hl">不良一覧</span>へ。発生した不良を検索・並び替え・絞り込みで素早く探せます。'},
+  {ms:2200,el:()=>$('q'),run:async()=>{await typeInto($('q'),'U字溝');renderList();},
+   cap:'検索ボックスに「<span class="hl">U字溝</span>」と入力。該当する記録だけに一瞬で絞り込まれました。'},
+  {ms:1900,el:()=>$('q'),run:async()=>{$('q').value='';renderList();},
+   cap:'検索を解除。ヘッダーをクリックすれば<span class="hl">件数や重大度で並び替え</span>もできます。'},
+  {ms:2300,el:()=>$('nav').querySelector('[data-v="pareto"]'),run:async()=>{go('pareto');},
+   cap:'<span class="hl">パレート図</span>へ。どの不良要因に対策を集中すべきか（80:20）を自動で可視化します。'},
+  {ms:2400,el:()=>$('nav').querySelector('[data-v="ai"]'),run:async()=>{go('ai');},
+   cap:'ここが本命、<span class="hl">AI原因究明</span>。手作業3時間20分の分析を、AIが数秒で行います。'},
+  {ms:600,el:()=>$('aiRun'),run:async()=>{},
+   cap:'では実際に<span class="hl">「⚡ AIで原因究明する」</span>ボタンを押してみます。'},
+  {ms:4200,el:()=>$('genList'),run:async()=>{clickPulse();await runAi();},
+   cap:'AIが全データを解析し、<span class="hl">真因</span>と<span class="hl">対策案</span>を Before→After 付きで自動生成しました。'},
+  {ms:2600,el:()=>$('nav').querySelector('[data-v="cm"]'),run:async()=>{go('cm');},
+   cap:'生成された対策は<span class="hl">対策タブ</span>に自動登録。進捗まで一元管理できます。'},
+];
+function typeInto(input,text){
+  return new Promise(async(res)=>{
+    input.focus();input.value='';
+    for(let i=0;i<text.length;i++){
+      if(demo.stop||demo.skip){input.value=text;break;}
+      input.value=text.slice(0,i+1);
+      await new Promise(r=>setTimeout(r,reduceMotion()?20:90));
+    }
+    res();
+  });
+}
+function endDemoUI(msg){
+  demo.running=false;
+  $('demoSpot').classList.remove('show');
+  $('demoCursor').classList.remove('show');
+  if(msg){caption(msg,DEMO_STEPS.length,DEMO_STEPS.length);$('dcBar').style.width='100%';
+    setTimeout(()=>$('demoCap').classList.remove('show'),2600);}
+  else $('demoCap').classList.remove('show');
+  $('demoStart').disabled=false;$('demoStart').innerHTML='▶ 自動デモを見る';
+}
+async function startDemo(){
+  if(demo.running)return;
+  demo.running=true;demo.stop=false;demo.skip=false;
+  $('demoStart').disabled=true;$('demoStart').innerHTML='● デモ再生中';
+  closeSide();
+  $('demoCap').classList.add('show');
+  const total=DEMO_STEPS.length;
+  for(let i=0;i<total;i++){
+    if(demo.stop)break;
+    const step=DEMO_STEPS[i];
+    caption(step.cap,i+1,total);
+    if(step.run)await step.run();
+    await new Promise(r=>requestAnimationFrame(r));
+    const el=step.el?step.el():null;
+    if(el){el.scrollIntoView({behavior:reduceMotion()?'auto':'smooth',block:'center'});
+      await new Promise(r=>setTimeout(r,reduceMotion()?60:350));
+      spotlight(el);moveCursor(el);clickPulse();}
+    else{spotlight(null);moveCursor(null);}
+    const r=await dWait(step.ms);
+    if(r==='stop'){break;}
+  }
+  if(demo.stop)endDemoUI(null);
+  else endDemoUI('✅ デモ完了。ご自由にお試しください。');
+}
+$('demoStart').addEventListener('click',startDemo);
+$('demoStart2').addEventListener('click',startDemo);
+$('dcSkip').addEventListener('click',()=>{if(demo.running)demo.skip=true;});
+$('dcStop').addEventListener('click',()=>{demo.stop=true;demo.skip=true;endDemoUI(null);showToast('デモを停止しました');});
+window.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    if(demo.running){demo.stop=true;demo.skip=true;endDemoUI(null);}
+    else closeSide();
+  }
 });
+window.addEventListener('resize',()=>{if(demo.running){const sp=$('demoSpot');if(sp.classList.contains('show'))sp.classList.remove('show');}});
 
 /* ============ INIT ============ */
 renderChips();
