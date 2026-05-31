@@ -17,102 +17,150 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#f5f7fb;--card:#ffffff;--soft:#f0f3f9;--line:#e6eaf1;--line-2:#d8deea;
-  --ink:#1d2733;--ink-2:#566072;--ink-3:#8a94a6;
-  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;
-  --green:#16b877;--green-soft:#e6f8f0;--amber:#e3941f;--amber-soft:#fdf3e2;
-  --red:#e24a4a;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cf0;--purple-soft:#efeafe;
+  --bg:#eef1f7;--card:#ffffff;--soft:#f1f4fa;--soft-2:#e9edf6;--line:#e7ebf3;--line-2:#d6dde9;
+  --ink:#16202e;--ink-2:#525d70;--ink-3:#8a94a6;--ink-4:#aab2c2;
+  --brand:#2f6df0;--brand-dk:#1f57cf;--brand-soft:#eaf1ff;--brand-2:#5b8bf5;
+  --green:#13a86c;--green-soft:#e6f8f0;--amber:#d8881a;--amber-soft:#fdf3e2;
+  --red:#dd4444;--red-soft:#fdeaea;--sky:#0ea5b7;--purple:#7c5cf0;--purple-soft:#efeafe;
   --sb:#0f1830;--sb-2:#16203c;--sb-ink:#c4cce0;--sb-ink-2:#7d88a6;
+  --shadow-xs:0 1px 2px rgba(16,24,40,.05);
   --shadow:0 1px 2px rgba(16,24,40,.04),0 4px 16px rgba(16,24,40,.05);
+  --shadow-md:0 4px 10px rgba(16,24,40,.06),0 12px 28px rgba(16,24,40,.07);
   --shadow-lg:0 18px 50px rgba(16,24,40,.16);
+  --r-sm:8px;--r:11px;--r-lg:14px;--r-xl:18px;
+  --t:.18s cubic-bezier(.2,.7,.3,1);
+}
+/* dark theme */
+body.dark{
+  --bg:#0c1322;--card:#141d31;--soft:#1b2540;--soft-2:#222e4c;--line:#26314e;--line-2:#33405f;
+  --ink:#e9eefb;--ink-2:#a4b0c8;--ink-3:#7c89a5;--ink-4:#5c688200;
+  --brand-soft:#1b2b54;--green-soft:#10322a;--amber-soft:#332714;--red-soft:#3a1f23;
+  --purple-soft:#251f44;
+  --shadow-xs:0 1px 2px rgba(0,0,0,.3);
+  --shadow:0 1px 2px rgba(0,0,0,.25),0 6px 18px rgba(0,0,0,.3);
+  --shadow-md:0 4px 12px rgba(0,0,0,.3),0 14px 32px rgba(0,0,0,.4);
+  --shadow-lg:0 20px 55px rgba(0,0,0,.5);
 }
 *{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
 body{background:var(--bg);color:var(--ink);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
-  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1}
+  -webkit-font-smoothing:antialiased;line-height:1.6;font-feature-settings:"palt" 1;transition:background .35s,color .35s}
 .mono{font-family:'Orbitron',sans-serif}
 .tnum{font-variant-numeric:tabular-nums}
 button{font-family:inherit}
+::selection{background:rgba(47,109,240,.22)}
+.side ::-webkit-scrollbar{width:8px}
+.side ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:9px}
 
 /* layout */
-.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+.app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
 @media(max-width:860px){.app{grid-template-columns:1fr}}
 
 /* ===== sidebar ===== */
-.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:20px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
-@media(max-width:860px){.side{position:static;height:auto}}
-.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
-.logo .mk{width:38px;height:38px;border-radius:10px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
-  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px}
+.side{background:linear-gradient(180deg,var(--sb),var(--sb-2));color:var(--sb-ink);padding:18px 13px;position:sticky;top:0;height:100vh;overflow-y:auto;z-index:30}
+@media(max-width:860px){
+  .side{position:fixed;left:0;top:0;width:264px;transform:translateX(-100%);transition:transform .28s cubic-bezier(.2,.7,.3,1);box-shadow:var(--shadow-lg)}
+  .side.open{transform:none}
+  .scrim{position:fixed;inset:0;background:rgba(8,12,24,.5);opacity:0;pointer-events:none;transition:opacity .28s;z-index:25}
+  .scrim.show{opacity:1;pointer-events:auto}
+}
+@media(min-width:861px){.scrim{display:none}}
+.logo{display:flex;align-items:center;gap:11px;padding:6px 8px 16px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:12px}
+.logo .mk{width:38px;height:38px;border-radius:11px;background:conic-gradient(from 210deg,#4fd1e6,#37e29a,#e3b864,#4fd1e6);
+  display:grid;place-items:center;color:#04101a;font-weight:900;font-size:18px;box-shadow:0 4px 14px rgba(79,209,230,.35)}
 .logo .nm{font-weight:900;font-size:15px;color:#fff;line-height:1.2}
 .logo .nm small{display:block;font-size:10px;color:var(--sb-ink-2);font-weight:500;letter-spacing:.04em}
-.nav-sec{font-size:10.5px;letter-spacing:.12em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
-.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;color:var(--sb-ink);text-decoration:none;
-  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.nav-sec{font-size:10px;letter-spacing:.13em;color:var(--sb-ink-2);font-weight:700;padding:14px 10px 7px;text-transform:uppercase}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:10px;color:var(--sb-ink);text-decoration:none;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all var(--t);margin-bottom:2px;position:relative}
 .nav a .i{width:18px;text-align:center;font-size:15px;opacity:.9}
-.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
-.nav a.on{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.4)}
-.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px}
-.side .org{margin-top:18px;padding:12px;border-radius:11px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
-.side .org .av{width:32px;height:32px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.nav a:hover{background:rgba(255,255,255,.07);color:#fff;transform:translateX(2px)}
+.nav a.on{background:linear-gradient(90deg,var(--brand),#3f78f2);color:#fff;box-shadow:0 7px 18px rgba(47,109,240,.42)}
+.nav a.on::before{content:"";position:absolute;left:-13px;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;background:#7fb0ff}
+.nav a .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:1px 7px;border-radius:99px;min-width:20px;text-align:center}
+.side .org{margin-top:16px;padding:12px;border-radius:12px;background:rgba(255,255,255,.04);font-size:12px;display:flex;align-items:center;gap:10px}
+.side .org .av{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--brand),#5b8bf5);display:grid;place-items:center;color:#fff;font-weight:800}
 .side .org b{color:#fff;display:block;font-size:12.5px}
 .side .org span{color:var(--sb-ink-2);font-size:10.5px}
+.side .demo-cta{margin-top:12px}
+.side .demo-cta button{width:100%;border:0;cursor:pointer;border-radius:11px;padding:12px;font-weight:800;font-size:13px;
+  color:#04161a;background:linear-gradient(120deg,#4fd1e6,#37e29a);box-shadow:0 8px 22px rgba(55,226,154,.3);transition:transform var(--t),filter var(--t);display:flex;align-items:center;justify-content:center;gap:8px}
+.side .demo-cta button:hover{filter:brightness(1.05);transform:translateY(-1px)}
+.side .demo-cta small{display:block;text-align:center;color:var(--sb-ink-2);font-size:10px;margin-top:7px}
 
 /* ===== main ===== */
 .main{min-width:0}
 .demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
   font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+body.dark .demobar{background:linear-gradient(90deg,#2b2410,#332a13);border-color:#4a3d18;color:#e7c773}
 .demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
-.topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
+.topbar{display:flex;align-items:center;gap:14px;padding:18px 26px 0}
+.topbar .menu-btn{display:none;border:1px solid var(--line-2);background:var(--card);border-radius:10px;width:40px;height:40px;font-size:18px;cursor:pointer;color:var(--ink);flex-shrink:0}
+@media(max-width:860px){.topbar .menu-btn{display:grid;place-items:center}}
 .topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
 .topbar .sub{color:var(--ink-3);font-size:13px;margin-top:2px}
-.topbar .actions{margin-left:auto;display:flex;gap:9px}
-.btn{padding:10px 16px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
-  font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
-.btn:hover{border-color:var(--brand);color:var(--brand)}
-.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
-.btn.primary:hover{background:var(--brand-dk);color:#fff}
-.btn.green{background:var(--green);border-color:var(--green);color:#fff}
-.btn.green:hover{filter:brightness(1.06);color:#fff}
-.content{padding:22px 26px 60px}
-.view{display:none;animation:fade .35s}
+.topbar .actions{margin-left:auto;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+@media(max-width:560px){.topbar h1{font-size:19px}.topbar .sub{font-size:12px}}
+.btn{padding:10px 15px;border-radius:10px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all var(--t);display:inline-flex;align-items:center;gap:7px;white-space:nowrap;box-shadow:var(--shadow-xs)}
+.btn:hover{border-color:var(--brand);color:var(--brand);transform:translateY(-1px);box-shadow:var(--shadow)}
+.btn:active{transform:translateY(0)}
+.btn.primary{background:linear-gradient(120deg,var(--brand),#3f78f2);border-color:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,109,240,.3)}
+.btn.primary:hover{filter:brightness(1.04);color:#fff;border-color:var(--brand)}
+.btn.green{background:linear-gradient(120deg,var(--green),#1bbd7c);border-color:var(--green);color:#fff;box-shadow:0 6px 16px rgba(19,168,108,.28)}
+.btn.green:hover{filter:brightness(1.05);color:#fff;border-color:var(--green)}
+.btn.demo{background:linear-gradient(120deg,#11b39a,#2f6df0);border-color:transparent;color:#fff;box-shadow:0 8px 22px rgba(17,179,154,.32);position:relative;overflow:hidden}
+.btn.demo:hover{filter:brightness(1.05);color:#fff}
+.btn.demo::after{content:"";position:absolute;top:0;left:-120%;width:50%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,.45),transparent);animation:sheen 3.4s ease-in-out infinite}
+@keyframes sheen{0%,55%{left:-120%}80%,100%{left:160%}}
+.btn.ghost{background:transparent;border-color:transparent;box-shadow:none;padding:9px 11px}
+.btn.ghost:hover{background:var(--soft);color:var(--ink);transform:none}
+.iconbtn{width:40px;height:40px;border-radius:10px;border:1px solid var(--line-2);background:var(--card);cursor:pointer;display:grid;place-items:center;font-size:17px;color:var(--ink-2);transition:all var(--t);box-shadow:var(--shadow-xs)}
+.iconbtn:hover{border-color:var(--brand);color:var(--brand);transform:translateY(-1px)}
+.content{padding:22px 26px 70px}
+@media(max-width:560px){.content{padding:18px 16px 60px}.topbar{padding:16px 16px 0}.demobar{padding:9px 16px}}
+.view{display:none;animation:fade .4s cubic-bezier(.2,.7,.3,1)}
 .view.on{display:block}
-@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 
 /* KPI cards */
 .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
 @media(max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:520px){.kpis{grid-template-columns:1fr}}
-.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;box-shadow:var(--shadow)}
-.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:10px}
-.kpi .l .dot{width:8px;height:8px;border-radius:3px}
+@media(max-width:460px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:17px 18px;box-shadow:var(--shadow);transition:transform var(--t),box-shadow var(--t);position:relative;overflow:hidden}
+.kpi:hover{transform:translateY(-3px);box-shadow:var(--shadow-md)}
+.kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ac,var(--brand));opacity:.85}
+.kpi .l{font-size:12px;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:11px}
+.kpi .l .dot{width:8px;height:8px;border-radius:3px;box-shadow:0 0 0 3px var(--card)}
 .kpi .v{font-size:27px;font-weight:900;letter-spacing:-.02em;line-height:1}
 .kpi .v small{font-size:14px;color:var(--ink-3);font-weight:700}
-.kpi .d{font-size:11.5px;margin-top:9px;font-weight:600}
+.kpi .d{font-size:11.5px;margin-top:10px;font-weight:700;display:inline-flex;align-items:center;gap:4px}
 .kpi .d.up{color:var(--green)}.kpi .d.down{color:var(--red)}.kpi .d.warn{color:var(--amber)}
 
 /* panels */
 .cols{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
 @media(max-width:980px){.cols{grid-template-columns:1fr}}
-.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow);overflow:hidden}
 .panel+.panel{margin-top:16px}
 .panel .ph{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
-.panel .ph h3{font-size:14.5px;font-weight:800}
-.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer}
+.panel .ph h3{font-size:14.5px;font-weight:800;letter-spacing:-.01em}
+.panel .ph .more{margin-left:auto;font-size:12px;color:var(--brand);font-weight:700;cursor:pointer;transition:color var(--t)}
+.panel .ph .more:hover{color:var(--brand-dk);text-decoration:underline}
 .panel .pb{padding:16px 18px}
 
 /* bar chart */
 .bars{display:flex;flex-direction:column;gap:13px}
 .bar-row{display:grid;grid-template-columns:54px 1fr 92px;align-items:center;gap:11px;font-size:12.5px}
 .bar-row .mlabel{color:var(--ink-2);font-weight:600}
-.bar-track{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
-.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1s cubic-bezier(.2,.8,.3,1)}
+.bar-track{height:10px;border-radius:99px;background:var(--soft-2);overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--sky));width:0;transition:width 1.05s cubic-bezier(.2,.8,.3,1)}
 .bar-fill.g{background:linear-gradient(90deg,var(--green),#5fd6a6)}
 .bar-fill.p{background:linear-gradient(90deg,var(--purple),#a98cf5)}
 .bar-row .mval{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
 
 /* dual bar (dept) */
 .dbar{display:flex;flex-direction:column;gap:16px}
-.dbar-row .dh{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;margin-bottom:6px}
+.dbar-row .dh{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;margin-bottom:6px;gap:8px}
 .dbar-row .dh b{font-weight:700}
 .dbar-row .dh .dv{font-weight:800;font-variant-numeric:tabular-nums}
 .dbar-row .dh .dr{color:var(--ink-3);font-size:11px;font-weight:700;margin-left:7px}
@@ -121,22 +169,29 @@ button{font-family:inherit}
 .acts{display:flex;flex-direction:column}
 .act{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
 .act:last-child{border-bottom:0}
-.act .ai{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
+.act .ai{width:30px;height:30px;border-radius:9px;flex-shrink:0;display:grid;place-items:center;font-size:14px}
 .act .at{color:var(--ink);font-weight:600}
 .act .am{color:var(--ink-3);font-size:11px;margin-top:1px}
 
 /* table */
 .toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
 .search{flex:1;min-width:200px;position:relative}
-.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:9px;font-family:inherit;font-size:13.5px;background:var(--card)}
-.search input:focus{outline:none;border-color:var(--brand)}
-.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.search input{width:100%;padding:10px 13px 10px 36px;border:1px solid var(--line-2);border-radius:10px;font-family:inherit;font-size:13.5px;background:var(--card);color:var(--ink);transition:border-color var(--t),box-shadow var(--t)}
+.search input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+.search input::placeholder{color:var(--ink-4)}
+.search .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3);pointer-events:none}
 .chips{display:flex;gap:6px;flex-wrap:wrap}
-.chip{padding:8px 13px;border-radius:8px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all .15s}
-.chip:hover{border-color:var(--brand)}
+.chip{padding:8px 13px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all var(--t)}
+.chip:hover{border-color:var(--brand);color:var(--brand)}
 .chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
-table.tbl{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
-table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap}
+.tbl-wrap{overflow-x:auto;border-radius:var(--r-lg);box-shadow:var(--shadow);border:1px solid var(--line)}
+table.tbl{width:100%;border-collapse:collapse;background:var(--card);min-width:560px}
+.tbl-wrap table.tbl{border:0;box-shadow:none}
+table.tbl thead th{background:var(--soft);font-size:11.5px;color:var(--ink-2);font-weight:700;text-align:left;padding:12px 16px;white-space:nowrap;position:sticky;top:0;cursor:default;user-select:none}
+table.tbl thead th.sortable{cursor:pointer;transition:color var(--t)}
+table.tbl thead th.sortable:hover{color:var(--brand)}
+table.tbl thead th.sortable .ar{opacity:.4;font-size:10px;margin-left:3px}
+table.tbl thead th.sortable.act-asc .ar,table.tbl thead th.sortable.act-desc .ar{opacity:1;color:var(--brand)}
 table.tbl th.r,table.tbl td.r{text-align:right}
 table.tbl tbody td{padding:13px 16px;border-top:1px solid var(--line);font-size:13px}
 table.tbl tbody tr{transition:background .12s}
@@ -146,22 +201,21 @@ table.tbl tbody tr.subtotal td{color:var(--ink)}
 table.tbl tbody tr.grand td{background:var(--brand-dk);color:#fff;font-weight:900;border-top:2px solid var(--brand-dk)}
 .st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:99px}
 .st::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
-.st.ok{background:var(--green-soft);color:var(--green)}
+.st.ok,.st.done{background:var(--green-soft);color:var(--green)}
 .st.high{background:var(--red-soft);color:var(--red)}
 .st.mid{background:var(--amber-soft);color:var(--amber)}
-.st.info{background:var(--brand-soft);color:var(--brand)}
-.st.done{background:var(--green-soft);color:var(--green)}
-.st.run{background:var(--brand-soft);color:var(--brand)}
+.st.info,.st.run{background:var(--brand-soft);color:var(--brand)}
 .posneg{font-weight:800;font-variant-numeric:tabular-nums}
 .posneg.up{color:var(--green)}.posneg.down{color:var(--red)}
 
 /* anomaly cards */
 .alerts{display:flex;flex-direction:column;gap:12px}
-.alert{display:flex;gap:14px;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--amber);border-radius:12px;padding:15px 17px;box-shadow:var(--shadow)}
+.alert{display:flex;gap:14px;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--amber);border-radius:var(--r);padding:15px 17px;box-shadow:var(--shadow);transition:transform var(--t),box-shadow var(--t)}
+.alert:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
 .alert.high{border-left-color:var(--red)}
 .alert.mid{border-left-color:var(--amber)}
 .alert.info{border-left-color:var(--brand)}
-.alert .ico{width:38px;height:38px;border-radius:10px;flex-shrink:0;display:grid;place-items:center;font-size:18px}
+.alert .ico{width:38px;height:38px;border-radius:11px;flex-shrink:0;display:grid;place-items:center;font-size:18px}
 .alert.high .ico{background:var(--red-soft)}.alert.mid .ico{background:var(--amber-soft)}.alert.info .ico{background:var(--brand-soft)}
 .alert .body{flex:1;min-width:0}
 .alert .ttl{font-size:14px;font-weight:800;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
@@ -169,36 +223,40 @@ table.tbl tbody tr.grand td{background:var(--brand-dk);color:#fff;font-weight:90
 .alert .meta{font-size:11.5px;color:var(--ink-3);margin-top:7px;display:flex;gap:14px;flex-wrap:wrap}
 .alert .meta b{color:var(--ink-2)}
 .alert .act-btn{margin-left:auto;align-self:center;flex-shrink:0}
+@media(max-width:560px){.alert .act-btn{margin-left:0;align-self:flex-start;margin-top:6px}.alert{flex-wrap:wrap}}
 
 /* segmented period control */
-.seg{display:inline-flex;background:var(--soft);border:1px solid var(--line-2);border-radius:9px;padding:3px;gap:2px}
-.seg button{border:0;background:transparent;padding:7px 14px;border-radius:7px;font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer}
-.seg button.on{background:var(--card);color:var(--brand);box-shadow:var(--shadow)}
+.seg{display:inline-flex;background:var(--soft);border:1px solid var(--line-2);border-radius:10px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;padding:7px 14px;border-radius:8px;font-size:12.5px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:all var(--t)}
+.seg button.on{background:var(--card);color:var(--brand);box-shadow:var(--shadow-xs)}
 
 /* AI generate */
-.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.ai-stage{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:24px;box-shadow:var(--shadow)}
+@media(max-width:560px){.ai-stage{padding:18px}}
 .ba{display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:stretch;margin-top:8px}
 @media(max-width:760px){.ba{grid-template-columns:1fr;gap:14px}}
-.ba .col{padding:18px;border-radius:12px}
-.ba .before{background:linear-gradient(180deg,#f3f4f7,#fafbfd);border:1px solid var(--line)}
-.ba .after{background:linear-gradient(180deg,var(--green-soft),#f1fdf8);border:1px solid #bdebd4}
+.ba .col{padding:18px;border-radius:var(--r)}
+.ba .before{background:linear-gradient(180deg,var(--soft),var(--card));border:1px solid var(--line)}
+.ba .after{background:linear-gradient(180deg,var(--green-soft),var(--card));border:1px solid #bdebd4}
+body.dark .ba .after{border-color:#1d4a3a}
 .ba .arrow{display:grid;place-items:center;font-size:26px;color:var(--brand)}
 @media(max-width:760px){.ba .arrow{transform:rotate(90deg)}}
-.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:7px}
-.ba .before .ct{background:#e7e9ef;color:#6b7280}
+.ba .ct{font-size:12px;font-weight:800;letter-spacing:.04em;margin-bottom:14px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:8px}
+.ba .before .ct{background:var(--soft-2);color:var(--ink-2)}
 .ba .after .ct{background:#cdeedd;color:var(--green)}
+body.dark .ba .after .ct{background:#16402f}
 .ba .big{font-family:'Orbitron';font-size:30px;font-weight:700;margin:6px 0}
-.ba .before .big{color:#7a8499}.ba .after .big{color:var(--green)}
+.ba .before .big{color:var(--ink-3)}.ba .after .big{color:var(--green)}
 .ba ul{list-style:none;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
 .ba li{padding:6px 0;display:flex;gap:8px;align-items:flex-start}
 
 /* AI progress steps */
 .steps{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;display:none}
 .steps.show{display:block;animation:fade .4s}
-.step{display:flex;align-items:center;gap:11px;padding:10px 12px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;font-size:13px;opacity:.45;transition:all .35s}
+.step{display:flex;align-items:center;gap:11px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:7px;font-size:13px;opacity:.45;transition:all .35s}
 .step.in{opacity:1;border-color:#bdebd4;background:var(--green-soft)}
 .step.run{opacity:1;border-color:var(--brand);background:var(--brand-soft)}
-.step .ck{width:22px;height:22px;border-radius:50%;background:var(--line-2);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0}
+.step .ck{width:22px;height:22px;border-radius:50%;background:var(--line-2);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0;transition:background .3s}
 .step.in .ck{background:var(--green)}
 .step.run .ck{background:var(--brand);animation:pulse 1s infinite}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
@@ -209,25 +267,30 @@ table.tbl tbody tr.grand td{background:var(--brand-dk);color:#fff;font-weight:90
 .ai-result.show{display:block;animation:fade .4s}
 .rgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
 @media(max-width:680px){.rgrid{grid-template-columns:1fr}}
-.rcard{background:var(--soft);border:1px solid var(--line);border-radius:11px;padding:14px 16px}
+.rcard{background:var(--soft);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
 .rcard .rl{font-size:11.5px;color:var(--ink-3);font-weight:700}
 .rcard .rv{font-size:22px;font-weight:900;margin-top:5px;font-variant-numeric:tabular-nums}
 .rcard .rd{font-size:11px;margin-top:4px;font-weight:700}
 
 /* AI orb */
-.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto}
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:26px;margin:0 auto;box-shadow:0 8px 24px rgba(22,184,119,.28)}
 .orb.spin{animation:spin 1s linear infinite,glow 1.3s ease-in-out infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes glow{0%,100%{box-shadow:0 0 22px rgba(22,184,119,.4)}50%{box-shadow:0 0 40px rgba(79,209,230,.55)}}
 
 /* toast */
-.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:13px 20px;border-radius:11px;font-weight:700;font-size:13.5px;
-  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:200;display:flex;align-items:center;gap:10px}
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:var(--card);padding:13px 20px;border-radius:var(--r);font-weight:700;font-size:13.5px;
+  box-shadow:var(--shadow-lg);opacity:0;transform:translateY(14px);transition:all .3s;z-index:300;display:flex;align-items:center;gap:10px;max-width:calc(100vw - 48px)}
 .toast.show{opacity:1;transform:none}
-.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
+.toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-weight:900;flex-shrink:0}
+@media(max-width:560px){.toast{right:16px;left:16px;bottom:16px}}
 
 .empty-cell{text-align:center;color:var(--ink-3);padding:30px}
-.backlink{font-size:12px;color:var(--ink-3);text-decoration:none}
+.empty-state{text-align:center;padding:44px 20px;color:var(--ink-3)}
+.empty-state .em{font-size:38px;margin-bottom:10px}
+.empty-state b{display:block;color:var(--ink-2);font-size:14px;font-weight:800;margin-bottom:4px}
+.empty-state span{font-size:12.5px}
+.backlink{font-size:12px;color:var(--ink-3);text-decoration:none;transition:color var(--t)}
 .backlink:hover{color:var(--brand)}
 .sectionnote{font-size:12px;color:var(--ink-3);margin:-6px 0 14px}
 .donut-wrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
@@ -236,16 +299,55 @@ table.tbl tbody tr.grand td{background:var(--brand-dk);color:#fff;font-weight:90
 .donut .cn{position:absolute;inset:0;display:grid;place-items:center;text-align:center;z-index:2}
 .donut .cn b{font-size:20px;font-weight:900;display:block}
 .donut .cn span{font-size:10.5px;color:var(--ink-3)}
-.legend{display:flex;flex-direction:column;gap:9px;font-size:12.5px}
+.legend{display:flex;flex-direction:column;gap:9px;font-size:12.5px;flex:1;min-width:180px}
 .legend .lg{display:flex;align-items:center;gap:9px}
 .legend .lg .sw{width:11px;height:11px;border-radius:3px;flex-shrink:0}
 .legend .lg .lv{margin-left:auto;font-weight:800;font-variant-numeric:tabular-nums;padding-left:18px}
+
+/* favorite star */
+.fav{background:none;border:0;cursor:pointer;font-size:15px;line-height:1;padding:2px;color:var(--ink-4);transition:transform var(--t),color var(--t)}
+.fav:hover{transform:scale(1.2)}
+.fav.on{color:#f4b740}
+
+/* ===== auto demo overlay ===== */
+.demo-spot{position:fixed;border:2.5px solid var(--brand);border-radius:14px;box-shadow:0 0 0 4000px rgba(8,12,24,.55),0 0 0 4px rgba(47,109,240,.35);
+  z-index:400;pointer-events:none;transition:all .55s cubic-bezier(.4,0,.2,1);opacity:0}
+.demo-spot.show{opacity:1}
+body.dark .demo-spot{box-shadow:0 0 0 4000px rgba(2,5,12,.62),0 0 0 4px rgba(47,109,240,.4)}
+.demo-cap{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);z-index:420;
+  background:rgba(15,24,48,.97);color:#fff;border-radius:16px;padding:16px 20px;width:min(620px,calc(100vw - 32px));
+  box-shadow:var(--shadow-lg);opacity:0;transition:all .4s cubic-bezier(.2,.7,.3,1);border:1px solid rgba(255,255,255,.1)}
+.demo-cap.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.demo-cap .dc-top{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.demo-cap .dc-orb{width:30px;height:30px;border-radius:50%;flex-shrink:0;background:radial-gradient(circle at 35% 30%,#4fd1e6,#16b877);display:grid;place-items:center;font-size:15px}
+.demo-cap .dc-step{font-size:11px;font-weight:800;letter-spacing:.05em;color:#7fb0ff;text-transform:uppercase}
+.demo-cap .dc-txt{font-size:14.5px;font-weight:600;line-height:1.55}
+.demo-cap .dc-ctrl{display:flex;gap:9px;margin-top:13px;align-items:center}
+.demo-cap .dc-ctrl button{border:0;cursor:pointer;font-weight:700;font-size:12.5px;border-radius:9px;padding:8px 14px;transition:filter var(--t),background var(--t)}
+.demo-cap .dc-ctrl .skip{background:rgba(255,255,255,.13);color:#fff}
+.demo-cap .dc-ctrl .skip:hover{background:rgba(255,255,255,.22)}
+.demo-cap .dc-ctrl .stop{background:#dd4444;color:#fff}
+.demo-cap .dc-ctrl .stop:hover{filter:brightness(1.08)}
+.demo-cap .dc-prog{margin-left:auto;display:flex;gap:5px}
+.demo-cap .dc-prog i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.22);transition:background .3s}
+.demo-cap .dc-prog i.on{background:#4fd1e6}
+.demo-cap .dc-prog i.done{background:#37e29a}
+.demo-pulse{animation:demoPulse 1.6s ease-in-out infinite}
+@keyframes demoPulse{0%,100%{box-shadow:0 0 0 4000px rgba(8,12,24,.55),0 0 0 4px rgba(47,109,240,.35)}50%{box-shadow:0 0 0 4000px rgba(8,12,24,.55),0 0 0 9px rgba(47,109,240,.22)}}
+
+/* reduced motion */
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important;scroll-behavior:auto !important}
+  .bar-fill{transition:width .001ms !important}
+  .btn.demo::after{display:none}
+}
 </style>
 </head>
 <body>
+<div class="scrim" id="scrim"></div>
 <div class="app">
   <!-- ===== SIDEBAR ===== -->
-  <aside class="side">
+  <aside class="side" id="side">
     <div class="logo">
       <div class="mk">技</div>
       <div class="nm">月次決算マシン<small>技マシン｜月次決算自動化</small></div>
@@ -262,6 +364,10 @@ table.tbl tbody tr.grand td{background:var(--brand-dk);color:#fff;font-weight:90
     <nav class="nav">
       <a data-v="ai"><span class="i">⚡</span>AI自動決算</a>
     </nav>
+    <div class="demo-cta">
+      <button id="sideDemoBtn">▶ 自動デモを見る</button>
+      <small>30秒で全機能をご案内します</small>
+    </div>
     <div class="org">
       <div class="av">気</div>
       <div><b>株式会社気持ち市場</b><span>デモ環境 / 管理者</span></div>
@@ -273,11 +379,16 @@ table.tbl tbody tr.grand td{background:var(--brand-dk);color:#fff;font-weight:90
   <div class="main">
     <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。数値・部門はサンプルです。自由に触ってお試しください。</div>
     <div class="topbar">
+      <button class="menu-btn" id="menuBtn" aria-label="メニュー">☰</button>
       <div>
         <h1 id="pgTitle">ダッシュボード</h1>
         <div class="sub" id="pgSub">2026年4月度の月次決算</div>
       </div>
-      <div class="actions" id="pgActions"></div>
+      <div class="actions">
+        <button class="btn demo" id="demoBtn">▶ 自動デモを見る</button>
+        <button class="iconbtn" id="themeBtn" aria-label="ライト / ダーク切替" title="ライト / ダーク切替">🌙</button>
+        <span id="pgActions" style="display:contents"></span>
+      </div>
     </div>
     <div class="content">
 
@@ -317,11 +428,14 @@ table.tbl tbody tr.grand td{background:var(--brand-dk);color:#fff;font-weight:90
         <div class="toolbar">
           <div class="search"><span class="ic">🔍</span><input id="tbQ" placeholder="勘定科目で検索（例：売上高、仕入高）"></div>
           <div class="chips" id="tbChips"></div>
+          <button class="btn" id="tbCsv">⬇ CSV出力</button>
         </div>
+        <div class="tbl-wrap">
         <table class="tbl">
           <thead><tr><th>区分</th><th>勘定科目</th><th class="r">前月繰越</th><th class="r">当月借方</th><th class="r">当月貸方</th><th class="r">当月残高</th></tr></thead>
           <tbody id="tbRows"></tbody>
         </table>
+        </div>
       </section>
 
       <!-- DEPARTMENT -->
@@ -332,12 +446,14 @@ table.tbl tbody tr.grand td{background:var(--brand-dk);color:#fff;font-weight:90
           <div class="pb"><div class="dbar" id="deptBars"></div></div>
         </div>
         <div class="panel">
-          <div class="ph"><h3>部門別 損益明細</h3></div>
+          <div class="ph"><h3>部門別 損益明細</h3><span class="more" id="deptCsv">⬇ CSV出力</span></div>
           <div class="pb" style="padding:0">
-            <table class="tbl" style="border:0;box-shadow:none;border-radius:0">
+            <div class="tbl-wrap" style="border:0;border-radius:0;box-shadow:none">
+            <table class="tbl">
               <thead><tr><th>部門</th><th class="r">売上高</th><th class="r">売上原価</th><th class="r">粗利</th><th class="r">販管費</th><th class="r">営業利益</th><th class="r">粗利率</th></tr></thead>
               <tbody id="deptRows"></tbody>
             </table>
+            </div>
           </div>
         </div>
       </section>
@@ -351,10 +467,12 @@ table.tbl tbody tr.grand td{background:var(--brand-dk);color:#fff;font-weight:90
           </div>
           <span class="sectionnote" style="margin:0">プラス＝改善、マイナス＝悪化として色分けしています。</span>
         </div>
+        <div class="tbl-wrap">
         <table class="tbl">
           <thead><tr><th>科目</th><th class="r" id="momHA">前月</th><th class="r" id="momHB">当月</th><th class="r">増減額</th><th class="r">増減率</th><th>傾向</th></tr></thead>
           <tbody id="momRows"></tbody>
         </table>
+        </div>
       </section>
 
       <!-- ANOMALY -->
@@ -362,8 +480,9 @@ table.tbl tbody tr.grand td{background:var(--brand-dk);color:#fff;font-weight:90
         <div class="kpis" id="anomKpis"></div>
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap">
           <div class="chips" id="anomChips"></div>
-          <span class="sectionnote" style="margin:0;margin-left:auto">AIが当月の仕訳と過去推移を照合し、自動で検知した注意点です。</span>
+          <button class="btn" id="anomAck" style="margin-left:auto">✓ 表示中をすべて確認済に</button>
         </div>
+        <span class="sectionnote" style="display:block">AIが当月の仕訳と過去推移を照合し、自動で検知した注意点です。</span>
         <div class="alerts" id="anomList"></div>
       </section>
 
@@ -372,7 +491,7 @@ table.tbl tbody tr.grand td{background:var(--brand-dk);color:#fff;font-weight:90
         <div class="ai-stage">
           <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap">
             <div class="orb" id="aiOrb">🤖</div>
-            <div style="min-width:0"><div style="font-size:16px;font-weight:900">会計データから月次決算を自動作成</div>
+            <div style="min-width:0;flex:1"><div style="font-size:16px;font-weight:900">会計データから月次決算を自動作成</div>
             <div style="font-size:12.5px;color:var(--ink-3)" id="aiSub">今月の仕訳データ <b>1,284件</b> を読み込み、試算表の作成から異常値チェックまでAIが自動で行います。</div></div>
             <button class="btn primary" id="aiRun" style="margin-left:auto">⚡ AIで月次決算を実行</button>
           </div>
@@ -417,6 +536,21 @@ table.tbl tbody tr.grand td{background:var(--brand-dk);color:#fff;font-weight:90
       </section>
 
     </div>
+  </div>
+</div>
+
+<!-- auto demo overlay -->
+<div class="demo-spot" id="demoSpot"></div>
+<div class="demo-cap" id="demoCap" role="status" aria-live="polite">
+  <div class="dc-top">
+    <div class="dc-orb">🤖</div>
+    <div class="dc-step" id="demoStepLabel">自動デモ</div>
+    <div class="dc-prog" id="demoProg"></div>
+  </div>
+  <div class="dc-txt" id="demoText">案内を準備しています…</div>
+  <div class="dc-ctrl">
+    <button class="skip" id="demoSkip">スキップ ⏭</button>
+    <button class="stop" id="demoStop">停止 ✕</button>
   </div>
 </div>
 
@@ -509,9 +643,56 @@ const yen=n=>'¥'+Math.round(n).toLocaleString();
 const yenS=n=>(n<0?'-¥':'¥')+Math.abs(Math.round(n)).toLocaleString();
 const pct=n=>n.toFixed(1)+'%';
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-function showToast(m){$('toastMsg').textContent=esc(m);$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2600);}
+let toastTimer=null;
+function showToast(m){$('toastMsg').textContent=esc(m);$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),2600);}
 const SEV_LABEL={high:'要対応',mid:'注意',info:'参考'};
 const SEV_ST={high:'high',mid:'mid',info:'info'};
+const prefersReduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// count-up animation
+function countUp(el,target,opts){
+  opts=opts||{};const dur=prefersReduced?0:(opts.dur||900);const fmt=opts.fmt||(n=>Math.round(n).toLocaleString());
+  if(dur<=0){el.textContent=fmt(target);return;}
+  const start=performance.now();
+  function frame(now){
+    const p=Math.min(1,(now-start)/dur);const e=1-Math.pow(1-p,3);
+    el.textContent=fmt(target*e);
+    if(p<1)requestAnimationFrame(frame);else el.textContent=fmt(target);
+  }
+  requestAnimationFrame(frame);
+}
+function animateKpis(scope){
+  (scope||document).querySelectorAll('.kpi .v[data-count]').forEach(el=>{
+    const t=+el.dataset.count;const pre=el.dataset.pre||'';const suf=el.dataset.suf||'';
+    countUp(el,t,{fmt:n=>pre+Math.round(n).toLocaleString()+suf});
+  });
+}
+
+// CSV helper（XSS/CSVインジェクション配慮：先頭記号をエスケープ）
+function csvCell(v){let s=String(v==null?'':v);if(/^[=+\-@]/.test(s))s="'"+s;if(/[",\n]/.test(s))s='"'+s.replace(/"/g,'""')+'"';return s;}
+function downloadCsv(name,rows){
+  const bom='﻿';
+  const body=rows.map(r=>r.map(csvCell).join(',')).join('\r\n');
+  const blob=new Blob([bom+body],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');
+  a.href=url;a.download=name;document.body.appendChild(a);a.click();
+  setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},300);
+  showToast(name+' をダウンロードしました');
+}
+
+/* ============ THEME ============ */
+function setTheme(dark){
+  document.body.classList.toggle('dark',dark);
+  $('themeBtn').textContent=dark?'☀️':'🌙';
+  $('themeBtn').title=dark?'ライトに切替':'ダークに切替';
+  document.querySelector('meta[name=theme-color]').setAttribute('content',dark?'#0c1322':'#0f1830');
+}
+$('themeBtn').onclick=()=>{const d=!document.body.classList.contains('dark');setTheme(d);showToast(d?'ダークモードに切り替えました':'ライトモードに切り替えました');};
+
+/* ============ MOBILE NAV ============ */
+function closeSide(){$('side').classList.remove('open');$('scrim').classList.remove('show');}
+$('menuBtn').onclick=()=>{const o=!$('side').classList.contains('open');$('side').classList.toggle('open',o);$('scrim').classList.toggle('show',o);};
+$('scrim').onclick=closeSide;
 
 /* ============ ROUTING ============ */
 const TITLES={dash:['ダッシュボード','2026年4月度の月次決算'],trial:['試算表','当月の勘定科目残高（合計残高試算表）'],
@@ -524,7 +705,7 @@ function go(v){
   $('pgActions').innerHTML = (v==='dash')
     ? '<button class="btn" onclick="go(\'anomaly\')">🚨 異常を見る</button><button class="btn primary" onclick="go(\'ai\')">⚡ AI自動決算</button>'
     : (v==='trial'||v==='dept'||v==='mom'||v==='anomaly')
-      ? '<button class="btn" id="topExport">📄 レポート出力</button>'
+      ? '<button class="btn" id="topExport">📄 レポート出力</button><button class="btn ghost" onclick="window.print()" title="印刷 / PDF保存">🖨</button>'
       : '';
   const ex=$('topExport');if(ex)ex.onclick=()=>showToast('月次レポート（PDF）を出力しました');
   if(v==='dash')renderDash();
@@ -532,21 +713,30 @@ function go(v){
   if(v==='dept')renderDept();
   if(v==='mom')renderMom();
   if(v==='anomaly')renderAnom();
+  closeSide();window.scrollTo({top:0,behavior:prefersReduced?'auto':'smooth'});
 }
 document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.v)));
 window.go=go;
 
 /* ============ DASHBOARD ============ */
-function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${esc(l)}</div>
-  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?esc(sub)+' ・ ':''}${esc(d)}</div></div>`;}
+function kpi(color,l,v,sub,cls,d,count){
+  const vHtml=count?`<span class="v tnum" data-count="${count.n}" data-pre="${esc(count.pre||'')}" data-suf="${esc(count.suf||'')}">${count.pre||''}0${count.suf||''}</span>`
+                   :`<div class="v tnum">${v}</div>`;
+  // keep .v as the value; sub appended inside
+  const inner=count?`<div class="v tnum">${vHtml}${sub?' <small>'+esc(sub)+'</small>':''}</div>`
+                   :`<div class="v tnum">${v}</div>`;
+  return `<div class="kpi" style="--ac:${color}"><div class="l"><span class="dot" style="background:${color}"></span>${esc(l)}</div>
+  ${inner}<div class="d ${cls}">${esc(d)}</div></div>`;
+}
 
 function renderDash(){
   const opr=TOTAL.op/TOTAL.rev*100;
   $('kpis').innerHTML=`
-    ${kpi('#2f6df0','当月 売上高',yen(TOTAL.rev),'',  'up','前月比 +6.7%')}
-    ${kpi('#16b877','売上総利益',yen(TOTAL.gross),pct(TOTAL.gross/TOTAL.rev*100)+' 粗利率','up','前月比 +10.4%')}
-    ${kpi('#7c5cf0','営業利益',yen(TOTAL.op),pct(opr)+' 利益率','up','前月比 +16.8%')}
-    ${kpi('#e3941f','前月比（営業利益）','+'+yen(620000).slice(1),'',  'up','+16.8%')}`;
+    ${kpi('#2f6df0','当月 売上高','','','up','▲ 前月比 +6.7%',{n:TOTAL.rev,pre:'¥'})}
+    ${kpi('#16b877','売上総利益','',pct(TOTAL.gross/TOTAL.rev*100)+' 粗利率','up','▲ 前月比 +10.4%',{n:TOTAL.gross,pre:'¥'})}
+    ${kpi('#7c5cf0','営業利益','',pct(opr)+' 利益率','up','▲ 前月比 +16.8%',{n:TOTAL.op,pre:'¥'})}
+    ${kpi('#e3941f','前月比（営業利益）','','','up','+16.8%',{n:620000,pre:'+¥'})}`;
+  animateKpis($('kpis'));
 
   // trend: 売上/粗利/営業利益の6ヶ月
   const labels=['11月','12月','1月','2月','3月','4月'];
@@ -596,41 +786,71 @@ function renderDashAlerts(){
 
 /* ============ TRIAL BALANCE ============ */
 let tbFilter='all';
+let tbFavs=new Set();
 function renderTBChips(){
-  const opts=[['all','すべて'],['資産','資産'],['負債','負債'],['純資産','純資産'],['収益','収益'],['費用','費用']];
+  const opts=[['all','すべて'],['fav','★ お気に入り'],['資産','資産'],['負債','負債'],['純資産','純資産'],['収益','収益'],['費用','費用']];
   $('tbChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===tbFilter?'on':''}" data-s="${esc(o[0])}">${esc(o[1])}</button>`).join('');
   $('tbChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{tbFilter=c.dataset.s;renderTBChips();renderTB();});
 }
+function tbVisibleRows(){
+  const q=($('tbQ').value||'').toLowerCase();
+  return TB.filter(r=>{
+    if(tbFilter==='fav')return tbFavs.has(r.acc)&&(!q||r.acc.toLowerCase().includes(q));
+    if(tbFilter!=='all'&&tbFilter!==r.grp)return false;
+    return !q||r.acc.toLowerCase().includes(q);
+  });
+}
 function renderTB(){
   const q=($('tbQ').value||'').toLowerCase();
-  const groups=['資産','負債','純資産','収益','費用'];
+  const favMode=tbFilter==='fav';
   let html='';let totOpen=0,totDr=0,totCr=0,totBal=0;
-  groups.forEach(g=>{
-    if(tbFilter!=='all'&&tbFilter!==g)return;
-    const rows=TB.filter(r=>r.grp===g).filter(r=>!q||r.acc.toLowerCase().includes(q));
-    if(!rows.length)return;
-    let so=0,sd=0,sc=0,sb=0;
-    rows.forEach(r=>{
-      const bal=tbBalance(r);so+=r.open;sd+=r.dr;sc+=r.cr;sb+=bal;
-      totOpen+=r.open;totDr+=r.dr;totCr+=r.cr;totBal+=bal;
-      html+=`<tr>
-        <td><span class="st info" style="background:var(--soft);color:var(--ink-2)">${esc(r.grp)}</span></td>
-        <td><b>${esc(r.acc)}</b></td>
-        <td class="r tnum" style="color:var(--ink-2)">${r.open?yen(r.open):'—'}</td>
-        <td class="r tnum">${r.dr?yen(r.dr):'—'}</td>
-        <td class="r tnum">${r.cr?yen(r.cr):'—'}</td>
-        <td class="r tnum"><b>${yen(bal)}</b></td></tr>`;
-    });
-    html+=`<tr class="subtotal"><td></td><td>${esc(g)} 小計</td>
-      <td class="r tnum">${yen(so)}</td><td class="r tnum">${yen(sd)}</td><td class="r tnum">${yen(sc)}</td><td class="r tnum">${yen(sb)}</td></tr>`;
-  });
-  if(tbFilter==='all'){
-    html+=`<tr class="grand"><td></td><td>合計</td>
-      <td class="r tnum">${yen(totOpen)}</td><td class="r tnum">${yen(totDr)}</td><td class="r tnum">${yen(totCr)}</td><td class="r tnum">${yen(totBal)}</td></tr>`;
+  function rowHtml(r){
+    const bal=tbBalance(r);
+    return `<tr>
+      <td><span class="st info" style="background:var(--soft);color:var(--ink-2)">${esc(r.grp)}</span></td>
+      <td><button class="fav ${tbFavs.has(r.acc)?'on':''}" data-acc="${esc(r.acc)}" title="お気に入り">${tbFavs.has(r.acc)?'★':'☆'}</button> <b>${esc(r.acc)}</b></td>
+      <td class="r tnum" style="color:var(--ink-2)">${r.open?yen(r.open):'—'}</td>
+      <td class="r tnum">${r.dr?yen(r.dr):'—'}</td>
+      <td class="r tnum">${r.cr?yen(r.cr):'—'}</td>
+      <td class="r tnum"><b>${yen(bal)}</b></td></tr>`;
   }
-  $('tbRows').innerHTML=html||'<tr><td colspan="6" class="empty-cell">該当する勘定科目がありません</td></tr>';
+  if(favMode){
+    const rows=TB.filter(r=>tbFavs.has(r.acc)).filter(r=>!q||r.acc.toLowerCase().includes(q));
+    rows.forEach(r=>{const bal=tbBalance(r);totOpen+=r.open;totDr+=r.dr;totCr+=r.cr;totBal+=bal;html+=rowHtml(r);});
+  }else{
+    const groups=['資産','負債','純資産','収益','費用'];
+    groups.forEach(g=>{
+      if(tbFilter!=='all'&&tbFilter!==g)return;
+      const rows=TB.filter(r=>r.grp===g).filter(r=>!q||r.acc.toLowerCase().includes(q));
+      if(!rows.length)return;
+      let so=0,sd=0,sc=0,sb=0;
+      rows.forEach(r=>{const bal=tbBalance(r);so+=r.open;sd+=r.dr;sc+=r.cr;sb+=bal;
+        totOpen+=r.open;totDr+=r.dr;totCr+=r.cr;totBal+=bal;html+=rowHtml(r);});
+      html+=`<tr class="subtotal"><td></td><td>${esc(g)} 小計</td>
+        <td class="r tnum">${yen(so)}</td><td class="r tnum">${yen(sd)}</td><td class="r tnum">${yen(sc)}</td><td class="r tnum">${yen(sb)}</td></tr>`;
+    });
+    if(tbFilter==='all'){
+      html+=`<tr class="grand"><td></td><td>合計</td>
+        <td class="r tnum">${yen(totOpen)}</td><td class="r tnum">${yen(totDr)}</td><td class="r tnum">${yen(totCr)}</td><td class="r tnum">${yen(totBal)}</td></tr>`;
+    }
+  }
+  if(!html){
+    const msg=favMode?'お気に入りの勘定科目はまだありません。★を押して登録できます':(q?'「'+($('tbQ').value)+'」に一致する勘定科目がありません':'該当する勘定科目がありません');
+    html=`<tr><td colspan="6"><div class="empty-state"><div class="em">🗂️</div><b>${esc(favMode?'お気に入り未登録':'結果が見つかりません')}</b><span>${esc(msg)}</span></div></td></tr>`;
+  }
+  $('tbRows').innerHTML=html;
+  $('tbRows').querySelectorAll('.fav').forEach(b=>b.onclick=(e)=>{
+    e.stopPropagation();const acc=b.dataset.acc;
+    if(tbFavs.has(acc))tbFavs.delete(acc);else{tbFavs.add(acc);showToast('「'+acc+'」をお気に入りに追加しました');}
+    renderTB();
+  });
 }
 $('tbQ').addEventListener('input',renderTB);
+$('tbCsv').onclick=()=>{
+  const rows=[['区分','勘定科目','前月繰越','当月借方','当月貸方','当月残高']];
+  tbVisibleRows().forEach(r=>rows.push([r.grp,r.acc,r.open,r.dr,r.cr,tbBalance(r)]));
+  downloadCsv('試算表_2026-04.csv',rows);
+};
 
 /* ============ DEPARTMENT ============ */
 function renderDept(){
@@ -638,7 +858,7 @@ function renderDept(){
   $('deptKpis').innerHTML=`
     ${kpi('#2f6df0','部門数',DEPTC.length+'<small>部門</small>','','up','全部門 黒字')}
     ${kpi('#16b877','最高 粗利率',pct(best.gpr),best.name,'up','好調')}
-    ${kpi('#7c5cf0','全社 営業利益',yen(TOTAL.op),'','up','前月比 +16.8%')}
+    ${kpi('#7c5cf0','全社 営業利益',yen(TOTAL.op),'','up','▲ 前月比 +16.8%')}
     ${kpi('#e3941f','全社 粗利率',pct(TOTAL.gross/TOTAL.rev*100),'','warn','目標 45%')}`;
 
   const mx=Math.max(...DEPTC.map(d=>d.rev));
@@ -662,6 +882,13 @@ function renderDept(){
        <td class="r tnum">${yen(TOTAL.gross)}</td><td class="r tnum">${yen(TOTAL.sga)}</td><td class="r tnum">${yen(TOTAL.op)}</td>
        <td class="r">${pct(TOTAL.gross/TOTAL.rev*100)}</td></tr>`;
 }
+$('deptCsv').onclick=(e)=>{
+  e.stopPropagation();
+  const rows=[['部門','売上高','売上原価','粗利','販管費','営業利益','粗利率(%)']];
+  [...DEPTC].sort((a,b)=>b.rev-a.rev).forEach(d=>rows.push([d.name,d.rev,d.cogs,d.gross,d.sga,d.op,d.gpr.toFixed(1)]));
+  rows.push(['全社合計',TOTAL.rev,TOTAL.cogs,TOTAL.gross,TOTAL.sga,TOTAL.op,(TOTAL.gross/TOTAL.rev*100).toFixed(1)]);
+  downloadCsv('部門別損益_2026-04.csv',rows);
+};
 
 /* ============ MONTH OVER MONTH ============ */
 let momMode='prev';
@@ -696,6 +923,7 @@ function renderMom(){
 
 /* ============ ANOMALY ============ */
 let anomFilter='all';
+let anomAcked=new Set();
 function renderAnomChips(){
   const opts=[['all','すべて'],['high','要対応'],['mid','注意'],['info','参考']];
   $('anomChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===anomFilter?'on':''}" data-s="${o[0]}">${esc(o[1])}</button>`).join('');
@@ -713,7 +941,9 @@ function renderAnom(){
 }
 function renderAnomList(){
   const rows=ANOMALIES.filter(a=>anomFilter==='all'||a.sev===anomFilter);
-  $('anomList').innerHTML=rows.length?rows.map((a,idx)=>`
+  $('anomList').innerHTML=rows.length?rows.map((a,idx)=>{
+    const i=ANOMALIES.indexOf(a);const acked=anomAcked.has(i);
+    return `
     <div class="alert ${SEV_ST[a.sev]}">
       <div class="ico">${a.icon}</div>
       <div class="body">
@@ -722,15 +952,24 @@ function renderAnomList(){
         <div class="desc">${esc(a.desc)}</div>
         <div class="meta">${a.meta.map(m=>`<span>・${esc(m)}</span>`).join('')}</div>
       </div>
-      <button class="btn act-btn" data-i="${ANOMALIES.indexOf(a)}">✓ 確認済にする</button>
-    </div>`).join('')
-    :'<div class="empty-cell">該当する異常はありません 🎉</div>';
-  $('anomList').querySelectorAll('.act-btn').forEach(b=>b.onclick=()=>{
-    const i=+b.dataset.i;const item=ANOMALIES[i];
-    showToast('「'+item.title+'」を確認済にしました');
-    b.textContent='✓ 確認済';b.disabled=true;b.style.opacity='.55';
+      <button class="btn act-btn" data-i="${i}" ${acked?'disabled style="opacity:.55"':''}>${acked?'✓ 確認済':'✓ 確認済にする'}</button>
+    </div>`;}).join('')
+    :'<div class="empty-state"><div class="em">🎉</div><b>該当する異常はありません</b><span>この区分で検知された注意点はありません</span></div>';
+  $('anomList').querySelectorAll('.act-btn').forEach(b=>{
+    if(b.disabled)return;
+    b.onclick=()=>{
+      const i=+b.dataset.i;const item=ANOMALIES[i];anomAcked.add(i);
+      showToast('「'+item.title+'」を確認済にしました');
+      b.textContent='✓ 確認済';b.disabled=true;b.style.opacity='.55';
+    };
   });
 }
+$('anomAck').onclick=()=>{
+  const rows=ANOMALIES.filter(a=>anomFilter==='all'||a.sev===anomFilter);
+  let cnt=0;rows.forEach(a=>{const i=ANOMALIES.indexOf(a);if(!anomAcked.has(i)){anomAcked.add(i);cnt++;}});
+  renderAnomList();
+  showToast(cnt?cnt+'件を確認済にしました':'未確認の項目はありません');
+};
 
 /* ============ AI AUTO CLOSING ============ */
 const AI_STEPS=[
@@ -741,7 +980,9 @@ const AI_STEPS=[
   {t:'前月・前年と自動で突合',d:''},
   {t:'AIが異常値を抽出・説明',d:'5件検知'},
 ];
-$('aiRun').addEventListener('click',async()=>{
+let aiRunning=false;
+async function runAi(){
+  if(aiRunning)return;aiRunning=true;
   const btn=$('aiRun');btn.disabled=true;btn.textContent='⚡ 処理中…';
   $('aiOrb').classList.add('spin');$('aiOrb').textContent='⚡';
   $('baAfterList').style.opacity='1';
@@ -754,9 +995,10 @@ $('aiRun').addEventListener('click',async()=>{
     <div class="step" data-i="${i}"><span class="ck">${i+1}</span><span style="flex:1">${esc(st.t)}</span><span class="sm">${esc(st.d)}</span></div>`).join('');
   $('aiSteps').classList.add('show');
   const steps=[...$('stepItems').querySelectorAll('.step')];
+  const stepDelay=prefersReduced?120:520;
   for(let i=0;i<steps.length;i++){
     steps[i].classList.add('run');
-    await new Promise(r=>setTimeout(r,520));
+    await new Promise(r=>setTimeout(r,stepDelay));
     steps[i].classList.remove('run');steps[i].classList.add('in');
     steps[i].querySelector('.ck').textContent='✓';
   }
@@ -769,14 +1011,120 @@ $('aiRun').addEventListener('click',async()=>{
     <div class="rcard"><div class="rl">AI検知 異常</div><div class="rv tnum">${ANOMALIES.length}<span style="font-size:13px"> 件</span></div><div class="rd" style="color:var(--red)">要対応 ${ANOMALIES.filter(a=>a.sev==='high').length}件</div></div>`;
   $('aiResult').classList.add('show');
   btn.disabled=false;btn.textContent='⚡ もう一度実行';
+  aiRunning=false;
   showToast('月次決算が完成しました（所要8秒・異常5件を検知）');
-});
+}
+$('aiRun').addEventListener('click',runAi);
 $('aiReport').addEventListener('click',()=>showToast('月次レポート（PDF）を出力しました'));
+
+/* ============ AUTO DEMO ============ */
+const DEMO_RM=prefersReduced; // reduced motionなら短縮
+const _t=(ms)=>DEMO_RM?Math.min(ms,500):ms;
+let demoActive=false,demoStop=false,demoSkip=false,demoIdx=0;
+const DEMO_STEPS=[
+  {label:'はじめに',sel:'.topbar h1',ms:2200,
+   text:'こんにちは。これは「技マシン｜月次決算マシン」の自動デモです。会計データから月次決算をAIが自動で作る流れを、ゆっくりご案内します。'},
+  {label:'STEP 1 / ダッシュボード',before:()=>go('dash'),sel:'#kpis',ms:2400,
+   text:'まずダッシュボード。当月の売上・粗利・営業利益が一目でわかります。数字は自動で集計され、前月比も色で表示されます。'},
+  {label:'STEP 1 / 推移グラフ',sel:'#trendBars',ms:2300,
+   text:'過去6ヶ月の売上・粗利・営業利益の推移グラフ。会社の調子が伸びているか、ひと目で確認できます。'},
+  {label:'STEP 2 / 試算表',before:()=>go('trial'),sel:'#v-trial .tbl-wrap',ms:2300,
+   text:'次は試算表。資産・負債・収益・費用などの勘定科目が、AIによって自動で集計・分類されています。'},
+  {label:'STEP 2 / 検索',before:()=>{const q=$('tbQ');q.value='売上';renderTB();},sel:'#tbQ',ms:2400,
+   text:'科目名で検索もできます。「売上」と入力すると、関係する科目だけにすぐ絞り込めます。'},
+  {label:'STEP 2 / 絞り込み',before:()=>{$('tbQ').value='';tbFilter='費用';renderTBChips();renderTB();},sel:'#tbChips',ms:2300,
+   text:'区分での絞り込みもワンタップ。ここでは「費用」だけを表示しました。お気に入り★やCSV出力も用意しています。'},
+  {label:'STEP 3 / 部門別',before:()=>{tbFilter='all';renderTBChips();go('dept');},sel:'#deptBars',ms:2500,
+   text:'部門別ページ。青果卸売・介護・AI自動化など、事業ごとの売上と粗利率を自動で見える化します。'},
+  {label:'STEP 4 / 前月比',before:()=>go('mom'),sel:'#v-mom .tbl-wrap',ms:2300,
+   text:'前月比のページ。科目ごとの増減を「改善・悪化」で色分け。前年同月比にも切り替えられます。'},
+  {label:'STEP 5 / 異常検知',before:()=>go('anomaly'),sel:'#anomList',ms:2500,
+   text:'AIが自動で見つけた注意点の一覧です。広告費の急増や粗利率の低下など、見落としやすい点を説明付きで教えてくれます。'},
+  {label:'STEP 6 / AI自動決算',before:()=>go('ai'),sel:'.ba',ms:2400,
+   text:'いよいよAI自動決算。手作業だと約18時間かかる月次決算が、技マシンなら数秒で完成します。'},
+  {label:'STEP 6 / 実行',before:()=>{const b=$('aiRun');if(!b.disabled)b.click();},sel:'#aiRun',ms:5200,
+   text:'では実行ボタンを自動で押してみます。仕訳の読み込みから試算表の生成、異常チェックまで自動で進みます…'},
+  {label:'STEP 6 / 完成',sel:'#aiResult',ms:2600,
+   text:'完成しました。売上・営業利益・検知した異常がまとまり、ここから各画面へすぐ移動できます。'},
+];
+const demoEls={spot:$('demoSpot'),cap:$('demoCap'),text:$('demoText'),label:$('demoStepLabel'),prog:$('demoProg')};
+function buildDemoProg(){
+  demoEls.prog.innerHTML=DEMO_STEPS.map(()=>'<i></i>').join('');
+}
+function spotlight(sel){
+  const el=sel?document.querySelector(sel):null;
+  if(!el){demoEls.spot.classList.remove('show');return;}
+  el.scrollIntoView({block:'center',behavior:DEMO_RM?'auto':'smooth'});
+  setTimeout(()=>{
+    const r=el.getBoundingClientRect();const pad=8;
+    const sp=demoEls.spot;
+    sp.style.top=(r.top-pad)+'px';sp.style.left=(r.left-pad)+'px';
+    sp.style.width=(r.width+pad*2)+'px';sp.style.height=(r.height+pad*2)+'px';
+    sp.classList.add('show');sp.classList.toggle('demo-pulse',!DEMO_RM);
+  },DEMO_RM?20:260);
+}
+function updateProg(){
+  [...demoEls.prog.children].forEach((d,i)=>{
+    d.className='';if(i<demoIdx)d.classList.add('done');else if(i===demoIdx)d.classList.add('on');
+  });
+}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function interruptibleSleep(ms){
+  const step=80;let waited=0;
+  while(waited<ms){
+    if(demoStop||demoSkip)return;
+    await sleep(step);waited+=step;
+  }
+}
+async function startDemo(){
+  if(demoActive)return;
+  demoActive=true;demoStop=false;demoIdx=0;
+  $('demoBtn').textContent='● デモ再生中';$('demoBtn').disabled=true;$('sideDemoBtn').disabled=true;
+  buildDemoProg();
+  demoEls.cap.classList.add('show');
+  for(demoIdx=0;demoIdx<DEMO_STEPS.length;demoIdx++){
+    if(demoStop)break;
+    demoSkip=false;
+    const st=DEMO_STEPS[demoIdx];
+    try{ if(st.before)st.before(); }catch(e){ /* 続行 */ }
+    updateProg();
+    demoEls.label.textContent=st.label;
+    demoEls.text.textContent=st.text;
+    await sleep(DEMO_RM?40:340); // 画面遷移を待ってからハイライト
+    if(demoStop)break;
+    spotlight(st.sel);
+    await interruptibleSleep(_t(st.ms));
+  }
+  endDemo(!demoStop);
+}
+function endDemo(completed){
+  demoEls.spot.classList.remove('show','demo-pulse');
+  demoActive=false;
+  $('demoBtn').textContent='▶ 自動デモを見る';$('demoBtn').disabled=false;$('sideDemoBtn').disabled=false;
+  if(completed){
+    demoEls.label.textContent='デモ完了';
+    demoEls.text.textContent='デモ完了。ご自由にお試しください。各メニューを触って、AI自動決算もぜひ実行してみてください。';
+    [...demoEls.prog.children].forEach(d=>{d.className='done';});
+    setTimeout(()=>{demoEls.cap.classList.remove('show');},DEMO_RM?1200:4200);
+    showToast('自動デモが完了しました。ご自由にお試しください');
+  }else{
+    demoEls.cap.classList.remove('show');
+    showToast('自動デモを停止しました');
+  }
+}
+function skipStep(){ if(demoActive)demoSkip=true; }
+function stopDemo(){ if(demoActive){demoStop=true;demoSkip=true;} }
+$('demoBtn').onclick=startDemo;
+$('sideDemoBtn').onclick=()=>{closeSide();startDemo();};
+$('demoSkip').onclick=skipStep;
+$('demoStop').onclick=stopDemo;
+window.addEventListener('keydown',e=>{if(e.key==='Escape'&&demoActive)stopDemo();});
+window.addEventListener('resize',()=>{if(demoActive&&!demoStop){const st=DEMO_STEPS[demoIdx];if(st)spotlight(st.sel);}});
 
 /* ============ INIT ============ */
 $('navAnom').textContent=ANOMALIES.filter(a=>a.sev!=='info').length;
 renderTBChips();renderMomSeg();
-renderDash();
+go('dash');
 </script>
 </body>
 </html>
