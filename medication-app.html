@@ -12,6 +12,8 @@
 <link rel="manifest" href="manifest.json">
 <style>html,body{max-width:100vw;overflow-x:hidden;-webkit-text-size-adjust:100%}img,video,canvas,svg{max-width:100%}@supports(padding:env(safe-area-inset-top)){body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}}</style>
 <title>技マシン｜服薬管理マシン（医療・介護向け服薬管理システム）</title>
+<!-- v2: pro UI upgrade + auto-demo / dark mode / favorites / CSV+print / period filter / count-up -->
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Orbitron:wght@700&display=swap" rel="stylesheet">
@@ -60,7 +62,7 @@ button{font-family:inherit}
 /* ===== main ===== */
 .main{min-width:0}
 .demobar{background:linear-gradient(90deg,#fef6e0,#fdeecb);border-bottom:1px solid #f0dca6;color:#8a6212;
-  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px}
+  font-size:12.5px;font-weight:600;padding:9px 26px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .demobar .tag{background:#8a6212;color:#fff;font-size:10px;font-weight:800;padding:2px 9px;border-radius:5px;letter-spacing:.05em}
 .topbar{display:flex;align-items:center;gap:16px;padding:20px 26px 0}
 .topbar h1{font-size:22px;font-weight:900;letter-spacing:-.01em}
@@ -264,6 +266,94 @@ table.tbl tbody tr:hover{background:var(--soft)}
 .toast .ck{width:22px;height:22px;border-radius:50%;background:var(--green);display:grid;place-items:center;font-weight:900}
 
 .tag-pill{font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:6px;background:var(--soft);color:var(--ink-2)}
+
+/* ===== DARK MODE ===== */
+body.dark{
+  --bg:#0c121e;--card:#141d2e;--soft:#1c273a;--line:#26324a;--line-2:#33425e;
+  --ink:#e9eef7;--ink-2:#a7b3c7;--ink-3:#6f7e96;
+  --brand-soft:#0e3a35;--green-soft:#0f3328;--amber-soft:#3a2c12;--red-soft:#3a1c1c;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.35);
+  --shadow-lg:0 18px 50px rgba(0,0,0,.6);
+}
+body.dark .demobar{background:linear-gradient(90deg,#2a2410,#332b14);border-bottom-color:#4a3d1a;color:#e3c574}
+body.dark .ba .before{background:linear-gradient(180deg,#1a2030,#161d2c)}
+body.dark .ba .before .ct{background:#26324a;color:#9aa6bb}
+body.dark .ba .before .big{color:#8d98ad}
+body.dark .card-prev{background:var(--card)}
+body.dark .pill.refuse{background:var(--card)}
+body.dark table.tbl thead th{color:var(--ink-2)}
+body{transition:background .35s,color .35s}
+
+/* theme toggle in topbar */
+.iconbtn{width:38px;height:38px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);color:var(--ink-2);
+  font-size:16px;cursor:pointer;display:inline-grid;place-items:center;transition:all .15s;flex-shrink:0}
+.iconbtn:hover{border-color:var(--brand);color:var(--brand)}
+
+/* favorite star */
+.fav{background:none;border:0;cursor:pointer;font-size:16px;line-height:1;padding:2px;color:var(--ink-3);transition:transform .15s,color .15s}
+.fav:hover{transform:scale(1.2)}
+.fav.on{color:#f0b429}
+
+/* period select */
+.period{display:inline-flex;align-items:center;gap:6px;padding:8px 11px;border:1px solid var(--line-2);border-radius:9px;background:var(--card);font-size:12.5px;font-weight:700;color:var(--ink-2)}
+.period select{border:0;background:none;font-family:inherit;font-weight:700;color:var(--ink);font-size:12.5px;cursor:pointer}
+.period select:focus{outline:none}
+
+/* row enter animation for tables */
+@keyframes rowin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ===== AUTO-DEMO ===== */
+.demo-spot{position:relative;z-index:9100!important;outline:3px solid var(--brand);outline-offset:3px;border-radius:12px;
+  box-shadow:0 0 0 6px rgba(14,159,142,.22),0 18px 50px rgba(14,159,142,.30);animation:spotpulse 1.4s ease-in-out infinite}
+@keyframes spotpulse{0%,100%{box-shadow:0 0 0 6px rgba(14,159,142,.22),0 18px 50px rgba(14,159,142,.30)}50%{box-shadow:0 0 0 11px rgba(14,159,142,.10),0 18px 50px rgba(14,159,142,.40)}}
+.demo-scrim{position:fixed;inset:0;background:rgba(7,12,22,.30);backdrop-filter:saturate(.85) blur(.4px);z-index:9000;opacity:0;
+  transition:opacity .4s;pointer-events:none}
+.demo-scrim.show{opacity:1}
+body.dark .demo-scrim{background:rgba(0,0,0,.5)}
+.demo-cap{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);z-index:9300;
+  width:min(680px,calc(100vw - 32px));background:rgba(14,21,36,.96);color:#fff;border:1px solid rgba(255,255,255,.10);
+  border-radius:16px;padding:16px 20px;box-shadow:0 22px 60px rgba(0,0,0,.5);opacity:0;transition:opacity .4s,transform .4s;pointer-events:auto}
+.demo-cap.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.demo-cap .top{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+.demo-cap .step{font-size:10.5px;font-weight:800;letter-spacing:.08em;color:#7fe6d4;background:rgba(14,159,142,.18);padding:3px 9px;border-radius:6px}
+.demo-cap .dots{display:flex;gap:5px;margin-left:auto}
+.demo-cap .dots i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.22);transition:all .3s}
+.demo-cap .dots i.on{background:#37e29a;width:18px;border-radius:99px}
+.demo-cap .narr{font-size:14.5px;font-weight:600;line-height:1.55;font-family:'Zen Kaku Gothic New',sans-serif}
+.demo-cap .ctrls{display:flex;gap:8px;margin-top:13px}
+.demo-cap .db{flex:1;padding:9px 12px;border-radius:9px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);
+  color:#fff;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.demo-cap .db:hover{background:rgba(255,255,255,.13)}
+.demo-cap .db.primary{background:var(--brand);border-color:var(--brand)}
+.demo-cap .db.primary:hover{background:var(--brand-dk)}
+.demo-cap .pgbar{height:3px;border-radius:99px;background:rgba(255,255,255,.12);margin-top:12px;overflow:hidden}
+.demo-cap .pgbar i{display:block;height:100%;background:linear-gradient(90deg,#37e29a,#4fd1e6);width:0;transition:width linear}
+.demo-fab{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:10px;border:0;cursor:pointer;
+  font-family:inherit;font-size:13px;font-weight:800;color:#04101a;
+  background:linear-gradient(135deg,#4fd1e6,#37e29a);box-shadow:0 8px 22px rgba(55,226,154,.35);transition:transform .15s,box-shadow .15s}
+.demo-fab:hover{transform:translateY(-1px);box-shadow:0 12px 28px rgba(55,226,154,.45)}
+.demo-fab .pl{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:rgba(4,16,26,.18);font-size:10px}
+.demo-typing{box-shadow:0 0 0 2px var(--brand) inset!important}
+
+@media(prefers-reduced-motion:reduce){
+  .demo-spot{animation:none}
+  .view{animation:none}
+  *{scroll-behavior:auto!important}
+}
+@media(max-width:600px){
+  .demo-cap{bottom:14px}
+  .topbar{flex-wrap:wrap}
+  .topbar .actions{margin-left:0;width:100%}
+}
+@media print{
+  .side,.demobar,.toolbar,.demo-cap,.demo-scrim,.toast,#themeBtn,.topbar .actions,.fav,th:first-child,td:first-child{display:none!important}
+  .app{display:block}
+  body{background:#fff;color:#000}
+  .view{display:none!important}.view.on{display:block!important}
+  table.tbl{box-shadow:none;border:1px solid #ccc}
+  .topbar{padding:0 0 12px}
+  @page{margin:14mm}
+}
 </style>
 </head>
 <body>
@@ -296,13 +386,15 @@ table.tbl tbody tr:hover{background:var(--soft)}
 
   <!-- ===== MAIN ===== -->
   <div class="main">
-    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。入居者名・お薬はすべて架空のサンプルです。自由に触ってお試しください。</div>
+    <div class="demobar"><span class="tag">デモ環境</span>これは技マシンの体験用デモです。入居者名・お薬はすべて架空のサンプルです。自由に触ってお試しください。
+      <button class="demo-fab" id="demoStart" style="margin-left:auto"><span class="pl">▶</span>自動デモを見る</button></div>
     <div class="topbar">
       <div>
         <h1 id="pgTitle">ダッシュボード</h1>
         <div class="sub" id="pgSub">本日の服薬状況</div>
       </div>
       <div class="actions" id="pgActions"></div>
+      <button class="iconbtn" id="themeBtn" title="ライト / ダーク切替" aria-label="テーマ切替">🌙</button>
     </div>
     <div class="content">
 
@@ -335,9 +427,19 @@ table.tbl tbody tr:hover{background:var(--soft)}
         <div class="toolbar">
           <div class="search"><span class="ic">🔍</span><input id="rq" placeholder="入居者名・部屋番号・担当で検索"></div>
           <div class="chips" id="resChips"></div>
+          <label class="period">並び替え
+            <select id="resSort">
+              <option value="room">部屋番号順</option>
+              <option value="name">名前順</option>
+              <option value="adhLow">遵守率の低い順</option>
+              <option value="adhHigh">遵守率の高い順</option>
+            </select>
+          </label>
+          <button class="btn" id="resCsv">⬇ CSV</button>
+          <button class="btn" id="resPrint">🖨 印刷</button>
         </div>
         <table class="tbl">
-          <thead><tr><th>入居者</th><th>部屋</th><th>服用中のお薬</th><th>本日の服薬状況</th><th>遵守率(7日)</th><th>状態</th></tr></thead>
+          <thead><tr><th style="width:34px"></th><th>入居者</th><th>部屋</th><th>服用中のお薬</th><th>本日の服薬状況</th><th>遵守率(7日)</th><th>状態</th></tr></thead>
           <tbody id="resRows"></tbody>
         </table>
       </section>
@@ -347,6 +449,14 @@ table.tbl tbody tr:hover{background:var(--soft)}
         <div class="toolbar">
           <div class="search"><span class="ic">🔍</span><input id="recq" placeholder="入居者名で検索"></div>
           <div class="chips" id="recChips"></div>
+          <label class="period">期間
+            <select id="recPeriod">
+              <option value="today">本日</option>
+              <option value="am">午前（〜12時）</option>
+              <option value="pm">午後（12時〜）</option>
+            </select>
+          </label>
+          <button class="btn" id="recCsv">⬇ CSV</button>
         </div>
         <table class="tbl">
           <thead><tr><th>時刻</th><th>入居者</th><th>お薬</th><th>タイミング</th><th>記録者</th><th>状態</th><th class="c">操作</th></tr></thead>
@@ -453,6 +563,22 @@ table.tbl tbody tr:hover{background:var(--soft)}
 </div>
 
 <div class="toast" id="toast"><span class="ck">✓</span><span id="toastMsg"></span></div>
+
+<!-- ===== AUTO-DEMO OVERLAY ===== -->
+<div class="demo-scrim" id="demoScrim"></div>
+<div class="demo-cap" id="demoCap" role="dialog" aria-live="polite" aria-label="自動デモのナレーション">
+  <div class="top">
+    <span class="step" id="demoStep">STEP 1 / 7</span>
+    <span class="dots" id="demoDots"></span>
+  </div>
+  <div class="narr" id="demoNarr">自動デモを準備しています…</div>
+  <div class="pgbar"><i id="demoPg"></i></div>
+  <div class="ctrls">
+    <button class="db" id="demoPause">⏸ 一時停止</button>
+    <button class="db" id="demoSkip">⏭ スキップ</button>
+    <button class="db primary" id="demoStop">■ 終了</button>
+  </div>
+</div>
 
 <script>
 /* ============ DATA ============ */
@@ -563,6 +689,48 @@ function stBadge(s){return `<span class="st ${s}">${STLABEL[s]||s}</span>`;}
 function adhClass(a){return a>=90?'ok':a>=80?'mid':'low';}
 function adhColor(a){return a>=90?'var(--green)':a>=80?'var(--amber)':'var(--red)';}
 
+/* favorites (persisted) */
+let favs=new Set();
+try{favs=new Set(JSON.parse(localStorage.getItem('wazaFavs')||'[]'));}catch(e){favs=new Set();}
+function saveFavs(){try{localStorage.setItem('wazaFavs',JSON.stringify([...favs]));}catch(e){}}
+window.toggleFav=(id,ev)=>{if(ev)ev.stopPropagation();if(favs.has(id)){favs.delete(id);showToast('お気に入りから外しました');}else{favs.add(id);showToast('お気に入りに登録しました');}saveFavs();renderRes();};
+
+/* count-up animation (respects reduced-motion) */
+const REDUCE=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function countUp(el,to,suffix,dur){
+  to=Number(to)||0;suffix=suffix||'';dur=dur||900;
+  if(REDUCE){el.textContent=to+suffix;return;}
+  const t0=performance.now();
+  function tick(now){
+    const p=Math.min(1,(now-t0)/dur);const e=1-Math.pow(1-p,3);
+    el.textContent=Math.round(to*e)+suffix;
+    if(p<1)requestAnimationFrame(tick);else el.textContent=to+suffix;
+  }
+  requestAnimationFrame(tick);
+}
+function animateKpis(){
+  document.querySelectorAll('.view.on .kpi .v [data-c]').forEach(el=>countUp(el,el.dataset.c,'',850));
+}
+
+/* theme toggle (persisted) */
+function applyTheme(dark){
+  document.body.classList.toggle('dark',dark);
+  $('themeBtn').textContent=dark?'☀️':'🌙';
+  document.querySelector('meta[name=theme-color]').setAttribute('content',dark?'#0c121e':'#0f1830');
+  try{localStorage.setItem('wazaTheme',dark?'dark':'light');}catch(e){}
+}
+$('themeBtn').addEventListener('click',()=>applyTheme(!document.body.classList.contains('dark')));
+(function(){let t='light';try{t=localStorage.getItem('wazaTheme')||((window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light');}catch(e){}applyTheme(t==='dark');})();
+
+/* CSV download helper */
+function downloadCSV(filename,rows){
+  const csv=rows.map(r=>r.map(c=>{const s=String(c==null?'':c);return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}).join(',')).join('\r\n');
+  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(url),500);
+  showToast(filename+' をダウンロードしました');
+}
+
 /* ============ ROUTING ============ */
 const TITLES={
   dash:['ダッシュボード','本日の服薬状況'],
@@ -591,8 +759,12 @@ document.querySelectorAll('.nav a').forEach(a=>a.addEventListener('click',()=>go
 window.go=go;
 
 /* ============ DASHBOARD ============ */
-function kpi(color,l,v,sub,cls,d){return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
-  <div class="v tnum">${v}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
+function kpi(color,l,v,sub,cls,d){
+  // split leading number from trailing unit markup so the number can count up
+  const m=String(v).match(/^(\d+)(.*)$/s);
+  const inner=m?`<span data-c="${m[1]}">0</span>${m[2]}`:v;
+  return `<div class="kpi"><div class="l"><span class="dot" style="background:${color}"></span>${l}</div>
+  <div class="v tnum">${inner}</div><div class="d ${cls}">${sub?sub+' ・ ':''}${d}</div></div>`;}
 function todayDoseCount(){let n=0;residents.forEach(r=>TIMINGS.forEach(t=>{if(r.doseMap[t].length)n+=r.doseMap[t].length;}));return n;}
 function todayDoneCount(){let n=0;residents.forEach(r=>TIMINGS.forEach(t=>{if(r.timingStatus[t]==='done')n+=r.doseMap[t].length;}));return n;}
 function todayMissCount(){return alerts.filter(a=>a.cat==='miss'&&!a.ack).length;}
@@ -610,6 +782,7 @@ function renderDash(){
     ${kpi('#16b877','服薬遵守率',compliance+'<small>%</small>',done+'/'+(done+miss+refuse)+'回','up','目標95%')}
     ${kpi('#e3941f','残薬アラート',lowStock+'<small>件</small>','残り3日以内',lowStock?'warn':'up',lowStock?'要発注':'なし')}
     ${kpi('#e24a4a','誤薬',miss+refuse===0?'0<small>件</small>':'0<small>件</small>','本日','up','誤薬ゼロ継続中')}`;
+  animateKpis();
 
   // donut
   const segs=[['done',done,'var(--green)','服薬済'],['wait',wait<0?0:wait,'#cdd6e4','予定/未'],['refuse',refuse,'var(--ink-3)','拒薬'],['miss',miss,'var(--red)','飲み忘れ']];
@@ -655,22 +828,38 @@ function pillRow(r){
   }).join('')+'</div>';
 }
 function renderResChips(){
-  const opts=[['all','すべて'],['miss','飲み忘れあり'],['low','遵守率低'],['note','特記あり']];
+  const opts=[['all','すべて'],['fav','⭐ お気に入り'],['miss','飲み忘れあり'],['low','遵守率低'],['note','特記あり']];
   $('resChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===resFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
   $('resChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{resFilter=c.dataset.s;renderResChips();renderRes();});
 }
-function renderRes(){
+function getResRows(){
   const q=($('rq').value||'').toLowerCase();
   let rows=residents.filter(r=>{
+    if(resFilter==='fav')return favs.has(r.id);
     if(resFilter==='miss')return TIMINGS.some(t=>r.timingStatus[t]==='miss');
     if(resFilter==='low')return r.adherence<85;
     if(resFilter==='note')return !!r.note;
     return true;
   }).filter(r=>!q||(r.name+r.room+r.staff).toLowerCase().includes(q));
-  $('resRows').innerHTML=rows.length?rows.map(r=>{
+  const sort=($('resSort')&&$('resSort').value)||'room';
+  rows.sort((a,b)=>{
+    if(sort==='name')return a.name.localeCompare(b.name,'ja');
+    if(sort==='adhLow')return a.adherence-b.adherence;
+    if(sort==='adhHigh')return b.adherence-a.adherence;
+    return a.room.localeCompare(b.room);
+  });
+  // favorites float to the top within each sort
+  rows.sort((a,b)=>(favs.has(b.id)?1:0)-(favs.has(a.id)?1:0));
+  return rows;
+}
+function renderRes(){
+  const rows=getResRows();
+  $('resRows').innerHTML=rows.length?rows.map((r,i)=>{
     const hasMiss=TIMINGS.some(t=>r.timingStatus[t]==='miss');
     const stat=hasMiss?'missed':(r.adherence>=90?'done':'soon');
-    return `<tr onclick="openRes('${esc(r.id)}')">
+    const an=REDUCE?'':`animation:rowin .3s ${Math.min(i*28,260)}ms both`;
+    return `<tr onclick="openRes('${esc(r.id)}')" style="${an}">
+    <td class="c"><button class="fav ${favs.has(r.id)?'on':''}" title="お気に入り" onclick="toggleFav('${esc(r.id)}',event)">${favs.has(r.id)?'★':'☆'}</button></td>
     <td><div class="resident"><span class="avatar" style="background:${r.color}">${esc(initial(r.name))}</span>
       <div><b>${esc(r.name)}</b><div class="meta">${r.sex} / ${r.age}歳 ・ 担当 ${esc(r.staff)}${r.note?' ・ <span class="tag-pill" style="background:var(--amber-soft);color:var(--amber)">特記</span>':''}</div></div></div></td>
     <td class="mono" style="font-size:12px">${esc(r.room)}</td>
@@ -679,9 +868,17 @@ function renderRes(){
     <td><div class="mini"><div class="tk"><div class="fl" style="width:${r.adherence}%;background:${adhColor(r.adherence)}"></div></div><b>${r.adherence}%</b></div></td>
     <td>${stBadge(stat)}</td></tr>`;
   }).join('')
-  :'<tr><td colspan="6" class="empty-cell">該当する入居者がいません</td></tr>';
+  :'<tr><td colspan="7" class="empty-cell">🔍 該当する入居者がいません<div style="font-size:11.5px;margin-top:6px;color:var(--ink-3)">検索条件や絞り込みを変えてお試しください</div></td></tr>';
 }
 window.openRes=id=>{const r=residents.find(x=>x.id===id);if(r){go('schedule');$('sRes').value=r.name;loadResToForm(r);showToast(r.name+' 様のスケジュールを表示');}};
+$('resSort').addEventListener('change',renderRes);
+$('resCsv').addEventListener('click',()=>{
+  const rows=getResRows();
+  const data=[['部屋','入居者','性別','年齢','担当','剤数','遵守率(7日)','特記']];
+  rows.forEach(r=>data.push([r.room,r.name,r.sex,r.age,r.staff,r.meds.length,r.adherence+'%',r.note||'']));
+  downloadCSV('入居者一覧_'+new Date().toISOString().slice(0,10)+'.csv',data);
+});
+$('resPrint').addEventListener('click',()=>{showToast('印刷プレビューを開きます');setTimeout(()=>window.print(),250);});
 
 /* ============ RECORDS ============ */
 let recFilter='all';
@@ -691,26 +888,43 @@ function renderRecChips(){
   $('recChips').innerHTML=opts.map(o=>`<button class="chip ${o[0]===recFilter?'on':''}" data-s="${o[0]}">${o[1]}</button>`).join('');
   $('recChips').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{recFilter=c.dataset.s;renderRecChips();renderRec();});
 }
-function renderRec(){
+function recHour(x){return parseInt(x.time.slice(0,2),10);}
+function getRecRows(){
   const q=($('recq').value||'').toLowerCase();
-  let rows=records.filter(x=>recFilter==='all'||x.status===recFilter).filter(x=>!q||x.res.toLowerCase().includes(q));
-  $('recRows').innerHTML=rows.length?rows.map((x,i)=>`<tr>
+  const per=($('recPeriod')&&$('recPeriod').value)||'today';
+  return records.filter(x=>recFilter==='all'||x.status===recFilter)
+    .filter(x=>!q||x.res.toLowerCase().includes(q))
+    .filter(x=>per==='today'?true:per==='am'?recHour(x)<12:recHour(x)>=12);
+}
+function renderRec(){
+  let rows=getRecRows();
+  $('recRows').innerHTML=rows.length?rows.map((x,i)=>{
+    const an=REDUCE?'':`animation:rowin .3s ${Math.min(i*24,240)}ms both`;
+    return `<tr style="${an}">
     <td class="mono" style="font-size:12.5px">${esc(x.time)}</td>
     <td><div class="resident"><span class="avatar" style="background:${x.resObj.color};width:26px;height:26px;font-size:11px">${esc(initial(x.res))}</span><b>${esc(x.res)}</b></div></td>
     <td>${esc(x.med)}</td>
     <td><span class="tag-pill">${esc(x.timing)}</span></td>
     <td style="color:var(--ink-2)">${esc(x.staff)}</td>
     <td>${recBadge(x.status)}</td>
-    <td class="c">${x.status==='miss'?`<button class="btn green" style="padding:5px 11px" onclick="markDone(${i})">服薬済に</button>`:'<span style="color:var(--ink-3);font-size:11px">—</span>'}</td></tr>`).join('')
-  :'<tr><td colspan="7" class="empty-cell">該当する記録がありません</td></tr>';
+    <td class="c">${x.status==='miss'?`<button class="btn green" style="padding:5px 11px" onclick="markDone(${i})">服薬済に</button>`:'<span style="color:var(--ink-3);font-size:11px">—</span>'}</td></tr>`;}).join('')
+  :'<tr><td colspan="7" class="empty-cell">📋 該当する記録がありません<div style="font-size:11.5px;margin-top:6px;color:var(--ink-3)">期間や絞り込みを変えてお試しください</div></td></tr>';
 }
 window.markDone=i=>{
-  const visible=records.filter(x=>recFilter==='all'||x.status===recFilter).filter(x=>!($('recq').value||'')||x.res.toLowerCase().includes(($('recq').value||'').toLowerCase()));
+  const visible=getRecRows();
   const rec=visible[i];if(!rec)return;rec.status='done';
   // remove related miss alert
   alerts.forEach(a=>{if(a.cat==='miss'&&a.ti.includes(rec.res))a.ack=true;});
   renderRec();updateBadges();showToast(rec.res+' 様 のお薬を服薬済に記録しました');
 };
+$('recPeriod').addEventListener('change',renderRec);
+$('recCsv').addEventListener('click',()=>{
+  const rows=getRecRows();
+  const data=[['時刻','入居者','お薬','タイミング','記録者','状態']];
+  const lab={done:'服薬済',miss:'飲み忘れ',refuse:'拒薬'};
+  rows.forEach(x=>data.push([x.time,x.res,x.med,x.timing,x.staff,lab[x.status]||x.status]));
+  downloadCSV('服薬記録_'+new Date().toISOString().slice(0,10)+'.csv',data);
+});
 
 /* ============ STOCK ============ */
 function stockState(d){return d<=3?'low':d<=7?'mid':'ok';}
@@ -721,6 +935,7 @@ function renderStockKpis(){
     ${kpi('#e24a4a','要発注（3日以内）',low+'<small>件</small>','至急',low?'down':'up',low?'発注推奨':'なし')}
     ${kpi('#e3941f','残少（7日以内）',mid+'<small>件</small>','早めに',mid?'warn':'up','確認')}
     ${kpi('#16b877','十分な在庫',stock.filter(s=>s.days>7).length+'<small>件</small>','','up','安心')}`;
+  animateKpis();
 }
 function renderStock(){
   renderStockKpis();
@@ -882,6 +1097,122 @@ $('aiRun').addEventListener('click',async()=>{
   btn.disabled=false;btn.textContent='⚡ もう一度チェック';
   showToast('AIチェック完了：飲み忘れ'+Math.min(missList.length,3)+'件・残薬不足'+Math.min(lowStock.length,3)+'件を検知');
 });
+
+/* ============ SEARCH LISTENERS ============ */
+$('rq').addEventListener('input',renderRes);
+$('recq').addEventListener('input',renderRec);
+
+/* ============ AUTO-DEMO ENGINE ============ */
+const Demo=(function(){
+  let running=false,paused=false,skipReq=false,stopReq=false,curResolve=null,curTimer=null,curStart=0,curDur=0,curRemain=0,stepIdx=0;
+  const cap=$('demoCap'),scrim=$('demoScrim'),pgEl=$('demoPg'),narrEl=$('demoNarr'),stepEl=$('demoStep'),dotsEl=$('demoDots');
+  let spotted=null;
+
+  function clearSpot(){if(spotted){spotted.classList.remove('demo-spot');spotted=null;}}
+  function spot(el){clearSpot();if(!el)return;spotted=el;el.classList.add('demo-spot');
+    try{el.scrollIntoView({behavior:REDUCE?'auto':'smooth',block:'center'});}catch(e){el.scrollIntoView();}}
+
+  // wait `ms`, honoring pause/skip/stop. Resolves true normally, false if stop requested.
+  function wait(ms){
+    return new Promise(resolve=>{
+      curDur=ms;curRemain=ms;curStart=performance.now();
+      curResolve=resolve;
+      runProgress();
+    });
+  }
+  function runProgress(){
+    if(stopReq){finishWait(false);return;}
+    if(skipReq){skipReq=false;finishWait(true);return;}
+    if(paused)return;
+    curStart=performance.now();
+    if(!REDUCE){pgEl.style.transition='none';pgEl.style.width=((curDur-curRemain)/curDur*100)+'%';
+      requestAnimationFrame(()=>{pgEl.style.transition='width '+curRemain+'ms linear';pgEl.style.width='100%';});}
+    curTimer=setTimeout(()=>finishWait(true),curRemain);
+  }
+  function finishWait(ok){clearTimeout(curTimer);curTimer=null;const r=curResolve;curResolve=null;if(r)r(ok);}
+
+  function setNarr(text,total){
+    stepIdx++;
+    stepEl.textContent='STEP '+stepIdx+' / '+total;
+    narrEl.textContent=text;
+    dotsEl.innerHTML=Array.from({length:total},(_,i)=>`<i class="${i<stepIdx?'on':''}"></i>`).join('');
+  }
+
+  async function start(){
+    if(running)return;
+    running=true;paused=false;skipReq=false;stopReq=false;stepIdx=0;
+    $('demoPause').textContent='⏸ 一時停止';
+    scrim.classList.add('show');cap.classList.add('show');
+    // restore deterministic state for a clean demo run
+    applyTheme(false);
+    const TOTAL=7;
+    const D=REDUCE?900:2100;
+    const steps=[
+      async()=>{ go('dash');setNarr('まずはダッシュボード。施設全体の服薬遵守率や残薬アラートが、ひと目で分かります。',TOTAL);
+        spot(document.querySelector('#v-dash .kpis'));await wait(D); },
+      async()=>{ setNarr('本日の服薬遵守率はこの円グラフで確認。服薬済・予定・飲み忘れの内訳が色で分かります。',TOTAL);
+        spot(document.querySelector('#v-dash .donut-wrap'));await wait(D); },
+      async()=>{ go('residents');setNarr('次に入居者一覧。気になる方は★でお気に入り登録、検索や並び替えもできます。',TOTAL);
+        spot($('v-residents'));await wait(D-300);
+        const star=document.querySelector('#resRows .fav');if(star){star.click();await wait(700);} },
+      async()=>{ go('records');setNarr('服薬記録では、飲み忘れをワンタップで「服薬済」に。記録はCSVでも書き出せます。',TOTAL);
+        recFilter='miss';renderRecChips();renderRec();spot($('v-records'));await wait(D-200);
+        const mb=document.querySelector('#recRows .btn.green');if(mb){mb.click();await wait(700);}
+        recFilter='all';renderRecChips();renderRec(); },
+      async()=>{ go('stock');setNarr('残薬管理。残り日数が少ないお薬を自動で検知。不足分はボタン一つで発注リストにまとめます。',TOTAL);
+        spot($('autoOrder'));await wait(D-400);
+        $('autoOrder').click();await wait(1100); },
+      async()=>{ go('ai');setNarr('目玉のAIチェック。今まで1時間20分かかっていた点検作業を、AIが数秒で自動実行します。',TOTAL);
+        spot($('aiRun'));await wait(D-500);
+        $('aiRun').click();await wait(2600); },
+      async()=>{ go('alerts');setNarr('検知された飲み忘れ・残薬不足はアラートに集約。対応漏れを防ぎます。これがCareboardの服薬管理です。',TOTAL);
+        renderAlerts();spot($('alertList'));await wait(D); },
+    ];
+    for(const step of steps){
+      if(stopReq)break;
+      const ok=await step();
+      if(ok===false||stopReq)break;
+    }
+    if(!stopReq)await done();
+    else cleanup();
+  }
+  async function done(){
+    clearSpot();
+    stepEl.textContent='完了';
+    narrEl.textContent='デモ完了。ご自由にお試しください。';
+    dotsEl.querySelectorAll('i').forEach(d=>d.classList.add('on'));
+    $('demoPause').textContent='⏸ 一時停止';
+    pgEl.style.transition='width .3s';pgEl.style.width='100%';
+    showToast('自動デモが完了しました');
+    await wait(REDUCE?1200:2600);
+    cleanup();
+  }
+  function cleanup(){
+    clearSpot();finishWait(false);
+    scrim.classList.remove('show');cap.classList.remove('show');
+    pgEl.style.transition='none';pgEl.style.width='0';
+    running=false;paused=false;
+  }
+  function togglePause(){
+    if(!running)return;
+    paused=!paused;
+    $('demoPause').textContent=paused?'▶ 再開':'⏸ 一時停止';
+    if(paused){
+      if(curTimer){clearTimeout(curTimer);curTimer=null;}
+      curRemain=Math.max(0,curDur-(performance.now()-curStart));
+      if(!REDUCE){const w=((curDur-curRemain)/curDur*100);pgEl.style.transition='none';pgEl.style.width=w+'%';}
+    }else{ if(curResolve)runProgress(); }
+  }
+  function skip(){ if(!running)return; if(paused)togglePause(); if(curResolve){skipReq=true;if(curTimer){clearTimeout(curTimer);curTimer=null;}finishWait(true);} }
+  function stop(){ if(!running)return; stopReq=true; if(curTimer){clearTimeout(curTimer);curTimer=null;} if(curResolve)finishWait(false); cleanup(); }
+
+  return {start,togglePause,skip,stop,isRunning:()=>running};
+})();
+$('demoStart').addEventListener('click',()=>Demo.start());
+$('demoPause').addEventListener('click',()=>Demo.togglePause());
+$('demoSkip').addEventListener('click',()=>Demo.skip());
+$('demoStop').addEventListener('click',()=>Demo.stop());
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(Demo.isRunning())Demo.stop();}});
 
 /* ============ INIT ============ */
 renderResChips();renderRecChips();renderAlertChips();renderResSelect();renderTimingPick();renderSchedPreview([]);
