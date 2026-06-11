@@ -577,10 +577,17 @@ html[data-theme="dark"] .idea .score{background:#241b40}
 .vs-hook.on{border-color:var(--brand);background:var(--brand-soft)}
 .vs-hook .no{width:22px;height:22px;border-radius:7px;background:var(--soft-2);display:grid;place-items:center;font-size:11px;font-weight:900;color:var(--ink-2);flex-shrink:0}
 .vs-hook.on .no{background:var(--brand);color:#fff}
-table.vs-scene td:first-child{white-space:nowrap;font-weight:800;color:var(--brand);font-variant-numeric:tabular-nums}
-table.vs-scene td{vertical-align:top;line-height:1.6}
-table.vs-scene .sc-lab{font-weight:800;font-size:12.5px;display:block;margin-bottom:2px}
-table.vs-scene .sc-cam{color:var(--ink-2);font-size:12px}
+.vs-scenes{display:grid;gap:12px}
+.vs-sc{border:1px solid var(--line);border-radius:13px;background:var(--card);overflow:hidden;box-shadow:var(--shadow)}
+.vs-sc .sc-head{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--soft);border-bottom:1px solid var(--line)}
+.vs-sc .sc-time{font-weight:800;color:var(--brand);font-variant-numeric:tabular-nums;font-size:12.5px;flex-shrink:0}
+.vs-sc .sc-head b{font-size:13.5px;font-weight:800}
+.vs-sc .sc-dur{margin-left:auto;font-size:11px;font-weight:800;color:var(--ink-3);background:var(--card);border:1px solid var(--line-2);padding:2px 9px;border-radius:99px;flex-shrink:0}
+.vs-sc .sc-row{display:flex;gap:10px;padding:9px 14px;font-size:12.5px;line-height:1.65;border-bottom:1px dashed var(--line)}
+.vs-sc .sc-row:last-child{border-bottom:0}
+.vs-sc .sc-ic{flex-shrink:0;width:22px;text-align:center}
+.vs-sc .sc-row>div{min-width:0;flex:1}
+.vs-sc .sc-row>div>b{display:block;font-size:11px;color:var(--ink-3);margin-bottom:2px;font-weight:800}
 .vs-cap{display:inline-block;background:var(--ink);color:var(--bg);font-size:11px;font-weight:800;padding:2px 9px;border-radius:6px;margin-top:5px}
 html[data-theme="dark"] .vs-cap{background:#f0f3fa;color:#0c1426}
 .vs-meta{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
@@ -1025,7 +1032,7 @@ html[data-theme="dark"] .vs-cap{background:#f0f3fa;color:#0c1426}
           <div class="rb-orb" style="background:radial-gradient(circle at 35% 30%,#7fd8e8,#0fa6bd);box-shadow:0 6px 18px rgba(15,166,189,.32)">🎬</div>
           <div style="flex:1;min-width:200px">
             <div class="rb-t">ネタ1行から、ショート動画の「台本・絵コンテ」まで自動設計</div>
-            <div class="rb-s">最初の3秒のフック・シーン割り・テロップ・撮影チェックリストまで。スマホ1台でそのまま撮れる構成案を出します。</div>
+            <div class="rb-s">最初の3秒のフック・構図（何をどう映すか）・カット割り・音楽と音ハメ・演出・撮影チェックリストまで。スマホ1台でそのまま撮れる台本を出します。</div>
           </div>
           <div class="rb-meta"><span>使える構成の型</span><b>7種</b></div>
         </div>
@@ -1294,7 +1301,7 @@ const TITLES={
   notify:['通知連携','Discord / Slack に毎日サマリーを自動送信'],
   compose:['投稿を作成','1つの内容を各SNSに最適化して予約'],
   ai:['AI投稿提案','トレンド×自社データ×過去バズから最適ネタを提案'],
-  video:['動画構成案','ネタ1行から、ショート動画の台本・絵コンテを設計'],
+  video:['動画構成案','ネタ1行から、構図・カット・音楽・演出まで入った動画台本を設計'],
 };
 function go(v){
   document.querySelectorAll('.nav a').forEach(a=>{const on=a.dataset.v===v;a.classList.toggle('on',on);if(on)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
@@ -1796,81 +1803,97 @@ const VS_TYPES=[
  d:'最初の3秒に「結論の一部」か「強い疑問」を置き、本編で回収する基本の形。',
  w:'迷ったらこれ。最初の3秒で見るかどうかが決まる',
  hooks:['この後たぶん消します。{ネタ}','正直、見せるか迷いました。{ネタ}','最後の5秒、鳥肌注意。{ネタ}'],
+ music:{genre:'いま急上昇中のビート強めの曲（BPM120〜140目安）',hame:'フックを言い切った直後（0:03あたり）でビートを始める。頭は無音か小さめだと言葉が立つ',se:'フック直後にインパクト音「ドン」、カット切替に「ヒュッ」'},
+ edit:{tempo:'平均1カット2〜4秒。フックの1カット目だけは途中で切らない',color:'明るめ・コントラスト強め。サムネ映えを優先'},
  beats:[
-  {p:.15,lab:'フック',cam:'被写体に思いきり寄った1カット。動きのある瞬間から始める（静止画は避ける）',say:'（選んだフックをそのまま言い切る）',cap:'フック文を画面中央に大きく'},
-  {p:.2,lab:'つかみ補強',cam:'引きのカットで状況がわかる画。場所と人を見せる',say:'今日は{店}の現場から、{ネタ}をお見せします',cap:'場所・日付を左上に小さく'},
-  {p:.45,lab:'本編（見せ場）',cam:'寄り→引き→寄りの3カット構成。一番いい瞬間は2回使ってよい',say:'見どころをひと言ずつ。長い説明はしない',cap:'要点を3語以内で順番に出す'},
-  {p:.2,lab:'締め・CTA',cam:'笑顔か決めの画で止める。最後に小さくロゴ',say:'続きはプロフィールから。感想はコメントで教えてください',cap:'「保存して見返してね」'}],
+  {p:.15,lab:'フック',frame:'顔か主役の物のどアップを画面中央に。余白は上1割だけ、背景はボカすか暗めに落とす',cut:'1カットだけ。3秒未満で切らない（何の動画か伝わる前に切れる）',say:'（選んだフックをそのまま言い切る）',cap:'フック文を画面中央に大きく',fx:'言い切った瞬間に0.5秒止めてテロップをドンと出す。SE:インパクト音'},
+  {p:.2,lab:'つかみ補強',frame:'引きの全景。人物は左右どちらかに寄せ、背景に{店}の現場全体を入れる',cut:'2カット（全景2秒→寄り2秒）。切替は「ヒュッ」のスウィッシュ',say:'今日は{店}の現場から、{ネタ}をお見せします',cap:'場所・日付を左上に小さく',fx:'ここからBGMを流し始める。軽いズームインで本編へ引き込む'},
+  {p:.45,lab:'本編（見せ場）',frame:'見せ場は寄り・状況は引き、を交互に。手元を映すときは画面の下半分に大きく',cut:'3〜5カット、1カット2〜3秒で刻む。一番いい瞬間だけ4秒に伸ばす',say:'見どころをひと言ずつ。長い説明はしない',cap:'要点を3語以内で順番に出す',fx:'一番の見せ場だけ軽いスロー（0.7倍）か、寄りズームのパンチイン'},
+  {p:.2,lab:'締め・CTA',frame:'正面の笑顔か決めの画。画面の下1/3はCTAテロップ用に空けて撮る',cut:'1カット。BGMの終わりに合わせて止める',say:'続きはプロフィールから。感想はコメントで教えてください',cap:'「保存して見返してね」',fx:'最後にロゴを右下に小さく。SE:ポンッ'}],
  cta:'お願いする行動は1つだけに絞る（コメントか保存か、どちらか）',
  check:['一番いい瞬間を最初の3秒に置ける素材があるか']},
 {k:'ba',i:'🔁',n:'ビフォーアフター型',
  d:'変化の「差」を見せる型。Beforeを一瞬見せて、Afterで回収する。',
  w:'人の目は差分に吸い寄せられる。準備・仕込み・転換のある現場と相性抜群',
  hooks:['30分前まで、ここは空っぽでした','ここから先、全部変わります。{ネタ}','このBefore、覚えておいてください'],
+ music:{genre:'だんだん盛り上がるビルドアップ系（BPM100〜120目安）',hame:'After公開の瞬間にサビ（ドロップ）を合わせるのが命。Before中は音量を絞って差をつくる',se:'Beforeの終わりに「カシャッ」、After公開に「ドーン」'},
+ edit:{tempo:'過程は1〜2秒の早いカット、Afterだけ4〜6秒ゆっくり見せる',color:'Beforeは少し暗め・彩度低め→Afterで明るく彩度高めに。色でも差を見せる'},
  beats:[
-  {p:.2,lab:'Before提示',cam:'整う前の状態を5秒以内で。あえて雑に撮るとリアルさが出る',say:'これが準備前の状態です',cap:'「BEFORE」を大きく'},
-  {p:.4,lab:'変化の過程',cam:'作業を早回し（タイムラプスか2倍速）。手元の寄りを多めに',say:'BGMに乗せて、説明は最小限',cap:'経過時間をカウント表示'},
-  {p:.25,lab:'After公開',cam:'完成の瞬間にその日一番の引きの画。ここだけスローでもよい',say:'そして、こうなりました',cap:'「AFTER」をドンと'},
-  {p:.15,lab:'締め・CTA',cam:'完成した空間の中でひと言',say:'実物は{店}で見られます。詳細はプロフィールへ',cap:'日時・場所'}],
+  {p:.2,lab:'Before提示',frame:'Beforeの全景を真正面・固定で。あとでAfterを同じ場所から撮るので、足元に立ち位置の目印を付けておく',cut:'1カット5秒以内。「カシャッ」で切る',say:'これが準備前の状態です',cap:'「BEFORE」を大きく',fx:'画面を一瞬白フラッシュ→BEFOREテロップ。色味は暗め・彩度低めに補正'},
+  {p:.4,lab:'変化の過程',frame:'作業の手元のどアップ中心。ときどき引きで全体の進み具合を見せる',cut:'タイムラプスか1〜2秒の細かいカットを8〜10個。テンポ最優先',say:'BGMに乗せて、説明は最小限',cap:'経過時間をカウント表示（30分後…）',fx:'BGMの盛り上がりに合わせてカットをだんだん速くする（加速感）'},
+  {p:.25,lab:'After公開',frame:'Beforeと完全に同じ位置・同じ角度から撮る。これが効きの9割',cut:'1カット。サビの頭ぴったりで切り替える（音ハメ）',say:'そして、こうなりました',cap:'「AFTER」をドンと',fx:'サビと同時に明るい色味へ。ゆっくりズームアウトで全体を見せる。SE:ドーン'},
+  {p:.15,lab:'締め・CTA',frame:'Afterの空間に人物が入ってひと言。背景がAfterだと伝わる構図で',cut:'1カット。最後にBefore/Afterの2枚並び比較を2秒差し込む',say:'実物は{店}で見られます。詳細はプロフィールへ',cap:'日時・場所',fx:'比較2枚並びは画面を左右半分ずつに割る'}],
  cta:'「実物を見に来て」と行き先を具体的に1つ示す',
- check:['Before素材を撮り忘れない（あとからは撮れない）']},
+ check:['Before素材を撮り忘れない（あとからは撮れない）','BeforeとAfterは同じ位置・同じ角度で撮ったか']},
 {k:'list',i:'☝️',n:'3つのコツ型',
  d:'「3つあります」と先に数を宣言してテンポよく出す、実用・保存型。',
  w:'数を宣言されると最後まで数えたくなる。実用系は保存されやすい',
  hooks:['{ネタ}、知らないと損する3つだけ話します','9割の人がやっていない3つのこと','3つ目だけでも覚えて帰ってください'],
+ music:{genre:'軽快なポップ・カフェ系（BPM110〜130目安）。声が主役なので歌なしが無難',hame:'コツの切り替わり（①→②→③）をビートの頭に合わせる',se:'切替に「ピッ」、3つ目の結論に正解音「ピンポン」'},
+ edit:{tempo:'1コツ＝4〜6秒。間延びが一番の敵',color:'明るくフラットに。情報（文字・手元）がよく見える画を優先'},
  beats:[
-  {p:.15,lab:'宣言',cam:'正面・目線カメラ。指で「3」を見せるとわかりやすい',say:'（フック＝3つあります、と宣言）',cap:'「3つだけ」'},
-  {p:.22,lab:'その1',cam:'コツに対応する実物・実演のカット',say:'1つ目。結論→理由の順で短く',cap:'①＋要点'},
-  {p:.22,lab:'その2',cam:'同じ構図を避けてリズムを変える',say:'2つ目。テンポ最優先',cap:'②＋要点'},
-  {p:.26,lab:'その3（一番強い）',cam:'一番映える実演。ここに最強のネタを置く',say:'3つ目、これが一番大事です',cap:'③＋要点を強調色で'},
-  {p:.15,lab:'まとめ・CTA',cam:'正面に戻る',say:'忘れそうなら保存をどうぞ。質問はコメントで',cap:'「保存して見返す」'}],
+  {p:.15,lab:'宣言',frame:'正面バストアップ・目線はレンズ。指で「3」を出して画面中央に',cut:'1カット',say:'（フック＝3つあります、と宣言）',cap:'「3つだけ」を数字だけ特大で',fx:'SE:ピッ。数字テロップは1文字ずつポンと出す'},
+  {p:.22,lab:'その1',frame:'コツの実物・実演を画面の主役に。人物は端に小さくでよい',cut:'2カット（結論の画2秒→理由の画2秒）',say:'1つ目。結論→理由の順で短く',cap:'①＋要点',fx:'番号①を左上に置きっぱなしにする（いま何個目か迷子にしない）'},
+  {p:.22,lab:'その2',frame:'その1と構図を変える（寄りなら引き、引きなら寄り）。同じ構図が続くと飽きる',cut:'2カット。切替にスウィッシュ',say:'2つ目。テンポ最優先',cap:'②＋要点',fx:'テンポを落とさない。説明が長引いたら編集で詰める'},
+  {p:.26,lab:'その3（一番強い）',frame:'一番映える実演をどアップで。ここが「保存される画」になる',cut:'2〜3カット。結論の前に1秒だけ間を置く',say:'3つ目、これが一番大事です',cap:'③＋要点を強調色で',fx:'軽くズームイン＋正解音「ピンポン」。ここだけ演出を厚めに'},
+  {p:.15,lab:'まとめ・CTA',frame:'正面に戻る。画面下にまとめテロップ用の余白を空けて撮る',cut:'1カット',say:'忘れそうなら保存をどうぞ。質問はコメントで',cap:'「保存して見返す」',fx:'①②③のまとめテロップをポン・ポン・ポンと順に出す（この画面が保存される）'}],
  cta:'保存をお願いする（実用系は保存率で伸びる）',
  check:['3つの順番は「一番強いネタを最後」に並べ替えたか']},
 {k:'vlog',i:'🎥',n:'密着ドキュメント型',
  d:'現場の裏側に密着する型。中の人の日常は、外から見ると非日常。',
  w:'作り込まない臨場感が武器。手ブレも味になる唯一の型',
  hooks:['{店}の1日、全部見せます','お客さんが知らない{店}の裏側','開店3時間前の{店}に潜入'],
+ music:{genre:'ローファイ・アコースティック系（BPM80〜100目安）。現場の音を活かすため音量は小さめ',hame:'山場でBGMを止めて現場の音だけにする「逆音ハメ」。静→生音の落差が鳥肌をつくる',se:'効果音は足さない。ドアの音・足音・歓声など現場の生音がSEになる'},
+ edit:{tempo:'1カット4〜6秒のゆったりめ。手ブレ補正は弱めでよい（揺れが臨場感）',color:'暖色寄り・少しフィルム風。作り込みすぎない'},
  beats:[
-  {p:.2,lab:'現場入り',cam:'歩きながらの自撮り、または入口から入っていく主観カット',say:'おはようございます。今日は{ネタ}',cap:'時刻を表示（朝○時）'},
-  {p:.3,lab:'準備の様子',cam:'作業の手元・道具・人の表情を短いカットでつなぐ',say:'ナレーションは最小限。現場の音を活かす',cap:'いまの作業名'},
-  {p:.3,lab:'山場',cam:'その日一番の瞬間（開場・完成・歓声）。少し長回しでもよい',say:'（現場の音だけでも成立する）',cap:'「この瞬間のためにやってる」'},
-  {p:.2,lab:'締め',cam:'片付けや帰り道のしみじみしたカット',say:'今日もありがとうございました。また来週',cap:'次回予告'}],
+  {p:.2,lab:'現場入り',frame:'歩く本人を胸から上・画面右1/3に。背景に{店}の看板や入口が読める角度で',cut:'2カット（歩き3秒→ドアを開ける3秒）。ドアの開閉動作でそのまま次のシーンへつなぐ',say:'おはようございます。今日は{ネタ}',cap:'時刻を表示（朝○時）',fx:'ドアが開く瞬間に現場の音（ガチャ・ざわめき）を一瞬大きくする'},
+  {p:.3,lab:'準備の様子',frame:'手元のどアップと働く人の横顔・後ろ姿を交互に。顔出しNGなら後ろ姿だけで成立する',cut:'3〜4カット各4秒。作業音（機材・足音・テープ）を切替の合図に使う',say:'ナレーションは最小限。現場の音を活かす',cap:'いまの作業名を左下に小さく',fx:'BGMは小さく流す。寄りの画では現場音を前に出す'},
+  {p:.3,lab:'山場',frame:'その日一番の瞬間を引きの全景で。直後に人の表情の寄りを1つ差し込む',cut:'長回し1カット＋表情の寄り1カット。ここは刻まない',say:'（現場の音だけでも成立する）',cap:'「この瞬間のためにやってる」',fx:'ここでBGMを完全に止めて現場の音だけにする。動画全体で一番の聞かせどころ'},
+  {p:.2,lab:'締め',frame:'片付け・照明の落ちた会場・帰り道など「終わった感」のある画',cut:'1〜2カットをゆっくり。フェードで終わる',say:'今日もありがとうございました。また来週',cap:'次回予告をひと言',fx:'BGMを静かに戻してフェードアウト'}],
  cta:'「次も見たい人はフォロー」（密着はフォローにつながりやすい）',
  check:['映ってはいけない物（個人情報・伝票類）が画角に入っていないか']},
 {k:'aruaru',i:'😂',n:'あるある共感型',
  d:'「わかる」を狙う型。共感は一番コメントが付く感情。',
  w:'コメント数はどのSNSでも強く評価される指標',
  hooks:['{店}に来る人、だいたいこれやりがち','これ、わかる人だけ笑ってください','{ネタ}あるある、言っていいですか'],
+ music:{genre:'コミカル系か、いま流行りのネタ曲。テンポ速め',hame:'あるあるの切替をビートの頭に合わせる。オチの直前で音をブツッと止める',se:'切替に「ピッ」、オチに「ズコッ」やツッコミ音'},
+ edit:{tempo:'1カット2〜3秒で刻む。テンポが命、迷ったら詰める',color:'明るくポップに。表情がよく見える明るさを確保'},
  beats:[
-  {p:.15,lab:'あるある宣言',cam:'正面。ニヤッとした表情から入る',say:'（フックをそのまま）',cap:'「あるある」'},
-  {p:.55,lab:'あるある連発',cam:'1あるある＝1カットで再現。テンポ命、各3〜5秒',say:'あるあるを3〜5連発。後ろにいくほど強く',cap:'あるある本文をそのまま'},
-  {p:.15,lab:'オチ',cam:'一番マニアックなネタか自虐で落とす',say:'…全部スタッフの実話です',cap:'オチを強調'},
-  {p:.15,lab:'CTA',cam:'正面に戻る',say:'あなたのあるあるもコメントで教えてください',cap:'「コメントで募集」'}],
+  {p:.15,lab:'あるある宣言',frame:'正面バストアップ。ニヤッとした表情から入る',cut:'1カット',say:'（フックをそのまま）',cap:'「あるある」を手書き風に',fx:'テロップは弾むように出す'},
+  {p:.55,lab:'あるある連発',frame:'1あるある＝1再現。本人が演じ分ける。帽子や小道具で人物を変えると伝わる',cut:'1あるある＝1カット3〜5秒。ビートの頭で切り替える（音ハメ）',say:'あるあるを3〜5連発。後ろにいくほど強いネタに',cap:'あるある本文をそのまま画面下に',fx:'回を追うごとに少しずつズームを寄せると加速感が出る。切替SE:ピッ'},
+  {p:.15,lab:'オチ',frame:'真顔のどアップ。または現場の「動かぬ証拠」の実物を映す',cut:'1カット。直前に0.5秒の間（ま）をつくる',say:'…全部スタッフの実話です',cap:'オチを強調',fx:'BGMをブツッと止めて無音にしてから言う。SE:ズコッ'},
+  {p:.15,lab:'CTA',frame:'正面に戻って笑顔',cut:'1カット',say:'あなたのあるあるもコメントで教えてください',cap:'「コメントで募集」',fx:'指でコメント欄の方向（画面下）を指す'}],
  cta:'コメント募集で締める（会話の量を稼ぐ）',
  check:['内輪すぎるネタになっていないか（初見でも伝わるか）']},
 {k:'qa',i:'❓',n:'Q&A型',
  d:'よくある質問に答える型。質問文がそのままフックになる。',
  w:'答えを最後まで引っ張ると視聴維持率が伸びる。誤解の訂正は特に強い',
  hooks:['「{ネタ}」って、よく聞かれます','その常識、半分まちがいです','一番多い質問に、今日こそ答えます'],
+ music:{genre:'落ち着いたピアノ・ローファイ系（BPM90〜110目安）。知的トーン',hame:'「本当の答え」の頭で曲調を変える（静かなパート→明るいパート）と答えが立つ',se:'誤解に「ブッブー」、正解に「ピンポン」'},
+ edit:{tempo:'1カット3〜5秒。説明パートはゆっくりめでよい',color:'ニュートラルで清潔感のある色味。文字の読みやすさ最優先'},
  beats:[
-  {p:.2,lab:'質問提示',cam:'正面。質問テロップをドンと出す',say:'（質問を読み上げる）',cap:'質問文をそのまま'},
-  {p:.25,lab:'よくある誤解',cam:'「実は…」で一拍ためる。首を振るなどのリアクション',say:'多くの人はこう思っています。でも実は',cap:'「実は…」'},
-  {p:.35,lab:'本当の答え',cam:'根拠になる実物・現場を見せながら話す',say:'答えはこれ。理由は1つだけ',cap:'答えを大きく＋理由を小さく'},
-  {p:.2,lab:'CTA',cam:'正面に戻る',say:'ほかに聞きたいことはコメントへ。全部答えます',cap:'「質問募集中」'}],
+  {p:.2,lab:'質問提示',frame:'正面バストアップ。頭の上に質問テロップを置くので上に余白を空けて撮る',cut:'1カット',say:'（質問を読み上げる）',cap:'質問文を吹き出し風で頭上に',fx:'吹き出しテロップをポコッと出す'},
+  {p:.25,lab:'よくある誤解',frame:'首を振るリアクションを寄りで。誤解の中身は図か写真をインサート',cut:'2カット（リアクション→誤解の図）',say:'多くの人はこう思っています。でも実は',cap:'「実は…」',fx:'「実は」で0.5秒の間。誤解の図に赤の✕印。SE:ブッブー'},
+  {p:.35,lab:'本当の答え',frame:'根拠になる実物・現場を指差しで見せる。物が主役、人は添え',cut:'2〜3カット（答え→根拠→もう一度答え）',say:'答えはこれ。理由は1つだけ',cap:'答えを画面中央に大きく、理由は下に小さく',fx:'SE:ピンポン。曲調をここで明るく変える（音でも正解感を出す）'},
+  {p:.2,lab:'CTA',frame:'正面に戻る',cut:'1カット',say:'ほかに聞きたいことはコメントへ。全部答えます',cap:'「質問募集中」',fx:'指でコメント欄を指す。次回予告を小さく添えてもよい'}],
  cta:'次の質問を募集する（Q&Aは連載にできる）',
  check:['答えの根拠（実物・数字）を画で見せられるか']},
 {k:'count',i:'⏳',n:'カウントダウン告知型',
  d:'締切や残り日数で行動を促す、イベント・販売の直前告知に特化した型。',
  w:'「あと○日」は行動の強い引き金。告知は1回でなく3回に分けると効く',
  hooks:['あと3日で、これが見られなくなります','{ネタ}、ついに今週です','まだ間に合います。ただ、あと少しだけ'],
+ music:{genre:'頭は心臓音（ドクドク）だけ→ダイジェストから盛り上がる曲へ（BPMは曲の展開で上げる）',hame:'残り日数ドンの間は心臓音のみ。ダイジェストの1カット目でサビ（ドロップ)を投入',se:'数字の表示に「ドン」、心臓音はフリー素材の鼓動ループ'},
+ edit:{tempo:'ダイジェストは1〜2秒の高速カット、最後の行動指示だけゆっくり',color:'高コントラスト・夜系の引き締まった色味。日付と価格のテロップは最後まで残す'},
  beats:[
-  {p:.15,lab:'残り日数ドン',cam:'数字だけの画か、指でカウント。BGMは鼓動系',say:'あと○日です',cap:'残り日数を画面いっぱいに'},
-  {p:.4,lab:'当日のダイジェスト',cam:'見どころを10秒でまとめる（過去素材の使い回しでよい）',say:'当日はこれが全部あります',cap:'見どころを箇条書きで順に'},
-  {p:.25,lab:'現場の熱量',cam:'過去回の歓声・満員の画。なければ準備風景の本気カット',say:'前回はこうでした',cap:'前回の様子・実績をひと言'},
-  {p:.2,lab:'行動指示',cam:'正面。チケットや予約の方法を画面で見せる',say:'チケットはプロフィールのリンクから',cap:'入手方法を1ステップずつ'}],
+  {p:.15,lab:'残り日数ドン',frame:'黒背景に数字だけ。または指でカウントする手のどアップ',cut:'1カット2〜3秒',say:'あと○日です',cap:'残り日数を画面いっぱいに',fx:'心臓音SEだけで始める。数字は1文字ずつドン・ドンと出す'},
+  {p:.4,lab:'当日のダイジェスト',frame:'過去回・準備中の一番強い画だけを選抜。1見どころ＝1画で欲張らない',cut:'1〜2秒の高速カットを5〜8個。サビの頭から開始（音ハメ）',say:'当日はこれが全部あります',cap:'見どころ名を順番に',fx:'ビートに合わせて画を切り替える。文字は短く・大きく'},
+  {p:.25,lab:'現場の熱量',frame:'満員・歓声・笑顔など「人の熱」が映る画を優先。なければ仕込みの本気の手元',cut:'2〜3カット',say:'前回はこうでした',cap:'「前回満員」など実績をひと言',fx:'歓声の現場音をBGMに重ねる（熱は音で伝わる）'},
+  {p:.2,lab:'行動指示',frame:'正面でひと言→チケットページを開くスマホ手元のインサート',cut:'2カット（本人→スマホ画面）',say:'チケットはプロフィールのリンクから',cap:'入手方法を1→2→3で順に',fx:'BGMを下げて声を聞かせる。日付・場所・価格のテロップは画面に残したまま終わる'}],
  cta:'入手方法を「1ステップずつ」具体的に言う',
  check:['日付・残数は投稿直前に最新のものへ差し替えたか']},
 ];
+const VS_MUSIC_FIND='曲はTikTok/Instagramアプリ内の「商用利用可」ライブラリから、急上昇中のものを選ぶ（権利が安全で、流行りの音は乗るだけで伸びる）';
+const VS_SUBTITLE='字幕は全シーン常時表示（音を出さずに見る人が半分以上いる）';
 const VS_LENS=[15,30,60];
 const VS_TARGETS=[{k:'TT',label:'TikTok'},{k:'IG',label:'Instagram リール'}];
 const VS_CHECK_BASE=[
@@ -1911,7 +1934,9 @@ function vsBuildPlan(){
   const scenes=t.beats.map((b,i)=>{
     let dur=Math.max(2,Math.round(VS.len*b.p));
     if(i===t.beats.length-1)dur=Math.max(2,VS.len-acc);
-    const sc={t0:acc,t1:Math.min(acc+dur,VS.len),lab:b.lab,cam:vsT(b.cam,idea,client),say:vsT(b.say,idea,client),cap:vsT(b.cap,idea,client)};
+    const sc={t0:acc,t1:Math.min(acc+dur,VS.len),lab:b.lab,
+      frame:vsT(b.frame,idea,client),cut:vsT(b.cut,idea,client),
+      say:vsT(b.say,idea,client),cap:vsT(b.cap,idea,client),fx:vsT(b.fx,idea,client)};
     acc+=dur;return sc;
   });
   const tag=client.replace(/\s/g,'');
@@ -1932,19 +1957,27 @@ function vsRenderOut(){
     </div>
   </div>
   <div class="panel">
-    <div class="ph"><h3>🎞️ 絵コンテ（シーン割り）</h3><span class="badge-soft">合計 ${VS.len}秒</span></div>
-    <div class="pb" style="padding:0">
-      <table class="tbl vs-scene">
-        <thead><tr><th>秒数</th><th>シーン / 映像（カメラ）</th><th>セリフ・テロップ</th></tr></thead>
-        <tbody>${p.scenes.map((s,i)=>{
-          const say=i===0?p.hooks[VS.hook]:s.say;
-          return `<tr><td>${vsSec(s.t0)}<br>｜<br>${vsSec(s.t1)}</td>
-            <td><span class="sc-lab">${esc(s.lab)}</span><span class="sc-cam">📷 ${esc(s.cam)}</span></td>
-            <td>🗣 ${esc(say)}<br><span class="vs-cap">字幕 ${esc(s.cap)}</span></td></tr>`;}).join('')}</tbody>
-      </table>
-    </div>
+    <div class="ph"><h3>🎞️ 絵コンテ（シーン割り・カット・演出）</h3><span class="badge-soft">合計 ${VS.len}秒</span></div>
+    <div class="pb"><div class="vs-scenes">${p.scenes.map((s,i)=>{
+      const say=i===0?p.hooks[VS.hook]:s.say;
+      return `<div class="vs-sc">
+        <div class="sc-head"><span class="sc-time">${vsSec(s.t0)}–${vsSec(s.t1)}</span><b>${esc(s.lab)}</b><span class="sc-dur">${s.t1-s.t0}秒</span></div>
+        <div class="sc-row"><span class="sc-ic">🎥</span><div><b>映すもの・構図</b>${esc(s.frame)}</div></div>
+        <div class="sc-row"><span class="sc-ic">✂️</span><div><b>カット割り・つなぎ</b>${esc(s.cut)}</div></div>
+        <div class="sc-row"><span class="sc-ic">🗣</span><div><b>セリフ</b>${esc(say)}<br><span class="vs-cap">字幕 ${esc(s.cap)}</span></div></div>
+        <div class="sc-row"><span class="sc-ic">✨</span><div><b>演出</b>${esc(s.fx)}</div></div>
+      </div>`;}).join('')}</div></div>
   </div>
   <div class="vs-meta">
+    <div class="vs-box" style="border-left:3px solid var(--sky)"><div class="bt">🎵 音楽・音ハメ設計</div>
+      <b style="font-size:12px">曲：</b>${esc(p.type.music.genre)}<br>
+      <b style="font-size:12px">音ハメ：</b>${esc(p.type.music.hame)}<br>
+      <b style="font-size:12px">効果音：</b>${esc(p.type.music.se)}
+      <div style="font-size:11.5px;color:var(--ink-3);margin-top:7px">${esc(VS_MUSIC_FIND)}</div></div>
+    <div class="vs-box" style="border-left:3px solid var(--violet)"><div class="bt">🎬 編集・演出ガイド</div>
+      <b style="font-size:12px">テンポ：</b>${esc(p.type.edit.tempo)}<br>
+      <b style="font-size:12px">色味：</b>${esc(p.type.edit.color)}<br>
+      <b style="font-size:12px">字幕：</b>${esc(VS_SUBTITLE)}</div>
     <div class="vs-box"><div class="bt">📣 締め（CTA）のコツ</div>${esc(p.type.cta)}</div>
     <div class="vs-box"><div class="bt">💡 この型が効く理由</div>${esc(p.type.w)}</div>
     <div class="vs-box"><div class="bt">✍️ 投稿キャプション案</div><div style="white-space:pre-wrap">${esc(p.caption.cap)}</div><div class="tags-line">${esc(p.caption.tags)}</div></div>
@@ -2483,7 +2516,7 @@ go('dash');
 
     // ⑧ 動画構成スタジオ（新機能）
     stepIdx=8; go('video');
-    say('🎬','新機能「動画構成案」。ネタを1行入れるだけで、ショート動画の台本・絵コンテまで設計します。',2400);
+    say('🎬','新機能「動画構成案」。ネタを1行入れるだけで、構図・カット・音楽・演出まで入った動画の台本を設計します。',2400);
     await wait(800);
     $('vsClient').value='大分ROCK HALL';
     spot($('vsIdea').closest('.fg'));
@@ -2496,7 +2529,7 @@ go('dash');
     await wait(1500);
     clearSpot();
     spot($('vsOut'));
-    say('🎞️','秒数つきのシーン割り・テロップ・撮影チェックリストまで完成。このまま投稿の予約にもつながります。',2600);
+    say('🎞️','秒数・構図・カット割り・音ハメ・演出まで決まった絵コンテが完成。このまま投稿の予約にもつながります。',2600);
     await wait(2600);
     clearSpot();
 
