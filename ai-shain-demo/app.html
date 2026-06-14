@@ -1,0 +1,1675 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI社員パック チーム版 ― デモ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --green-darkest:#0f3d21;
+  --green-dark:#15512b;
+  --green:#1f6b3a;
+  --green-bright:#2c8f4d;
+  --green-soft:#e7f0ea;
+  --green-soft2:#f1f6f2;
+  --amber:#c98a2b;
+  --amber-deep:#a96a10;
+  --amber-soft:#f8efdc;
+  --ink:#1f262c;
+  --ink-soft:#3b444c;
+  --muted:#6c757d;
+  --muted-soft:#94a09a;
+  --bg:#eef1ed;
+  --bg-grad-a:#eef2ee;
+  --bg-grad-b:#e8ede8;
+  --line:#e1e7e0;
+  --line-soft:#edf1ec;
+  --warn:#b8442f;
+  --warn-soft:#f9e8e3;
+  --blue:#2e6796;
+  --blue-soft:#e6eef6;
+  --card:#ffffff;
+  --shadow-xs:0 1px 2px rgba(20,40,25,.06);
+  --shadow-sm:0 2px 8px rgba(20,40,25,.07);
+  --shadow-md:0 6px 18px rgba(20,40,25,.09);
+  --shadow-lg:0 14px 38px rgba(20,40,25,.13);
+  --radius-sm:10px;
+  --radius:14px;
+  --radius-lg:18px;
+  --sb-w:252px;
+  --ease:cubic-bezier(.22,.85,.3,1);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:"Noto Sans JP",system-ui,-apple-system,sans-serif;
+  color:var(--ink);
+  background:
+    radial-gradient(1200px 500px at 80% -10%, rgba(31,107,58,.05), transparent 60%),
+    linear-gradient(180deg,var(--bg-grad-a),var(--bg-grad-b));
+  background-attachment:fixed;
+  line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  letter-spacing:.005em;
+}
+h1,h2,h3,h4{margin:0;font-weight:700;}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;}
+a{color:inherit;}
+table{border-collapse:collapse;width:100%;}
+svg{display:block;}
+::selection{background:rgba(31,107,58,.18);}
+
+/* scrollbar polish */
+.sb-nav::-webkit-scrollbar,.chat-log::-webkit-scrollbar,.tbl-scroll::-webkit-scrollbar{width:8px;height:8px;}
+.sb-nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:8px;}
+.chat-log::-webkit-scrollbar-thumb,.tbl-scroll::-webkit-scrollbar-thumb{background:#d3dbd4;border-radius:8px;}
+
+/* ---------- demo strip ---------- */
+.demo-strip{
+  position:fixed;top:0;left:0;right:0;height:34px;z-index:60;
+  background:linear-gradient(90deg,#1c2118,#2b3124 55%,#1c2118);
+  color:#f1e6cf;display:flex;align-items:center;justify-content:center;
+  font-size:12px;letter-spacing:.04em;gap:9px;font-weight:500;
+  border-bottom:1px solid rgba(255,255,255,.07);
+}
+.demo-strip .dot{width:7px;height:7px;border-radius:50%;background:var(--amber);box-shadow:0 0 0 3px rgba(201,138,43,.22);animation:pulse 2.4s ease-in-out infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 3px rgba(201,138,43,.22);}50%{box-shadow:0 0 0 5px rgba(201,138,43,.05);}}
+
+/* ---------- layout ---------- */
+.app{display:flex;min-height:100vh;padding-top:34px;}
+.sidebar{
+  width:var(--sb-w);flex:0 0 var(--sb-w);
+  background:linear-gradient(185deg,var(--green-darkest),var(--green-dark) 70%,#123f22);
+  color:#dde9e0;
+  position:fixed;top:34px;bottom:0;left:0;
+  display:flex;flex-direction:column;
+  z-index:50;
+  box-shadow:1px 0 0 rgba(255,255,255,.04), 6px 0 26px rgba(15,40,25,.10);
+}
+.sb-brand{padding:22px 20px 16px;display:flex;align-items:center;gap:12px;}
+.sb-logo{
+  width:40px;height:40px;border-radius:12px;flex:0 0 40px;
+  background:linear-gradient(150deg,var(--green-bright),var(--green));
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.22), 0 4px 12px rgba(15,40,25,.35);
+}
+.sb-brand .nm{font-size:15px;font-weight:700;color:#fff;line-height:1.25;letter-spacing:.01em;}
+.sb-brand .nm small{display:block;font-size:10.5px;font-weight:500;color:#9cc1aa;letter-spacing:.12em;margin-top:2px;text-transform:uppercase;}
+.sb-nav{flex:1;overflow-y:auto;padding:8px 13px 16px;}
+.nav-sec{font-size:10px;letter-spacing:.16em;color:#79a587;padding:16px 11px 7px;font-weight:700;text-transform:uppercase;}
+.nav-item{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 13px;border-radius:11px;margin-bottom:3px;
+  color:#c7dacd;font-size:13.5px;font-weight:500;
+  position:relative;transition:background .18s var(--ease),color .18s var(--ease),transform .18s var(--ease);
+  width:100%;text-align:left;
+}
+.nav-item .ic{width:19px;height:19px;flex:0 0 19px;opacity:.82;transition:opacity .18s,transform .18s var(--ease);}
+.nav-item:hover{background:rgba(255,255,255,.07);color:#fff;}
+.nav-item:hover .ic{opacity:1;transform:translateX(1px);}
+.nav-item:active{transform:scale(.985);}
+.nav-item:focus-visible{outline:2px solid var(--amber);outline-offset:-2px;}
+.nav-item.active{background:linear-gradient(90deg,rgba(255,255,255,.13),rgba(255,255,255,.05));color:#fff;font-weight:700;box-shadow:inset 0 1px 0 rgba(255,255,255,.06);}
+.nav-item.active .ic{opacity:1;}
+.nav-item.active::before{
+  content:"";position:absolute;left:-13px;top:8px;bottom:8px;width:4px;
+  border-radius:0 4px 4px 0;background:linear-gradient(180deg,var(--amber),#e0a445);
+  box-shadow:0 0 10px rgba(201,138,43,.5);
+}
+.nav-item .badge{margin-left:auto;font-size:10px;font-weight:700;padding:1px 8px;border-radius:9px;background:linear-gradient(135deg,var(--amber),#dca243);color:#3a2606;box-shadow:0 2px 5px rgba(0,0,0,.18);}
+.sb-foot{
+  padding:15px 16px;border-top:1px solid rgba(255,255,255,.08);
+  display:flex;align-items:center;gap:12px;background:rgba(0,0,0,.10);
+}
+.sb-foot .av{
+  width:36px;height:36px;border-radius:50%;flex:0 0 36px;
+  background:linear-gradient(150deg,var(--amber),#e3ab48);
+  display:flex;align-items:center;justify-content:center;
+  color:#3a2606;font-weight:700;font-size:13px;box-shadow:0 3px 8px rgba(0,0,0,.22);
+}
+.sb-foot .who{font-size:12.5px;line-height:1.4;}
+.sb-foot .who b{color:#fff;font-weight:700;}
+.sb-foot .who span{color:#9cc1aa;font-size:11px;display:block;}
+
+/* ---------- main ---------- */
+.main{margin-left:var(--sb-w);flex:1;min-width:0;}
+.topbar{display:none;}
+.viewwrap{padding:30px 36px 64px;max-width:1320px;}
+.page-head{margin-bottom:26px;}
+.page-head h1{font-size:23px;letter-spacing:.005em;line-height:1.3;color:var(--ink);}
+.page-head p{margin:7px 0 0;color:var(--muted);font-size:13.5px;max-width:760px;line-height:1.7;}
+.view{display:none;animation:fadeUp .34s var(--ease);}
+.view.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+
+/* ---------- grid + card ---------- */
+.grid{display:grid;gap:18px;}
+.grid>*{min-width:0;}
+.g4{grid-template-columns:repeat(4,1fr);}
+.g3{grid-template-columns:repeat(3,1fr);}
+.g2{grid-template-columns:1fr 1fr;}
+.g23{grid-template-columns:1.5fr 1fr;}
+.g32{grid-template-columns:1fr 1.4fr;}
+.card{
+  background:var(--card);border:1px solid var(--line);
+  border-radius:var(--radius);box-shadow:var(--shadow-xs);
+  padding:22px;transition:box-shadow .22s var(--ease),transform .22s var(--ease),border-color .22s;
+}
+.card.click{cursor:pointer;}
+.card.click:hover{box-shadow:var(--shadow-md);transform:translateY(-3px);border-color:#d5ddd4;}
+.card.click:active{transform:translateY(-1px);}
+.card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;gap:12px;}
+.card-h h3{font-size:14.5px;font-weight:700;letter-spacing:.01em;}
+.card-h .sub{font-size:11.5px;color:var(--muted);font-weight:500;white-space:nowrap;}
+
+/* KPI */
+.kpi{position:relative;overflow:hidden;}
+.kpi .lbl{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.01em;}
+.kpi .val{font-family:"Oswald",sans-serif;font-weight:700;font-size:31px;line-height:1.12;margin-top:7px;letter-spacing:.01em;color:var(--ink);}
+.kpi .delta{font-size:11.5px;font-weight:700;margin-top:6px;display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:20px;}
+.kpi .delta.up{color:var(--green);background:var(--green-soft);}
+.kpi .delta.warn{color:var(--warn);background:var(--warn-soft);}
+.kpi-top{display:flex;align-items:flex-start;justify-content:space-between;}
+.kpi-ic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--green-soft);color:var(--green);box-shadow:inset 0 0 0 1px rgba(31,107,58,.07);}
+.kpi-ic svg{width:21px;height:21px;}
+.kpi-ic.amber{background:var(--amber-soft);color:var(--amber-deep);box-shadow:inset 0 0 0 1px rgba(201,138,43,.10);}
+.kpi-ic.blue{background:var(--blue-soft);color:var(--blue);box-shadow:inset 0 0 0 1px rgba(46,103,150,.10);}
+.kpi-ic.warn{background:var(--warn-soft);color:var(--warn);box-shadow:inset 0 0 0 1px rgba(184,68,47,.10);}
+
+/* chips / badges */
+.chip{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:11.5px;font-weight:700;padding:3px 11px;border-radius:20px;line-height:1.45;white-space:nowrap;
+}
+.chip.green{background:var(--green-soft);color:var(--green);}
+.chip.amber{background:var(--amber-soft);color:var(--amber-deep);}
+.chip.blue{background:var(--blue-soft);color:var(--blue);}
+.chip.warn{background:var(--warn-soft);color:var(--warn);}
+.chip.gray{background:#eef1ed;color:var(--muted);}
+.chip .d{width:6px;height:6px;border-radius:50%;background:currentColor;}
+
+/* buttons */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  font-size:13px;font-weight:700;padding:10px 17px;border-radius:11px;letter-spacing:.01em;
+  transition:background .18s var(--ease),box-shadow .18s var(--ease),transform .1s var(--ease),border-color .18s,color .18s;
+}
+.btn svg{width:16px;height:16px;}
+.btn:active{transform:translateY(1px) scale(.99);}
+.btn:focus-visible{outline:2px solid var(--amber);outline-offset:2px;}
+.btn-amber{background:linear-gradient(135deg,#cd8f2c,#b97c1c);color:#fff;box-shadow:0 3px 10px rgba(201,138,43,.30);}
+.btn-amber:hover{background:linear-gradient(135deg,#c1851f,#a96f12);box-shadow:0 6px 16px rgba(201,138,43,.34);transform:translateY(-1px);}
+.btn-green{background:#fff;color:var(--green);border:1.5px solid var(--green);}
+.btn-green:hover{background:var(--green-soft);box-shadow:0 3px 10px rgba(31,107,58,.14);transform:translateY(-1px);}
+.btn-ghost{background:#f4f7f3;color:var(--ink-soft);border:1px solid var(--line);}
+.btn-ghost:hover{background:#eaefe9;border-color:#d6ddd5;}
+.btn-sm{padding:7px 13px;font-size:12px;border-radius:9px;}
+.btn-sm svg{width:14px;height:14px;}
+.btn[disabled]{background:#e9ebe8;color:#aab0a9;box-shadow:none;cursor:not-allowed;border-color:#e9ebe8;transform:none;}
+
+/* tables */
+.tbl{font-size:13px;}
+.tbl th{
+  text-align:left;font-size:10.5px;font-weight:700;color:var(--muted);
+  letter-spacing:.06em;padding:9px 13px;border-bottom:1.5px solid var(--line);
+  white-space:nowrap;text-transform:uppercase;
+}
+.tbl td{padding:12px 13px;border-bottom:1px solid var(--line-soft);vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr.row{transition:background .14s;}
+.tbl tbody tr.row:hover{background:var(--green-soft2);}
+.tbl .done td{color:#9aa29a;}
+.tbl .done .tname{text-decoration:line-through;}
+.num{font-family:"Oswald",sans-serif;font-weight:600;letter-spacing:.02em;}
+
+/* avatar mini */
+.av-mini{
+  width:27px;height:27px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:#fff;flex:0 0 27px;box-shadow:0 1px 3px rgba(0,0,0,.16);
+}
+.who-cell{display:flex;align-items:center;gap:9px;}
+
+/* tabs */
+.tabs{display:inline-flex;background:#eaeee9;border:1px solid var(--line);border-radius:13px;padding:4px;gap:3px;margin-bottom:20px;flex-wrap:wrap;}
+.tab{padding:8px 17px;border-radius:9px;font-size:13px;font-weight:700;color:var(--muted);transition:.18s var(--ease);}
+.tab:hover{color:var(--ink);}
+.tab.active{background:#fff;color:var(--green);box-shadow:var(--shadow-xs);}
+
+/* forms */
+.field{display:flex;flex-direction:column;gap:7px;margin-bottom:15px;}
+.field label{font-size:12px;font-weight:700;color:var(--ink-soft);}
+.field input,.field select,.field textarea{
+  font-family:inherit;font-size:13.5px;color:var(--ink);
+  border:1.5px solid var(--line);border-radius:10px;padding:10px 13px;background:#fbfcfb;
+  transition:border-color .18s,box-shadow .18s,background .18s;width:100%;
+}
+.field input::placeholder,.field textarea::placeholder{color:#a9b0a8;}
+.field input:hover,.field select:hover,.field textarea:hover{border-color:#cdd6cc;}
+.field input:focus,.field select:focus,.field textarea:focus{
+  outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(31,107,58,.13);background:#fff;
+}
+.field textarea{resize:vertical;min-height:66px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:15px;}
+
+/* progress ring */
+.ring{transform:rotate(-90deg);}
+.ring circle{fill:none;stroke-linecap:round;transition:stroke-dashoffset .9s var(--ease);}
+
+/* bars */
+.bar-row{display:grid;grid-template-columns:120px 1fr 56px;align-items:center;gap:12px;margin-bottom:13px;font-size:12px;}
+.bar-row:last-child{margin-bottom:2px;}
+.bar-track{height:10px;background:#eef1ed;border-radius:6px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--green),var(--green-bright));transition:width .8s var(--ease);}
+
+/* alert box */
+.alert{
+  display:flex;gap:13px;align-items:flex-start;flex-wrap:wrap;
+  background:var(--amber-soft);border:1px solid #ecd6a8;border-radius:13px;padding:15px 17px;font-size:13px;
+}
+.alert .ai{flex:0 0 22px;color:var(--amber-deep);margin-top:1px;}
+.alert .ai svg{width:22px;height:22px;}
+.alert.ok{background:var(--green-soft);border-color:#bcdac6;}
+.alert.ok .ai{color:var(--green);}
+
+/* note */
+.note{font-size:11.5px;color:var(--muted);margin-top:15px;line-height:1.6;}
+.note.box{background:var(--green-soft2);border:1px dashed #cdd8ce;border-radius:11px;padding:12px 14px;}
+
+/* mini list */
+.feed{list-style:none;margin:0;padding:0;}
+.feed li{display:flex;gap:12px;padding:13px 0;border-bottom:1px solid var(--line-soft);font-size:13px;align-items:flex-start;}
+.feed li:last-child{border-bottom:none;padding-bottom:0;}
+.feed .fic{width:32px;height:32px;border-radius:10px;flex:0 0 32px;display:flex;align-items:center;justify-content:center;background:var(--green-soft);color:var(--green);}
+.feed .fic svg{width:17px;height:17px;}
+.feed .ft{font-size:11px;color:var(--muted);margin-top:3px;}
+.feed .chan{display:inline-flex;gap:5px;margin-top:6px;flex-wrap:wrap;}
+
+/* kanban */
+.kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;}
+.kcol{background:var(--green-soft2);border:1px solid var(--line);border-radius:15px;padding:13px;}
+.kcol.appr{background:var(--amber-soft);border-color:#ecd6a8;}
+.kcol h4{font-size:11.5px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;color:var(--muted);letter-spacing:.03em;text-transform:uppercase;font-weight:700;}
+.kcol h4 .cnt{font-family:"Oswald";font-size:13px;color:var(--ink);background:#fff;border-radius:8px;padding:1px 9px;box-shadow:var(--shadow-xs);}
+.kcard{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;box-shadow:var(--shadow-xs);transition:.18s var(--ease);cursor:pointer;}
+.kcard:last-child{margin-bottom:0;}
+.kcard:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);border-color:#d5ddd4;}
+.kcard .kt{font-size:12.5px;font-weight:500;line-height:1.5;color:var(--ink-soft);}
+.kcard .kmeta{display:flex;align-items:center;justify-content:space-between;margin-top:11px;}
+.pri{width:8px;height:8px;border-radius:50%;display:inline-block;}
+.pri.high{background:var(--warn);box-shadow:0 0 0 3px var(--warn-soft);}
+.pri.mid{background:var(--amber);box-shadow:0 0 0 3px var(--amber-soft);}
+.pri.low{background:#a7afa7;box-shadow:0 0 0 3px #eef1ed;}
+
+/* checkbox */
+.cbx{
+  width:21px;height:21px;border-radius:6px;border:2px solid #c2cbc2;background:#fff;
+  display:inline-flex;align-items:center;justify-content:center;flex:0 0 21px;transition:.18s var(--ease);cursor:pointer;padding:0;
+}
+.cbx:hover{border-color:var(--green);}
+.cbx:focus-visible{outline:2px solid var(--amber);outline-offset:2px;}
+.cbx.on{background:var(--green);border-color:var(--green);}
+.cbx svg{opacity:0;transform:scale(.5);transition:opacity .18s,transform .2s var(--ease);width:13px;height:13px;}
+.cbx.on svg{opacity:1;transform:scale(1);}
+
+/* toggle */
+.tg{width:44px;height:25px;border-radius:13px;background:#ccd3cc;position:relative;transition:background .22s var(--ease);flex:0 0 44px;cursor:pointer;padding:0;}
+.tg:focus-visible{outline:2px solid var(--amber);outline-offset:2px;}
+.tg::after{content:"";position:absolute;top:2.5px;left:2.5px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25);transition:transform .22s var(--ease);}
+.tg.on{background:var(--green);}
+.tg.on::after{transform:translateX(19px);}
+
+/* donut center */
+.donut-wrap{position:relative;display:flex;align-items:center;justify-content:center;}
+.donut-center{position:absolute;text-align:center;}
+.donut-center .dl{font-size:11px;color:var(--muted);font-weight:600;}
+.donut-center .dv{font-family:"Oswald";font-size:20px;font-weight:700;color:var(--ink);}
+.legend{margin-top:14px;display:flex;flex-direction:column;gap:11px;}
+.legend .lg{display:flex;align-items:center;gap:10px;font-size:12.5px;}
+.legend .sw{width:12px;height:12px;border-radius:4px;flex:0 0 12px;}
+.legend .lg .pct{margin-left:auto;font-family:"Oswald";font-weight:600;color:var(--ink-soft);}
+
+/* matrix */
+.matrix td,.matrix th{text-align:center;}
+.matrix td:first-child,.matrix th:first-child{text-align:left;}
+.mk{font-weight:700;font-size:15px;}
+.mk.o{color:var(--green);} .mk.x{color:var(--warn);} .mk.dash{color:#c2cbc2;}
+
+/* shift grid */
+.shiftgrid{font-size:12px;}
+.shiftgrid th{text-align:center;}
+.shiftgrid td{text-align:center;padding:9px 6px;border-bottom:1px solid var(--line-soft);}
+.shiftgrid td:first-child{text-align:left;font-weight:700;}
+.scell{display:inline-block;padding:4px 9px;border-radius:8px;background:var(--green-soft);color:var(--green);font-weight:600;font-size:11px;white-space:nowrap;}
+.scell.off{background:#eef1ed;color:#9aa29a;}
+.scell.early{background:var(--blue-soft);color:var(--blue);}
+
+/* timeline */
+.timeline{position:relative;padding-left:24px;}
+.timeline::before{content:"";position:absolute;left:6px;top:5px;bottom:5px;width:2px;background:var(--line);}
+.tl-item{position:relative;margin-bottom:20px;}
+.tl-item:last-child{margin-bottom:0;}
+.tl-item::before{content:"";position:absolute;left:-24px;top:3px;width:13px;height:13px;border-radius:50%;background:#fff;border:3px solid var(--green);box-shadow:0 0 0 3px #fff;}
+.tl-item.warn::before{border-color:var(--amber);}
+.tl-date{font-family:"Oswald";font-weight:600;font-size:13px;color:var(--ink-soft);}
+.tl-t{font-size:12.5px;color:var(--muted);margin-top:2px;}
+
+/* memory cards */
+.memo{border:1px solid var(--line);border-radius:12px;padding:13px 14px;margin-bottom:11px;background:#fbfcfb;transition:.18s var(--ease);}
+.memo:last-child{margin-bottom:0;}
+.memo:hover{border-color:#d5ddd4;box-shadow:var(--shadow-xs);}
+.memo .mt{font-size:12.5px;line-height:1.55;color:var(--ink-soft);}
+.memo .mf{display:flex;align-items:center;justify-content:space-between;margin-top:9px;gap:8px;}
+.memo .mf .when{font-size:10.5px;color:var(--muted);}
+.memo .mf .acts{display:flex;gap:6px;}
+.txtbtn{font-size:11px;color:var(--green);font-weight:700;padding:3px 8px;border-radius:7px;transition:.14s;}
+.txtbtn:hover{background:var(--green-soft);}
+.txtbtn:focus-visible{outline:2px solid var(--amber);outline-offset:1px;}
+.txtbtn.del{color:var(--warn);}
+.txtbtn.del:hover{background:var(--warn-soft);}
+
+/* proposal */
+.prop{border:1px solid var(--line);border-left:3px solid var(--green);border-radius:12px;padding:14px 16px;margin-bottom:12px;background:#fff;transition:.22s var(--ease);}
+.prop:last-child{margin-bottom:0;}
+.prop:hover{box-shadow:var(--shadow-sm);border-left-color:var(--green-bright);}
+.prop .pt{font-size:13px;line-height:1.6;color:var(--ink-soft);}
+.prop .pa{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+
+/* chat */
+.chat{display:flex;flex-direction:column;height:348px;}
+.chat-log{flex:1;overflow-y:auto;padding:4px 4px 4px 2px;display:flex;flex-direction:column;gap:12px;}
+.bub{max-width:86%;padding:11px 14px;border-radius:15px;font-size:12.5px;line-height:1.6;animation:bubIn .3s var(--ease);}
+@keyframes bubIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+.bub.me{align-self:flex-end;background:linear-gradient(135deg,var(--green),var(--green-bright));color:#fff;border-bottom-right-radius:5px;box-shadow:0 2px 8px rgba(31,107,58,.22);}
+.bub.ai{align-self:flex-start;background:#eef1ed;color:var(--ink-soft);border-bottom-left-radius:5px;}
+.bub.ai b{color:var(--green);}
+.chat-in{display:flex;gap:9px;margin-top:13px;}
+.chat-in input{flex:1;}
+.typing{display:inline-flex;gap:4px;align-items:center;}
+.typing span{width:6px;height:6px;border-radius:50%;background:#9aa29a;animation:typing 1.1s infinite;}
+.typing span:nth-child(2){animation-delay:.15s;}
+.typing span:nth-child(3){animation-delay:.3s;}
+@keyframes typing{0%,60%,100%{opacity:.3;transform:translateY(0);}30%{opacity:1;transform:translateY(-3px);}}
+
+/* toast */
+.toast-wrap{position:fixed;right:22px;bottom:22px;z-index:90;display:flex;flex-direction:column;gap:10px;max-width:calc(100vw - 44px);}
+.toast{
+  background:linear-gradient(135deg,#23303a,#1f262c);color:#fff;padding:13px 18px;border-radius:13px;font-size:13px;font-weight:500;
+  box-shadow:0 12px 34px rgba(0,0,0,.28);display:flex;align-items:center;gap:11px;
+  animation:toastIn .34s var(--ease);border:1px solid rgba(255,255,255,.06);
+}
+.toast.out{animation:toastOut .3s forwards;}
+.toast .ti{width:22px;height:22px;flex:0 0 22px;color:#8ee2ab;}
+.toast .ti svg{width:22px;height:22px;}
+@keyframes toastIn{from{opacity:0;transform:translateX(34px) scale(.96);}to{opacity:1;transform:none;}}
+@keyframes toastOut{to{opacity:0;transform:translateX(34px) scale(.96);}}
+
+/* footer */
+.foot{margin-top:34px;padding:20px 0 6px;border-top:1px solid var(--line);font-size:11.5px;color:var(--muted);text-align:center;line-height:1.8;}
+.foot b{color:var(--ink-soft);}
+
+/* empty state */
+.empty-state{text-align:center;padding:48px 22px;color:var(--muted);}
+.empty-state .es-ic{width:58px;height:58px;margin:0 auto 16px;color:#c8d0c8;}
+.empty-state .es-ic svg{width:58px;height:58px;}
+
+/* hamburger */
+.hamburger{display:none;}
+.scrim{display:none;}
+
+/* util */
+.mt8{margin-top:8px;} .mt16{margin-top:16px;} .mt24{margin-top:24px;}
+.flexwrap{display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
+
+/* responsive */
+@media (max-width:1080px){
+  .g4{grid-template-columns:1fr 1fr;}
+}
+@media (max-width:980px){
+  .g3,.g23,.g32,.g2{grid-template-columns:1fr;}
+  .kanban{grid-template-columns:1fr 1fr;}
+}
+@media (max-width:760px){
+  :root{--sb-w:0px;}
+  .sidebar{
+    transform:translateX(-100%);width:270px;flex-basis:270px;
+    transition:transform .3s var(--ease);box-shadow:10px 0 40px rgba(0,0,0,.32);
+  }
+  body.nav-open .sidebar{transform:translateX(0);}
+  .main{margin-left:0;}
+  .topbar{
+    display:flex;align-items:center;gap:13px;
+    position:sticky;top:34px;z-index:40;
+    background:linear-gradient(90deg,var(--green-darkest),var(--green-dark));color:#fff;padding:11px 16px;
+    box-shadow:0 2px 10px rgba(15,40,25,.12);
+  }
+  .hamburger{display:inline-flex;flex-direction:column;gap:4px;padding:7px;border-radius:8px;}
+  .hamburger:active{background:rgba(255,255,255,.1);}
+  .hamburger span{width:22px;height:2.5px;background:#fff;border-radius:2px;transition:.22s var(--ease);}
+  .topbar .tb-title{font-size:14.5px;font-weight:700;}
+  .scrim{display:block;position:fixed;inset:34px 0 0 0;background:rgba(15,30,20,.45);z-index:45;opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(1px);}
+  body.nav-open .scrim{opacity:1;pointer-events:auto;}
+  .viewwrap{padding:20px 16px 56px;}
+  .page-head h1{font-size:20px;}
+  .g4{grid-template-columns:1fr 1fr;}
+  .kanban{grid-template-columns:1fr;}
+  .form-row{grid-template-columns:1fr;}
+  .tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;}
+  .tbl-scroll table{min-width:560px;}
+  .shiftgrid{min-width:600px;}
+  .bar-row{grid-template-columns:96px 1fr 48px;}
+}
+@media (max-width:440px){
+  .g4{grid-template-columns:1fr;}
+  .toast-wrap{right:12px;left:12px;bottom:12px;}
+}
+</style>
+</head>
+<body>
+
+<div class="demo-strip"><span class="dot"></span>これはデモです（サンプルデータ／一部は今後実装の機能）</div>
+
+<div class="app">
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-brand">
+      <div class="sb-logo">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="11" rx="2"/><circle cx="9" cy="13.5" r="1.1" fill="#fff" stroke="none"/><circle cx="15" cy="13.5" r="1.1" fill="#fff" stroke="none"/><path d="M12 4v3M9.5 4h5"/></svg>
+      </div>
+      <div class="nm">AI社員パック<small>Team Edition</small></div>
+    </div>
+    <nav class="sb-nav" id="nav"></nav>
+    <div class="sb-foot">
+      <div class="av">社</div>
+      <div class="who"><b>社長</b><span>管理者でログイン中</span></div>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <div class="main">
+    <div class="topbar">
+      <button class="hamburger" id="hb" aria-label="メニューを開く"><span></span><span></span><span></span></button>
+      <div class="tb-title" id="tbTitle">ダッシュボード</div>
+    </div>
+    <div class="viewwrap" id="viewwrap"></div>
+  </div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<div class="toast-wrap" id="toastWrap" aria-live="polite"></div>
+
+<script>
+"use strict";
+
+/* ---------- helpers ---------- */
+const $ = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>[...r.querySelectorAll(s)];
+const el = (tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e;};
+const yen = n => "¥"+Number(n).toLocaleString("ja-JP");
+const avColor = name=>{const c=["#1f6b3a","#2e6796","#c98a2b","#6f54b8","#a64e2a","#2a8585"];let h=0;for(const ch of String(name))h=ch.charCodeAt(0)+h;return c[h%c.length];};
+const initial = name => (String(name||"?").trim()[0]||"?");
+
+/* icons (inline line svg) */
+const I = {
+  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="100%" height="100%"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg>',
+  task:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="100%" height="100%"><path d="M9 11l3 3 8-8"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>',
+  nippo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="100%" height="100%"><path d="M14 3v5h5"/><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M8 13h8M8 17h6"/></svg>',
+  shift:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="100%" height="100%"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>',
+  money:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="100%" height="100%"><path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+  hojo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="100%" height="100%"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M3 12h18"/><path d="M12 8V5a2 2 0 0 0-4 0M12 8V5a2 2 0 0 1 4 0"/></svg>',
+  ai:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="100%" height="100%"><rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 8V4M9 4h6"/><circle cx="9.5" cy="13" r="1.1" fill="currentColor" stroke="none"/><circle cx="14.5" cy="13" r="1.1" fill="currentColor" stroke="none"/><path d="M2 13h2M20 13h2"/></svg>',
+  bell:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="100%" height="100%"><path d="M6 9a6 6 0 0 1 12 0c0 6 2 7 2 7H4s2-1 2-7"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" width="100%" height="100%"><polyline points="4 12 9 17 20 6"/></svg>'
+};
+
+/* ---------- nav config ---------- */
+const NAV = [
+  {id:"dashboard", ic:I.home, label:"ダッシュボード"},
+  {id:"tasks",     ic:I.task, label:"タスク"},
+  {id:"nippo",     ic:I.nippo, label:"日報"},
+  {id:"shift",     ic:I.shift, label:"シフト"},
+  {id:"shushi",    ic:I.money, label:"収支・月次"},
+  {id:"hojokin",   ic:I.hojo, label:"補助金斡旋", badge:"2"},
+  {id:"kioku",     ic:I.ai,   label:"専属AI記憶ノート"},
+  {id:"tsuchi",    ic:I.bell, label:"通知連携"}
+];
+
+/* ---------- state ---------- */
+const STATE = {
+  view:"dashboard",
+  tasksTab:"list",
+  hojoTab:"list",
+  expenses:2210000,
+  sales:3820000
+};
+
+/* ====================================================================
+   RENDER HELPERS
+==================================================================== */
+function kpiCard(opt){
+  const c = el("div","card kpi"+(opt.go?" click":""));
+  if(opt.go) c.dataset.go = opt.go;
+  c.innerHTML = `
+    <div class="kpi-top">
+      <div class="kpi-ic ${opt.tone||""}">${opt.icon}</div>
+      ${opt.ring!=null? ringSvg(opt.ring,opt.ringTxt):""}
+    </div>
+    <div class="lbl mt8">${opt.lbl}</div>
+    <div class="val">${opt.val}</div>
+    ${opt.delta? `<div class="delta ${opt.deltaTone||"up"}">${opt.delta}</div>`:""}
+  `;
+  return c;
+}
+function ringSvg(pct,txt){
+  const r=20, c=2*Math.PI*r, off=c*(1-pct/100);
+  return `<svg width="52" height="52" class="ring"><circle cx="26" cy="26" r="${r}" stroke="#eef1ed" stroke-width="6"/><circle cx="26" cy="26" r="${r}" stroke="#1f6b3a" stroke-width="6" stroke-dasharray="${c}" stroke-dashoffset="${off}"/><text x="26" y="26" transform="rotate(90 26 26)" text-anchor="middle" dominant-baseline="central" style="font-family:Oswald;font-weight:700;font-size:13px;fill:#1f262c">${txt}</text></svg>`;
+}
+
+/* donut via conic-gradient */
+function donut(segs,centerLbl,centerVal){
+  let acc=0; const stops=[];
+  segs.forEach(s=>{const start=acc; acc+=s.pct; stops.push(`${s.color} ${start}% ${acc}%`);});
+  const wrap=el("div","donut-wrap");
+  wrap.innerHTML = `
+    <div style="width:172px;height:172px;border-radius:50%;background:conic-gradient(${stops.join(",")});display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(20,40,25,.10)">
+      <div style="width:110px;height:110px;border-radius:50%;background:#fff;box-shadow:inset 0 1px 5px rgba(0,0,0,.07)"></div>
+    </div>
+    <div class="donut-center"><div class="dl">${centerLbl}</div><div class="dv">${centerVal}</div></div>`;
+  return wrap;
+}
+
+/* toast */
+function toast(msg){
+  const w=$("#toastWrap");
+  const t=el("div","toast",`<span class="ti">${I.check}</span><span>${msg}</span>`);
+  w.appendChild(t);
+  setTimeout(()=>{t.classList.add("out");setTimeout(()=>t.remove(),300);},2600);
+}
+
+/* checkbox factory */
+function checkbox(on,onToggle){
+  const b=el("button","cbx"+(on?" on":""),I.check);
+  b.type="button";
+  b.setAttribute("aria-pressed",on);
+  b.onclick=()=>{const nv=!b.classList.contains("on");b.classList.toggle("on",nv);b.setAttribute("aria-pressed",nv);onToggle(nv);};
+  return b;
+}
+/* toggle factory */
+function toggle(on,onChange){
+  const t=el("button","tg"+(on?" on":""));
+  t.type="button";
+  t.setAttribute("role","switch");t.setAttribute("aria-checked",on);
+  t.onclick=()=>{const nv=!t.classList.contains("on");t.classList.toggle("on",nv);t.setAttribute("aria-checked",nv);if(onChange)onChange(nv);};
+  return t;
+}
+
+/* ====================================================================
+   VIEW: DASHBOARD
+==================================================================== */
+function viewDashboard(){
+  const v = el("div","view");
+  v.innerHTML = `<div class="page-head"><h1>一元管理ダッシュボード</h1><p>会社のお金・タスク・人の状態を1画面に。朝この1枚を見れば今日やることが分かります。</p></div>`;
+
+  // KPI row
+  const k = el("div","grid g4");
+  k.appendChild(kpiCard({lbl:"今月の売上",val:yen(STATE.sales),delta:"▲ 前月比 +12.4%",deltaTone:"up",icon:I.money,go:"shushi"}));
+  k.appendChild(kpiCard({lbl:"未入金",val:"2件 / "+yen(162000),delta:"要対応",deltaTone:"warn",icon:I.money,tone:"amber",go:"shushi"}));
+  k.appendChild(kpiCard({lbl:"今日のタスク",val:"7 / 10",icon:I.task,tone:"blue",ring:70,ringTxt:"70%",go:"tasks"}));
+  k.appendChild(kpiCard({lbl:"提出済み日報",val:"本日 5 / 6名",delta:"1名 未提出",deltaTone:"warn",icon:I.nippo,go:"nippo"}));
+  v.appendChild(k);
+
+  // mid row: donut + bar
+  const mid = el("div","grid g23 mt24");
+  // donut card
+  const dCard = el("div","card");
+  dCard.innerHTML = `<div class="card-h"><h3>今月の売上構成</h3><span class="sub">合計 ${yen(3820000)}</span></div>`;
+  const dBody = el("div"); dBody.style.cssText="display:flex;gap:26px;flex-wrap:wrap;align-items:center;";
+  const segs=[
+    {label:"青果B2B",pct:52,val:1986400,color:"#1f6b3a"},
+    {label:"システム受託",pct:28,val:1069600,color:"#2c8f4d"},
+    {label:"月額SaaS",pct:14,val:534800,color:"#c98a2b"},
+    {label:"その他",pct:6,val:229200,color:"#c8d0c8"}
+  ];
+  dBody.appendChild(donut(segs,"総額",yen(3820000)));
+  const lg=el("div","legend");lg.style.flex="1";lg.style.minWidth="180px";
+  segs.forEach(s=>lg.appendChild(el("div","lg",`<span class="sw" style="background:${s.color}"></span>${s.label}<span class="pct">${s.pct}%</span>`)));
+  dBody.appendChild(lg);
+  dCard.appendChild(dBody);
+  mid.appendChild(dCard);
+
+  // bar card
+  const bCard = el("div","card");
+  bCard.innerHTML=`<div class="card-h"><h3>日別タスク完了数</h3><span class="sub">直近7日 ・ 目標10本</span></div>`;
+  const bars=[["6/8",8],["6/9",11],["6/10",9],["6/11",12],["6/12",7],["6/13",10],["6/14",7,true]];
+  const max=14;
+  const bWrap=el("div");bWrap.style.cssText="position:relative;padding-top:8px;";
+  const chart=el("div");chart.style.cssText="display:flex;align-items:flex-end;gap:14px;height:154px;position:relative;border-bottom:1px solid var(--line);";
+  // goal line
+  const goal=el("div");goal.style.cssText=`position:absolute;left:0;right:0;bottom:${(10/max)*154}px;border-top:2px dashed var(--amber);pointer-events:none;`;
+  goal.innerHTML=`<span style="position:absolute;right:0;top:-16px;font-size:10px;color:var(--amber-deep);font-weight:700;">目標10</span>`;
+  chart.appendChild(goal);
+  bars.forEach(([d,n,today])=>{
+    const col=el("div");col.style.cssText="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:7px;min-width:0;";
+    const valEl=el("div","num",n);valEl.style.cssText="font-size:12px;color:var(--ink-soft);";
+    const bar=el("div");bar.style.cssText=`width:66%;border-radius:6px 6px 0 0;height:0;background:${today?"linear-gradient(180deg,#bcdac6,#9fc8ad)":"linear-gradient(180deg,#2c8f4d,#1f6b3a)"};transition:height .8s var(--ease);box-shadow:0 2px 6px rgba(31,107,58,.16);`;
+    bar.title=`${d}: ${n}本`;
+    const lbl=el("div","num");lbl.style.cssText="font-size:11px;color:var(--muted);";lbl.textContent=d+(today?"※":"");
+    col.appendChild(valEl);col.appendChild(bar);col.appendChild(lbl);
+    chart.appendChild(col);
+    requestAnimationFrame(()=>{bar.style.height=`${(n/max)*132}px`;});
+  });
+  bWrap.appendChild(chart);
+  bCard.appendChild(bWrap);
+  bCard.appendChild(el("div","note","※印は本日（集計途中）。"));
+  mid.appendChild(bCard);
+  v.appendChild(mid);
+
+  // bottom row: tasks + feed
+  const bot = el("div","grid g23 mt24");
+
+  // approvals table
+  const tCard=el("div","card");
+  tCard.innerHTML=`<div class="card-h"><h3>本日やること（社長承認待ち）</h3><span class="sub">承認は社長のみ</span></div>`;
+  const rows=[
+    {t:"カード明細CSVを受付箱へ",who:"社長",chip:'<span class="chip amber"><span class="d"></span>社長待ち</span>'},
+    {t:"未入金 サンプル総合病院 督促文を確認→送信",who:"社長",chip:'<span class="chip blue"><span class="d"></span>下書き完了</span>'},
+    {t:"6月分請求書5件の最終承認",who:"社長",chip:'<span class="chip gray"><span class="d"></span>発行待ち</span>'},
+    {t:"新規補助金1件 該当の可能性→確認",who:"AI事務",chip:'<span class="chip warn"><span class="d"></span>NEW</span>'}
+  ];
+  const tbl=el("table","tbl");
+  tbl.innerHTML="<thead><tr><th>やること</th><th>担当</th><th>状態</th><th></th></tr></thead>";
+  const tb=el("tbody");
+  rows.forEach(r=>{
+    const tr=el("tr","row");
+    const td=el("td");td.style.fontWeight="500";td.textContent=r.t;
+    const tw=el("td");tw.innerHTML=`<span class="chip gray">${r.who}</span>`;
+    const stCell=el("td",null,r.chip);
+    const ta=el("td");ta.style.textAlign="right";
+    const btn=el("button","btn btn-amber btn-sm","承認");
+    btn.onclick=()=>{
+      stCell.innerHTML='<span class="chip green"><span class="d"></span>✓ 承認済み</span>';
+      ta.innerHTML="";
+      tr.style.background="var(--green-soft2)";
+      toast("承認しました（送信準備まで）");
+    };
+    ta.appendChild(btn);
+    tr.append(td,tw,stCell,ta);tb.appendChild(tr);
+  });
+  tbl.appendChild(tb);
+  const scroll=el("div","tbl-scroll");scroll.appendChild(tbl);tCard.appendChild(scroll);
+  tCard.appendChild(el("div","note","お金・送信が絡む行は、承認しても「送信準備」までです。実際の送信・支払いは社長本人が操作します。"));
+  bot.appendChild(tCard);
+
+  // feed card
+  const fCard=el("div","card");
+  fCard.innerHTML=`<div class="card-h"><h3>お知らせ / 通知連携</h3><span class="sub" data-go="tsuchi" style="cursor:pointer;color:var(--green);font-weight:700">設定 →</span></div>`;
+  const feed=el("ul","feed");
+  [
+    {t:"田中さんがシフト希望を提出",time:"10分前",ch:["Slack","LINE"]},
+    {t:"AI事務部長：入金照合が完了。未入金1件",time:"1時間前",ch:["Slack"]},
+    {t:"補助金：IT導入補助金2026 一次公募が開始",time:"本日",ch:["メール","Slack"]}
+  ].forEach(f=>{
+    const li=el("li");
+    const chans=f.ch.map(c=>`<span class="chip green" style="font-size:10px;padding:1px 8px">${c}✓</span>`).join(" ");
+    li.innerHTML=`<div class="fic">${I.bell}</div><div style="flex:1;min-width:0"><div>${f.t}</div><div class="ft">${f.time}</div><div class="chan">${chans}</div></div>`;
+    feed.appendChild(li);
+  });
+  fCard.appendChild(feed);
+  bot.appendChild(fCard);
+  v.appendChild(bot);
+
+  v.appendChild(footer());
+  return v;
+}
+
+/* ====================================================================
+   VIEW: TASKS
+==================================================================== */
+const TASKDATA = [
+  {n:"6月分請求書5件の発行", who:"AI事務部長", due:"6/20", st:"進行中", prog:80, done:false, pri:"mid", col:"prog"},
+  {n:"未入金の督促文作成（サンプル総合病院）", who:"AI事務部長→社長承認", due:"6/15", st:"社長待ち", prog:100, done:false, pri:"high", col:"appr"},
+  {n:"野菜定期便 6月納品リスト確定", who:"佐藤", due:"6/16", st:"進行中", prog:50, done:false, pri:"mid", col:"prog"},
+  {n:"経費CSVの仕分け", who:"AI経理", due:"6/14", st:"完了", prog:100, done:true, pri:"low", col:"done"},
+  {n:"補助金IT導入の見積書ドラフト", who:"AI事務", due:"6/18", st:"未着手", prog:0, done:false, pri:"low", col:"todo"},
+  {n:"配送ルート見直し（大分市内）", who:"鈴木", due:"6/22", st:"進行中", prog:30, done:false, pri:"mid", col:"prog"}
+];
+let taskRows = TASKDATA.map(t=>({...t}));
+let completedCount = 1;
+const WEEK_BASE = 11;
+
+function stChip(st){
+  const m={"未着手":"gray","進行中":"blue","社長待ち":"amber","完了":"green"};
+  const t=st==="完了"?"✓ 完了":st;
+  return `<span class="chip ${m[st]||"gray"}"><span class="d"></span>${t}</span>`;
+}
+
+function viewTasks(){
+  const v=el("div","view");
+  v.innerHTML=`<div class="page-head"><h1>タスク管理</h1><p>誰が何をどこまでやったか一目で。お金や送信が絡むタスクは自動で「社長承認待ち」に回ります。</p></div>`;
+
+  // KPI mini
+  const todo=taskRows.filter(t=>t.col==="todo").length;
+  const prog=taskRows.filter(t=>t.col==="prog").length;
+  const km=el("div","grid g3");
+  km.appendChild(kpiCard({lbl:"未着手",val:todo,icon:I.task,tone:"blue"}));
+  km.appendChild(kpiCard({lbl:"進行中",val:prog,icon:I.task,tone:"amber"}));
+  const doneCard=kpiCard({lbl:"今週完了",val:completedCount+WEEK_BASE,icon:I.task});
+  doneCard.id="doneKpi";
+  km.appendChild(doneCard);
+  v.appendChild(km);
+
+  // controls
+  const ctrl=el("div");ctrl.style.cssText="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:24px 0 16px;";
+  // tabs
+  const tabs=el("div","tabs");tabs.style.margin="0";
+  ["list","kanban"].forEach(t=>{
+    const b=el("button","tab"+(STATE.tasksTab===t?" active":""),t==="list"?"一覧":"かんばん");
+    b.onclick=()=>{STATE.tasksTab=t;render();};
+    tabs.appendChild(b);
+  });
+  ctrl.appendChild(tabs);
+  // filter
+  const fl=el("div");fl.style.cssText="display:flex;gap:9px;align-items:center;margin-left:auto;flex-wrap:wrap;";
+  fl.innerHTML=`<span style="font-size:12px;color:var(--muted);font-weight:700">担当者</span>`;
+  const sel=el("select");sel.style.cssText="font-family:inherit;font-size:13px;border:1.5px solid var(--line);border-radius:10px;padding:8px 11px;background:#fff;cursor:pointer;";
+  const whos=["全員",...new Set(taskRows.map(t=>t.who))];
+  whos.forEach(w=>{const o=el("option");o.value=w;o.textContent=w;sel.appendChild(o);});
+  fl.appendChild(sel);
+  // add button
+  const addBtn=el("button","btn btn-amber btn-sm","＋ タスク追加");
+  fl.appendChild(addBtn);
+  ctrl.appendChild(fl);
+  v.appendChild(ctrl);
+
+  // add form (hidden)
+  const addForm=el("div","card");addForm.style.cssText="display:none;margin-bottom:16px;";
+  addForm.innerHTML=`<div class="card-h"><h3>新しいタスク</h3></div>
+    <div class="form-row">
+      <div class="field"><label>内容</label><input id="ntName" placeholder="例：8月分の在庫棚卸し"></div>
+      <div class="field"><label>担当者</label><input id="ntWho" placeholder="例：山口" value="社長"></div>
+    </div>
+    <div class="form-row">
+      <div class="field"><label>期限</label><input id="ntDue" placeholder="例：6/30" value="6/30"></div>
+      <div class="field"><label>　</label><button class="btn btn-green" id="ntSubmit">追加する</button></div>
+    </div>`;
+  addBtn.onclick=()=>{addForm.style.display=addForm.style.display==="none"?"block":"none";if(addForm.style.display==="block")addForm.querySelector("#ntName").focus();};
+  v.appendChild(addForm);
+
+  // body container
+  const body=el("div");body.id="taskBody";
+  v.appendChild(body);
+
+  function renderBody(){
+    body.innerHTML="";
+    const filter=sel.value;
+    const list=taskRows.filter(t=>filter==="全員"||t.who===filter);
+    if(STATE.tasksTab==="list"){
+      const card=el("div","card");
+      const tbl=el("table","tbl");
+      tbl.innerHTML="<thead><tr><th></th><th>タスク</th><th>担当</th><th>期限</th><th>状態</th><th>進捗</th></tr></thead>";
+      const tb=el("tbody");
+      list.forEach(t=>{
+        const tr=el("tr","row"+(t.done?" done":""));
+        const cbTd=el("td");
+        const stTd=el("td",null,stChip(t.st));
+        const pgTd=el("td");pgTd.innerHTML=`<div style="display:flex;align-items:center;gap:9px"><div class="bar-track" style="width:70px"><div class="bar-fill" style="width:${t.prog}%"></div></div><span class="num" style="font-size:11px;color:var(--muted)">${t.prog}%</span></div>`;
+        const cb=checkbox(t.done,(on)=>{
+          t.done=on; t.col=on?"done":"prog"; t.st=on?"完了":"進行中"; t.prog=on?100:t.prog;
+          completedCount += on?1:-1;
+          tr.classList.toggle("done",on);
+          stTd.innerHTML=stChip(t.st);
+          const dk=$("#doneKpi .val"); if(dk) dk.textContent=completedCount+WEEK_BASE;
+          pgTd.querySelector(".bar-fill").style.width=t.prog+"%";
+        });
+        cbTd.appendChild(cb);
+        const nTd=el("td","tname");nTd.style.cssText="font-weight:500;max-width:300px;";nTd.textContent=t.n;
+        const wTd=el("td");wTd.innerHTML=`<div class="who-cell"><span class="av-mini" style="background:${avColor(t.who)}">${initial(t.who)}</span><span style="font-size:12px">${t.who}</span></div>`;
+        const dTd=el("td","num");dTd.textContent=t.due;
+        tr.append(cbTd,nTd,wTd,dTd,stTd,pgTd);tb.appendChild(tr);
+      });
+      tbl.appendChild(tb);
+      const sc=el("div","tbl-scroll");sc.appendChild(tbl);card.appendChild(sc);
+      card.appendChild(el("div","note","従業員はタスクの入力・進捗更新まで。お金や送信が絡むタスクは自動で「社長承認待ち」に回り、権限境界が画面で守られます。"));
+      body.appendChild(card);
+    } else {
+      const cols=[["todo","未着手"],["prog","進行中"],["appr","社長承認待ち"],["done","完了"]];
+      const kb=el("div","kanban");
+      cols.forEach(([cid,clbl])=>{
+        const items=list.filter(t=>t.col===cid);
+        const cnt=cid==="done"?(completedCount+WEEK_BASE):items.length;
+        const col=el("div","kcol"+(cid==="appr"?" appr":""));
+        col.innerHTML=`<h4>${clbl}<span class="cnt">${cnt}</span></h4>`;
+        items.forEach(t=>{
+          const c=el("div","kcard");
+          c.innerHTML=`<div class="kt">${t.n}</div>
+            <div class="kmeta">
+              <div class="who-cell"><span class="av-mini" style="width:23px;height:23px;flex-basis:23px;background:${avColor(t.who)}">${initial(t.who)}</span><span class="num" style="font-size:11px;color:var(--muted)">${t.due}</span></div>
+              <span class="pri ${t.pri}" title="優先度"></span>
+            </div>`;
+          col.appendChild(c);
+        });
+        if(!items.length) col.appendChild(el("div",null,'<div style="font-size:11px;color:#a8aea8;padding:10px;text-align:center">なし</div>'));
+        kb.appendChild(col);
+      });
+      body.appendChild(kb);
+      body.appendChild(el("div","note","かんばんのカードはクリックで詳細（今後実装）。優先度の赤ドット＝高。"));
+    }
+  }
+  sel.onchange=renderBody;
+  renderBody();
+
+  // add submit
+  addForm.querySelector("#ntSubmit").onclick=()=>{
+    const nm=addForm.querySelector("#ntName").value.trim();
+    if(!nm){toast("内容を入力してください");return;}
+    const who=addForm.querySelector("#ntWho").value.trim()||"社長";
+    const due=addForm.querySelector("#ntDue").value.trim()||"未定";
+    taskRows.unshift({n:nm,who,due,st:"未着手",prog:0,done:false,pri:"low",col:"todo"});
+    addForm.querySelector("#ntName").value="";
+    addForm.style.display="none";
+    render();
+    toast("タスクを追加しました");
+  };
+
+  v.appendChild(footer());
+  return v;
+}
+
+/* ====================================================================
+   VIEW: NIPPO
+==================================================================== */
+let nippoList = [
+  {who:"佐藤", body:"野菜定期便3病院へ納品／在庫棚卸し。所感：サンプル総合病院の追加注文の打診あり。困りごと：木曜の配送車が1台不足しそう。", h:"納品3h／棚卸し1.5h／事務1h", when:"本日 17:10"},
+  {who:"山口", body:"システム受託の画面修正2件対応。テスト完了。明日は結合テスト。", h:"開発5h／会議1h", when:"本日 17:30"},
+  {who:"田中", body:"配送3ルート／伝票整理。所感：午後の渋滞で1件遅延、先方へ連絡済。", h:"配送4h／事務1h", when:"本日 18:00"}
+];
+let aiSummaryLines = [
+  "6/13まとめ：全6名中5名提出。共通の動き＝納品ピーク。",
+  "要対応①：鈴木さん未提出（リマインド送信済）。",
+  "要対応②：佐藤さんから「木曜の配送車不足」報告→シフト/車両の調整を社長に提案。",
+  "明日の注目：サンプル総合病院 追加注文の見込み。"
+];
+
+function viewNippo(){
+  const v=el("div","view");
+  v.innerHTML=`<div class="page-head"><h1>日報一覧</h1><p>提出漏れが赤で即わかり、6人分の日報をAIが毎日1枚に要約します。</p></div>`;
+
+  const top=el("div","grid g4");
+  top.appendChild(kpiCard({lbl:"本日の提出率",val:"5 / 6名",delta:"83%",icon:I.nippo}));
+  top.appendChild(kpiCard({lbl:"未提出",val:"鈴木さん",delta:"リマインド済",deltaTone:"warn",icon:I.bell,tone:"warn"}));
+  top.appendChild(kpiCard({lbl:"今週の提出",val:"27 / 30",icon:I.check,tone:"blue"}));
+  top.appendChild(kpiCard({lbl:"AI要約",val:"自動生成",delta:"毎日18時",icon:I.ai,tone:"amber"}));
+  v.appendChild(top);
+
+  const grid=el("div","grid g23 mt24");
+
+  // left: matrix + recent
+  const left=el("div");
+  const mCard=el("div","card");
+  mCard.innerHTML=`<div class="card-h"><h3>提出マトリクス</h3><span class="sub">直近5日 ・ ○提出 / ×未 / − 休</span></div>`;
+  const matrix=[
+    ["佐藤","o","o","o","o","o"],["田中","o","o","dash","o","o"],
+    ["鈴木","o","o","o","o","x"],["山口","o","o","o","o","o"],
+    ["中村","o","dash","o","o","o"],["林（パート）","o","o","o","o","o"]
+  ];
+  const mt=el("table","tbl matrix");
+  mt.innerHTML="<thead><tr><th>従業員</th><th>6/9</th><th>6/10</th><th>6/11</th><th>6/12</th><th>6/13</th></tr></thead>";
+  const mtb=el("tbody");
+  matrix.forEach(r=>{
+    const tr=el("tr","row");
+    tr.appendChild(el("td",null,`<span style="font-weight:700">${r[0]}</span>`));
+    for(let i=1;i<r.length;i++){
+      const sym={o:"○",x:"×","dash":"−"}[r[i]];
+      tr.appendChild(el("td",null,`<span class="mk ${r[i]}">${sym}</span>`));
+    }
+    mtb.appendChild(tr);
+  });
+  mt.appendChild(mtb);
+  const msc=el("div","tbl-scroll");msc.appendChild(mt);mCard.appendChild(msc);
+  left.appendChild(mCard);
+
+  // recent reports
+  const rCard=el("div","card mt16");
+  rCard.innerHTML=`<div class="card-h"><h3>提出済みの日報</h3><span class="sub" id="nCount">${nippoList.length}件</span></div>`;
+  const nCount=$("#nCount",rCard);
+  const rList=el("div");rList.id="nippoList";
+  rCard.appendChild(rList);
+  left.appendChild(rCard);
+  grid.appendChild(left);
+
+  // right: AI summary + write
+  const right=el("div");
+  const sCard=el("div","card");
+  sCard.style.cssText="border-left:3px solid var(--green);";
+  sCard.innerHTML=`<div class="card-h"><h3>AI事務部長の日次サマリ</h3><span class="chip green"><span class="d"></span>自動</span></div>`;
+  const sBody=el("div");sBody.id="aiSummary";
+  sCard.appendChild(sBody);
+  right.appendChild(sCard);
+
+  // write form
+  const wCard=el("div","card mt16");
+  wCard.innerHTML=`<div class="card-h"><h3>日報を書く</h3></div>
+    <div class="field"><label>現場 / 作業</label><input id="nField" placeholder="例：野菜定期便2病院へ納品"></div>
+    <div class="field"><label>作業内容・所感</label><textarea id="nBody" placeholder="今日やったこと、気づいたこと"></textarea></div>
+    <div class="field"><label>ひと言（困りごと等）</label><input id="nNote" placeholder="例：来週の車両が心配"></div>
+    <button class="btn btn-amber" id="nSend" style="width:100%">送信する</button>`;
+  right.appendChild(wCard);
+  grid.appendChild(right);
+
+  v.appendChild(grid);
+  v.appendChild(el("div","note box","本人・社内共有のみ。実在の個人情報はダミー化しています（デモ）。"));
+
+  function renderNippo(){
+    rList.innerHTML="";
+    nippoList.forEach((n)=>{
+      const c=el("div","memo");
+      c.innerHTML=`<div style="display:flex;align-items:center;gap:9px;margin-bottom:8px">
+          <span class="av-mini" style="background:${avColor(n.who)}">${initial(n.who)}</span>
+          <b style="font-size:13px">${n.who}</b>
+          <span class="chip green" style="font-size:10px;padding:1px 8px">提出済</span>
+          <span class="when" style="margin-left:auto;font-size:10.5px;color:var(--muted)">${n.when}</span>
+        </div>
+        <div class="mt" style="font-size:12.5px">${n.body}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:7px">工数：${n.h}</div>`;
+      rList.appendChild(c);
+    });
+    nCount.textContent=nippoList.length+"件";
+  }
+  function renderSummary(){
+    sBody.innerHTML="";
+    aiSummaryLines.forEach((l,i)=>{
+      const p=el("div");p.style.cssText="font-size:12.5px;line-height:1.65;padding:8px 0;border-bottom:1px solid var(--line-soft);";
+      if(i===aiSummaryLines.length-1)p.style.borderBottom="none";
+      p.innerHTML=l.startsWith("＋")?`<b style="color:var(--green)">${l}</b>`:l;
+      sBody.appendChild(p);
+    });
+  }
+  renderNippo();renderSummary();
+
+  wCard.querySelector("#nSend").onclick=()=>{
+    const f=wCard.querySelector("#nField").value.trim();
+    const b=wCard.querySelector("#nBody").value.trim();
+    const nt=wCard.querySelector("#nNote").value.trim();
+    if(!f && !b){toast("作業内容を入力してください");return;}
+    const text=`${f?f+"。":""}${b}${nt?" 困りごと："+nt:""}`;
+    nippoList.unshift({who:"社長",body:text,h:"—",when:"たった今"});
+    aiSummaryLines.push(`＋ 新着：社長の日報を受信。${nt?"「"+nt+"」を要対応候補に追加。":"内容を要約に反映しました。"}`);
+    wCard.querySelector("#nField").value="";
+    wCard.querySelector("#nBody").value="";
+    wCard.querySelector("#nNote").value="";
+    renderNippo();renderSummary();
+    toast("日報を送信しました");
+  };
+
+  v.appendChild(footer());
+  return v;
+}
+
+/* ====================================================================
+   VIEW: SHIFT
+==================================================================== */
+const SHIFT_PEOPLE=[
+  {name:"佐藤", hope:"平日希望／土日休み", on:true},
+  {name:"田中", hope:"火木金OK・水NG", on:true},
+  {name:"鈴木", hope:"早番希望", on:true},
+  {name:"山口", hope:"フルタイム可", on:true},
+  {name:"中村", hope:"午後のみ", on:true},
+  {name:"林（パート）", hope:"月水金 9-13", on:true}
+];
+const SHIFT_TABLE=[
+  ["佐藤","8-17","8-17","8-17","8-17","8-17","休","休"],
+  ["田中","休","8-17","休","8-17","8-17","9-15","休"],
+  ["鈴木","7-16","7-16","7-16","休","7-16","7-13","休"],
+  ["山口","9-18","9-18","9-18","9-18","9-18","休","休"],
+  ["中村","休","13-18","13-18","13-18","13-18","13-18","休"],
+  ["林（パート）","9-13","休","9-13","休","9-13","休","休"]
+];
+let shiftGenerated=false, shiftApproved=false;
+
+function viewShift(){
+  const v=el("div","view");
+  v.innerHTML=`<div class="page-head"><h1>シフト希望 → 自動シフト作成</h1><p>全員の希望を集めてAIが原案を作成。不足や法定違反は自動警告し、最終確定は必ず社長承認です。</p></div>`;
+
+  // hope card
+  const hCard=el("div","card");
+  hCard.innerHTML=`<div class="card-h"><h3>希望の提出状況</h3><span class="chip green"><span class="d"></span>6/6名 提出（100%）</span></div><div class="card-h" style="margin-bottom:10px"><span class="sub">対象週 6/16（月）〜 6/22（日）　各人のトグルで反映/除外</span></div>`;
+  const hGrid=el("div","grid g3");
+  SHIFT_PEOPLE.forEach(p=>{
+    const row=el("div");row.style.cssText="display:flex;align-items:center;gap:12px;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:#fbfcfb;";
+    row.innerHTML=`<span class="av-mini" style="background:${avColor(p.name)}">${initial(p.name)}</span><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">${p.name}</div><div style="font-size:11px;color:var(--muted)">${p.hope}</div></div>`;
+    const tg=toggle(p.on,(on)=>{p.on=on;});
+    row.appendChild(tg);
+    hGrid.appendChild(row);
+  });
+  hCard.appendChild(hGrid);
+  const genBtn=el("button","btn btn-amber mt16");
+  genBtn.innerHTML=`${I.ai}<span>AIでシフト案を作成</span>`;
+  hCard.appendChild(genBtn);
+  v.appendChild(hCard);
+
+  // result container
+  const res=el("div");res.id="shiftRes";res.style.marginTop="22px";
+  v.appendChild(res);
+
+  function renderResult(){
+    res.innerHTML="";
+    if(!shiftGenerated){
+      const empty=el("div","card");
+      empty.innerHTML=`<div class="empty-state"><div class="es-ic">${I.shift}</div><div style="font-size:14.5px;font-weight:700;color:var(--ink)">まだシフト案がありません</div><div style="font-size:12.5px;margin-top:7px">上の「AIでシフト案を作成」を押すと、希望をもとに原案を1分で生成します。</div></div>`;
+      res.appendChild(empty);
+      return;
+    }
+    const grid=el("div","grid g23");
+    // table
+    const tCard=el("div","card");
+    tCard.innerHTML=`<div class="card-h"><h3>自動生成シフト表</h3>${shiftApproved?'<span class="chip green"><span class="d"></span>確定（社長承認済）</span>':'<span class="chip amber"><span class="d"></span>案・未確定</span>'}</div>`;
+    const tbl=el("table","tbl shiftgrid");
+    tbl.innerHTML="<thead><tr><th>従業員</th><th>月</th><th>火</th><th>水</th><th>木</th><th>金</th><th>土</th><th>日</th></tr></thead>";
+    const tb=el("tbody");
+    let shown=0;
+    SHIFT_TABLE.forEach(r=>{
+      if(!SHIFT_PEOPLE.find(p=>p.name===r[0]&&p.on))return;
+      shown++;
+      const tr=el("tr","row");
+      tr.appendChild(el("td",null,r[0]));
+      for(let i=1;i<r.length;i++){
+        const val=r[i];
+        let cls="scell";
+        if(val==="休")cls+=" off";
+        else if(val.startsWith("7-"))cls+=" early";
+        tr.appendChild(el("td",null,`<span class="${cls}">${val}</span>`));
+      }
+      tb.appendChild(tr);
+    });
+    if(!shown){
+      const tr=el("tr");tr.appendChild(el("td",null,'<div style="padding:18px;color:var(--muted);font-size:12.5px">反映対象の従業員がいません。上のトグルで誰かをONにしてください。</div>'));
+      tr.firstChild.colSpan=8;tb.appendChild(tr);
+    }
+    tbl.appendChild(tb);
+    const sc=el("div","tbl-scroll");sc.appendChild(tbl);tCard.appendChild(sc);
+    grid.appendChild(tCard);
+
+    // indicators
+    const iCard=el("div","card");
+    iCard.innerHTML=`<div class="card-h"><h3>充足 / コスト指標</h3></div>`;
+    const mk=(lbl,val)=>`<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid var(--line-soft)"><span style="font-size:12.5px;color:var(--muted)">${lbl}</span><span style="text-align:right">${val}</span></div>`;
+    const ind=el("div");
+    ind.innerHTML=`
+      ${mk("必要人数 充足",'月✅ 火✅ <span class="chip warn" style="font-size:10px;padding:1px 7px">水⚠</span> 木✅ 金✅ 土✅')}
+      ${mk("希望反映率",'<span class="num" style="font-size:17px;color:var(--green)">94%</span>')}
+      ${mk("週あたり人件費（概算）",'<span class="num" style="font-size:17px">¥412,000</span>')}
+      ${mk("法定休憩・連続勤務",'<span class="chip green" style="font-size:10px;padding:1px 8px">違反 0件</span>')}`;
+    ind.lastElementChild.style.borderBottom="none";
+    iCard.appendChild(ind);
+    grid.appendChild(iCard);
+    res.appendChild(grid);
+
+    // alert + approve
+    const aWrap=el("div");aWrap.style.marginTop="18px";
+    if(!shiftApproved){
+      const al=el("div","alert");
+      al.innerHTML=`<span class="ai">${I.bell}</span><div style="flex:1;min-width:200px"><b>水曜午前 配送1名不足</b>　候補：山口さんを9時入りに変更で解消（人件費 +¥0）。</div>`;
+      const apBtn=el("button","btn btn-amber");apBtn.textContent="この案を採用（社長承認）";
+      apBtn.onclick=()=>{shiftApproved=true;renderResult();toast("シフトを確定しました（社長承認済）");};
+      al.appendChild(apBtn);
+      aWrap.appendChild(al);
+    } else {
+      const al=el("div","alert ok");
+      al.innerHTML=`<span class="ai">${I.check}</span><div><b>このシフトを確定しました（社長承認済）。</b> 各人へ通知を配信準備しました。実際の確定連絡は社長操作で送信されます。</div>`;
+      aWrap.appendChild(al);
+    }
+    res.appendChild(aWrap);
+    res.appendChild(el("div","note box","自動作成した案は必ず責任者（社長＝雇用主）が承認してから確定。労基法の確認と確定は雇用主が行います。異常値（連続勤務・休憩割れ）は自動で警告します。デモ用サンプル。"));
+  }
+
+  genBtn.onclick=()=>{
+    shiftGenerated=true;shiftApproved=false;
+    renderResult();
+    res.scrollIntoView({behavior:"smooth",block:"nearest"});
+    toast("シフト案を作成しました");
+  };
+  renderResult();
+
+  v.appendChild(footer());
+  return v;
+}
+
+/* ====================================================================
+   VIEW: SHUSHI
+==================================================================== */
+let ledger=[
+  {date:"6/13",type:"売上",who:"サンプル総合病院",amt:54000,tax:"8%",by:"佐藤",state:"未確定"},
+  {date:"6/13",type:"経費",who:"大分青果市場",amt:86400,tax:"8%",by:"鈴木",state:"未確定"},
+  {date:"6/12",type:"売上",who:"サンプル大学病院",amt:129600,tax:"8%",by:"佐藤",state:"確定"},
+  {date:"6/12",type:"経費",who:"ガソリン",amt:9800,tax:"10%",by:"田中",state:"未確定"},
+  {date:"6/11",type:"売上",who:"みどり園",amt:48000,tax:"8%",by:"佐藤",state:"確定"}
+];
+
+function grossRate(){return ((STATE.sales-STATE.expenses)/STATE.sales*100).toFixed(1);}
+
+function viewShushi(){
+  const v=el("div","view");
+  v.innerHTML=`<div class="page-head"><h1>収支入力 / 月次売上</h1><p>現場が売上・経費をその場で入力、社長は確定と締めだけ。数字の二重入力が消えて月次がリアルタイムに。</p></div>`;
+
+  // KPI
+  const kRow=el("div","grid g3");
+  const salesKpi=kpiCard({lbl:"今月の売上",val:yen(STATE.sales),delta:"▲ 前月 ¥3,398,000",icon:I.money});salesKpi.id="kSales";
+  const expKpi=kpiCard({lbl:"今月の経費",val:yen(STATE.expenses),icon:I.money,tone:"amber"});expKpi.id="kExp";
+  const grossKpi=kpiCard({lbl:"粗利（粗利率）",val:yen(STATE.sales-STATE.expenses),delta:"粗利率 "+grossRate()+"%",icon:I.money,tone:"blue"});grossKpi.id="kGross";
+  kRow.append(salesKpi,expKpi,grossKpi);
+  v.appendChild(kRow);
+
+  // charts
+  const cRow=el("div","grid g2 mt24");
+  // line chart svg
+  const lCard=el("div","card");
+  lCard.innerHTML=`<div class="card-h"><h3>月次売上推移</h3><span class="sub">直近6か月（百万円）</span></div>`;
+  const pts=[2.9,3.1,3.0,3.3,3.4,3.82];const labels=["1月","2月","3月","4月","5月","6月"];
+  const W=460,H=180,pad=32;const cmax=4.2,cmin=2.6;
+  const x=i=>pad+i*((W-pad*2)/(pts.length-1));
+  const y=val=>H-pad-((val-cmin)/(cmax-cmin))*(H-pad*2);
+  let path="";
+  pts.forEach((p,i)=>{path+=(i?"L":"M")+x(i).toFixed(1)+" "+y(p).toFixed(1)+" ";});
+  const area=`M${x(0).toFixed(1)} ${(H-pad).toFixed(1)} `+pts.map((p,i)=>`L${x(i).toFixed(1)} ${y(p).toFixed(1)}`).join(" ")+` L${x(pts.length-1).toFixed(1)} ${(H-pad).toFixed(1)} Z`;
+  let dots="",xlab="",grid="";
+  for(let gv=3;gv<=4;gv++){grid+=`<line x1="${pad}" y1="${y(gv).toFixed(1)}" x2="${W-pad}" y2="${y(gv).toFixed(1)}" stroke="#eef1ed" stroke-width="1"/>`;}
+  pts.forEach((p,i)=>{dots+=`<circle cx="${x(i).toFixed(1)}" cy="${y(p).toFixed(1)}" r="4" fill="#fff" stroke="#1f6b3a" stroke-width="2.5"/>`;xlab+=`<text x="${x(i).toFixed(1)}" y="${H-9}" text-anchor="middle" font-size="10" fill="#6c757d">${labels[i]}</text>`;});
+  lCard.innerHTML+=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto"><defs><linearGradient id="lg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1f6b3a" stop-opacity=".16"/><stop offset="1" stop-color="#1f6b3a" stop-opacity="0"/></linearGradient></defs>${grid}<path d="${area}" fill="url(#lg)"/><path d="${path}" fill="none" stroke="#1f6b3a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>${dots}${xlab}<text x="${x(5).toFixed(1)}" y="${(y(3.82)-12).toFixed(1)}" text-anchor="middle" font-size="11" font-family="Oswald" font-weight="700" fill="#1f6b3a">3.82</text></svg>`;
+  cRow.appendChild(lCard);
+
+  // expense bars
+  const eCard=el("div","card");
+  eCard.innerHTML=`<div class="card-h"><h3>今月の経費内訳</h3><span class="sub">合計 ${yen(STATE.expenses)}</span></div>`;
+  const exps=[["仕入（青果）",1240000,"#1f6b3a"],["人件費",620000,"#2c8f4d"],["配送",210000,"#5cae74"],["AI実費（顧客名義）",18000,"#c98a2b"],["その他",122000,"#c8d0c8"]];
+  const emax=1240000;
+  const eb=el("div");
+  exps.forEach(([l,a,c])=>{
+    const row=el("div","bar-row");
+    row.innerHTML=`<span style="font-size:11.5px;color:var(--ink-soft)">${l}</span><div class="bar-track"><div class="bar-fill" style="width:0;background:${c}"></div></div><span class="num" style="font-size:11.5px;text-align:right;color:var(--ink-soft)">${(a/10000).toFixed(0)}万</span>`;
+    eb.appendChild(row);
+    requestAnimationFrame(()=>{row.querySelector(".bar-fill").style.width=(a/emax*100)+"%";});
+  });
+  eCard.appendChild(eb);
+  cRow.appendChild(eCard);
+  v.appendChild(cRow);
+
+  // input form + table
+  const bRow=el("div","grid g32 mt24");
+  const fCard=el("div","card");
+  fCard.innerHTML=`<div class="card-h"><h3>収支入力（従業員モード）</h3></div>
+    <div class="field"><label>日付</label><input id="sDate" value="6/14"></div>
+    <div class="form-row">
+      <div class="field"><label>区分</label><select id="sType"><option>売上</option><option>経費</option></select></div>
+      <div class="field"><label>税率</label><select id="sTax"><option>8%軽減</option><option>10%</option></select></div>
+    </div>
+    <div class="field"><label>取引先</label><input id="sWho" placeholder="例：サンプル総合病院"></div>
+    <div class="field"><label>金額（円）</label><input id="sAmt" type="number" inputmode="numeric" placeholder="例：54000"></div>
+    <div class="field"><label>メモ</label><input id="sMemo" placeholder="例：野菜定期便"></div>
+    <button class="btn btn-amber" id="sSubmit" style="width:100%">入力する（社内共有）</button>
+    <div class="note">従業員は入力まで。確定・締め・送信は社長のみ。</div>`;
+  bRow.appendChild(fCard);
+
+  const lCard2=el("div","card");
+  lCard2.innerHTML=`<div class="card-h"><h3>直近の入力明細</h3><span class="sub" id="ledgerCount">${ledger.length}件</span></div>`;
+  const ledgerCount=$("#ledgerCount",lCard2);
+  const lt=el("table","tbl");
+  lt.innerHTML="<thead><tr><th>日付</th><th>区分</th><th>取引先</th><th>金額</th><th>税</th><th>入力者</th><th>状態</th></tr></thead>";
+  const ltb=el("tbody");ltb.id="ledgerBody";
+  lt.appendChild(ltb);
+  const lsc=el("div","tbl-scroll");lsc.appendChild(lt);lCard2.appendChild(lsc);
+  lCard2.appendChild(el("div","note","従業員に見せるのは月次売上の合計まで。個別の利益率・原価は管理者のみ。デモ用サンプル。"));
+  bRow.appendChild(lCard2);
+  v.appendChild(bRow);
+
+  function renderLedger(){
+    ltb.innerHTML="";
+    ledger.forEach(r=>{
+      const tr=el("tr","row");
+      const typeChip=r.type==="売上"?'<span class="chip green" style="font-size:10px;padding:1px 8px">売上</span>':'<span class="chip amber" style="font-size:10px;padding:1px 8px">経費</span>';
+      const stCh=r.state==="確定"?'<span class="chip green" style="font-size:10px;padding:1px 8px">✓ 社長確定</span>':'<span class="chip gray" style="font-size:10px;padding:1px 8px">未確定</span>';
+      tr.innerHTML=`<td class="num">${r.date}</td><td>${typeChip}</td><td style="font-size:12px">${r.who}</td><td class="num">${yen(r.amt)}</td><td style="font-size:11px;color:var(--muted)">${r.tax}</td><td style="font-size:12px">${r.by}</td><td>${stCh}</td>`;
+      ltb.appendChild(tr);
+    });
+    ledgerCount.textContent=ledger.length+"件";
+  }
+  renderLedger();
+
+  fCard.querySelector("#sSubmit").onclick=()=>{
+    const amt=parseInt(fCard.querySelector("#sAmt").value,10);
+    const who=fCard.querySelector("#sWho").value.trim();
+    if(!amt||amt<=0){toast("金額を入力してください");return;}
+    if(!who){toast("取引先を入力してください");return;}
+    const type=fCard.querySelector("#sType").value;
+    const rec={date:fCard.querySelector("#sDate").value||"6/14",type,who,amt,tax:fCard.querySelector("#sTax").value==="10%"?"10%":"8%",by:"社長",state:"未確定"};
+    ledger.unshift(rec);
+    if(type==="売上")STATE.sales+=amt; else STATE.expenses+=amt;
+    $("#kSales .val").textContent=yen(STATE.sales);
+    $("#kExp .val").textContent=yen(STATE.expenses);
+    $("#kGross .val").textContent=yen(STATE.sales-STATE.expenses);
+    $("#kGross .delta").textContent="粗利率 "+grossRate()+"%";
+    renderLedger();
+    fCard.querySelector("#sAmt").value="";fCard.querySelector("#sWho").value="";fCard.querySelector("#sMemo").value="";
+    toast("明細を入力しました（未確定）");
+  };
+
+  v.appendChild(footer());
+  return v;
+}
+
+/* ====================================================================
+   VIEW: HOJOKIN
+==================================================================== */
+const HOJO=[
+  {id:"it", name:"IT導入補助金2026（通常枠）", match:95, amt:"最大450万 / 補助率1/2", due:"7/31", left:47, reason:"定款：情報処理サービス／ソフトウェア開発に合致。自社のSaaS開発に使えます。", warn:false, canDraft:true},
+  {id:"mono", name:"ものづくり補助金（デジタル枠）", match:78, amt:"最大1,250万", due:"8/20", left:67, reason:"定款：ヘルスケア機器／システムに合致。", warn:false, canDraft:false},
+  {id:"jizo", name:"小規模事業者持続化補助金", match:70, amt:"最大200万", due:"6/30", left:16, reason:"販路開拓＝営業資料／HP制作費が対象。", warn:true, canDraft:true}
+];
+let hojoTarget="it";
+
+function viewHojokin(){
+  const v=el("div","view");
+  v.innerHTML=`<div class="page-head"><h1>補助金斡旋ツール</h1><p>公募が出るたびAIが定款40項目と照合し、使える補助金だけを抽出。事業計画書のたたき台まで用意します。</p></div>`;
+
+  const banner=el("div","card");
+  banner.style.cssText="background:linear-gradient(120deg,#123f22,#1f6b3a 80%);color:#eaf3ec;border:none;display:flex;align-items:center;gap:18px;flex-wrap:wrap;box-shadow:var(--shadow-md);";
+  banner.innerHTML=`<div style="width:44px;height:44px;color:#cfe7d5;flex:0 0 44px">${I.hojo}</div><div style="flex:1;min-width:200px"><div style="font-size:14px;font-weight:700;color:#fff;line-height:1.6">自社の定款40項目（AI/IT/教育/ヘルスケア/EC/コンサル等）に当てはまる補助金を、公募が出るたび自動で抽出してお知らせします。</div><div style="font-size:12px;color:#bcdac6;margin-top:5px">本日の新着 2件</div></div><span class="chip" style="background:#fff;color:var(--warn)"><span class="d"></span>NEW 2</span>`;
+  v.appendChild(banner);
+
+  // tabs
+  const tabs=el("div","tabs mt24");
+  [["list","該当一覧"],["cal","締切カレンダー"],["share","社内共有"],["doc","書類作成支援"]].forEach(([id,lbl])=>{
+    const b=el("button","tab"+(STATE.hojoTab===id?" active":""),lbl);
+    b.onclick=()=>{STATE.hojoTab=id;render();};
+    tabs.appendChild(b);
+  });
+  v.appendChild(tabs);
+
+  const body=el("div");body.id="hojoBody";
+  v.appendChild(body);
+
+  function ring(pct){
+    const r=18,c=2*Math.PI*r,off=c*(1-pct/100);
+    const col=pct>=90?"#1f6b3a":pct>=75?"#2c8f4d":"#c98a2b";
+    return `<svg width="48" height="48" class="ring"><circle cx="24" cy="24" r="${r}" stroke="#eef1ed" stroke-width="5"/><circle cx="24" cy="24" r="${r}" stroke="${col}" stroke-width="5" stroke-dasharray="${c}" stroke-dashoffset="${off}"/><text x="24" y="24" transform="rotate(90 24 24)" text-anchor="middle" dominant-baseline="central" style="font-family:Oswald;font-weight:700;font-size:11px;fill:#1f262c">${pct}</text></svg>`;
+  }
+
+  function renderBody(){
+    body.innerHTML="";
+    if(STATE.hojoTab==="list"){
+      const grid=el("div","grid g3");
+      HOJO.forEach(h=>{
+        const c=el("div","card");
+        c.innerHTML=`
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+            <div style="flex:1"><div style="font-size:13.5px;font-weight:700;line-height:1.45">${h.name}</div></div>
+            ${ring(h.match)}
+          </div>
+          <div style="margin-top:12px;font-size:12px;color:var(--muted)">補助額</div>
+          <div class="num" style="font-size:15px;color:var(--ink)">${h.amt}</div>
+          <div style="margin:12px 0;display:flex;align-items:center;gap:8px">
+            <span class="chip ${h.warn?"warn":"gray"}" style="font-size:11px"><span class="d"></span>締切 ${h.due}（あと${h.left}日）</span>
+          </div>
+          <div style="font-size:11.5px;color:var(--ink-soft);line-height:1.55;background:var(--green-soft2);border-radius:10px;padding:10px 11px">${h.reason}</div>`;
+        const btn=el("button",(h.canDraft?"btn btn-amber btn-sm":"btn btn-green btn-sm")+" mt16",h.canDraft?"書類作成を開始":"詳細を見る");
+        btn.style.width="100%";
+        btn.onclick=()=>{
+          if(h.canDraft){hojoTarget=h.id;STATE.hojoTab="doc";render();const hb=$("#hojoBody");if(hb)hb.scrollIntoView({behavior:"smooth",block:"nearest"});}
+          else toast("詳細ページは今後実装です");
+        };
+        c.appendChild(btn);
+        grid.appendChild(c);
+      });
+      body.appendChild(grid);
+      body.appendChild(el("div","note box","補助金は「確実に給付」を断定しません。該当可能性のお知らせと書類のたたき台までです。申請・提出は社長本人。景表法／各公募要領に沿って表現を調整（Lex検査済）。デモ用サンプル。"));
+    }
+    else if(STATE.hojoTab==="cal"){
+      const c=el("div","card");
+      c.innerHTML=`<div class="card-h"><h3>締切タイムライン</h3><span class="sub">迫っている順</span></div>`;
+      const tl=el("div","timeline");
+      [["6/30","小規模事業者持続化補助金","あと16日・要注意",true],["7/31","IT導入補助金2026","あと47日",false],["8/20","ものづくり補助金（デジタル枠）","あと67日",false]].forEach(([d,n,sub,w])=>{
+        const it=el("div","tl-item"+(w?" warn":""));
+        it.innerHTML=`<div class="tl-date">${d}</div><div style="font-size:13px;font-weight:700;margin-top:2px">${n}</div><div class="tl-t">${w?'<span style="color:var(--amber-deep);font-weight:700">'+sub+'</span>':sub}</div>`;
+        tl.appendChild(it);
+      });
+      c.appendChild(tl);
+      body.appendChild(c);
+    }
+    else if(STATE.hojoTab==="share"){
+      const c=el("div","card");
+      c.innerHTML=`<div class="card-h"><h3>社内共有</h3><span class="sub">担当割り当てと進捗（デモ）</span></div>`;
+      const ul=el("div");
+      const data=[["IT導入補助金2026","社長＋AI事務","事業計画書 下書き済","green"],["持続化補助金","社長","営業資料費を集計中","amber"],["ものづくり補助金","検討中","要件を精査中","gray"]];
+      data.forEach(([n,who,st,tone],idx)=>{
+        const row=el("div");row.style.cssText="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--line-soft);";
+        if(idx===data.length-1)row.style.borderBottom="none";
+        row.innerHTML=`<div style="flex:1"><div style="font-size:13px;font-weight:700">${n}</div><div style="font-size:11.5px;color:var(--muted)">担当：${who}</div></div><span class="chip ${tone}" style="font-size:11px"><span class="d"></span>${st}</span>`;
+        ul.appendChild(row);
+      });
+      c.appendChild(ul);
+      c.appendChild(el("div","note","社内での進捗共有のみ。申請・提出は社長本人が行います。"));
+      body.appendChild(c);
+    }
+    else if(STATE.hojoTab==="doc"){
+      const h=HOJO.find(x=>x.id===hojoTarget)||HOJO[0];
+      const c=el("div","card");
+      c.innerHTML=`<div class="card-h"><h3>書類作成支援</h3><span class="chip green"><span class="d"></span>対象：${h.name}</span></div>`;
+      const checks=[
+        ["GビズIDプライム（取得済）",true],
+        ["事業計画書（AIが下書き生成済・要社長加筆）",true],
+        ["見積書（AI事務がドラフト中）",false],
+        ["労務関連書類",false]
+      ];
+      const cl=el("div");
+      checks.forEach(([t,on],idx)=>{
+        const row=el("div");row.style.cssText="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line-soft);font-size:13px;";
+        if(idx===checks.length-1)row.style.borderBottom="none";
+        row.innerHTML=`${on?'<span class="cbx on">'+I.check+'</span>':'<span class="cbx"></span>'}<span style="${on?'':'color:var(--muted)'}">${t}</span>`;
+        cl.appendChild(row);
+      });
+      c.appendChild(cl);
+      const draftBtn=el("button","btn btn-amber mt16");
+      draftBtn.innerHTML=`${I.ai}<span>事業計画書のたたき台を作る</span>`;
+      c.appendChild(draftBtn);
+      const draftOut=el("div");draftOut.id="draftOut";draftOut.style.marginTop="16px";
+      c.appendChild(draftOut);
+      draftBtn.onclick=()=>{
+        draftOut.innerHTML="";
+        const box=el("div");box.style.cssText="background:var(--green-soft2);border:1px solid var(--line);border-radius:13px;padding:17px;font-size:12.5px;line-height:1.75;animation:fadeUp .34s var(--ease);";
+        box.innerHTML=`<div style="font-weight:700;margin-bottom:9px;color:var(--green)">【AI下書き】${h.name} 事業計画書（たたき台）</div>
+          <b>1. 事業概要</b><br>大分市を拠点に、医療・介護施設向けの業務自動化サービス（シフト最適化・日報集約・収支管理）を提供。本補助金で開発・販路開拓を加速する。<br><br>
+          <b>2. 課題</b><br>現場の手作業（シフト調整・日報・入金照合）が属人化し、月◯時間を要している。<br><br>
+          <b>3. 解決策と導入効果（見込み）</b><br>本ツール導入により対象業務の所要時間を削減（数値は導入後に実測）。<br><br>
+          <b>4. 資金計画</b><br>ソフトウェア開発費・クラウド利用料・導入支援費を対象経費として計上予定。<br><br>
+          <span style="color:var(--warn);font-weight:700">※これはAIのたたき台です。数値・固有名は社長が一次資料で加筆・修正のうえ、申請・提出は社長本人が行ってください。</span>`;
+        draftOut.appendChild(box);
+        toast("事業計画書のたたき台を作成しました");
+      };
+      body.appendChild(c);
+    }
+  }
+  renderBody();
+
+  v.appendChild(footer());
+  return v;
+}
+
+/* ====================================================================
+   VIEW: KIOKU (AI memory note)
+==================================================================== */
+let memos=[
+  {t:"会社：株式会社サンプル市場（大分市）／インボイス登録番号は一次資料で検証済の値のみ使用。", when:"5/28に記憶"},
+  {t:"主要取引先：サンプル総合病院・サンプル大学病院・みどり園（野菜定期便）／支払サイト＝末締め翌月末。", when:"5/30に記憶"},
+  {t:"社長の好み：結論は3行／専門用語は避ける／お金と送信は必ず本人確認。", when:"6/1に記憶"},
+  {t:"継続案件：シフトSaaS・補助金IT導入・サンプル社HP。", when:"6/5に記憶"},
+  {t:"NG：パスワード代理入力しない／AIは下書きまで。", when:"6/5に記憶"}
+];
+let proposals=[
+  {t:"サンプル総合病院、先月は6/3に入金。今月はまだ。明後日が支払期限です→督促文の下書きを用意しました（承認で送信準備）。"},
+  {t:"持続化補助金の締切が6/30。前回「販路開拓で使いたい」と仰っていたので、対象になりそうな営業資料費をまとめました。"},
+  {t:"田中さんが3日連続で残業気味。来週シフトに余裕を持たせる案を作りますか？"},
+  {t:"6月の請求書5件、内容は揃っています。最終承認だけお願いします。"}
+];
+let chatLog=[
+  {who:"me",t:"今月ピンチな支払いある？"},
+  {who:"ai",t:"直近で大きいのは<b>青果市場への仕入 ¥1,240,000（6/末）</b>。現預金見込みでは問題ありません。ただ未入金2件 ¥162,000を回収すると更に安全です。督促文は準備済みです。"}
+];
+const AI_REPLIES=[
+  "承知しました。要点を3行でまとめます。①数字は確認済みの範囲でお答え ②不確かな点は推測せず印を付けます ③送信・送金は社長の確認後です。",
+  "下書きを用意できます。送信は行わず、社長の承認待ちの状態にします。よろしいですか？",
+  "その件は記憶ノートに沿ってお答えします。お金が絡む部分は確定前に必ず本人確認します。",
+  "関連する未対応は2件あります。督促文の下書きと、補助金の締切（6/30）です。どちらから進めますか？"
+];
+let replyIdx=0;
+
+function viewKioku(){
+  const v=el("div","view");
+  v.innerHTML=`<div class="page-head"><h1>専属AI 記憶ノート</h1><p>あなたの会社を覚えた専属AIが、聞く前に「次やること」を先回りで提案。督促・補助金・シフトの取りこぼしを防ぎます。</p></div>`;
+
+  const grid=el("div","grid g3");
+
+  // memo column
+  const mCard=el("div","card");
+  mCard.innerHTML=`<div class="card-h"><h3>覚えていること</h3><span class="chip green"><span class="d"></span>社長が編集可</span></div>`;
+  const mList=el("div");mList.id="memoList";
+  mCard.appendChild(mList);
+  mCard.appendChild(el("div","note","記憶はこの会社の中だけ。要配慮情報はマスキングして外部AIに送りません。"));
+  grid.appendChild(mCard);
+
+  // proposals column
+  const pCard=el("div","card");
+  pCard.innerHTML=`<div class="card-h"><h3>先回り提案（今朝）</h3><span class="chip amber"><span class="d"></span>AIから</span></div>`;
+  const pList=el("div");pList.id="propList";
+  pCard.appendChild(pList);
+  grid.appendChild(pCard);
+
+  // chat column
+  const cCard=el("div","card");
+  cCard.innerHTML=`<div class="card-h"><h3>チャット</h3><span class="sub">記憶を踏まえて回答</span></div>`;
+  const chat=el("div","chat");
+  const log=el("div","chat-log");log.id="chatLog";
+  const inWrap=el("div","chat-in");
+  const inp=el("input");inp.placeholder="例：来週の段取りは？";inp.setAttribute("aria-label","チャット入力");
+  const send=el("button","btn btn-amber btn-sm","送信");
+  inWrap.append(inp,send);
+  chat.append(log,inWrap);
+  cCard.appendChild(chat);
+  grid.appendChild(cCard);
+
+  v.appendChild(grid);
+  v.appendChild(el("div","note box","送信・送金は社長確認。AIは下書き・案・提案までです（デモ）。"));
+
+  function renderMemos(){
+    mList.innerHTML="";
+    memos.forEach((m,i)=>{
+      const c=el("div","memo");
+      c.innerHTML=`<div class="mt">${m.t}</div><div class="mf"><span class="when">${m.when}</span><span class="acts"><button class="txtbtn" data-edit="${i}">編集</button><button class="txtbtn del" data-del="${i}">削除</button></span></div>`;
+      mList.appendChild(c);
+    });
+    $$("[data-del]",mList).forEach(b=>b.onclick=()=>{memos.splice(+b.dataset.del,1);renderMemos();toast("記憶を削除しました");});
+    $$("[data-edit]",mList).forEach(b=>b.onclick=()=>{const i=+b.dataset.edit;const nv=prompt("記憶を編集",memos[i].t);if(nv!=null&&nv.trim()){memos[i].t=nv.trim();memos[i].when="たった今 更新";renderMemos();toast("記憶を更新しました");}});
+  }
+  function renderProps(){
+    pList.innerHTML="";
+    if(!proposals.length){pList.innerHTML='<div style="font-size:12.5px;color:var(--muted);padding:16px 4px;text-align:center">先回り提案はすべて処理済みです。</div>';return;}
+    proposals.forEach((p)=>{
+      const c=el("div","prop");
+      c.innerHTML=`<div class="pt">${p.t}</div>`;
+      const pa=el("div","pa");
+      const ok=el("button","btn btn-amber btn-sm","採用");
+      const later=el("button","btn btn-ghost btn-sm","あとで");
+      const no=el("button","btn btn-ghost btn-sm","却下");
+      const removeWith=(msg)=>{c.style.opacity="0";c.style.transform="translateX(22px)";setTimeout(()=>{const ix=proposals.indexOf(p);if(ix>-1)proposals.splice(ix,1);renderProps();},250);toast(msg);};
+      ok.onclick=()=>removeWith("採用しました（下書きを準備）");
+      later.onclick=()=>removeWith("「あとで」に移しました");
+      no.onclick=()=>removeWith("却下しました");
+      pa.append(ok,later,no);c.appendChild(pa);
+      c.style.transition="opacity .25s var(--ease),transform .25s var(--ease)";
+      pList.appendChild(c);
+    });
+  }
+  function renderChat(){
+    log.innerHTML="";
+    chatLog.forEach(m=>{
+      const b=el("div","bub "+m.who);b.innerHTML=m.t;
+      log.appendChild(b);
+    });
+    log.scrollTop=log.scrollHeight;
+  }
+  renderMemos();renderProps();renderChat();
+
+  let waiting=false;
+  const doSend=()=>{
+    const t=inp.value.trim();if(!t||waiting)return;
+    chatLog.push({who:"me",t});inp.value="";renderChat();
+    waiting=true;
+    const typing=el("div","bub ai");typing.innerHTML='<span class="typing"><span></span><span></span><span></span></span>';
+    log.appendChild(typing);log.scrollTop=log.scrollHeight;
+    setTimeout(()=>{
+      typing.remove();
+      chatLog.push({who:"ai",t:AI_REPLIES[replyIdx%AI_REPLIES.length]});replyIdx++;renderChat();
+      waiting=false;
+    },650);
+  };
+  send.onclick=doSend;
+  inp.onkeydown=e=>{if(e.key==="Enter")doSend();};
+
+  v.appendChild(footer());
+  return v;
+}
+
+/* ====================================================================
+   VIEW: TSUCHI (notifications)
+==================================================================== */
+function viewTsuchi(){
+  const v=el("div","view");
+  v.innerHTML=`<div class="page-head"><h1>通知連携</h1><p>日報・入金・シフト・補助金の動きをSlack / LINE / メールへ自動でお知らせ。ただし送るのは「知らせ」だけ、お金と送信は本人だけ。</p></div>`;
+
+  // channels
+  const chCard=el("div","card");
+  chCard.innerHTML=`<div class="card-h"><h3>接続チャンネル</h3><span class="sub">トグルで接続のON/OFF</span></div>`;
+  const chGrid=el("div","grid g4");
+  const channels=[
+    {n:"Slack",sub:"#業務連絡",on:true},
+    {n:"LINE",sub:"社内グループ",on:true},
+    {n:"メール",sub:"代表アドレス",on:true},
+    {n:"スマホ通知",sub:"NTFY（任意）",on:false}
+  ];
+  channels.forEach(ch=>{
+    const card=el("div");card.style.cssText="border:1px solid var(--line);border-radius:13px;padding:15px;background:#fbfcfb;transition:.18s var(--ease);";
+    const head=el("div");head.style.cssText="display:flex;align-items:center;justify-content:space-between;gap:10px;";
+    head.innerHTML=`<div><div style="font-size:13.5px;font-weight:700">${ch.n}</div><div style="font-size:11px;color:var(--muted)">${ch.sub}</div></div>`;
+    const stat=el("div");stat.style.marginTop="11px";
+    const paint=(on)=>{stat.innerHTML=on?'<span class="chip green" style="font-size:10px;padding:1px 8px">接続済</span>':'<span class="chip gray" style="font-size:10px;padding:1px 8px">未接続</span>';};
+    const tg=toggle(ch.on,(on)=>paint(on));
+    head.appendChild(tg);
+    paint(ch.on);
+    card.append(head,stat);
+    chGrid.appendChild(card);
+  });
+  chCard.appendChild(chGrid);
+  const testBtn=el("button","btn btn-green mt16","テスト通知を送る");
+  testBtn.onclick=()=>toast("通知を送信しました（デモ）");
+  chCard.appendChild(testBtn);
+  v.appendChild(chCard);
+
+  // rules table
+  const rCard=el("div","card mt24");
+  rCard.innerHTML=`<div class="card-h"><h3>通知ルール</h3><span class="sub">トグルでON/OFF</span></div>`;
+  const rules=[
+    ["日報の未提出リマインド","本人LINE","18:00",true,"gray"],
+    ["未入金 / 督促の下書き完了","社長Slack＋LINE","即時",true,"amber"],
+    ["シフト希望の提出","社長Slack","即時",true,"gray"],
+    ["補助金の新着公募","社長メール＋Slack","公募検知時",true,"gray"],
+    ["月次締めリマインド","社長LINE","毎月1日 9:00",true,"gray"],
+    ["タスク期限 前日","担当者本人","前日 17:00",true,"gray"]
+  ];
+  const rt=el("table","tbl");
+  rt.innerHTML="<thead><tr><th>通知</th><th>宛先</th><th>タイミング</th><th>状態</th></tr></thead>";
+  const rtb=el("tbody");
+  rules.forEach(([n,to,when,on,tone])=>{
+    const tr=el("tr","row");
+    const nTd=el("td");nTd.style.fontWeight="500";nTd.innerHTML=tone==="amber"?n+' <span class="chip amber" style="font-size:9px;padding:0 7px">要承認系</span>':n;
+    tr.appendChild(nTd);
+    tr.appendChild(el("td",null,`<span style="font-size:12px;color:var(--muted)">${to}</span>`));
+    tr.appendChild(el("td","num",when));
+    const stTd=el("td");
+    const wrap=el("div");wrap.style.cssText="display:flex;align-items:center;gap:10px;";
+    const lbl=el("span","chip "+(on?"green":"gray"),on?"ON":"OFF");lbl.style.fontSize="10px";lbl.style.padding="1px 8px";
+    const tg=toggle(on,(vv)=>{lbl.textContent=vv?"ON":"OFF";lbl.className="chip "+(vv?"green":"gray");lbl.style.fontSize="10px";lbl.style.padding="1px 8px";});
+    wrap.append(tg,lbl);stTd.appendChild(wrap);
+    tr.appendChild(stTd);
+    rtb.appendChild(tr);
+  });
+  rt.appendChild(rtb);
+  const rsc=el("div","tbl-scroll");rsc.appendChild(rt);rCard.appendChild(rsc);
+  v.appendChild(rCard);
+
+  // log
+  const lCard=el("div","card mt24");
+  lCard.innerHTML=`<div class="card-h"><h3>配信ログ</h3><span class="sub">直近5件</span></div>`;
+  const feed=el("ul","feed");
+  [
+    ["14:20","田中さんがシフト希望を提出",["Slack"]],
+    ["13:05","入金照合完了／未入金1件・督促下書き準備",["Slack","LINE"]],
+    ["09:00","おはようございます。本日の段取り（タスク3／承認2）",["LINE"]],
+    ["本日","IT導入補助金2026 一次公募が開始",["メール","Slack"]],
+    ["昨日","鈴木さん 日報未提出リマインド",["本人LINE"]]
+  ].forEach(([time,t,ch])=>{
+    const li=el("li");
+    const chans=ch.map(c=>`<span class="chip green" style="font-size:10px;padding:1px 8px">${c}✓</span>`).join(" ");
+    li.innerHTML=`<div class="fic">${I.bell}</div><div style="flex:1;min-width:0"><div>${t}</div><div class="ft">${time}</div><div class="chan">${chans}</div></div>`;
+    feed.appendChild(li);
+  });
+  lCard.appendChild(feed);
+  v.appendChild(lCard);
+
+  v.appendChild(el("div","note box","通知＝お知らせと下書きの配信まで。実際の送信・送金・公開はどのルールも行いません（社長本人が操作）。デモ用サンプル。"));
+
+  v.appendChild(footer());
+  return v;
+}
+
+/* ====================================================================
+   FOOTER
+==================================================================== */
+function footer(){
+  const f=el("div","foot");
+  f.innerHTML=`AI社員パック「チーム版」 デモ ／ どの操作も <b>AIは下書き・案・通知まで。送信・支払い・確定は人</b> が行います。<br>シフト案は「案」であり、労基法の確認と確定は雇用主が行います。補助金は採択を保証しません（申請は本人）。<br><span style="color:var(--muted-soft)">効果は業務により異なり保証しません。表示はすべて架空のサンプルデータです。</span>`;
+  return f;
+}
+
+/* ====================================================================
+   ROUTER + INIT
+==================================================================== */
+const VIEWS={
+  dashboard:viewDashboard, tasks:viewTasks, nippo:viewNippo, shift:viewShift,
+  shushi:viewShushi, hojokin:viewHojokin, kioku:viewKioku, tsuchi:viewTsuchi
+};
+
+function buildNav(){
+  const nav=$("#nav");nav.innerHTML="";
+  nav.appendChild(el("div","nav-sec","メニュー"));
+  NAV.forEach(n=>{
+    const b=el("button","nav-item"+(STATE.view===n.id?" active":""));
+    b.innerHTML=`<span class="ic">${n.ic}</span>${n.label}${n.badge?`<span class="badge">${n.badge}</span>`:""}`;
+    b.onclick=()=>{go(n.id);};
+    nav.appendChild(b);
+  });
+}
+
+function go(id){
+  STATE.view=id;
+  document.body.classList.remove("nav-open");
+  buildNav();
+  render();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function render(){
+  const wrap=$("#viewwrap");
+  wrap.innerHTML="";
+  const builder=VIEWS[STATE.view]||viewDashboard;
+  const view=builder();
+  view.classList.add("active");
+  wrap.appendChild(view);
+  const nv=NAV.find(n=>n.id===STATE.view);
+  $("#tbTitle").textContent=nv?nv.label:"";
+  // wire any data-go (kpi cards / links)
+  $$("[data-go]",wrap).forEach(elm=>{
+    elm.style.cursor="pointer";
+    elm.addEventListener("click",e=>{e.stopPropagation();go(elm.dataset.go);});
+  });
+}
+
+// hamburger
+$("#hb").onclick=()=>document.body.classList.toggle("nav-open");
+$("#scrim").onclick=()=>document.body.classList.remove("nav-open");
+
+buildNav();
+render();
+</script>
+</body>
+</html>
