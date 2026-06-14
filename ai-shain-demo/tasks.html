@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1920, initial-scale=1">
+<title>タスク管理 | AI社員パック TEAM EDITION</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    width: 1920px; height: 1080px; overflow: hidden;
+    font-family: "Noto Sans JP", sans-serif;
+    color: #22272e; background: #eef1ee;
+    display: flex;
+  }
+
+  /* ===== サイドバー ===== */
+  .sidebar {
+    width: 260px; height: 1080px; flex: 0 0 260px;
+    background: #14512a; color: #9fc4aa;
+    display: flex; flex-direction: column;
+  }
+  .logo-wrap { padding: 26px 22px 18px 22px; }
+  .logo-title { font-weight: 900; font-size: 21px; color: #ffffff; letter-spacing: .5px; }
+  .logo-sub { font-family: "Oswald", sans-serif; font-size: 10.5px; color: #7fae8e; letter-spacing: 1.5px; margin-top: 5px; }
+  .nav { margin-top: 8px; flex: 1; }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 13px 22px; font-size: 15px; font-weight: 500;
+    color: #9fc4aa; position: relative; cursor: default;
+  }
+  .nav-item .ico { font-size: 17px; width: 22px; text-align: center; }
+  .nav-item.active {
+    color: #ffffff; background: rgba(255,255,255,.12); font-weight: 700;
+  }
+  .nav-item.active::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0;
+    width: 4px; background: #d98e1f;
+  }
+  .side-user {
+    display: flex; align-items: center; gap: 12px;
+    padding: 18px 22px; border-top: 1px solid rgba(255,255,255,.12);
+  }
+  .avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: #d98e1f; color: #14512a; font-weight: 900;
+    display: flex; align-items: center; justify-content: center; font-size: 16px;
+    flex: 0 0 40px;
+  }
+  .side-user .nm { font-size: 14px; color: #fff; font-weight: 700; }
+  .side-user .rl { font-size: 11px; color: #9fc4aa; margin-top: 2px; }
+
+  /* ===== メイン ===== */
+  .main { flex: 1; height: 1080px; display: flex; flex-direction: column; }
+
+  .topbar {
+    height: 78px; flex: 0 0 78px; background: #fff;
+    border-bottom: 1px solid #dde3dd;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 34px;
+  }
+  .page-title { font-size: 24px; font-weight: 700; color: #22272e; }
+  .topbar-right { display: flex; align-items: center; gap: 18px; }
+  .date-chip { font-size: 15px; font-weight: 700; color: #1f6b3a; }
+  .search {
+    display: flex; align-items: center; gap: 8px;
+    background: #eef1ee; border: 1px solid #dde3dd; border-radius: 10px;
+    padding: 9px 14px; width: 280px; color: #6b756d; font-size: 14px;
+  }
+  .bell {
+    width: 42px; height: 42px; border-radius: 10px; background: #eef1ee;
+    display: flex; align-items: center; justify-content: center; font-size: 19px;
+    position: relative;
+  }
+  .bell .dot {
+    position: absolute; top: 9px; right: 10px; width: 9px; height: 9px;
+    border-radius: 50%; background: #c0392b; border: 2px solid #fff;
+  }
+  .user-circle {
+    width: 42px; height: 42px; border-radius: 50%; background: #1f6b3a;
+    color: #fff; font-weight: 900; display: flex; align-items: center;
+    justify-content: center; font-size: 16px;
+  }
+
+  .content { flex: 1; padding: 24px 34px 18px 34px; overflow: hidden; }
+
+  /* フィルタ行 */
+  .filter-row {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 18px;
+  }
+  .filter-sel {
+    background: #fff; border: 1px solid #dde3dd; border-radius: 10px;
+    padding: 10px 15px; font-size: 14px; font-weight: 500; color: #3a423a;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .filter-sel .lab { color: #8a948a; font-weight: 500; }
+  .filter-sel .val { font-weight: 700; color: #22272e; }
+  .filter-sel .car { color: #8a948a; font-size: 11px; }
+  .filter-search {
+    background: #fff; border: 1px solid #dde3dd; border-radius: 10px;
+    padding: 10px 15px; font-size: 14px; color: #8a948a; width: 220px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .add-btn {
+    margin-left: auto; background: #1f6b3a; color: #fff; font-weight: 700;
+    font-size: 15px; border-radius: 10px; padding: 11px 22px;
+    display: flex; align-items: center; gap: 8px;
+    box-shadow: 0 2px 6px rgba(31,107,58,.25);
+  }
+  .add-note { font-size: 11px; color: #8a948a; margin-left: 10px; }
+
+  /* KPI小カード */
+  .kpi-row { display: flex; gap: 18px; margin-bottom: 20px; }
+  .kpi {
+    flex: 1; background: #fff; border: 1px solid #dde3dd; border-radius: 16px;
+    padding: 18px 22px; box-shadow: 0 2px 8px rgba(20,40,25,.04);
+    display: flex; align-items: center; gap: 18px;
+  }
+  .kpi .badge-ico {
+    width: 50px; height: 50px; border-radius: 12px; flex: 0 0 50px;
+    display: flex; align-items: center; justify-content: center; font-size: 22px;
+  }
+  .kpi.k-todo .badge-ico { background: #f1f3f1; color: #6b756d; }
+  .kpi.k-doing .badge-ico { background: #e3eef6; color: #2f6ea8; }
+  .kpi.k-done .badge-ico { background: #e4f2e9; color: #1f6b3a; }
+  .kpi .num { font-size: 36px; font-weight: 900; line-height: 1; color: #22272e; }
+  .kpi .lbl { font-size: 14px; color: #6b756d; margin-top: 6px; font-weight: 500; }
+
+  /* メイン2カラム */
+  .grid { display: flex; gap: 22px; }
+  .col-table { flex: 1.32; }
+  .col-kanban { flex: 1; }
+
+  .card {
+    background: #fff; border: 1px solid #dde3dd; border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(20,40,25,.04); padding: 20px 22px;
+  }
+  .card-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .card-title { font-size: 18px; font-weight: 700; }
+  .view-tabs { display: flex; background: #eef1ee; border-radius: 9px; padding: 3px; gap: 2px; }
+  .view-tab {
+    font-size: 13px; font-weight: 700; padding: 6px 16px; border-radius: 7px;
+    color: #6b756d;
+  }
+  .view-tab.active { background: #fff; color: #1f6b3a; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+
+  /* 一覧テーブル */
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    background: #2b2f36; color: #fff; font-size: 12.5px; font-weight: 700;
+    text-align: left; padding: 11px 14px;
+  }
+  thead th:first-child { border-radius: 8px 0 0 8px; }
+  thead th:last-child { border-radius: 0 8px 8px 0; }
+  tbody td {
+    border-bottom: 1px solid #dde3dd; padding: 13px 14px; font-size: 13.5px;
+    vertical-align: middle;
+  }
+  .t-name { font-weight: 700; color: #22272e; }
+  .t-num { color: #8a948a; font-weight: 700; margin-right: 6px; }
+  .t-owner { color: #3a423a; }
+  .t-owner .arrow { color: #d98e1f; font-weight: 700; }
+  .t-due { color: #3a423a; font-weight: 500; }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 20px;
+    white-space: nowrap;
+  }
+  .b-doing { background: #e3eef6; color: #2f6ea8; }
+  .b-wait  { background: #fbeed3; color: #a96f12; }
+  .b-done  { background: #e4f2e9; color: #1f6b3a; }
+  .b-todo  { background: #eef1ee; color: #6b756d; }
+
+  .prog-wrap { display: flex; align-items: center; gap: 9px; min-width: 110px; }
+  .prog-bar { flex: 1; height: 8px; background: #eef1ee; border-radius: 6px; overflow: hidden; }
+  .prog-fill { height: 100%; background: #1f6b3a; border-radius: 6px; }
+  .prog-fill.amber { background: #d98e1f; }
+  .prog-val { font-size: 12px; font-weight: 700; color: #3a423a; width: 32px; text-align: right; }
+  .dash { color: #c2cbc2; }
+
+  /* かんばん */
+  .kanban-cols { display: flex; gap: 11px; }
+  .kcol { flex: 1; background: #f3f5f3; border-radius: 12px; padding: 10px 9px; }
+  .kcol.wait { background: #fbf4e4; border: 1px solid #ecd6a6; }
+  .kcol-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 4px 6px 10px 6px; font-size: 12.5px; font-weight: 700; color: #4a544a;
+  }
+  .kcount {
+    font-family: "Oswald", sans-serif; font-size: 13px; font-weight: 700;
+    background: #fff; border-radius: 14px; padding: 1px 9px; color: #1f6b3a;
+  }
+  .kcol.wait .kcount { color: #a96f12; }
+  .kcard {
+    background: #fff; border: 1px solid #e4e9e4; border-radius: 9px;
+    padding: 9px 10px; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0,0,0,.04);
+  }
+  .kcol.wait .kcard { border-color: #ecd6a6; }
+  .kcard-title { font-size: 12px; font-weight: 700; color: #22272e; line-height: 1.4; margin-bottom: 8px; }
+  .kcard-meta { display: flex; align-items: center; gap: 7px; }
+  .kavatar {
+    width: 22px; height: 22px; border-radius: 50%; flex: 0 0 22px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 900; color: #fff; background: #1f6b3a;
+  }
+  .kdue { font-size: 11px; color: #8a948a; font-weight: 500; }
+  .pri-dot { width: 9px; height: 9px; border-radius: 50%; margin-left: auto; }
+  .pri-high { background: #c0392b; }
+  .pri-mid { background: #d98e1f; }
+  .pri-low { background: #c2cbc2; }
+
+  /* 注記バー */
+  .note-bar {
+    margin-top: 18px; background: #f3f7f3; border: 1px solid #d8e3d8;
+    border-left: 4px solid #1f6b3a; border-radius: 10px;
+    padding: 13px 18px; font-size: 13px; color: #3a4a3a; line-height: 1.6;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .note-bar .lock { font-size: 16px; }
+  .note-bar b { color: #1f6b3a; }
+
+  .demo-note {
+    position: fixed; right: 18px; bottom: 12px;
+    font-size: 11px; color: #aab3aa;
+  }
+</style>
+</head>
+<body>
+
+  <!-- ===== サイドバー ===== -->
+  <aside class="sidebar">
+    <div class="logo-wrap">
+      <div class="logo-title">AI社員パック</div>
+      <div class="logo-sub">TEAM EDITION / KIMOCHI ICHIBA</div>
+    </div>
+    <nav class="nav">
+      <div class="nav-item"><span class="ico">🏠</span><span>ダッシュボード</span></div>
+      <div class="nav-item active"><span class="ico">✅</span><span>タスク管理</span></div>
+      <div class="nav-item"><span class="ico">📝</span><span>日報</span></div>
+      <div class="nav-item"><span class="ico">🗓</span><span>シフト</span></div>
+      <div class="nav-item"><span class="ico">💰</span><span>収支・月次</span></div>
+      <div class="nav-item"><span class="ico">🎁</span><span>補助金斡旋</span></div>
+      <div class="nav-item"><span class="ico">🤖</span><span>専属AI</span></div>
+      <div class="nav-item"><span class="ico">🔔</span><span>通知設定</span></div>
+    </nav>
+    <div class="side-user">
+      <div class="avatar">社</div>
+      <div>
+        <div class="nm">社長</div>
+        <div class="rl">管理者</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== メイン ===== -->
+  <div class="main">
+    <div class="topbar">
+      <div class="page-title">タスク管理</div>
+      <div class="topbar-right">
+        <div class="date-chip">2026/6/14(土)</div>
+        <div class="search"><span>🔍</span><span>タスク・担当者を検索</span></div>
+        <div class="bell">🔔<span class="dot"></span></div>
+        <div class="user-circle">社</div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- フィルタ -->
+      <div class="filter-row">
+        <div class="filter-sel"><span class="lab">担当者</span><span class="val">全員</span><span class="car">▾</span></div>
+        <div class="filter-sel"><span class="lab">期限</span><span class="val">今週</span><span class="car">▾</span></div>
+        <div class="filter-sel"><span class="lab">状態</span><span class="val">すべて</span><span class="car">▾</span></div>
+        <div class="filter-search"><span>🔍</span><span>検索</span></div>
+        <div class="add-btn"><span>＋</span><span>タスク追加</span></div>
+        <span class="add-note">※社長/管理者のみ表示</span>
+      </div>
+
+      <!-- KPI小カード -->
+      <div class="kpi-row">
+        <div class="kpi k-todo">
+          <div class="badge-ico">⚪</div>
+          <div><div class="num">4</div><div class="lbl">未着手</div></div>
+        </div>
+        <div class="kpi k-doing">
+          <div class="badge-ico">🔵</div>
+          <div><div class="num">5</div><div class="lbl">進行中</div></div>
+        </div>
+        <div class="kpi k-done">
+          <div class="badge-ico">✅</div>
+          <div><div class="num">12</div><div class="lbl">今週完了</div></div>
+        </div>
+      </div>
+
+      <!-- メイン2カラム -->
+      <div class="grid">
+
+        <!-- 一覧テーブル -->
+        <div class="col-table">
+          <div class="card">
+            <div class="card-head">
+              <div class="card-title">タスク一覧</div>
+              <div class="view-tabs">
+                <div class="view-tab active">一覧</div>
+                <div class="view-tab">かんばん</div>
+              </div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:38%">タスク</th>
+                  <th style="width:22%">担当</th>
+                  <th style="width:11%">期限</th>
+                  <th style="width:13%">状態</th>
+                  <th style="width:16%">進捗</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="t-name"><span class="t-num">1</span>6月分請求書5件の発行</td>
+                  <td class="t-owner">AI事務部長</td>
+                  <td class="t-due">6/20</td>
+                  <td><span class="badge b-doing">🔵 進行中</span></td>
+                  <td><div class="prog-wrap"><div class="prog-bar"><div class="prog-fill" style="width:80%"></div></div><span class="prog-val">80%</span></div></td>
+                </tr>
+                <tr>
+                  <td class="t-name"><span class="t-num">2</span>未入金の督促文作成（テスト病院）</td>
+                  <td class="t-owner">AI事務部長<span class="arrow"> → </span>社長承認</td>
+                  <td class="t-due">6/15</td>
+                  <td><span class="badge b-wait">⏳ 社長待ち</span></td>
+                  <td><span class="dash">—</span></td>
+                </tr>
+                <tr>
+                  <td class="t-name"><span class="t-num">3</span>野菜定期便 6月納品リスト確定</td>
+                  <td class="t-owner">佐藤</td>
+                  <td class="t-due">6/16</td>
+                  <td><span class="badge b-doing">🔵 進行中</span></td>
+                  <td><div class="prog-wrap"><div class="prog-bar"><div class="prog-fill" style="width:50%"></div></div><span class="prog-val">50%</span></div></td>
+                </tr>
+                <tr>
+                  <td class="t-name"><span class="t-num">4</span>経費CSVの仕分け</td>
+                  <td class="t-owner">AI経理</td>
+                  <td class="t-due">6/14</td>
+                  <td><span class="badge b-done">✅ 完了</span></td>
+                  <td><div class="prog-wrap"><div class="prog-bar"><div class="prog-fill" style="width:100%"></div></div><span class="prog-val">100%</span></div></td>
+                </tr>
+                <tr>
+                  <td class="t-name"><span class="t-num">5</span>補助金IT導入の見積書ドラフト</td>
+                  <td class="t-owner">AI事務</td>
+                  <td class="t-due">6/18</td>
+                  <td><span class="badge b-todo">⚪ 未着手</span></td>
+                  <td><span class="dash">—</span></td>
+                </tr>
+                <tr>
+                  <td class="t-name"><span class="t-num">6</span>配送ルート見直し（大分市内）</td>
+                  <td class="t-owner">鈴木</td>
+                  <td class="t-due">6/22</td>
+                  <td><span class="badge b-doing">🔵 進行中</span></td>
+                  <td><div class="prog-wrap"><div class="prog-bar"><div class="prog-fill" style="width:30%"></div></div><span class="prog-val">30%</span></div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- かんばん -->
+        <div class="col-kanban">
+          <div class="card">
+            <div class="card-head">
+              <div class="card-title">かんばん（ステータス別）</div>
+            </div>
+            <div class="kanban-cols">
+
+              <!-- 未着手 -->
+              <div class="kcol">
+                <div class="kcol-head"><span>未着手</span><span class="kcount">4</span></div>
+                <div class="kcard">
+                  <div class="kcard-title">補助金IT導入の見積書ドラフト</div>
+                  <div class="kcard-meta"><div class="kavatar">事</div><span class="kdue">6/18</span><span class="pri-dot pri-mid"></span></div>
+                </div>
+                <div class="kcard">
+                  <div class="kcard-title">在庫棚卸し 月次集計</div>
+                  <div class="kcard-meta"><div class="kavatar" style="background:#3a423a">中</div><span class="kdue">6/19</span><span class="pri-dot pri-low"></span></div>
+                </div>
+                <div class="kcard">
+                  <div class="kcard-title">名刺データの入力</div>
+                  <div class="kcard-meta"><div class="kavatar" style="background:#a96f12">林</div><span class="kdue">6/21</span><span class="pri-dot pri-low"></span></div>
+                </div>
+              </div>
+
+              <!-- 進行中 -->
+              <div class="kcol">
+                <div class="kcol-head"><span>進行中</span><span class="kcount">5</span></div>
+                <div class="kcard">
+                  <div class="kcard-title">6月分請求書5件の発行</div>
+                  <div class="kcard-meta"><div class="kavatar">事</div><span class="kdue">6/20</span><span class="pri-dot pri-high"></span></div>
+                </div>
+                <div class="kcard">
+                  <div class="kcard-title">野菜定期便 6月納品リスト確定</div>
+                  <div class="kcard-meta"><div class="kavatar" style="background:#2f6ea8">佐</div><span class="kdue">6/16</span><span class="pri-dot pri-high"></span></div>
+                </div>
+                <div class="kcard">
+                  <div class="kcard-title">配送ルート見直し（大分市内）</div>
+                  <div class="kcard-meta"><div class="kavatar" style="background:#7a5ca8">鈴</div><span class="kdue">6/22</span><span class="pri-dot pri-mid"></span></div>
+                </div>
+              </div>
+
+              <!-- 社長承認待ち -->
+              <div class="kcol wait">
+                <div class="kcol-head"><span>社長承認待ち</span><span class="kcount">2</span></div>
+                <div class="kcard">
+                  <div class="kcard-title">未入金の督促文作成（テスト病院）</div>
+                  <div class="kcard-meta"><div class="kavatar" style="background:#d98e1f">事</div><span class="kdue">6/15</span><span class="pri-dot pri-high"></span></div>
+                </div>
+                <div class="kcard">
+                  <div class="kcard-title">6月分請求書 最終承認</div>
+                  <div class="kcard-meta"><div class="kavatar" style="background:#d98e1f">事</div><span class="kdue">6/20</span><span class="pri-dot pri-mid"></span></div>
+                </div>
+              </div>
+
+              <!-- 完了 -->
+              <div class="kcol">
+                <div class="kcol-head"><span>完了</span><span class="kcount">12</span></div>
+                <div class="kcard">
+                  <div class="kcard-title">経費CSVの仕分け</div>
+                  <div class="kcard-meta"><div class="kavatar" style="background:#1f6b3a">経</div><span class="kdue">6/14</span><span class="pri-dot pri-low"></span></div>
+                </div>
+                <div class="kcard">
+                  <div class="kcard-title">5月分 月次締め処理</div>
+                  <div class="kcard-meta"><div class="kavatar">社</div><span class="kdue">6/3</span><span class="pri-dot pri-low"></span></div>
+                </div>
+                <div class="kcard">
+                  <div class="kcard-title">シフト希望の集計（6/9週）</div>
+                  <div class="kcard-meta"><div class="kavatar" style="background:#2f6ea8">佐</div><span class="kdue">6/8</span><span class="pri-dot pri-low"></span></div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 注記 -->
+      <div class="note-bar">
+        <span class="lock">🔒</span>
+        <span>従業員はタスクの入力・進捗更新まで。<b>お金の確定や送信が絡むタスクは「社長承認待ち」列へ自動で回る</b>ので、権限の境界が画面の上で守られます。</span>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="demo-note">画面はデモ用のサンプルデータです</div>
+
+<a href="index.html" style="position:fixed;top:14px;right:16px;z-index:99999;background:#d98e1f;color:#fff;font-family:'Noto Sans JP',sans-serif;font-size:14px;font-weight:700;text-decoration:none;padding:9px 16px;border-radius:9px;box-shadow:0 3px 10px rgba(0,0,0,.25)">&#9776; デモ目次へ</a><div style="position:fixed;bottom:14px;left:16px;z-index:99999;background:rgba(34,39,46,.82);color:#fff;font-family:'Noto Sans JP',sans-serif;font-size:12px;padding:6px 12px;border-radius:8px">デモ（サンプルデータ／一部は今後実装の機能）</div>
+</body>
+</html>

@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>日報一覧 - AI社員パック TEAM EDITION</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    width: 1920px; height: 1080px; overflow: hidden; margin: 0;
+    font-family: "Noto Sans JP", sans-serif;
+    color: #22272e; background: #eef1ee;
+    display: flex;
+  }
+  /* ===== Sidebar ===== */
+  .sidebar {
+    width: 260px; min-width: 260px; height: 1080px;
+    background: #14512a; color: #9fc4aa;
+    display: flex; flex-direction: column;
+    padding: 0;
+  }
+  .logo-area { padding: 26px 22px 20px 22px; border-bottom: 1px solid rgba(255,255,255,.08); }
+  .logo-title { font-size: 22px; font-weight: 900; color: #ffffff; letter-spacing: .5px; }
+  .logo-sub {
+    font-family: "Oswald", sans-serif; font-size: 11px; font-weight: 600;
+    color: #7fae90; letter-spacing: 2px; margin-top: 6px;
+  }
+  .nav { flex: 1; padding: 14px 0; }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 13px 22px; font-size: 15px; font-weight: 500;
+    color: #9fc4aa; position: relative; cursor: default;
+  }
+  .nav-item .ico { font-size: 17px; width: 22px; text-align: center; }
+  .nav-item.active {
+    color: #ffffff; font-weight: 700;
+    background: rgba(255,255,255,.12);
+  }
+  .nav-item.active::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0;
+    width: 4px; background: #d98e1f;
+  }
+  .user-box {
+    padding: 18px 22px; border-top: 1px solid rgba(255,255,255,.08);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: #d98e1f; color: #fff; font-weight: 900; font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .user-name { color: #ffffff; font-size: 14px; font-weight: 700; }
+  .user-role { color: #7fae90; font-size: 11px; margin-top: 2px; }
+
+  /* ===== Main ===== */
+  .main { flex: 1; height: 1080px; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar {
+    height: 76px; min-height: 76px; background: #ffffff;
+    border-bottom: 1px solid #dde3dd;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 32px;
+  }
+  .page-title { font-size: 24px; font-weight: 700; }
+  .page-title small { font-size: 14px; font-weight: 500; color: #6b736b; margin-left: 12px; }
+  .top-right { display: flex; align-items: center; gap: 18px; }
+  .date-chip { font-size: 15px; font-weight: 700; color: #2b2f36; }
+  .search {
+    display: flex; align-items: center; gap: 8px;
+    background: #f1f4f1; border: 1px solid #dde3dd; border-radius: 10px;
+    padding: 9px 14px; width: 230px; color: #8a928a; font-size: 14px;
+  }
+  .bell { font-size: 20px; position: relative; }
+  .bell::after {
+    content: ""; position: absolute; top: -2px; right: -2px;
+    width: 9px; height: 9px; background: #c0392b; border-radius: 50%;
+    border: 2px solid #fff;
+  }
+  .top-avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: #1f6b3a; color: #fff; font-weight: 900; font-size: 15px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .content { flex: 1; padding: 24px 32px 0 32px; overflow: hidden; }
+
+  .toolbar { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+  .picker {
+    display: flex; align-items: center; gap: 8px;
+    background: #fff; border: 1px solid #dde3dd; border-radius: 10px;
+    padding: 10px 16px; font-size: 15px; font-weight: 700;
+  }
+  .picker .lbl { font-weight: 500; color: #6b736b; font-size: 13px; }
+  .submit-card {
+    margin-left: auto; display: flex; align-items: center; gap: 18px;
+    background: #fff; border: 1px solid #dde3dd; border-radius: 14px;
+    padding: 14px 24px; box-shadow: 0 2px 6px rgba(20,81,42,.05);
+  }
+  .submit-num { font-family: "Oswald", sans-serif; font-size: 30px; font-weight: 700; color: #1f6b3a; }
+  .submit-num span { font-size: 18px; color: #6b736b; }
+  .submit-meta { font-size: 13px; }
+  .submit-meta .good { color: #1f6b3a; font-weight: 700; font-size: 16px; }
+  .submit-meta .warn { color: #c0392b; font-weight: 700; margin-top: 3px; }
+  .ring {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: conic-gradient(#1f6b3a 0% 83%, #e3e8e3 83% 100%);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ring .inner {
+    width: 42px; height: 42px; border-radius: 50%; background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-family: "Oswald", sans-serif; font-size: 15px; font-weight: 700; color: #1f6b3a;
+  }
+
+  .grid { display: grid; grid-template-columns: 1fr 470px; gap: 22px; height: calc(100% - 130px); }
+  .col-left { display: flex; flex-direction: column; gap: 20px; }
+
+  .card {
+    background: #fff; border: 1px solid #dde3dd; border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(20,81,42,.05);
+    padding: 20px 22px;
+  }
+  .card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .card-title { font-size: 18px; font-weight: 700; }
+  .card-note { font-size: 12px; color: #8a928a; }
+
+  /* matrix table */
+  table { width: 100%; border-collapse: collapse; }
+  .matrix th, .matrix td { text-align: center; padding: 11px 6px; font-size: 15px; }
+  .matrix thead th {
+    background: #2b2f36; color: #fff; font-weight: 700; font-size: 14px;
+  }
+  .matrix thead th:first-child { border-radius: 8px 0 0 0; text-align: left; padding-left: 16px; width: 150px; }
+  .matrix thead th:last-child { border-radius: 0 8px 0 0; }
+  .matrix tbody td { border-bottom: 1px solid #dde3dd; }
+  .matrix tbody td:first-child { text-align: left; padding-left: 16px; font-weight: 700; font-size: 15px; }
+  .matrix .name-sub { font-size: 11px; font-weight: 500; color: #8a928a; margin-left: 6px; }
+  .mk-o { color: #1f6b3a; font-weight: 900; font-size: 19px; }
+  .mk-x { color: #c0392b; font-weight: 900; font-size: 19px; }
+  .mk-d { color: #b6bdb6; font-weight: 700; font-size: 18px; }
+  .row-warn td:first-child { color: #c0392b; }
+  .cell-x { background: #fbeceb; }
+
+  /* individual report card */
+  .report { display: flex; flex-direction: column; gap: 0; }
+  .rep-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .rep-avatar {
+    width: 42px; height: 42px; border-radius: 50%; background: #1f6b3a; color: #fff;
+    font-weight: 900; font-size: 17px; display: flex; align-items: center; justify-content: center;
+  }
+  .rep-name { font-size: 17px; font-weight: 700; }
+  .rep-tag {
+    font-size: 12px; color: #1f6b3a; background: #e7f1ea; border-radius: 6px;
+    padding: 3px 9px; font-weight: 700; margin-left: 4px;
+  }
+  .rep-block { margin-bottom: 11px; }
+  .rep-lbl { font-size: 12px; font-weight: 700; color: #1f6b3a; margin-bottom: 3px; }
+  .rep-txt { font-size: 14px; line-height: 1.55; color: #3a4048; }
+  .rep-txt.alert { color: #b5651a; font-weight: 700; }
+  .kosu { display: flex; gap: 10px; margin-top: 4px; }
+  .kosu .chip {
+    background: #f1f4f1; border: 1px solid #dde3dd; border-radius: 8px;
+    padding: 7px 14px; font-size: 13px;
+  }
+  .kosu .chip b { font-family: "Oswald", sans-serif; font-size: 16px; color: #2b2f36; margin-left: 5px; }
+
+  /* AI summary */
+  .ai-card {
+    background: #fff; border: 2px solid #1f6b3a; border-radius: 16px;
+    box-shadow: 0 2px 10px rgba(31,107,58,.10);
+    padding: 22px 24px; flex: 1; display: flex; flex-direction: column;
+  }
+  .ai-head { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .ai-icon { font-size: 24px; }
+  .ai-title { font-size: 18px; font-weight: 700; color: #14512a; }
+  .ai-date {
+    font-family: "Oswald", sans-serif; font-size: 13px; color: #fff;
+    background: #1f6b3a; border-radius: 6px; padding: 3px 10px; margin-left: auto; font-weight: 600;
+  }
+  .ai-lead { font-size: 15px; line-height: 1.6; margin-bottom: 16px; }
+  .ai-lead b { color: #1f6b3a; }
+  .ai-sec-title { font-size: 13px; font-weight: 700; color: #d98e1f; margin-bottom: 9px; letter-spacing: .5px; }
+  .ai-item {
+    display: flex; gap: 11px; align-items: flex-start;
+    padding: 12px 14px; border-radius: 10px; background: #f6f9f6;
+    border: 1px solid #e1e8e1; margin-bottom: 10px;
+  }
+  .ai-item .num {
+    width: 24px; height: 24px; min-width: 24px; border-radius: 50%;
+    background: #d98e1f; color: #fff; font-weight: 900; font-size: 13px;
+    display: flex; align-items: center; justify-content: center; margin-top: 1px;
+  }
+  .ai-item.done .num { background: #1f6b3a; }
+  .ai-item .txt { font-size: 14px; line-height: 1.5; }
+  .ai-item .txt b { color: #22272e; }
+  .badge-rem {
+    display: inline-block; font-size: 11px; font-weight: 700; color: #1f6b3a;
+    background: #e7f1ea; border-radius: 5px; padding: 1px 7px; margin-left: 4px;
+  }
+  .ai-next {
+    margin-top: auto; background: #fdf6ea; border: 1px solid #f0dcb6;
+    border-radius: 10px; padding: 13px 16px; font-size: 14px; line-height: 1.5;
+  }
+  .ai-next b { color: #b5651a; }
+
+  /* badges in submit rate */
+  .rate-badge {
+    display: inline-block; background: #d98e1f; color: #fff; font-size: 12px;
+    font-weight: 700; border-radius: 6px; padding: 3px 9px;
+  }
+
+  .footnote { font-size: 12px; color: #8a928a; padding: 10px 0 0 2px; }
+  .demo-note {
+    position: fixed; right: 18px; bottom: 12px;
+    font-size: 12px; color: #aab2aa;
+  }
+</style>
+</head>
+<body>
+
+  <!-- ===== Sidebar ===== -->
+  <aside class="sidebar">
+    <div class="logo-area">
+      <div class="logo-title">AI社員パック</div>
+      <div class="logo-sub">TEAM EDITION / KIMOCHI ICHIBA</div>
+    </div>
+    <nav class="nav">
+      <div class="nav-item"><span class="ico">🏠</span>ダッシュボード</div>
+      <div class="nav-item"><span class="ico">✅</span>タスク管理</div>
+      <div class="nav-item active"><span class="ico">📝</span>日報</div>
+      <div class="nav-item"><span class="ico">🗓</span>シフト</div>
+      <div class="nav-item"><span class="ico">💰</span>収支・月次</div>
+      <div class="nav-item"><span class="ico">🎁</span>補助金斡旋</div>
+      <div class="nav-item"><span class="ico">🤖</span>専属AI</div>
+      <div class="nav-item"><span class="ico">🔔</span>通知設定</div>
+    </nav>
+    <div class="user-box">
+      <div class="avatar">社</div>
+      <div>
+        <div class="user-name">社長</div>
+        <div class="user-role">管理者</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== Main ===== -->
+  <div class="main">
+    <div class="topbar">
+      <div class="page-title">日報一覧<small>提出状況・作業報告・AI日次サマリ</small></div>
+      <div class="top-right">
+        <div class="date-chip">2026/6/14(土)</div>
+        <div class="search"><span>🔍</span>従業員・キーワードで検索</div>
+        <div class="bell">🔔</div>
+        <div class="top-avatar">社</div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- toolbar -->
+      <div class="toolbar">
+        <div class="picker"><span class="lbl">日付</span>📅 2026/6/13 ▾</div>
+        <div class="picker"><span class="lbl">部署</span>全部署 ▾</div>
+        <div class="submit-card">
+          <div class="ring"><div class="inner">83%</div></div>
+          <div>
+            <div class="submit-meta" style="font-size:13px;color:#6b736b;font-weight:700;margin-bottom:2px;">本日の提出状況</div>
+            <div class="submit-num">5<span>/6名 提出</span></div>
+          </div>
+          <div class="submit-meta" style="border-left:1px solid #dde3dd;padding-left:18px;">
+            <span class="good">83%</span>
+            <div class="warn">⚠ 未提出 1名：鈴木</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid">
+
+        <!-- LEFT COLUMN -->
+        <div class="col-left">
+
+          <!-- submission matrix -->
+          <div class="card">
+            <div class="card-head">
+              <div class="card-title">提出マトリクス<span style="font-size:13px;font-weight:500;color:#8a928a;margin-left:10px;">従業員 × 直近5日（○提出 ／ ×未提出 ／ − 休）</span></div>
+            </div>
+            <table class="matrix">
+              <thead>
+                <tr>
+                  <th>従業員</th>
+                  <th>6/9</th><th>6/10</th><th>6/11</th><th>6/12</th><th>6/13</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>佐藤</td>
+                  <td><span class="mk-o">○</span></td><td><span class="mk-o">○</span></td><td><span class="mk-o">○</span></td><td><span class="mk-o">○</span></td><td><span class="mk-o">○</span></td>
+                </tr>
+                <tr>
+                  <td>田中</td>
+                  <td><span class="mk-o">○</span></td><td><span class="mk-o">○</span></td><td><span class="mk-d">−</span></td><td><span class="mk-o">○</span></td><td><span class="mk-o">○</span></td>
+                </tr>
+                <tr class="row-warn">
+                  <td>鈴木</td>
+                  <td><span class="mk-o">○</span></td><td><span class="mk-o">○</span></td><td><span class="mk-o">○</span></td><td><span class="mk-o">○</span></td><td class="cell-x"><span class="mk-x">×</span></td>
+                </tr>
+                <tr>
+                  <td>山口</td>
+                  <td><span class="mk-o">○</span></td><td><span class="mk-o">○</span></td><td><span class="mk-o">○</span></td><td><span class="mk-o">○</span></td><td><span class="mk-o">○</span></td>
+                </tr>
+                <tr>
+                  <td>中村</td>
+                  <td><span class="mk-o">○</span></td><td><span class="mk-d">−</span></td><td><span class="mk-o">○</span></td><td><span class="mk-o">○</span></td><td><span class="mk-o">○</span></td>
+                </tr>
+                <tr>
+                  <td>林<span class="name-sub">（パート）</span></td>
+                  <td><span class="mk-o">○</span></td><td><span class="mk-o">○</span></td><td><span class="mk-o">○</span></td><td><span class="mk-o">○</span></td><td><span class="mk-o">○</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- individual report card -->
+          <div class="card report" style="flex:1;">
+            <div class="card-head">
+              <div class="rep-head" style="margin-bottom:0;">
+                <div class="rep-avatar">佐</div>
+                <div>
+                  <span class="rep-name">佐藤さんの日報</span>
+                  <span class="rep-tag">2026/6/13 提出済</span>
+                </div>
+              </div>
+              <div class="card-note">クリックで他メンバーの日報も展開</div>
+            </div>
+
+            <div class="rep-block">
+              <div class="rep-lbl">本日の業務</div>
+              <div class="rep-txt">野菜定期便 3病院へ納品／在庫棚卸し。</div>
+            </div>
+            <div class="rep-block">
+              <div class="rep-lbl">所感</div>
+              <div class="rep-txt">サンプル総合病院から追加注文の打診あり。</div>
+            </div>
+            <div class="rep-block">
+              <div class="rep-lbl">困りごと</div>
+              <div class="rep-txt alert">⚠ 木曜の配送車が1台不足しそう。</div>
+            </div>
+            <div class="rep-block" style="margin-bottom:0;">
+              <div class="rep-lbl">工数</div>
+              <div class="kosu">
+                <div class="chip">納品<b>3.0h</b></div>
+                <div class="chip">棚卸し<b>1.5h</b></div>
+                <div class="chip">事務<b>1.0h</b></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN: AI summary -->
+        <div class="ai-card">
+          <div class="ai-head">
+            <span class="ai-icon">🤖</span>
+            <span class="ai-title">AI事務部長の日次サマリ</span>
+            <span class="ai-date">6/13</span>
+          </div>
+
+          <div class="ai-lead">
+            <b>全6名中5名が提出。</b>共通の動きは「納品ピーク」。要対応は次の2件です。
+          </div>
+
+          <div class="ai-sec-title">▶ 要対応 2件</div>
+          <div class="ai-item">
+            <div class="num">1</div>
+            <div class="txt"><b>鈴木さんが未提出</b><span class="badge-rem">リマインド送信済</span></div>
+          </div>
+          <div class="ai-item">
+            <div class="num">2</div>
+            <div class="txt">佐藤さんから<b>「木曜の配送車が不足」</b>の報告 → シフト・車両の調整を社長に提案します。</div>
+          </div>
+
+          <div class="ai-next">
+            <b>📌 明日の注目：</b>サンプル総合病院 追加注文の見込み。在庫と配送枠の確保を準備します。
+          </div>
+        </div>
+
+      </div>
+
+      <div class="footnote">本人・社内共有のみ。実在の個人情報はダミー化しています（デモ）。</div>
+
+    </div>
+  </div>
+
+  <div class="demo-note">画面はデモ用のサンプルデータです</div>
+
+<a href="index.html" style="position:fixed;top:14px;right:16px;z-index:99999;background:#d98e1f;color:#fff;font-family:'Noto Sans JP',sans-serif;font-size:14px;font-weight:700;text-decoration:none;padding:9px 16px;border-radius:9px;box-shadow:0 3px 10px rgba(0,0,0,.25)">&#9776; デモ目次へ</a><div style="position:fixed;bottom:14px;left:16px;z-index:99999;background:rgba(34,39,46,.82);color:#fff;font-family:'Noto Sans JP',sans-serif;font-size:12px;padding:6px 12px;border-radius:8px">デモ（サンプルデータ／一部は今後実装の機能）</div>
+</body>
+</html>

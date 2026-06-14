@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1920, initial-scale=1">
+<title>収支入力／月次売上 - AI社員パック TEAM EDITION</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    width: 1920px; height: 1080px; overflow: hidden; margin: 0;
+    font-family: "Noto Sans JP", sans-serif;
+    color: #22272e; background: #eef1ee;
+    display: flex;
+  }
+  /* ===== Sidebar ===== */
+  .sidebar {
+    width: 260px; min-width: 260px; height: 1080px;
+    background: #14512a; color: #9fc4aa;
+    display: flex; flex-direction: column;
+  }
+  .logo-area { padding: 26px 22px 18px; border-bottom: 1px solid rgba(255,255,255,.08); }
+  .logo-title { font-size: 21px; font-weight: 900; color: #fff; letter-spacing: .5px; }
+  .logo-sub { font-size: 10.5px; color: #7faf8b; margin-top: 6px; letter-spacing: 1.2px; font-family: "Oswald", sans-serif; }
+  .nav { flex: 1; padding: 14px 0; }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 13px 22px; font-size: 14.5px; font-weight: 500;
+    color: #9fc4aa; position: relative; cursor: default;
+  }
+  .nav-item .ic { width: 22px; text-align: center; font-size: 16px; }
+  .nav-item.active {
+    color: #fff; font-weight: 700;
+    background: rgba(255,255,255,.12);
+  }
+  .nav-item.active::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0;
+    width: 4px; background: #d98e1f;
+  }
+  .sidebar-footer {
+    padding: 16px 22px; border-top: 1px solid rgba(255,255,255,.08);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: #d98e1f; color: #fff; display: flex;
+    align-items: center; justify-content: center; font-weight: 900; font-size: 15px;
+  }
+  .sidebar-footer .who { font-size: 13px; }
+  .sidebar-footer .who b { color: #fff; display: block; font-weight: 700; }
+  .sidebar-footer .who span { font-size: 11px; color: #7faf8b; }
+
+  /* ===== Main ===== */
+  .main { flex: 1; height: 1080px; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar {
+    height: 76px; min-height: 76px; background: #fff;
+    border-bottom: 1px solid #dde3dd;
+    display: flex; align-items: center; padding: 0 32px; gap: 24px;
+  }
+  .page-title { font-size: 24px; font-weight: 700; }
+  .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 18px; }
+  .date-chip { font-size: 14px; color: #5a6560; font-weight: 500; }
+  .search-box {
+    display: flex; align-items: center; gap: 8px;
+    background: #eef1ee; border: 1px solid #dde3dd; border-radius: 10px;
+    padding: 9px 14px; width: 230px; color: #8a948e; font-size: 13px;
+  }
+  .bell { font-size: 19px; position: relative; }
+  .bell::after {
+    content: ""; position: absolute; top: -2px; right: -2px;
+    width: 8px; height: 8px; background: #c0392b; border-radius: 50%;
+  }
+  .user-dot { width: 38px; height: 38px; border-radius: 50%; background: #1f6b3a; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:14px; }
+
+  .content { flex: 1; padding: 22px 32px; overflow: hidden; }
+
+  /* KPI row */
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 18px; }
+  .card {
+    background: #fff; border: 1px solid #dde3dd; border-radius: 16px;
+    box-shadow: 0 2px 6px rgba(20,81,42,.05);
+  }
+  .kpi { padding: 18px 22px; }
+  .kpi .label { font-size: 13.5px; color: #5a6560; font-weight: 500; }
+  .kpi .num { font-size: 36px; font-weight: 900; margin-top: 6px; line-height: 1.05; }
+  .kpi .sub { font-size: 12.5px; margin-top: 8px; color: #7a857e; }
+  .up { color: #1f6b3a; font-weight: 700; }
+  .accent-num { color: #1f6b3a; }
+  .pct-pill { display: inline-block; background: #e7f1ea; color: #1f6b3a; font-weight: 700; font-size: 12px; padding: 2px 9px; border-radius: 20px; }
+
+  /* mid grid */
+  .mid-grid { display: grid; grid-template-columns: 1fr 1fr 1.1fr; gap: 18px; height: 326px; margin-bottom: 18px; }
+  .card-pad { padding: 18px 20px; height: 100%; display: flex; flex-direction: column; }
+  .card-title { font-size: 16px; font-weight: 700; margin-bottom: 14px; }
+
+  /* line chart */
+  .line-wrap { flex: 1; position: relative; padding: 6px 4px 26px; }
+  .line-svg { width: 100%; height: 100%; display: block; }
+  .line-x { display: flex; justify-content: space-between; font-size: 11.5px; color: #7a857e; margin-top: 2px; padding: 0 2px; }
+
+  /* stacked bar (expense breakdown) */
+  .exp-list { flex: 1; display: flex; flex-direction: column; gap: 11px; justify-content: center; }
+  .exp-row { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+  .exp-name { width: 130px; color: #3b443e; }
+  .exp-bar-track { flex: 1; height: 16px; background: #eef1ee; border-radius: 8px; overflow: hidden; }
+  .exp-bar { height: 100%; border-radius: 8px; }
+  .exp-val { width: 95px; text-align: right; font-weight: 700; font-size: 12.5px; }
+  .exp-total { margin-top: 12px; font-size: 12px; color: #7a857e; text-align: right; }
+
+  /* input form */
+  .form-grid { display: flex; flex-direction: column; gap: 12px; flex: 1; }
+  .frow { display: flex; gap: 12px; }
+  .field { flex: 1; }
+  .field label { display: block; font-size: 11.5px; color: #6a746e; margin-bottom: 5px; font-weight: 500; }
+  .field .inp {
+    width: 100%; border: 1px solid #dde3dd; border-radius: 9px;
+    padding: 9px 11px; font-size: 13.5px; background: #f7f9f7; color: #2b3138;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .field .inp .caret { color: #9aa49d; font-size: 10px; }
+  .field .inp.amt { font-weight: 700; color: #14512a; font-size: 15px; }
+  .btn-submit {
+    background: #1f6b3a; color: #fff; border: none; border-radius: 10px;
+    padding: 12px; font-size: 14.5px; font-weight: 700; font-family: inherit; cursor: pointer;
+    margin-top: 2px;
+  }
+  .form-note { font-size: 11px; color: #8a948e; margin-top: 6px; line-height: 1.5; }
+
+  /* detail table */
+  .table-card { padding: 18px 20px 14px; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    background: #2b2f36; color: #fff; font-size: 12.5px; font-weight: 700;
+    padding: 11px 14px; text-align: left;
+  }
+  thead th:first-child { border-radius: 8px 0 0 8px; }
+  thead th:last-child { border-radius: 0 8px 8px 0; }
+  tbody td { padding: 12px 14px; font-size: 13.5px; border-bottom: 1px solid #dde3dd; }
+  tbody tr:last-child td { border-bottom: none; }
+  .ta-r { text-align: right; }
+  .kubun-uri { color: #1f6b3a; font-weight: 700; }
+  .kubun-hi { color: #b06a17; font-weight: 700; }
+  .amt-cell { font-weight: 700; }
+  .badge { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; padding: 4px 11px; border-radius: 20px; }
+  .b-amber { background: #fbeede; color: #b06a17; }
+  .b-green { background: #e2efe6; color: #1f6b3a; }
+
+  .demo-note {
+    position: absolute; right: 22px; bottom: 12px;
+    font-size: 11px; color: #aab4ad;
+  }
+  .privacy-note { font-size: 11.5px; color: #8a948e; margin-top: 12px; line-height: 1.5; }
+</style>
+</head>
+<body>
+  <!-- ===== Sidebar ===== -->
+  <aside class="sidebar">
+    <div class="logo-area">
+      <div class="logo-title">AI社員パック</div>
+      <div class="logo-sub">TEAM EDITION / KIMOCHI ICHIBA</div>
+    </div>
+    <nav class="nav">
+      <div class="nav-item"><span class="ic">🏠</span>ダッシュボード</div>
+      <div class="nav-item"><span class="ic">✅</span>タスク管理</div>
+      <div class="nav-item"><span class="ic">📝</span>日報</div>
+      <div class="nav-item"><span class="ic">🗓</span>シフト</div>
+      <div class="nav-item active"><span class="ic">💰</span>収支・月次</div>
+      <div class="nav-item"><span class="ic">🎁</span>補助金斡旋</div>
+      <div class="nav-item"><span class="ic">🤖</span>専属AI</div>
+      <div class="nav-item"><span class="ic">🔔</span>通知設定</div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="avatar">社</div>
+      <div class="who"><b>社長</b><span>管理者</span></div>
+    </div>
+  </aside>
+
+  <!-- ===== Main ===== -->
+  <div class="main">
+    <div class="topbar">
+      <div class="page-title">収支入力／月次売上</div>
+      <div class="topbar-right">
+        <div class="date-chip">2026/6/14(土)</div>
+        <div class="search-box"><span>🔍</span><span>検索</span></div>
+        <div class="bell">🔔</div>
+        <div class="user-dot">社</div>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- KPI row -->
+      <div class="kpi-row">
+        <div class="card kpi">
+          <div class="label">今月売上</div>
+          <div class="num">¥3,820,000</div>
+          <div class="sub">前月 ¥3,398,000 <span class="up">▲ +12.4%</span></div>
+        </div>
+        <div class="card kpi">
+          <div class="label">今月経費</div>
+          <div class="num">¥2,210,000</div>
+          <div class="sub">仕入・人件費・配送ほか</div>
+        </div>
+        <div class="card kpi">
+          <div class="label">粗利</div>
+          <div class="num accent-num">¥1,610,000</div>
+          <div class="sub">粗利率 <span class="pct-pill">42.1%</span></div>
+        </div>
+        <div class="card kpi">
+          <div class="label">前月売上（参考）</div>
+          <div class="num" style="color:#5a6560;">¥3,398,000</div>
+          <div class="sub">2026年5月 実績</div>
+        </div>
+      </div>
+
+      <!-- mid grid -->
+      <div class="mid-grid">
+        <!-- Line chart -->
+        <div class="card card-pad">
+          <div class="card-title">月次売上推移（6か月）</div>
+          <div class="line-wrap">
+            <svg class="line-svg" viewBox="0 0 320 200" preserveAspectRatio="none">
+              <!-- grid lines -->
+              <line x1="0" y1="40" x2="320" y2="40" stroke="#eef1ee" stroke-width="1"/>
+              <line x1="0" y1="90" x2="320" y2="90" stroke="#eef1ee" stroke-width="1"/>
+              <line x1="0" y1="140" x2="320" y2="140" stroke="#eef1ee" stroke-width="1"/>
+              <!-- area -->
+              <polygon points="26,150 84,135 142,142 200,118 258,108 312,40 312,190 26,190"
+                       fill="#1f6b3a" fill-opacity="0.08"/>
+              <!-- line: 2.9 / 3.1 / 3.0 / 3.3 / 3.4 / 3.82 (scaled) -->
+              <polyline points="26,150 84,135 142,142 200,118 258,108 312,40"
+                        fill="none" stroke="#1f6b3a" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+              <circle cx="26" cy="150" r="4" fill="#1f6b3a"/>
+              <circle cx="84" cy="135" r="4" fill="#1f6b3a"/>
+              <circle cx="142" cy="142" r="4" fill="#1f6b3a"/>
+              <circle cx="200" cy="118" r="4" fill="#1f6b3a"/>
+              <circle cx="258" cy="108" r="4" fill="#1f6b3a"/>
+              <circle cx="312" cy="40" r="6" fill="#d98e1f"/>
+            </svg>
+          </div>
+          <div class="line-x">
+            <span>1月<br>2.9M</span><span>2月<br>3.1M</span><span>3月<br>3.0M</span>
+            <span>4月<br>3.3M</span><span>5月<br>3.4M</span><span style="color:#1f6b3a;font-weight:700;">6月<br>3.82M</span>
+          </div>
+        </div>
+
+        <!-- Expense breakdown -->
+        <div class="card card-pad">
+          <div class="card-title">今月の経費内訳</div>
+          <div class="exp-list">
+            <div class="exp-row">
+              <div class="exp-name">仕入（青果）</div>
+              <div class="exp-bar-track"><div class="exp-bar" style="width:100%;background:#1f6b3a;"></div></div>
+              <div class="exp-val">¥1,240,000</div>
+            </div>
+            <div class="exp-row">
+              <div class="exp-name">人件費</div>
+              <div class="exp-bar-track"><div class="exp-bar" style="width:50%;background:#3a8d57;"></div></div>
+              <div class="exp-val">¥620,000</div>
+            </div>
+            <div class="exp-row">
+              <div class="exp-name">配送</div>
+              <div class="exp-bar-track"><div class="exp-bar" style="width:17%;background:#d98e1f;"></div></div>
+              <div class="exp-val">¥210,000</div>
+            </div>
+            <div class="exp-row">
+              <div class="exp-name">AI実費（顧客名義）</div>
+              <div class="exp-bar-track"><div class="exp-bar" style="width:2.5%;background:#c9a25e;"></div></div>
+              <div class="exp-val">¥18,000</div>
+            </div>
+            <div class="exp-row">
+              <div class="exp-name">その他</div>
+              <div class="exp-bar-track"><div class="exp-bar" style="width:10%;background:#9aa49d;"></div></div>
+              <div class="exp-val">¥122,000</div>
+            </div>
+          </div>
+          <div class="exp-total">経費合計 ¥2,210,000</div>
+        </div>
+
+        <!-- Input form (employee mode) -->
+        <div class="card card-pad">
+          <div class="card-title">収支入力フォーム（従業員モード）</div>
+          <div class="form-grid">
+            <div class="frow">
+              <div class="field">
+                <label>日付</label>
+                <div class="inp">6/13<span class="caret">▾</span></div>
+              </div>
+              <div class="field">
+                <label>区分</label>
+                <div class="inp"><span class="kubun-uri">売上</span><span class="caret">▾</span></div>
+              </div>
+            </div>
+            <div class="field">
+              <label>取引先</label>
+              <div class="inp">テスト病院<span class="caret">▾</span></div>
+            </div>
+            <div class="frow">
+              <div class="field">
+                <label>金額</label>
+                <div class="inp amt">¥54,000</div>
+              </div>
+              <div class="field">
+                <label>税率</label>
+                <div class="inp">8%軽減<span class="caret">▾</span></div>
+              </div>
+            </div>
+            <div class="field">
+              <label>メモ</label>
+              <div class="inp">野菜定期便</div>
+            </div>
+            <button class="btn-submit">入力する（社内共有）</button>
+            <div class="form-note">従業員は入力まで。確定・締め・送信は社長のみ。</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detail table -->
+      <div class="card table-card">
+        <div class="card-title">直近の入力明細</div>
+        <table>
+          <thead>
+            <tr>
+              <th style="width:90px;">日付</th>
+              <th style="width:90px;">区分</th>
+              <th>取引先</th>
+              <th class="ta-r" style="width:130px;">金額</th>
+              <th style="width:90px;">税率</th>
+              <th style="width:120px;">入力者</th>
+              <th style="width:160px;">状態</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>6/13</td>
+              <td class="kubun-uri">売上</td>
+              <td>テスト病院</td>
+              <td class="ta-r amt-cell">¥54,000</td>
+              <td>8%</td>
+              <td>佐藤</td>
+              <td><span class="badge b-amber">未確定</span></td>
+            </tr>
+            <tr>
+              <td>6/13</td>
+              <td class="kubun-hi">経費</td>
+              <td>大分青果市場</td>
+              <td class="ta-r amt-cell">¥86,400</td>
+              <td>8%</td>
+              <td>鈴木</td>
+              <td><span class="badge b-amber">未確定</span></td>
+            </tr>
+            <tr>
+              <td>6/12</td>
+              <td class="kubun-uri">売上</td>
+              <td>サンプル総合病院</td>
+              <td class="ta-r amt-cell">¥129,600</td>
+              <td>8%</td>
+              <td>佐藤</td>
+              <td><span class="badge b-green">✅ 社長確定済</span></td>
+            </tr>
+            <tr>
+              <td>6/12</td>
+              <td class="kubun-hi">経費</td>
+              <td>ガソリン</td>
+              <td class="ta-r amt-cell">¥9,800</td>
+              <td>10%</td>
+              <td>田中</td>
+              <td><span class="badge b-amber">未確定</span></td>
+            </tr>
+            <tr>
+              <td>6/11</td>
+              <td class="kubun-uri">売上</td>
+              <td>みどり園</td>
+              <td class="ta-r amt-cell">¥48,000</td>
+              <td>8%</td>
+              <td>—</td>
+              <td><span class="badge b-green">✅ 社長確定済</span></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="privacy-note">従業員に見せるのは月次売上の合計まで。個別の利益率・原価は管理者のみ表示します。</div>
+      </div>
+    </div>
+
+    <div class="demo-note">画面はデモ用のサンプルデータです</div>
+  </div>
+<a href="index.html" style="position:fixed;top:14px;right:16px;z-index:99999;background:#d98e1f;color:#fff;font-family:'Noto Sans JP',sans-serif;font-size:14px;font-weight:700;text-decoration:none;padding:9px 16px;border-radius:9px;box-shadow:0 3px 10px rgba(0,0,0,.25)">&#9776; デモ目次へ</a><div style="position:fixed;bottom:14px;left:16px;z-index:99999;background:rgba(34,39,46,.82);color:#fff;font-family:'Noto Sans JP',sans-serif;font-size:12px;padding:6px 12px;border-radius:8px">デモ（サンプルデータ／一部は今後実装の機能）</div>
+</body>
+</html>

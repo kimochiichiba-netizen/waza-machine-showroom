@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1920, initial-scale=1">
+<title>補助金斡旋ツール — AI社員パック チーム版</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --dark-green:#14512a;
+    --green:#1f6b3a;
+    --amber:#d98e1f;
+    --ink:#22272e;
+    --bg:#eef1ee;
+    --line:#dde3dd;
+    --red:#c0392b;
+    --muted-green:#9fc4aa;
+    --th:#2b2f36;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    width:1920px;height:1080px;overflow:hidden;margin:0;
+    font-family:"Noto Sans JP",sans-serif;
+    background:var(--bg);color:var(--ink);
+    display:flex;
+  }
+  /* ====== サイドバー ====== */
+  .sidebar{
+    width:260px;min-width:260px;height:1080px;
+    background:var(--dark-green);
+    display:flex;flex-direction:column;
+    color:#fff;
+  }
+  .logo{
+    padding:24px 22px 18px 22px;
+    border-bottom:1px solid rgba(255,255,255,.10);
+  }
+  .logo .brand{
+    font-weight:900;font-size:22px;letter-spacing:.5px;
+    display:flex;align-items:center;gap:8px;
+  }
+  .logo .brand .leaf{font-size:20px;}
+  .logo .sub{
+    margin-top:6px;font-size:11px;letter-spacing:1.5px;
+    color:var(--muted-green);font-weight:500;
+  }
+  .nav{flex:1;padding:14px 12px;display:flex;flex-direction:column;gap:2px;}
+  .nav a{
+    display:flex;align-items:center;gap:12px;
+    padding:13px 14px;border-radius:10px;
+    color:var(--muted-green);font-size:15px;font-weight:500;
+    text-decoration:none;position:relative;
+  }
+  .nav a .ic{font-size:17px;width:22px;text-align:center;}
+  .nav a.active{
+    color:#fff;background:rgba(255,255,255,.12);font-weight:700;
+  }
+  .nav a.active::before{
+    content:"";position:absolute;left:0;top:8px;bottom:8px;width:4px;
+    border-radius:0 4px 4px 0;background:var(--amber);
+  }
+  .user{
+    padding:16px 18px;border-top:1px solid rgba(255,255,255,.10);
+    display:flex;align-items:center;gap:12px;
+  }
+  .user .avatar{
+    width:42px;height:42px;border-radius:50%;
+    background:linear-gradient(135deg,var(--green),var(--amber));
+    display:flex;align-items:center;justify-content:center;
+    font-weight:900;font-size:16px;color:#fff;
+  }
+  .user .who{font-size:14px;font-weight:700;}
+  .user .who small{display:block;font-size:11px;color:var(--muted-green);font-weight:500;}
+
+  /* ====== メイン ====== */
+  .main{flex:1;height:1080px;display:flex;flex-direction:column;overflow:hidden;position:relative;}
+  .topbar{
+    height:74px;min-height:74px;background:#fff;border-bottom:1px solid var(--line);
+    display:flex;align-items:center;padding:0 28px;gap:20px;
+  }
+  .topbar .title{font-size:24px;font-weight:900;color:var(--ink);}
+  .topbar .right{margin-left:auto;display:flex;align-items:center;gap:16px;}
+  .topbar .date{font-size:14px;font-weight:700;color:#55605a;}
+  .search{
+    display:flex;align-items:center;gap:8px;
+    background:var(--bg);border:1px solid var(--line);border-radius:10px;
+    padding:8px 14px;width:230px;color:#7c857f;font-size:13px;
+  }
+  .bell{
+    position:relative;width:40px;height:40px;border-radius:10px;background:var(--bg);
+    border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:18px;
+  }
+  .bell .dot{position:absolute;top:7px;right:8px;width:8px;height:8px;border-radius:50%;background:var(--red);border:2px solid #fff;}
+  .uround{
+    width:40px;height:40px;border-radius:50%;
+    background:linear-gradient(135deg,var(--green),var(--amber));
+    color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;
+  }
+
+  .content{flex:1;overflow:hidden;padding:20px 28px 22px 28px;}
+
+  /* バナー */
+  .banner{
+    background:linear-gradient(100deg,var(--green),#175c30);
+    color:#fff;border-radius:16px;padding:16px 22px;
+    display:flex;align-items:center;gap:16px;margin-bottom:16px;
+    box-shadow:0 2px 8px rgba(20,81,42,.18);
+  }
+  .banner .bi{font-size:30px;}
+  .banner .btext{font-size:15px;font-weight:500;line-height:1.5;flex:1;}
+  .banner .btext b{font-weight:900;}
+  .banner .new{
+    background:var(--red);color:#fff;border-radius:20px;padding:8px 16px;
+    font-size:14px;font-weight:900;white-space:nowrap;display:flex;align-items:center;gap:8px;
+  }
+  .banner .new .nb{background:#fff;color:var(--red);border-radius:6px;padding:1px 7px;font-size:11px;font-weight:900;}
+
+  /* グリッド */
+  .grid{display:grid;grid-template-columns:1fr 360px;gap:18px;}
+
+  .card{
+    background:#fff;border:1px solid var(--line);border-radius:16px;
+    box-shadow:0 1px 4px rgba(34,39,46,.05);
+  }
+  .card-h{
+    padding:14px 20px;border-bottom:1px solid var(--line);
+    font-size:17px;font-weight:900;color:var(--ink);display:flex;align-items:center;gap:9px;
+  }
+  .card-h .cnt{font-size:12px;font-weight:700;color:#7c857f;margin-left:auto;}
+
+  /* 補助金カード一覧 */
+  .hojo-list{padding:16px 18px;display:flex;flex-direction:column;gap:13px;}
+  .hojo{
+    border:1px solid var(--line);border-radius:14px;padding:15px 18px;
+    display:flex;align-items:center;gap:18px;position:relative;
+  }
+  .hojo.new::after{
+    content:"NEW";position:absolute;top:-9px;left:16px;background:var(--red);color:#fff;
+    font-size:11px;font-weight:900;border-radius:6px;padding:2px 8px;letter-spacing:.5px;
+  }
+  /* マッチ度リング */
+  .ring{width:84px;height:84px;border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0;}
+  .ring::before{content:"";position:absolute;inset:9px;border-radius:50%;background:#fff;}
+  .ring .rin{position:relative;text-align:center;line-height:1.05;}
+  .ring .rin b{font-size:23px;font-weight:900;font-family:"Oswald";color:var(--ink);}
+  .ring .rin small{display:block;font-size:10px;color:#7c857f;font-weight:700;}
+  .r95{background:conic-gradient(var(--green) 0 95%, #e7ece7 95% 100%);}
+  .r78{background:conic-gradient(var(--green) 0 78%, #e7ece7 78% 100%);}
+  .r70{background:conic-gradient(var(--amber) 0 70%, #e7ece7 70% 100%);}
+
+  .hojo .body{flex:1;min-width:0;}
+  .hojo .ttl{font-size:17px;font-weight:900;color:var(--ink);display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
+  .hojo .meta{display:flex;gap:22px;margin-top:7px;flex-wrap:wrap;}
+  .hojo .meta .m{font-size:13px;color:#55605a;}
+  .hojo .meta .m b{font-size:16px;font-weight:900;color:var(--ink);font-family:"Oswald";letter-spacing:.3px;}
+  .hojo .reason{margin-top:9px;font-size:12.5px;color:#5b655e;line-height:1.45;background:var(--bg);border-radius:8px;padding:7px 11px;}
+  .hojo .reason b{color:var(--green);font-weight:700;}
+
+  .due{font-size:13px;font-weight:700;}
+  .due .left{font-family:"Oswald";font-size:15px;}
+  .due.warn{color:var(--red);}
+  .badge-due{display:inline-block;border-radius:6px;padding:2px 9px;font-size:11px;font-weight:900;margin-left:6px;}
+  .badge-due.warn{background:#fcefe0;color:var(--amber);border:1px solid #f0d5a8;}
+
+  .hojo .act{display:flex;flex-direction:column;gap:9px;align-items:stretch;flex-shrink:0;width:150px;}
+  .btn{
+    border-radius:10px;padding:11px 12px;font-size:13.5px;font-weight:900;text-align:center;
+    cursor:default;border:none;
+  }
+  .btn-primary{background:var(--amber);color:#fff;box-shadow:0 2px 6px rgba(217,142,31,.3);}
+  .btn-ghost{background:#fff;color:var(--green);border:1.5px solid var(--green);}
+
+  /* 締切タイムライン */
+  .timeline{padding:18px 20px 16px 20px;}
+  .tl{position:relative;padding-left:30px;}
+  .tl::before{content:"";position:absolute;left:8px;top:6px;bottom:6px;width:3px;background:var(--line);border-radius:3px;}
+  .tl .ev{position:relative;padding:0 0 22px 0;}
+  .tl .ev:last-child{padding-bottom:0;}
+  .tl .ev .node{position:absolute;left:-26px;top:2px;width:16px;height:16px;border-radius:50%;background:var(--green);border:3px solid #fff;box-shadow:0 0 0 2px var(--line);}
+  .tl .ev.warn .node{background:var(--amber);}
+  .tl .ev .d{font-family:"Oswald";font-size:18px;font-weight:700;color:var(--ink);}
+  .tl .ev .nm{font-size:14px;font-weight:700;color:#3f4a43;margin-top:2px;}
+  .tl .ev .tag{font-size:11px;font-weight:900;border-radius:6px;padding:2px 8px;margin-left:8px;}
+  .tl .ev .tag.warn{background:#fcefe0;color:var(--amber);}
+
+  /* 書類作成支援 */
+  .docpanel{margin-top:18px;}
+  .doc-sel{font-size:12px;font-weight:700;color:var(--green);background:#e8f1ea;border-radius:8px;padding:3px 10px;}
+  .checklist{padding:14px 20px;display:flex;flex-direction:column;gap:11px;}
+  .chk{display:flex;align-items:center;gap:12px;font-size:14px;}
+  .chk .box{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;flex-shrink:0;}
+  .chk .box.done{background:var(--green);color:#fff;}
+  .chk .box.todo{background:#fff;border:2px solid var(--line);color:#fff;}
+  .chk .lbl{color:#3f4a43;font-weight:500;}
+  .chk .lbl b{font-weight:700;color:var(--ink);}
+  .chk .st{margin-left:auto;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:6px;}
+  .chk .st.ok{background:#e8f1ea;color:var(--green);}
+  .chk .st.ing{background:#eef2f6;color:#4a6fa5;}
+  .doc-cta{padding:0 20px 18px 20px;}
+  .doc-cta .btn{width:100%;display:flex;align-items:center;justify-content:center;gap:9px;}
+
+  /* 重要注記 */
+  .notice{
+    margin-top:16px;background:#fbf6ec;border:1px solid #efdfc2;border-radius:12px;
+    padding:13px 18px;font-size:12.5px;color:#6b5b3a;line-height:1.55;display:flex;gap:11px;align-items:flex-start;
+  }
+  .notice .ni{font-size:18px;line-height:1.2;}
+  .notice b{font-weight:900;color:#8a6d2e;}
+  .notice .lex{display:inline-block;background:var(--green);color:#fff;font-size:10.5px;font-weight:900;border-radius:5px;padding:1px 7px;margin-left:4px;vertical-align:middle;}
+
+  .demo-note{
+    position:absolute;right:18px;bottom:12px;font-size:11px;color:#9aa39c;font-weight:500;
+  }
+</style>
+</head>
+<body>
+  <!-- ===== サイドバー ===== -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="brand"><span class="leaf">🌿</span>AI社員パック</div>
+      <div class="sub">TEAM EDITION / KIMOCHI ICHIBA</div>
+    </div>
+    <nav class="nav">
+      <a href="#"><span class="ic">🏠</span>ダッシュボード</a>
+      <a href="#"><span class="ic">✅</span>タスク管理</a>
+      <a href="#"><span class="ic">📝</span>日報</a>
+      <a href="#"><span class="ic">🗓</span>シフト</a>
+      <a href="#"><span class="ic">💰</span>収支・月次</a>
+      <a href="#" class="active"><span class="ic">🎁</span>補助金斡旋</a>
+      <a href="#"><span class="ic">🤖</span>専属AI</a>
+      <a href="#"><span class="ic">🔔</span>通知設定</a>
+    </nav>
+    <div class="user">
+      <div class="avatar">社</div>
+      <div class="who">社長<small>管理者</small></div>
+    </div>
+  </aside>
+
+  <!-- ===== メイン ===== -->
+  <div class="main">
+    <div class="topbar">
+      <div class="title">補助金斡旋ツール</div>
+      <div class="right">
+        <div class="date">2026/6/14（土）</div>
+        <div class="search">🔍&nbsp;補助金・キーワード検索</div>
+        <div class="bell">🔔<span class="dot"></span></div>
+        <div class="uround">社</div>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- バナー -->
+      <div class="banner">
+        <div class="bi">🎁</div>
+        <div class="btext">自社の<b>定款40項目</b>（AI / IT / 教育 / ヘルスケア / EC / コンサル 等）に当てはまる補助金を、公募が出るたび自動で抽出してお知らせします。</div>
+        <div class="new"><span class="nb">NEW</span>本日の新着 2件</div>
+      </div>
+
+      <div class="grid">
+        <!-- 左：補助金カード一覧 -->
+        <div>
+          <div class="card">
+            <div class="card-h">📋 該当する補助金（マッチ度順）<span class="cnt">3件 該当</span></div>
+            <div class="hojo-list">
+
+              <!-- ① IT導入 -->
+              <div class="hojo new">
+                <div class="ring r95"><div class="rin"><b>95</b><small>マッチ度%</small></div></div>
+                <div class="body">
+                  <div class="ttl">IT導入補助金2026<span style="font-size:13px;font-weight:700;color:#7c857f;">（通常枠）</span></div>
+                  <div class="meta">
+                    <div class="m">補助額 <b>最大450万</b></div>
+                    <div class="m">補助率 <b>1/2</b></div>
+                    <div class="m">締切 <span class="due"><span class="left">7/31</span>（あと47日）</span></div>
+                  </div>
+                  <div class="reason">該当理由：<b>定款「情報処理サービス／ソフトウェア開発」に合致。</b>自社のSaaS開発に使えます。</div>
+                </div>
+                <div class="act">
+                  <button class="btn btn-primary">書類作成を開始</button>
+                </div>
+              </div>
+
+              <!-- ② ものづくり -->
+              <div class="hojo">
+                <div class="ring r78"><div class="rin"><b>78</b><small>マッチ度%</small></div></div>
+                <div class="body">
+                  <div class="ttl">ものづくり補助金<span style="font-size:13px;font-weight:700;color:#7c857f;">（デジタル枠）</span></div>
+                  <div class="meta">
+                    <div class="m">補助額 <b>最大1,250万</b></div>
+                    <div class="m">締切 <span class="due"><span class="left">8/20</span>（あと67日）</span></div>
+                  </div>
+                  <div class="reason">該当理由：<b>定款「ヘルスケア機器／システム」に合致。</b></div>
+                </div>
+                <div class="act">
+                  <button class="btn btn-ghost">詳細を見る</button>
+                </div>
+              </div>
+
+              <!-- ③ 持続化 -->
+              <div class="hojo">
+                <div class="ring r70"><div class="rin"><b>70</b><small>マッチ度%</small></div></div>
+                <div class="body">
+                  <div class="ttl">小規模事業者持続化補助金</div>
+                  <div class="meta">
+                    <div class="m">補助額 <b>最大200万</b></div>
+                    <div class="m">締切 <span class="due warn"><span class="left">6/30</span><span class="badge-due warn">あと16日・要対応</span></span></div>
+                  </div>
+                  <div class="reason">該当理由：<b>販路開拓＝営業資料／HP制作費が対象。</b></div>
+                </div>
+                <div class="act">
+                  <button class="btn btn-primary">書類作成を開始</button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- 重要注記 -->
+          <div class="notice">
+            <span class="ni">⚠️</span>
+            <div><b>補助金は「確実に給付」を断定しません。</b>該当可能性のお知らせと書類のたたき台までです。申請・提出は社長本人が行います。景表法／各公募要領に沿って表現を調整しています<span class="lex">Lex検査済</span></div>
+          </div>
+        </div>
+
+        <!-- 右：締切タイムライン＋書類作成支援 -->
+        <div>
+          <div class="card">
+            <div class="card-h">⏱ 締切タイムライン</div>
+            <div class="timeline">
+              <div class="tl">
+                <div class="ev warn">
+                  <div class="node"></div>
+                  <div class="d">6/30</div>
+                  <div class="nm">持続化補助金<span class="tag warn">迫る</span></div>
+                </div>
+                <div class="ev">
+                  <div class="node"></div>
+                  <div class="d">7/31</div>
+                  <div class="nm">IT導入補助金</div>
+                </div>
+                <div class="ev">
+                  <div class="node"></div>
+                  <div class="d">8/20</div>
+                  <div class="nm">ものづくり補助金</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 書類作成支援 -->
+          <div class="card docpanel">
+            <div class="card-h">📝 書類作成支援 <span class="doc-sel">IT導入を選択中</span></div>
+            <div class="checklist">
+              <div class="chk">
+                <div class="box done">✓</div>
+                <div class="lbl"><b>GビズIDプライム</b></div>
+                <div class="st ok">取得済</div>
+              </div>
+              <div class="chk">
+                <div class="box done">✓</div>
+                <div class="lbl"><b>事業計画書</b></div>
+                <div class="st ok">AI下書き生成済・要社長加筆</div>
+              </div>
+              <div class="chk">
+                <div class="box todo">　</div>
+                <div class="lbl"><b>見積書</b></div>
+                <div class="st ing">AI事務がドラフト中</div>
+              </div>
+              <div class="chk">
+                <div class="box todo">　</div>
+                <div class="lbl"><b>労務関連書類</b></div>
+                <div class="st ing">未着手</div>
+              </div>
+            </div>
+            <div class="doc-cta">
+              <button class="btn btn-primary">🤖&nbsp;事業計画書のたたき台を作る</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="demo-note">画面はデモ用のサンプルデータです</div>
+  </div>
+<a href="index.html" style="position:fixed;top:14px;right:16px;z-index:99999;background:#d98e1f;color:#fff;font-family:'Noto Sans JP',sans-serif;font-size:14px;font-weight:700;text-decoration:none;padding:9px 16px;border-radius:9px;box-shadow:0 3px 10px rgba(0,0,0,.25)">&#9776; デモ目次へ</a><div style="position:fixed;bottom:14px;left:16px;z-index:99999;background:rgba(34,39,46,.82);color:#fff;font-family:'Noto Sans JP',sans-serif;font-size:12px;padding:6px 12px;border-radius:8px">デモ（サンプルデータ／一部は今後実装の機能）</div>
+</body>
+</html>

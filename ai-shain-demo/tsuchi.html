@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>通知連携（Slack/LINE/メール）｜AI社員パック TEAM EDITION</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    width: 1920px; height: 1080px; overflow: hidden;
+    font-family: "Noto Sans JP", sans-serif;
+    color: #22272e; background: #eef1ee;
+    display: flex;
+  }
+  /* ===== Sidebar ===== */
+  .sidebar {
+    width: 260px; height: 1080px; flex: 0 0 260px;
+    background: #14512a; color: #9fc4aa;
+    display: flex; flex-direction: column;
+    padding: 0;
+  }
+  .brand { padding: 26px 22px 20px 22px; border-bottom: 1px solid rgba(255,255,255,.10); }
+  .brand .logo {
+    font-weight: 900; font-size: 22px; color: #ffffff; letter-spacing: .5px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .brand .logo .mark {
+    width: 30px; height: 30px; border-radius: 8px; background: #d98e1f;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px; color: #14512a; font-weight: 900;
+  }
+  .brand .sub {
+    margin-top: 8px; font-family: "Oswald", sans-serif; font-size: 11px;
+    letter-spacing: 2px; color: #7fb191;
+  }
+  .nav { flex: 1 1 auto; padding: 16px 12px; }
+  .nav a {
+    display: flex; align-items: center; gap: 11px;
+    padding: 12px 14px; margin-bottom: 4px; border-radius: 9px;
+    color: #9fc4aa; font-size: 15px; font-weight: 500;
+    text-decoration: none; position: relative;
+  }
+  .nav a .ic { width: 22px; text-align: center; font-size: 16px; }
+  .nav a.active {
+    color: #ffffff; background: rgba(255,255,255,.12); font-weight: 700;
+  }
+  .nav a.active::before {
+    content: ""; position: absolute; left: 0; top: 8px; bottom: 8px;
+    width: 4px; border-radius: 4px; background: #d98e1f;
+  }
+  .user {
+    padding: 16px 18px; border-top: 1px solid rgba(255,255,255,.10);
+    display: flex; align-items: center; gap: 11px;
+  }
+  .user .ava {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: #d98e1f; color: #14512a; font-weight: 900; font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .user .who { font-size: 13px; color: #e6f1e9; font-weight: 700; }
+  .user .who small { display: block; font-size: 11px; color: #7fb191; font-weight: 400; }
+
+  /* ===== Main ===== */
+  .main { flex: 1 1 auto; height: 1080px; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar {
+    height: 78px; flex: 0 0 78px; background: #ffffff;
+    border-bottom: 1px solid #dde3dd;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 32px;
+  }
+  .topbar .title { font-size: 24px; font-weight: 900; color: #14512a; }
+  .topbar .right { display: flex; align-items: center; gap: 18px; }
+  .topbar .date { font-size: 15px; font-weight: 700; color: #4a5550; }
+  .search {
+    display: flex; align-items: center; gap: 8px;
+    background: #f1f4f1; border: 1px solid #dde3dd; border-radius: 22px;
+    padding: 8px 16px; width: 240px; color: #8a948e; font-size: 14px;
+  }
+  .bell {
+    position: relative; width: 40px; height: 40px; border-radius: 50%;
+    background: #f1f4f1; border: 1px solid #dde3dd;
+    display: flex; align-items: center; justify-content: center; font-size: 18px;
+  }
+  .bell .dot {
+    position: absolute; top: 6px; right: 7px; width: 9px; height: 9px;
+    border-radius: 50%; background: #c0392b; border: 2px solid #fff;
+  }
+  .topbar .uava {
+    width: 40px; height: 40px; border-radius: 50%; background: #1f6b3a;
+    color: #fff; font-weight: 900; font-size: 15px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .content { flex: 1 1 auto; padding: 22px 32px 0 32px; overflow: hidden; }
+
+  /* channel status cards */
+  .chan-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 20px; }
+  .card { background: #fff; border: 1px solid #dde3dd; border-radius: 16px; box-shadow: 0 2px 8px rgba(20,81,42,.05); }
+  .chan-card { padding: 18px 20px; display: flex; align-items: center; gap: 16px; }
+  .chan-icon {
+    width: 52px; height: 52px; border-radius: 13px; flex: 0 0 52px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; font-weight: 900; color: #fff;
+  }
+  .ic-slack { background: #4a154b; }
+  .ic-line { background: #06c755; }
+  .ic-mail { background: #1f6b3a; }
+  .ic-ntfy { background: #c4ccc6; color: #6a746e; }
+  .chan-meta .name { font-size: 16px; font-weight: 700; color: #22272e; }
+  .chan-meta .desc { font-size: 12.5px; color: #6a746e; margin-top: 2px; }
+  .chan-status { margin-top: 7px; display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; }
+  .st-on { color: #1f6b3a; }
+  .st-off { color: #97a09a; }
+  .st-on .pill, .st-off .pill { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  .st-on .pill { background: #1f6b3a; }
+  .st-off .pill { background: #b8c0ba; }
+
+  /* two columns */
+  .grid2 { display: grid; grid-template-columns: 1.45fr 1fr; gap: 22px; }
+
+  .panel-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 22px 12px 22px;
+  }
+  .panel-head h2 { margin: 0; font-size: 18px; font-weight: 900; color: #14512a; display: flex; align-items: center; gap: 9px; }
+  .panel-head .badge-add {
+    font-size: 12.5px; font-weight: 700; color: #1f6b3a;
+    background: #e7f1ea; border: 1px solid #c8e0d0; border-radius: 7px; padding: 5px 12px;
+  }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    background: #2b2f36; color: #fff; font-size: 12.5px; font-weight: 700;
+    text-align: left; padding: 11px 14px;
+  }
+  thead th:first-child { padding-left: 22px; }
+  thead th.center { text-align: center; }
+  tbody td {
+    border-bottom: 1px solid #dde3dd; padding: 13px 14px;
+    font-size: 14px; vertical-align: middle;
+  }
+  tbody td:first-child { padding-left: 22px; }
+  tbody tr:last-child td { border-bottom: none; }
+  .rule-name { font-weight: 700; color: #22272e; }
+  .rule-no { display: inline-block; width: 22px; color: #97a09a; font-weight: 700; }
+  .dest { display: inline-flex; align-items: center; gap: 5px; flex-wrap: wrap; font-size: 13px; color: #4a5550; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11.5px; font-weight: 700; border-radius: 6px; padding: 3px 8px;
+  }
+  .chip-slack { background: #efe5f0; color: #4a154b; }
+  .chip-line { background: #e2f7eb; color: #06914a; }
+  .chip-mail { background: #e7f1ea; color: #1f6b3a; }
+  .chip-self { background: #eef1ee; color: #5a655f; border: 1px solid #dde3dd; }
+  .timing { font-size: 13px; color: #4a5550; }
+  .toggle {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 12.5px; font-weight: 700; color: #1f6b3a;
+  }
+  .sw {
+    width: 38px; height: 21px; border-radius: 11px; background: #1f6b3a;
+    position: relative; flex: 0 0 38px;
+  }
+  .sw::after {
+    content: ""; position: absolute; top: 2px; right: 2px;
+    width: 17px; height: 17px; border-radius: 50%; background: #fff;
+  }
+  .approve-note { display: block; font-size: 11px; color: #d98e1f; font-weight: 700; margin-top: 2px; }
+
+  /* delivery log */
+  .log-list { padding: 6px 18px 14px 18px; }
+  .log-item {
+    display: flex; align-items: flex-start; gap: 13px;
+    padding: 13px 6px; border-bottom: 1px solid #eef1ee;
+  }
+  .log-item:last-child { border-bottom: none; }
+  .log-time {
+    flex: 0 0 58px; font-family: "Oswald", sans-serif; font-size: 15px;
+    font-weight: 600; color: #1f6b3a; padding-top: 1px;
+  }
+  .log-time small { display: block; font-family: "Noto Sans JP", sans-serif; font-size: 10.5px; color: #97a09a; font-weight: 400; }
+  .log-body { flex: 1 1 auto; }
+  .log-msg { font-size: 14px; color: #22272e; line-height: 1.45; }
+  .log-tag { font-size: 11px; color: #8a948e; margin-left: 6px; }
+  .log-dests { margin-top: 6px; display: flex; gap: 7px; flex-wrap: wrap; }
+  .log-bell { flex: 0 0 16px; color: #d98e1f; font-size: 15px; padding-top: 1px; }
+
+  /* footer note */
+  .note-bar {
+    margin: 18px 0 0 0; padding: 13px 20px;
+    background: #fff5e6; border: 1px solid #f0d9a8; border-radius: 12px;
+    display: flex; align-items: center; gap: 11px;
+    font-size: 13.5px; color: #8a6212; font-weight: 500;
+  }
+  .note-bar .warn { color: #c0392b; font-weight: 900; font-size: 16px; }
+  .note-bar strong { color: #6f4e0e; font-weight: 900; }
+
+  .demo-note {
+    position: fixed; right: 18px; bottom: 12px;
+    font-size: 12px; color: #a9b1ab;
+  }
+</style>
+</head>
+<body>
+
+  <!-- ===== Sidebar ===== -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo"><span class="mark">社</span>AI社員パック</div>
+      <div class="sub">TEAM EDITION / KIMOCHI ICHIBA</div>
+    </div>
+    <nav class="nav">
+      <a href="#"><span class="ic">🏠</span>ダッシュボード</a>
+      <a href="#"><span class="ic">✅</span>タスク管理</a>
+      <a href="#"><span class="ic">📝</span>日報</a>
+      <a href="#"><span class="ic">🗓</span>シフト</a>
+      <a href="#"><span class="ic">💰</span>収支・月次</a>
+      <a href="#"><span class="ic">🎁</span>補助金斡旋</a>
+      <a href="#"><span class="ic">🤖</span>専属AI</a>
+      <a href="#" class="active"><span class="ic">🔔</span>通知設定</a>
+    </nav>
+    <div class="user">
+      <div class="ava">社</div>
+      <div class="who">社長<small>管理者</small></div>
+    </div>
+  </aside>
+
+  <!-- ===== Main ===== -->
+  <div class="main">
+    <div class="topbar">
+      <div class="title">通知連携（Slack/LINE/メール）</div>
+      <div class="right">
+        <div class="date">2026/6/14（土）</div>
+        <div class="search"><span>🔍</span>通知ルール・配信ログを検索</div>
+        <div class="bell">🔔<span class="dot"></span></div>
+        <div class="uava">社</div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- channel status -->
+      <div class="chan-row">
+        <div class="card chan-card">
+          <div class="chan-icon ic-slack">#</div>
+          <div class="chan-meta">
+            <div class="name">Slack</div>
+            <div class="desc">#業務連絡</div>
+            <div class="chan-status st-on"><span class="pill"></span>✅ 接続済</div>
+          </div>
+        </div>
+        <div class="card chan-card">
+          <div class="chan-icon ic-line">L</div>
+          <div class="chan-meta">
+            <div class="name">LINE</div>
+            <div class="desc">社内グループ</div>
+            <div class="chan-status st-on"><span class="pill"></span>✅ 接続済</div>
+          </div>
+        </div>
+        <div class="card chan-card">
+          <div class="chan-icon ic-mail">✉</div>
+          <div class="chan-meta">
+            <div class="name">メール</div>
+            <div class="desc">代表アドレス</div>
+            <div class="chan-status st-on"><span class="pill"></span>✅ 接続済</div>
+          </div>
+        </div>
+        <div class="card chan-card">
+          <div class="chan-icon ic-ntfy">📱</div>
+          <div class="chan-meta">
+            <div class="name">スマホ通知（NTFY）</div>
+            <div class="desc">プッシュ通知</div>
+            <div class="chan-status st-off"><span class="pill"></span>⚪ 未設定（任意）</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- two columns -->
+      <div class="grid2">
+
+        <!-- LEFT: rules -->
+        <div class="card">
+          <div class="panel-head">
+            <h2>🔔 通知ルール</h2>
+            <span class="badge-add">＋ ルール追加</span>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>通知の種類</th>
+                <th>宛先</th>
+                <th>タイミング</th>
+                <th class="center">状態</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="rule-no">①</span><span class="rule-name">日報の未提出リマインド</span></td>
+                <td><span class="dest"><span class="chip chip-line">LINE 本人</span></span></td>
+                <td class="timing">18:00</td>
+                <td><span class="toggle"><span class="sw"></span>ON</span></td>
+              </tr>
+              <tr>
+                <td>
+                  <span class="rule-no">②</span><span class="rule-name">未入金／督促の下書き完了</span>
+                  <span class="approve-note">要承認系</span>
+                </td>
+                <td><span class="dest"><span class="chip chip-slack"># 社長Slack</span><span class="chip chip-line">LINE</span></span></td>
+                <td class="timing">即時</td>
+                <td><span class="toggle"><span class="sw"></span>ON</span></td>
+              </tr>
+              <tr>
+                <td><span class="rule-no">③</span><span class="rule-name">シフト希望の提出</span></td>
+                <td><span class="dest"><span class="chip chip-slack"># 社長Slack</span></span></td>
+                <td class="timing">即時</td>
+                <td><span class="toggle"><span class="sw"></span>ON</span></td>
+              </tr>
+              <tr>
+                <td><span class="rule-no">④</span><span class="rule-name">補助金の新着公募</span></td>
+                <td><span class="dest"><span class="chip chip-mail">✉ 社長メール</span><span class="chip chip-slack"># Slack</span></span></td>
+                <td class="timing">公募検知時</td>
+                <td><span class="toggle"><span class="sw"></span>ON</span></td>
+              </tr>
+              <tr>
+                <td><span class="rule-no">⑤</span><span class="rule-name">月次締めリマインド</span></td>
+                <td><span class="dest"><span class="chip chip-line">LINE 社長</span></span></td>
+                <td class="timing">毎月1日 9:00</td>
+                <td><span class="toggle"><span class="sw"></span>ON</span></td>
+              </tr>
+              <tr>
+                <td><span class="rule-no">⑥</span><span class="rule-name">タスク期限前日</span></td>
+                <td><span class="dest"><span class="chip chip-self">担当者 本人</span></span></td>
+                <td class="timing">前日 17:00</td>
+                <td><span class="toggle"><span class="sw"></span>ON</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- RIGHT: delivery log -->
+        <div class="card">
+          <div class="panel-head">
+            <h2>📡 配信ログ（直近5件）</h2>
+          </div>
+          <div class="log-list">
+
+            <div class="log-item">
+              <div class="log-bell">🔔</div>
+              <div class="log-time">14:20</div>
+              <div class="log-body">
+                <div class="log-msg">田中さんがシフト希望を提出</div>
+                <div class="log-dests"><span class="chip chip-slack"># Slack ✅</span></div>
+              </div>
+            </div>
+
+            <div class="log-item">
+              <div class="log-bell">🔔</div>
+              <div class="log-time">13:05</div>
+              <div class="log-body">
+                <div class="log-msg">入金照合完了／未入金1件・督促下書き準備</div>
+                <div class="log-dests"><span class="chip chip-slack"># Slack ✅</span><span class="chip chip-line">LINE ✅</span></div>
+              </div>
+            </div>
+
+            <div class="log-item">
+              <div class="log-bell">🔔</div>
+              <div class="log-time">09:00</div>
+              <div class="log-body">
+                <div class="log-msg">おはようございます。本日の段取り（タスク3／承認2）<span class="log-tag">朝ブリーフィング</span></div>
+                <div class="log-dests"><span class="chip chip-line">LINE ✅</span></div>
+              </div>
+            </div>
+
+            <div class="log-item">
+              <div class="log-bell">🔔</div>
+              <div class="log-time">本日<small>09:30</small></div>
+              <div class="log-body">
+                <div class="log-msg">IT導入補助金2026 一次公募が開始</div>
+                <div class="log-dests"><span class="chip chip-mail">✉ メール ✅</span><span class="chip chip-slack"># Slack ✅</span></div>
+              </div>
+            </div>
+
+            <div class="log-item">
+              <div class="log-bell">🔔</div>
+              <div class="log-time">昨日<small>18:00</small></div>
+              <div class="log-body">
+                <div class="log-msg">鈴木さん 日報未提出リマインド</div>
+                <div class="log-dests"><span class="chip chip-line">LINE 本人 ✅</span></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- important note -->
+      <div class="note-bar">
+        <span class="warn">⚠</span>
+        <div><strong>通知＝お知らせと下書きの配信まで。</strong>実際の送信・送金・公開はどのルールも行いません（社長本人が操作）。</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="demo-note">画面はデモ用のサンプルデータです</div>
+
+<a href="index.html" style="position:fixed;top:14px;right:16px;z-index:99999;background:#d98e1f;color:#fff;font-family:'Noto Sans JP',sans-serif;font-size:14px;font-weight:700;text-decoration:none;padding:9px 16px;border-radius:9px;box-shadow:0 3px 10px rgba(0,0,0,.25)">&#9776; デモ目次へ</a><div style="position:fixed;bottom:14px;left:16px;z-index:99999;background:rgba(34,39,46,.82);color:#fff;font-family:'Noto Sans JP',sans-serif;font-size:12px;padding:6px 12px;border-radius:8px">デモ（サンプルデータ／一部は今後実装の機能）</div>
+</body>
+</html>

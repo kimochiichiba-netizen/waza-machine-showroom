@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>AI社員パック チーム版｜シフト希望→自動シフト作成</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;}
+  body{width:1920px;height:1080px;overflow:hidden;margin:0;font-family:"Noto Sans JP",sans-serif;color:#22272e;background:#eef1ee;}
+  .layout{display:flex;height:1080px;}
+
+  /* ===== Sidebar ===== */
+  .sidebar{width:260px;flex:0 0 260px;background:#14512a;color:#fff;display:flex;flex-direction:column;height:1080px;}
+  .brand{padding:24px 22px 18px;border-bottom:1px solid rgba(255,255,255,.12);}
+  .brand-logo{font-size:22px;font-weight:900;letter-spacing:.5px;}
+  .brand-sub{margin-top:6px;font-family:"Oswald",sans-serif;font-size:11px;letter-spacing:1.5px;color:#9fc4aa;}
+  .nav{flex:1;padding:14px 0;}
+  .nav-item{display:flex;align-items:center;gap:12px;padding:13px 22px;font-size:15px;color:#9fc4aa;font-weight:500;border-left:4px solid transparent;}
+  .nav-item .ico{font-size:17px;width:22px;text-align:center;}
+  .nav-item.active{color:#fff;background:rgba(255,255,255,.12);border-left:4px solid #d98e1f;font-weight:700;}
+  .nav-foot{padding:16px 20px;border-top:1px solid rgba(255,255,255,.12);display:flex;align-items:center;gap:12px;}
+  .avatar{width:42px;height:42px;border-radius:50%;background:#1f6b3a;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;flex:0 0 42px;}
+  .nav-foot .who{font-size:14px;font-weight:700;color:#fff;line-height:1.3;}
+  .nav-foot .role{font-size:11px;color:#9fc4aa;}
+
+  /* ===== Main ===== */
+  .main{flex:1;display:flex;flex-direction:column;height:1080px;overflow:hidden;}
+  .topbar{height:74px;flex:0 0 74px;background:#fff;border-bottom:1px solid #dde3dd;display:flex;align-items:center;justify-content:space-between;padding:0 30px;}
+  .page-title{font-size:24px;font-weight:900;}
+  .topbar-right{display:flex;align-items:center;gap:18px;}
+  .date-pill{font-size:14px;font-weight:700;color:#22272e;}
+  .search{display:flex;align-items:center;gap:8px;background:#eef1ee;border:1px solid #dde3dd;border-radius:10px;padding:8px 14px;width:240px;color:#7a857c;font-size:13px;}
+  .bell{position:relative;font-size:20px;}
+  .bell .dot{position:absolute;top:-2px;right:-3px;width:9px;height:9px;background:#c0392b;border-radius:50%;border:2px solid #fff;}
+  .user-circle{width:40px;height:40px;border-radius:50%;background:#1f6b3a;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;}
+
+  .content{flex:1;padding:22px 30px 16px;overflow:hidden;position:relative;}
+
+  .card{background:#fff;border:1px solid #dde3dd;border-radius:16px;box-shadow:0 2px 8px rgba(20,81,42,.05);}
+  .card-h{font-size:18px;font-weight:700;padding:15px 20px 10px;display:flex;align-items:center;gap:9px;}
+  .card-h .tag{font-size:12px;font-weight:500;color:#7a857c;}
+
+  /* ===== Top status row ===== */
+  .top-row{display:flex;gap:18px;margin-bottom:16px;}
+  .req-card{flex:1;padding:16px 22px;display:flex;align-items:center;justify-content:space-between;}
+  .req-left .req-title{font-size:14px;color:#566;font-weight:500;}
+  .req-left .req-week{font-size:21px;font-weight:900;margin-top:3px;}
+  .req-badge{display:flex;align-items:center;gap:10px;}
+  .pct-ring{width:70px;height:70px;border-radius:50%;background:conic-gradient(#1f6b3a 0% 100%, #e6ece6 0);display:flex;align-items:center;justify-content:center;}
+  .pct-ring .inner{width:54px;height:54px;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .pct-ring .inner b{font-size:18px;font-weight:900;color:#1f6b3a;line-height:1;}
+  .pct-ring .inner span{font-size:10px;color:#7a857c;}
+  .req-sub{font-size:13px;color:#1f6b3a;font-weight:700;}
+
+  .wishes{flex:2;padding:13px 22px 14px;}
+  .wishes .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
+  .wish{background:#f1f5f1;border:1px solid #dde3dd;border-radius:9px;padding:7px 12px;font-size:13px;}
+  .wish b{color:#14512a;}
+
+  /* ===== Main grid ===== */
+  .grid{display:flex;gap:18px;height:622px;}
+  .shift-wrap{flex:1;display:flex;flex-direction:column;min-width:0;}
+  .shift-table{width:100%;border-collapse:collapse;font-size:14px;}
+  .shift-table th{background:#2b2f36;color:#fff;font-weight:700;padding:11px 6px;text-align:center;font-size:13px;}
+  .shift-table th.name-col{text-align:left;padding-left:18px;width:90px;}
+  .shift-table td{border-bottom:1px solid #dde3dd;padding:10px 6px;text-align:center;}
+  .shift-table td.name{text-align:left;padding-left:18px;font-weight:700;font-size:14px;}
+  .shift-table td.name small{display:block;font-weight:400;color:#7a857c;font-size:11px;}
+  .shift-table tr:nth-child(even) td{background:#f7faf7;}
+  .cell{display:inline-block;background:#e7f1ea;color:#1f6b3a;border-radius:7px;padding:4px 8px;font-size:12.5px;font-weight:700;min-width:54px;}
+  .cell.early{background:#e9f0f7;color:#2563a8;}
+  .cell.pm{background:#f3eef7;color:#7a4ca8;}
+  .cell.off{background:transparent;color:#b7c0b7;font-weight:400;}
+  .cell.full{background:#dcefe1;color:#157a36;}
+  .cell.note{position:relative;}
+  .cell.note::after{content:"希望反映";position:absolute;top:-9px;right:-6px;background:#d98e1f;color:#fff;font-size:8px;padding:1px 4px;border-radius:4px;font-weight:700;white-space:nowrap;}
+  .legend{display:flex;gap:16px;padding:11px 20px 0;font-size:12px;color:#566;}
+  .legend i{display:inline-block;width:13px;height:13px;border-radius:4px;vertical-align:-2px;margin-right:5px;}
+
+  /* ===== Right metrics ===== */
+  .side{flex:0 0 380px;display:flex;flex-direction:column;gap:16px;}
+  .metric-card{padding:14px 18px;}
+  .metric-card .mt{font-size:14px;font-weight:700;margin-bottom:10px;}
+  .fill-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;text-align:center;}
+  .fill-grid .d{font-size:12px;color:#7a857c;font-weight:700;}
+  .fill-grid .s{font-size:18px;margin-top:4px;}
+  .fill-grid .warn .s{color:#d98e1f;}
+  .fill-warn-txt{margin-top:9px;font-size:12px;color:#a06a12;background:#fdf3e3;border:1px solid #f2d9ad;border-radius:8px;padding:6px 9px;}
+
+  .kpi2{display:flex;gap:14px;}
+  .kpi2 .k{flex:1;background:#fff;border:1px solid #dde3dd;border-radius:14px;padding:14px 16px;}
+  .kpi2 .k .lbl{font-size:13px;color:#566;font-weight:500;}
+  .kpi2 .k .val{font-size:34px;font-weight:900;margin-top:4px;font-family:"Oswald",sans-serif;letter-spacing:.5px;}
+  .kpi2 .k .val.amount{font-size:30px;}
+  .kpi2 .k .sub{font-size:12px;margin-top:2px;}
+  .up{color:#1f6b3a;font-weight:700;}
+
+  .compliance{padding:15px 18px;display:flex;align-items:center;gap:14px;}
+  .comp-ico{width:46px;height:46px;border-radius:12px;background:#dcefe1;color:#157a36;display:flex;align-items:center;justify-content:center;font-size:24px;flex:0 0 46px;}
+  .compliance .ct{font-size:14px;font-weight:700;}
+  .compliance .cs{font-size:12px;color:#566;margin-top:2px;}
+  .comp-zero{margin-left:auto;font-size:30px;font-weight:900;color:#1f6b3a;font-family:"Oswald",sans-serif;}
+
+  /* ===== Bottom alert ===== */
+  .alert{margin-top:16px;background:#fdf3e3;border:1px solid #f2d9ad;border-left:5px solid #d98e1f;border-radius:14px;padding:15px 22px;display:flex;align-items:center;justify-content:space-between;}
+  .alert-left{display:flex;align-items:flex-start;gap:13px;}
+  .alert-ico{font-size:24px;line-height:1;}
+  .alert-t{font-size:15px;font-weight:700;color:#a06a12;}
+  .alert-d{font-size:13.5px;color:#5c4a26;margin-top:3px;}
+  .alert-btn{background:#1f6b3a;color:#fff;font-size:14px;font-weight:700;border:none;border-radius:10px;padding:12px 20px;white-space:nowrap;font-family:"Noto Sans JP",sans-serif;}
+
+  .footnote{position:absolute;right:8px;bottom:-2px;font-size:11px;color:#a9b3a9;}
+  .demo-note{position:fixed;right:18px;bottom:10px;font-size:11px;color:#aab4aa;}
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ===== Sidebar ===== -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-logo">AI社員パック</div>
+      <div class="brand-sub">TEAM EDITION / KIMOCHI ICHIBA</div>
+    </div>
+    <nav class="nav">
+      <div class="nav-item"><span class="ico">🏠</span>ダッシュボード</div>
+      <div class="nav-item"><span class="ico">✅</span>タスク管理</div>
+      <div class="nav-item"><span class="ico">📝</span>日報</div>
+      <div class="nav-item active"><span class="ico">🗓</span>シフト</div>
+      <div class="nav-item"><span class="ico">💰</span>収支・月次</div>
+      <div class="nav-item"><span class="ico">🎁</span>補助金斡旋</div>
+      <div class="nav-item"><span class="ico">🤖</span>専属AI</div>
+      <div class="nav-item"><span class="ico">🔔</span>通知設定</div>
+    </nav>
+    <div class="nav-foot">
+      <div class="avatar">社</div>
+      <div>
+        <div class="who">社長</div>
+        <div class="role">管理者</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== Main ===== -->
+  <div class="main">
+    <div class="topbar">
+      <div class="page-title">シフト希望 → 自動シフト作成</div>
+      <div class="topbar-right">
+        <div class="date-pill">2026/6/14(土)</div>
+        <div class="search">🔍 <span>従業員・週を検索</span></div>
+        <div class="bell">🔔<span class="dot"></span></div>
+        <div class="user-circle">社</div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- Top status -->
+      <div class="top-row">
+        <div class="card req-card">
+          <div class="req-left">
+            <div class="req-title">希望提出状況</div>
+            <div class="req-week">対象週 6/16(月)〜6/22(日)</div>
+            <div class="req-sub" style="margin-top:6px;">全員が提出済み・原案は自動生成</div>
+          </div>
+          <div class="req-badge">
+            <div class="pct-ring">
+              <div class="inner"><b>100%</b><span>提出</span></div>
+            </div>
+            <div style="font-size:14px;font-weight:700;line-height:1.4;">6/6名<br><span style="color:#1f6b3a;">完了</span></div>
+          </div>
+        </div>
+        <div class="card wishes">
+          <div class="card-h" style="padding:2px 0 4px;">各人の希望サマリ</div>
+          <div class="row">
+            <div class="wish"><b>佐藤</b>：平日希望／土日休み</div>
+            <div class="wish"><b>田中</b>：火木金OK・水NG</div>
+            <div class="wish"><b>鈴木</b>：早番希望</div>
+            <div class="wish"><b>山口</b>：フルタイム可</div>
+            <div class="wish"><b>中村</b>：午後のみ</div>
+            <div class="wish"><b>林（パート）</b>：月水金 9-13</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main grid -->
+      <div class="grid">
+
+        <!-- Shift table -->
+        <div class="card shift-wrap">
+          <div class="card-h">自動生成シフト表 <span class="tag">／ AIが希望をもとに作成した原案</span></div>
+          <div style="padding:0 16px;">
+            <table class="shift-table">
+              <thead>
+                <tr>
+                  <th class="name-col">従業員</th>
+                  <th>月 6/16</th><th>火 6/17</th><th>水 6/18</th><th>木 6/19</th><th>金 6/20</th><th>土 6/21</th><th>日 6/22</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="name">佐藤</td>
+                  <td><span class="cell">8-17</span></td><td><span class="cell">8-17</span></td><td><span class="cell">8-17</span></td><td><span class="cell">8-17</span></td><td><span class="cell">8-17</span></td>
+                  <td><span class="cell off">休</span></td><td><span class="cell off">休</span></td>
+                </tr>
+                <tr>
+                  <td class="name">田中</td>
+                  <td><span class="cell off">休</span></td><td><span class="cell">8-17</span></td><td><span class="cell off note">休</span></td><td><span class="cell">8-17</span></td><td><span class="cell">8-17</span></td>
+                  <td><span class="cell">9-15</span></td><td><span class="cell off">休</span></td>
+                </tr>
+                <tr>
+                  <td class="name">鈴木</td>
+                  <td><span class="cell early">7-16</span></td><td><span class="cell early">7-16</span></td><td><span class="cell early">7-16</span></td><td><span class="cell off">休</span></td><td><span class="cell early">7-16</span></td>
+                  <td><span class="cell early">7-13</span></td><td><span class="cell off">休</span></td>
+                </tr>
+                <tr>
+                  <td class="name">山口</td>
+                  <td><span class="cell full">9-18</span></td><td><span class="cell full">9-18</span></td><td><span class="cell full">9-18</span></td><td><span class="cell full">9-18</span></td><td><span class="cell full">9-18</span></td>
+                  <td><span class="cell off">休</span></td><td><span class="cell off">休</span></td>
+                </tr>
+                <tr>
+                  <td class="name">中村</td>
+                  <td><span class="cell pm">13-18</span></td><td><span class="cell pm">13-18</span></td><td><span class="cell pm">13-18</span></td><td><span class="cell pm">13-18</span></td><td><span class="cell pm">13-18</span></td>
+                  <td><span class="cell off">休</span></td><td><span class="cell off">休</span></td>
+                </tr>
+                <tr>
+                  <td class="name">林<small>パート</small></td>
+                  <td><span class="cell">9-13</span></td><td><span class="cell off">休</span></td><td><span class="cell">9-13</span></td><td><span class="cell off">休</span></td><td><span class="cell">9-13</span></td>
+                  <td><span class="cell off">休</span></td><td><span class="cell off">休</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="legend">
+            <span><i style="background:#e7f1ea;"></i>通常</span>
+            <span><i style="background:#e9f0f7;"></i>早番</span>
+            <span><i style="background:#f3eef7;"></i>午後のみ</span>
+            <span><i style="background:#dcefe1;"></i>フルタイム</span>
+            <span><i style="background:#d98e1f;"></i>希望を反映した調整</span>
+          </div>
+        </div>
+
+        <!-- Right metrics -->
+        <div class="side">
+          <div class="card metric-card">
+            <div class="mt">必要人数の充足</div>
+            <div class="fill-grid">
+              <div class="d">月<div class="s">✅</div></div>
+              <div class="d">火<div class="s">✅</div></div>
+              <div class="d warn">水<div class="s">⚠</div></div>
+              <div class="d">木<div class="s">✅</div></div>
+              <div class="d">金<div class="s">✅</div></div>
+              <div class="d">土<div class="s">✅</div></div>
+              <div class="d">日<div class="s" style="color:#b7c0b7;">休</div></div>
+            </div>
+            <div class="fill-warn-txt">⚠ 水曜 午前 配送1名不足</div>
+          </div>
+
+          <div class="kpi2">
+            <div class="k">
+              <div class="lbl">希望反映率</div>
+              <div class="val">94<span style="font-size:20px;">%</span></div>
+              <div class="sub up">▲ 高い反映率</div>
+            </div>
+            <div class="k">
+              <div class="lbl">週あたり人件費（概算）</div>
+              <div class="val amount">¥412,000</div>
+              <div class="sub" style="color:#7a857c;">対象週 6/16〜6/22</div>
+            </div>
+          </div>
+
+          <div class="card compliance">
+            <div class="comp-ico">✓</div>
+            <div>
+              <div class="ct">法定休憩・連続勤務の違反</div>
+              <div class="cs">夜勤連続・休憩割れを自動チェック</div>
+            </div>
+            <div class="comp-zero">0<span style="font-size:14px;font-weight:700;">件</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom alert -->
+      <div class="alert">
+        <div class="alert-left">
+          <div class="alert-ico">⚠</div>
+          <div>
+            <div class="alert-t">水曜 午前 配送1名不足 → 解消できる案があります</div>
+            <div class="alert-d">候補：山口さんを <b>9時入りに変更</b> で解消（人件費 +¥0）。最終確定は社長承認のうえ反映します。</div>
+          </div>
+        </div>
+        <button class="alert-btn">この案を採用（社長承認）</button>
+      </div>
+
+      <div class="footnote">自動作成した案は必ず責任者（社長）が承認してから確定。異常値（連続勤務・休憩割れ）は自動で警告します。</div>
+    </div>
+  </div>
+</div>
+<div class="demo-note">画面はデモ用のサンプルデータです</div>
+<a href="index.html" style="position:fixed;top:14px;right:16px;z-index:99999;background:#d98e1f;color:#fff;font-family:'Noto Sans JP',sans-serif;font-size:14px;font-weight:700;text-decoration:none;padding:9px 16px;border-radius:9px;box-shadow:0 3px 10px rgba(0,0,0,.25)">&#9776; デモ目次へ</a><div style="position:fixed;bottom:14px;left:16px;z-index:99999;background:rgba(34,39,46,.82);color:#fff;font-family:'Noto Sans JP',sans-serif;font-size:12px;padding:6px 12px;border-radius:8px">デモ（サンプルデータ／一部は今後実装の機能）</div>
+</body>
+</html>

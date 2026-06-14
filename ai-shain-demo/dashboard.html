@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>一元管理ダッシュボード（社長ホーム）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    width: 1920px; height: 1080px; overflow: hidden; margin: 0;
+    font-family: "Noto Sans JP", sans-serif;
+    color: #22272e; background: #eef1ee;
+    display: flex;
+  }
+
+  /* ===== サイドバー ===== */
+  .sidebar {
+    width: 260px; height: 1080px; flex: 0 0 260px;
+    background: #14512a; color: #9fc4aa;
+    display: flex; flex-direction: column;
+  }
+  .brand {
+    padding: 26px 22px 22px 22px;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+  .brand .logo {
+    font-weight: 900; font-size: 22px; color: #fff; letter-spacing: .5px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .brand .logo .mark {
+    width: 30px; height: 30px; border-radius: 8px; background: #d98e1f;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px;
+  }
+  .brand .sub {
+    margin-top: 8px; font-size: 10.5px; letter-spacing: 2px;
+    color: #6fa884; font-family: "Oswald", sans-serif; font-weight: 600;
+  }
+  .nav { flex: 1; padding: 14px 12px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 14px; margin: 3px 0; border-radius: 10px;
+    font-size: 15px; font-weight: 500; color: #9fc4aa;
+    position: relative; cursor: default;
+  }
+  .nav-item .ico { width: 22px; text-align: center; font-size: 16px; }
+  .nav-item.active {
+    background: rgba(255,255,255,.12); color: #fff; font-weight: 700;
+  }
+  .nav-item.active::before {
+    content: ""; position: absolute; left: 0; top: 6px; bottom: 6px;
+    width: 4px; border-radius: 4px; background: #d98e1f;
+  }
+  .user-box {
+    margin: 12px; padding: 13px 14px; border-radius: 12px;
+    background: rgba(0,0,0,.18);
+    display: flex; align-items: center; gap: 11px;
+  }
+  .user-box .avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: #d98e1f; color: #14512a; font-weight: 900; font-size: 16px;
+    display: flex; align-items: center; justify-content: center; flex: 0 0 38px;
+  }
+  .user-box .uname { color: #fff; font-weight: 700; font-size: 14px; }
+  .user-box .urole { color: #9fc4aa; font-size: 11px; margin-top: 2px; }
+
+  /* ===== メイン ===== */
+  .main { flex: 1; height: 1080px; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar {
+    height: 76px; flex: 0 0 76px; background: #fff;
+    border-bottom: 1px solid #dde3dd;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 32px;
+  }
+  .topbar .ptitle { font-size: 24px; font-weight: 900; color: #22272e; }
+  .topbar .right { display: flex; align-items: center; gap: 18px; }
+  .topbar .date { font-size: 15px; font-weight: 700; color: #1f6b3a; }
+  .topbar .search {
+    display: flex; align-items: center; gap: 8px;
+    background: #eef1ee; border: 1px solid #dde3dd; border-radius: 10px;
+    padding: 9px 14px; width: 240px; color: #7a857d; font-size: 14px;
+  }
+  .topbar .bell {
+    width: 42px; height: 42px; border-radius: 10px; background: #eef1ee;
+    display: flex; align-items: center; justify-content: center; font-size: 19px;
+    position: relative;
+  }
+  .topbar .bell .dot {
+    position: absolute; top: 9px; right: 10px; width: 9px; height: 9px;
+    border-radius: 50%; background: #c0392b; border: 2px solid #fff;
+  }
+  .topbar .uround {
+    width: 42px; height: 42px; border-radius: 50%; background: #1f6b3a;
+    color: #fff; font-weight: 900; font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .content { flex: 1; padding: 24px 32px 20px 32px; overflow: hidden; }
+
+  /* ===== KPIカード ===== */
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 22px; }
+  .card {
+    background: #fff; border: 1px solid #dde3dd; border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(20,81,42,.05);
+  }
+  .kpi {
+    border: 3px solid #d9dfd9; border-radius: 18px; padding: 18px 20px;
+    height: 142px; display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .kpi .label { font-size: 14px; font-weight: 700; color: #5a655c; }
+  .kpi .big { font-size: 38px; font-weight: 900; line-height: 1; color: #22272e; }
+  .kpi .big .yen { font-size: 22px; font-weight: 700; }
+  .kpi .delta { font-size: 14px; font-weight: 700; }
+  .kpi .delta.up { color: #1f6b3a; }
+  .kpi .delta.warn { color: #c0392b; }
+  .kpi .sub { font-size: 13px; color: #7a857d; }
+  .badge-amber {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #fbeccd; color: #9a6713; font-weight: 700; font-size: 12.5px;
+    padding: 4px 10px; border-radius: 8px;
+  }
+  .kpi-flex { display: flex; align-items: center; gap: 16px; }
+  .ring {
+    width: 78px; height: 78px; border-radius: 50%; flex: 0 0 78px;
+    display: flex; align-items: center; justify-content: center; position: relative;
+    background: conic-gradient(#1f6b3a 0% 70%, #e2e8e2 70% 100%);
+  }
+  .ring::after {
+    content: ""; position: absolute; width: 56px; height: 56px; border-radius: 50%; background: #fff;
+  }
+  .ring span { position: relative; z-index: 1; font-size: 18px; font-weight: 900; color: #1f6b3a; }
+  .ring2 {
+    width: 78px; height: 78px; border-radius: 50%; flex: 0 0 78px;
+    display: flex; align-items: center; justify-content: center; position: relative;
+    background: conic-gradient(#1f6b3a 0% 83.3%, #f3d2cf 83.3% 100%);
+  }
+  .ring2::after {
+    content: ""; position: absolute; width: 56px; height: 56px; border-radius: 50%; background: #fff;
+  }
+  .ring2 span { position: relative; z-index: 1; font-size: 16px; font-weight: 900; color: #1f6b3a; }
+
+  /* ===== 中段 ===== */
+  .mid-row { display: grid; grid-template-columns: 1fr 1.18fr; gap: 20px; margin-bottom: 22px; }
+  .panel { padding: 20px 22px; }
+  .panel .head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .panel .head h3 { margin: 0; font-size: 18px; font-weight: 700; }
+  .panel .head .note { font-size: 12px; color: #8a948c; }
+
+  /* ドーナツ */
+  .donut-wrap { display: flex; align-items: center; gap: 26px; }
+  .donut {
+    width: 188px; height: 188px; border-radius: 50%; flex: 0 0 188px; position: relative;
+    background: conic-gradient(
+      #1f6b3a 0% 52%,
+      #d98e1f 52% 80%,
+      #4a8f63 80% 94%,
+      #c8d4c9 94% 100%
+    );
+  }
+  .donut::after {
+    content: ""; position: absolute; inset: 42px; border-radius: 50%; background: #fff;
+    box-shadow: inset 0 0 0 1px #eef1ee;
+  }
+  .donut .center {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; z-index: 1;
+  }
+  .donut .center .lab { font-size: 11px; color: #7a857d; }
+  .donut .center .amt { font-size: 21px; font-weight: 900; color: #14512a; }
+  .legend { flex: 1; }
+  .legend .li { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px dashed #e3e8e3; }
+  .legend .li:last-child { border-bottom: none; }
+  .legend .sw { width: 13px; height: 13px; border-radius: 4px; flex: 0 0 13px; }
+  .legend .nm { font-size: 14px; font-weight: 500; flex: 1; }
+  .legend .pct { font-size: 15px; font-weight: 900; width: 44px; text-align: right; }
+  .legend .val { font-size: 13px; color: #6a756c; width: 110px; text-align: right; }
+
+  /* 棒グラフ */
+  .bars { position: relative; height: 196px; padding: 0 6px 26px 6px; }
+  .bars .target {
+    position: absolute; left: 6px; right: 6px; border-top: 2px dashed #c08a3d;
+    bottom: 26px; /* offset set inline via height calc baseline */
+  }
+  .bars .target .tl { position: absolute; right: 0; top: -18px; font-size: 11px; color: #c08a3d; font-weight: 700; background:#fff; padding:0 4px;}
+  .bars .grid {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    height: 170px; gap: 14px; position: relative; z-index: 1;
+  }
+  .bars .col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+  .bars .bar {
+    width: 100%; max-width: 58px; border-radius: 8px 8px 0 0; background: #1f6b3a;
+    display: flex; align-items: flex-start; justify-content: center; color: #fff;
+    font-size: 13px; font-weight: 700; padding-top: 5px;
+  }
+  .bars .bar.today { background: #b7d3bf; color: #2f5a40; }
+  .bars .xlab { margin-top: 8px; font-size: 12px; color: #6a756c; }
+  .bars .xlab.today { color: #1f6b3a; font-weight: 700; }
+
+  /* ===== 下段 ===== */
+  .bot-row { display: grid; grid-template-columns: 1.35fr 1fr; gap: 20px; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    background: #2b2f36; color: #fff; font-weight: 700; font-size: 13px;
+    text-align: left; padding: 11px 14px;
+  }
+  thead th:first-child { border-radius: 8px 0 0 0; }
+  thead th:last-child { border-radius: 0 8px 0 0; }
+  tbody td { padding: 12px 14px; border-bottom: 1px solid #dde3dd; font-size: 14px; vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  .task-name { font-weight: 700; }
+  .who { color: #5a655c; font-size: 13px; }
+  .b { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 700; padding: 4px 11px; border-radius: 20px; white-space: nowrap; }
+  .b.amber { background: #fbeccd; color: #9a6713; }
+  .b.green { background: #d8ecdf; color: #1f6b3a; }
+  .b.blue  { background: #d6e6f5; color: #1f5b8f; }
+  .b.red   { background: #f7d9d6; color: #c0392b; }
+
+  /* お知らせ */
+  .notes { padding: 10px 6px; }
+  .note-row {
+    display: flex; align-items: flex-start; gap: 13px;
+    padding: 14px 12px; border-bottom: 1px solid #eaeee9;
+  }
+  .note-row:last-child { border-bottom: none; }
+  .note-row .ni {
+    width: 40px; height: 40px; border-radius: 10px; flex: 0 0 40px;
+    background: #eaf3ed; display: flex; align-items: center; justify-content: center; font-size: 19px;
+  }
+  .note-row .nbody { flex: 1; }
+  .note-row .nt { font-size: 14px; font-weight: 500; line-height: 1.4; }
+  .note-row .nmeta { margin-top: 6px; display: flex; align-items: center; gap: 10px; }
+  .note-row .ntime { font-size: 12px; color: #8a948c; }
+  .delivered {
+    display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700;
+    color: #1f6b3a; background: #e4f0e8; padding: 3px 9px; border-radius: 14px;
+  }
+
+  .demo-note {
+    position: fixed; right: 20px; bottom: 12px;
+    font-size: 11.5px; color: #aab3ab;
+  }
+</style>
+</head>
+<body>
+
+  <!-- ===== サイドバー ===== -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo"><span class="mark">AI</span>AI社員パック</div>
+      <div class="sub">TEAM EDITION / KIMOCHI ICHIBA</div>
+    </div>
+    <nav class="nav">
+      <div class="nav-item active"><span class="ico">🏠</span>ダッシュボード</div>
+      <div class="nav-item"><span class="ico">✅</span>タスク管理</div>
+      <div class="nav-item"><span class="ico">📝</span>日報一覧</div>
+      <div class="nav-item"><span class="ico">🗓</span>シフト</div>
+      <div class="nav-item"><span class="ico">💰</span>収支・月次売上</div>
+      <div class="nav-item"><span class="ico">🎁</span>補助金斡旋</div>
+      <div class="nav-item"><span class="ico">🤖</span>専属AI（記憶ノート）</div>
+      <div class="nav-item"><span class="ico">🔔</span>通知設定</div>
+    </nav>
+    <div class="user-box">
+      <div class="avatar">社</div>
+      <div>
+        <div class="uname">社長</div>
+        <div class="urole">管理者</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== メイン ===== -->
+  <div class="main">
+    <div class="topbar">
+      <div class="ptitle">一元管理ダッシュボード（社長ホーム）</div>
+      <div class="right">
+        <div class="date">2026/6/14（土）</div>
+        <div class="search"><span>🔍</span>取引先・タスクを検索</div>
+        <div class="bell">🔔<span class="dot"></span></div>
+        <div class="uround">社</div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- KPI -->
+      <div class="kpi-row">
+        <div class="card kpi">
+          <div class="label">今月の売上</div>
+          <div class="big"><span class="yen">¥</span>3,820,000</div>
+          <div class="delta up">▲ 前月比 +12.4%</div>
+        </div>
+        <div class="card kpi">
+          <div class="label">未入金</div>
+          <div class="big">2<span class="yen"> 件 / ¥</span>162,000</div>
+          <div><span class="badge-amber">● 要対応</span></div>
+        </div>
+        <div class="card kpi">
+          <div class="label">今日のタスク</div>
+          <div class="kpi-flex">
+            <div class="ring"><span>70%</span></div>
+            <div>
+              <div class="big" style="font-size:30px;">7<span style="font-size:18px;font-weight:700;color:#7a857d;"> / 10</span></div>
+              <div class="sub" style="margin-top:6px;">完了タスク</div>
+            </div>
+          </div>
+        </div>
+        <div class="card kpi">
+          <div class="label">提出済み日報</div>
+          <div class="kpi-flex">
+            <div class="ring2"><span>5/6</span></div>
+            <div>
+              <div class="sub" style="font-weight:700;color:#22272e;font-size:14px;">本日 5/6名 提出</div>
+              <div class="delta warn" style="margin-top:8px;">● 1名 未提出</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 中段 -->
+      <div class="mid-row">
+        <div class="card panel">
+          <div class="head"><h3>今月の売上構成</h3></div>
+          <div class="donut-wrap">
+            <div class="donut">
+              <div class="center">
+                <div class="lab">総額</div>
+                <div class="amt">¥3,820,000</div>
+              </div>
+            </div>
+            <div class="legend">
+              <div class="li"><span class="sw" style="background:#1f6b3a"></span><span class="nm">青果B2B</span><span class="pct">52%</span><span class="val">¥1,986,400</span></div>
+              <div class="li"><span class="sw" style="background:#d98e1f"></span><span class="nm">システム受託</span><span class="pct">28%</span><span class="val">¥1,069,600</span></div>
+              <div class="li"><span class="sw" style="background:#4a8f63"></span><span class="nm">月額SaaS</span><span class="pct">14%</span><span class="val">¥534,800</span></div>
+              <div class="li"><span class="sw" style="background:#c8d4c9"></span><span class="nm">その他</span><span class="pct">6%</span><span class="val">¥229,200</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card panel">
+          <div class="head"><h3>日別タスク完了数（直近7日）</h3><span class="note">点線 = 目標 10本</span></div>
+          <div class="bars">
+            <div class="target" style="bottom:calc(26px + 170px * 10 / 12);"><span class="tl">目標 10</span></div>
+            <div class="grid">
+              <div class="col"><div class="bar" style="height:calc(170px * 8 / 12)">8</div><div class="xlab">6/8</div></div>
+              <div class="col"><div class="bar" style="height:calc(170px * 11 / 12)">11</div><div class="xlab">6/9</div></div>
+              <div class="col"><div class="bar" style="height:calc(170px * 9 / 12)">9</div><div class="xlab">6/10</div></div>
+              <div class="col"><div class="bar" style="height:calc(170px * 12 / 12)">12</div><div class="xlab">6/11</div></div>
+              <div class="col"><div class="bar" style="height:calc(170px * 7 / 12)">7</div><div class="xlab">6/12</div></div>
+              <div class="col"><div class="bar" style="height:calc(170px * 10 / 12)">10</div><div class="xlab">6/13</div></div>
+              <div class="col"><div class="bar today" style="height:calc(170px * 7 / 12)">7</div><div class="xlab today">6/14（本日）</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 下段 -->
+      <div class="bot-row">
+        <div class="card panel" style="padding:20px 22px 14px 22px;">
+          <div class="head"><h3>本日やること（社長承認待ち）</h3></div>
+          <table>
+            <thead>
+              <tr><th style="width:48%">内容</th><th>担当 / 期限</th><th>状態</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="task-name">カード明細CSVを受付箱へ</td>
+                <td class="who">社長 ／ 今日</td>
+                <td><span class="b amber">⏳ 社長待ち</span></td>
+              </tr>
+              <tr>
+                <td class="task-name">未入金 テスト病院 督促文を確認 → 送信</td>
+                <td class="who">社長</td>
+                <td><span class="b amber">下書き完了・要承認</span></td>
+              </tr>
+              <tr>
+                <td class="task-name">6月分 請求書5件の最終承認</td>
+                <td class="who">社長</td>
+                <td><span class="b blue">発行待ち</span></td>
+              </tr>
+              <tr>
+                <td class="task-name">新規補助金1件 該当の可能性 → 確認</td>
+                <td class="who">社長</td>
+                <td><span class="b red">NEW</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <div class="panel" style="padding:20px 22px 6px 22px;">
+            <div class="head"><h3>お知らせ / 通知連携</h3></div>
+          </div>
+          <div class="notes">
+            <div class="note-row">
+              <div class="ni">🔔</div>
+              <div class="nbody">
+                <div class="nt">田中さんがシフト希望を提出</div>
+                <div class="nmeta"><span class="ntime">10分前</span><span class="delivered">✓ Slack / LINEにも配信済</span></div>
+              </div>
+            </div>
+            <div class="note-row">
+              <div class="ni">🔔</div>
+              <div class="nbody">
+                <div class="nt">AI事務部長：入金照合が完了。未入金1件</div>
+                <div class="nmeta"><span class="ntime">1時間前</span><span class="delivered">✓ Slack / LINEにも配信済</span></div>
+              </div>
+            </div>
+            <div class="note-row">
+              <div class="ni">🔔</div>
+              <div class="nbody">
+                <div class="nt">補助金：IT導入補助金2026 一次公募が開始</div>
+                <div class="nmeta"><span class="ntime">本日</span><span class="delivered">✓ Slack / LINEにも配信済</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="demo-note">画面はデモ用のサンプルデータです</div>
+
+<a href="index.html" style="position:fixed;top:14px;right:16px;z-index:99999;background:#d98e1f;color:#fff;font-family:'Noto Sans JP',sans-serif;font-size:14px;font-weight:700;text-decoration:none;padding:9px 16px;border-radius:9px;box-shadow:0 3px 10px rgba(0,0,0,.25)">&#9776; デモ目次へ</a><div style="position:fixed;bottom:14px;left:16px;z-index:99999;background:rgba(34,39,46,.82);color:#fff;font-family:'Noto Sans JP',sans-serif;font-size:12px;padding:6px 12px;border-radius:8px">デモ（サンプルデータ／一部は今後実装の機能）</div>
+</body>
+</html>
