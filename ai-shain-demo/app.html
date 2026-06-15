@@ -722,6 +722,9 @@ const NAV = [
   {id:"shift",     ic:I.shift, label:"シフト", sec:"main"},
   {id:"shushi",    ic:I.money, label:"収支・月次", sec:"main"},
   {id:"seikyu",    ic:I.card, label:"請求・入金", sec:"main"},
+  {id:"shikin",    ic:I.money, label:"資金繰り", sec:"main"},
+  {id:"shorui",    ic:I.doc,  label:"書類プレビュー", sec:"main"},
+  {id:"sakugen",   ic:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="100%" height="100%"><path d="M3 21h18"/><rect x="5" y="11" width="3.2" height="7"/><rect x="10.4" y="7" width="3.2" height="11"/><rect x="15.8" y="4" width="3.2" height="14"/></svg>', label:"削減メーター", sec:"main"},
   {id:"hojokin",   ic:I.hojo, label:"補助金斡旋", badge:"2", sec:"main"},
   {id:"kioku",     ic:I.ai,   label:"専属AI記憶ノート", sec:"main"},
   {id:"tsuchi",    ic:I.bell, label:"通知連携", sec:"main"},
@@ -2402,9 +2405,141 @@ function footer(){
 /* ====================================================================
    ROUTER + INIT
 ==================================================================== */
+/* ====================================================================
+   追加機能：資金繰りカレンダー / 書類プレビュー / 削減メーター
+==================================================================== */
+function viewShikin(){
+  const v=el("div","view");
+  v.innerHTML=`<div class="page-head"><h1>資金繰りカレンダー</h1><p>入ってくるお金・出ていくお金を月カレンダーで一覧。資金ショートの危険を、起きる前にAIが警告します。（サンプル・架空）</p></div>`;
+  const k=el("div","grid g4");
+  k.append(
+    kpiCard({icon:I.card,lbl:"月初の残高",val:yen(1850000)}),
+    kpiCard({icon:I.check,tone:"green",lbl:"今月の入金予定",val:yen(1890000),delta:"+3件",deltaTone:"up"}),
+    kpiCard({icon:I.money,lbl:"今月の支払予定",val:yen(1860000)}),
+    kpiCard({icon:I.bell,lbl:"月末の見込み残高",val:yen(1880000),delta:"安全圏",deltaTone:"up"})
+  );
+  v.append(k);
+  const warn=el("div");warn.style.cssText="margin:18px 0;background:var(--warn-soft);border:1px solid #f0c9c2;border-left:5px solid var(--warn);border-radius:12px;padding:14px 18px;color:#7a2f24;font-size:13px;font-weight:700";
+  warn.innerHTML=`⚠️ <b>6/25 に支払が集中</b>します。一時的に残高が <b>¥730,000</b> まで下がる見込みです。入金の前倒し依頼や支払日の調整をご検討ください。<span style="display:block;font-weight:400;color:#9a5a4f;margin-top:5px;font-size:11.5px">※AIは気づき・警告と下書きまで。実際の振込・調整は社長が行います。</span>`;
+  v.append(warn);
+  const cal=el("div","card");cal.style.marginTop="4px";
+  cal.innerHTML=`<div class="card-h"><h3>2026年6月 入出金カレンダー</h3><span class="sub" style="color:var(--muted)">緑＝入金予定 ／ 赤＝支払予定</span></div>`;
+  const grid=el("div");grid.style.cssText="display:grid;grid-template-columns:repeat(7,1fr);gap:6px";
+  ["日","月","火","水","木","金","土"].forEach(d=>{const h=el("div");h.style.cssText="text-align:center;font-size:11px;color:var(--muted);font-weight:700;padding:4px 0";h.textContent=d;grid.append(h);});
+  const ev={10:[{t:"入金",a:"129.6万"}],13:[{t:"入金",a:"5.4万"}],20:[{t:"入金",a:"54万"}],25:[{t:"支払",a:"124万"}],30:[{t:"支払",a:"62万"}]};
+  const firstDow=1, days=30;
+  for(let i=0;i<firstDow;i++)grid.append(el("div"));
+  for(let d=1;d<=days;d++){
+    const cell=el("div");const danger=(d===25);
+    cell.style.cssText="min-height:60px;border:1px solid var(--line);border-radius:9px;padding:5px 6px;background:"+(danger?"var(--warn-soft)":"#fff");
+    let h=`<div style="font-size:11px;font-weight:700;color:${danger?'var(--warn)':'var(--ink-soft)'}">${d}${danger?' ⚠':''}</div>`;
+    (ev[d]||[]).forEach(e=>{const col=e.t==="入金"?"#1f6b3a":"#bb4631";h+=`<div style="margin-top:3px;font-size:9px;font-weight:700;color:#fff;background:${col};border-radius:5px;padding:1px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.t} ${e.a}</div>`;});
+    cell.innerHTML=h;grid.append(cell);
+  }
+  cal.append(grid);v.append(cal);
+  const tbl=el("div","card");tbl.style.marginTop="18px";
+  tbl.innerHTML=`<div class="card-h"><h3>直近の入出金予定</h3></div><table>
+   <tr><th>日付</th><th>区分</th><th>相手</th><th style="text-align:right">金額</th><th style="text-align:right">残高見込み</th></tr>
+   <tr><td>6/10</td><td><span style="color:#1f6b3a;font-weight:700">入金</span></td><td>サンプル総合病院</td><td style="text-align:right;color:#1f6b3a">+¥1,296,000</td><td style="text-align:right">¥3,146,000</td></tr>
+   <tr><td>6/20</td><td><span style="color:#1f6b3a;font-weight:700">入金</span></td><td>みどり介護園</td><td style="text-align:right;color:#1f6b3a">+¥540,000</td><td style="text-align:right">¥3,686,000</td></tr>
+   <tr style="background:var(--warn-soft)"><td>6/25</td><td><span style="color:#bb4631;font-weight:700">支払 ⚠</span></td><td>大分青果市場（仕入）</td><td style="text-align:right;color:#bb4631">−¥1,240,000</td><td style="text-align:right;font-weight:700">¥730,000</td></tr>
+   <tr><td>6/30</td><td><span style="color:#bb4631;font-weight:700">支払</span></td><td>給与</td><td style="text-align:right;color:#bb4631">−¥620,000</td><td style="text-align:right">¥1,880,000</td></tr>
+   </table>`;
+  v.append(tbl);
+  v.append(footer());
+  return v;
+}
+
+function viewShorui(){
+  const v=el("div","view");
+  v.innerHTML=`<div class="page-head"><h1>書類プレビュー</h1><p>AIが作った書類を、その場で確認できます。送付・確定は社長が行います。（サンプル・架空）</p></div>`;
+  const inv=`<div style="font-size:12px;color:#333">
+   <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #1f6b3a;padding-bottom:10px;margin-bottom:12px">
+     <div><div style="font-size:20px;font-weight:900;color:#14512a">請　求　書</div><div style="font-size:11px;color:#888;margin-top:4px">No. INV-2026-0612 ／ 発行日 2026/06/30</div></div>
+     <div style="text-align:right;font-size:11px;color:#555">株式会社サンプル市場<br>大分県大分市〇〇1-2-3<br>登録番号 T1234567890123（架空）</div></div>
+   <div style="font-size:13.5px;margin-bottom:8px"><b>サンプル総合病院</b> 御中</div>
+   <div style="font-size:12px;margin-bottom:12px">下記のとおりご請求申し上げます。　ご請求金額：<b style="font-size:15px;color:#14512a">¥118,800</b>（税込）</div>
+   <table style="width:100%;border-collapse:collapse;font-size:11.5px">
+    <tr style="background:#14512a;color:#fff"><th style="padding:7px;text-align:left">品目</th><th style="padding:7px">数量</th><th style="padding:7px;text-align:right">単価</th><th style="padding:7px;text-align:right">金額</th></tr>
+    <tr><td style="padding:7px;border-bottom:1px solid #eee">野菜定期便（6月分）</td><td style="padding:7px;text-align:center;border-bottom:1px solid #eee">1式</td><td style="padding:7px;text-align:right;border-bottom:1px solid #eee">¥54,000</td><td style="padding:7px;text-align:right;border-bottom:1px solid #eee">¥54,000</td></tr>
+    <tr><td style="padding:7px;border-bottom:1px solid #eee">スポット納品</td><td style="padding:7px;text-align:center;border-bottom:1px solid #eee">1式</td><td style="padding:7px;text-align:right;border-bottom:1px solid #eee">¥50,000</td><td style="padding:7px;text-align:right;border-bottom:1px solid #eee">¥50,000</td></tr>
+    <tr><td style="padding:7px">配送料</td><td style="padding:7px;text-align:center">1式</td><td style="padding:7px;text-align:right">¥6,000</td><td style="padding:7px;text-align:right">¥6,000</td></tr></table>
+   <div style="text-align:right;font-size:12px;margin-top:10px;line-height:1.9">小計 ¥110,000　／　消費税（8%軽減・一部10%）¥8,800<br><b style="font-size:15px;color:#14512a">合計 ¥118,800</b></div></div>`;
+  const quo=`<div style="font-size:12px;color:#333">
+   <div style="display:flex;justify-content:space-between;border-bottom:2px solid #1f6b3a;padding-bottom:10px;margin-bottom:12px"><div style="font-size:20px;font-weight:900;color:#14512a">御　見　積　書</div><div style="text-align:right;font-size:11px;color:#555">No. EST-2026-014 ／ 2026/06/15<br>有効期限 2026/07/15</div></div>
+   <div style="font-size:13.5px;margin-bottom:8px"><b>サンプル建設 株式会社</b> 御中</div>
+   <div style="font-size:12px;margin-bottom:12px">件名：事務まわりのAI導入（チーム版）　お見積金額：<b style="font-size:15px;color:#14512a">¥146,080</b>（税込）</div>
+   <table style="width:100%;border-collapse:collapse;font-size:11.5px">
+    <tr style="background:#14512a;color:#fff"><th style="padding:7px;text-align:left">項目</th><th style="padding:7px;text-align:right">金額</th></tr>
+    <tr><td style="padding:7px;border-bottom:1px solid #eee">スタンダード 初期費用</td><td style="padding:7px;text-align:right;border-bottom:1px solid #eee">¥98,000</td></tr>
+    <tr><td style="padding:7px;border-bottom:1px solid #eee">月額（初月）</td><td style="padding:7px;text-align:right;border-bottom:1px solid #eee">¥29,800</td></tr>
+    <tr><td style="padding:7px">従業員席 3名</td><td style="padding:7px;text-align:right">¥4,500</td></tr></table>
+   <div style="text-align:right;font-size:12px;margin-top:10px;line-height:1.9">小計 ¥132,800　／　消費税(10%) ¥13,280<br><b style="font-size:15px;color:#14512a">合計 ¥146,080</b></div></div>`;
+  const pay=`<div style="font-size:12px;color:#333">
+   <div style="border-bottom:2px solid #1f6b3a;padding-bottom:10px;margin-bottom:12px"><div style="font-size:18px;font-weight:900;color:#14512a">給与明細書（2026年6月分）</div><div style="font-size:11px;color:#888;margin-top:3px">氏名：サンプル 太郎（架空）</div></div>
+   <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+    <div><div style="font-weight:700;color:#1f6b3a;font-size:12.5px;margin-bottom:6px">支給</div><table style="width:100%;font-size:11.5px;border-collapse:collapse">
+     <tr><td style="padding:4px 0">基本給</td><td style="text-align:right">¥250,000</td></tr><tr><td style="padding:4px 0">職務手当</td><td style="text-align:right">¥30,000</td></tr><tr><td style="padding:4px 0">通勤手当</td><td style="text-align:right">¥12,000</td></tr><tr style="border-top:1px solid #ddd;font-weight:700"><td style="padding:5px 0">支給合計</td><td style="text-align:right">¥292,000</td></tr></table></div>
+    <div><div style="font-weight:700;color:#bb4631;font-size:12.5px;margin-bottom:6px">控除</div><table style="width:100%;font-size:11.5px;border-collapse:collapse">
+     <tr><td style="padding:4px 0">健康保険</td><td style="text-align:right">¥14,400</td></tr><tr><td style="padding:4px 0">厚生年金</td><td style="text-align:right">¥26,700</td></tr><tr><td style="padding:4px 0">雇用保険</td><td style="text-align:right">¥1,752</td></tr><tr><td style="padding:4px 0">所得税</td><td style="text-align:right">¥6,850</td></tr><tr><td style="padding:4px 0">住民税</td><td style="text-align:right">¥12,000</td></tr><tr style="border-top:1px solid #ddd;font-weight:700"><td style="padding:5px 0">控除合計</td><td style="text-align:right">¥61,702</td></tr></table></div></div>
+   <div style="text-align:right;margin-top:12px;font-size:13px">差引支給額　<b style="font-size:18px;color:#14512a">¥230,298</b></div>
+   <div style="font-size:10.5px;color:#999;margin-top:8px">※検算式つきで自動作成。金額の確定・支給は社長が行います。</div></div>`;
+  const DOCS={invoice:{name:"請求書",html:inv},quote:{name:"見積書",html:quo},payslip:{name:"給与明細",html:pay}};
+  const wrap=el("div");wrap.style.cssText="display:grid;grid-template-columns:180px 1fr;gap:18px;align-items:start";
+  const list=el("div");list.style.cssText="display:flex;flex-direction:column;gap:8px";
+  const prev=el("div","card");prev.style.padding="0";prev.style.overflow="hidden";
+  const btns={};
+  function show(key){
+    prev.innerHTML=`<div class="card-h" style="padding:15px 18px;border-bottom:1px solid var(--line);margin:0"><h3>${DOCS[key].name}（下書き）</h3><span class="sub" style="color:var(--muted)">サンプル・架空</span></div><div style="padding:20px;background:#fafdfb">${DOCS[key].html}</div>`;
+    const dl=el("button","btn btn-opt btn-sm","PDFでダウンロード（デモ）");dl.style.margin="0 20px 18px";dl.onclick=()=>toast(DOCS[key].name+"をダウンロードしました（デモ）");
+    prev.append(dl);
+    Object.keys(btns).forEach(k=>{btns[k].style.borderColor=(k===key?"var(--green)":"var(--line)");btns[k].style.background=(k===key?"#f3f7f3":"#fff");btns[k].style.color=(k===key?"var(--green)":"var(--ink)");});
+  }
+  Object.keys(DOCS).forEach(k=>{const b=el("button","",DOCS[k].name);b.style.cssText="border:1.5px solid var(--line);background:#fff;border-radius:11px;padding:12px 14px;font-size:13px;font-weight:700;text-align:left;cursor:pointer;transition:.15s";b.onclick=()=>show(k);btns[k]=b;list.append(b);});
+  wrap.append(list,prev);v.append(wrap);
+  show("invoice");
+  v.append(footer());
+  return v;
+}
+
+function viewSakugen(){
+  const v=el("div","view");
+  v.innerHTML=`<div class="page-head"><h1>削減メーター</h1><p>この仕組みで、今月どれだけ時間とお金が浮いたかの試算です。（効果は業務・運用により異なり、保証するものではありません）</p></div>`;
+  const big=el("div","card");big.style.cssText="margin-bottom:18px;text-align:center;padding:30px 24px;background:linear-gradient(180deg,#f3f9f4,#fff)";
+  big.innerHTML=`<div style="font-size:13px;color:var(--muted);font-weight:700">今月、取り戻せた時間（試算）</div>
+   <div style="font-family:'Oswald',sans-serif;font-weight:700;font-size:58px;color:var(--green);line-height:1.05;margin-top:4px">28<span style="font-size:24px"> 時間</span></div>
+   <div style="font-size:15px;color:var(--ink-soft);margin-top:6px">金額換算 <b style="color:var(--amber)">¥84,000／月</b>（時給3,000円換算・一例）</div>
+   <div style="font-size:12.5px;color:var(--muted);margin-top:4px">年に換算すると 約 <b>336時間・¥1,008,000</b> 相当</div>`;
+  v.append(big);
+  const bd=el("div","card");bd.style.marginBottom="18px";
+  bd.innerHTML=`<div class="card-h"><h3>業務別の削減（今月・試算）</h3></div><table>
+   <tr><th>業務</th><th style="text-align:right">削減時間/月</th><th style="text-align:right">金額換算</th></tr>
+   <tr><td>経費の仕分け</td><td style="text-align:right">6時間</td><td style="text-align:right">¥18,000</td></tr>
+   <tr><td>メール返信の下書き</td><td style="text-align:right">5時間</td><td style="text-align:right">¥15,000</td></tr>
+   <tr><td>入金チェック</td><td style="text-align:right">5時間</td><td style="text-align:right">¥15,000</td></tr>
+   <tr><td>請求書づくり</td><td style="text-align:right">4時間</td><td style="text-align:right">¥12,000</td></tr>
+   <tr><td>日報の集計</td><td style="text-align:right">4時間</td><td style="text-align:right">¥12,000</td></tr>
+   <tr><td>ネット購入の管理</td><td style="text-align:right">3時間</td><td style="text-align:right">¥9,000</td></tr>
+   <tr><td>給与明細</td><td style="text-align:right">1時間</td><td style="text-align:right">¥3,000</td></tr>
+   <tr style="font-weight:700;background:#f3f7f3"><td>合計</td><td style="text-align:right">28時間</td><td style="text-align:right">¥84,000</td></tr></table>`;
+  v.append(bd);
+  const ch=el("div","card");
+  ch.innerHTML=`<div class="card-h"><h3>削減時間の推移（直近6ヶ月・試算）</h3></div>`;
+  const bars=el("div");bars.style.cssText="display:flex;align-items:flex-end;gap:14px;height:170px;padding:12px 6px 0";
+  [["1月",18],["2月",20],["3月",22],["4月",24],["5月",26],["6月",28]].forEach(p=>{
+    const col=el("div");col.style.cssText="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end";
+    col.innerHTML=`<div style="font-size:11px;font-weight:700;color:var(--green)">${p[1]}h</div><div style="width:58%;border-radius:7px 7px 0 0;background:linear-gradient(180deg,#2c8f4d,#1f6b3a);height:${Math.round(p[1]/28*100)}%"></div><div style="font-size:11px;color:var(--muted)">${p[0]}</div>`;
+    bars.append(col);
+  });
+  ch.append(bars);v.append(ch);
+  v.append(footer());
+  return v;
+}
+
 const VIEWS={
   dashboard:viewDashboard, tasks:viewTasks, nippo:viewNippo, shift:viewShift,
   shushi:viewShushi, seikyu:viewSeikyu, hojokin:viewHojokin, kioku:viewKioku,
+  shikin:viewShikin, shorui:viewShorui, sakugen:viewSakugen,
   tsuchi:viewTsuchi, options:viewOptions
 };
 
