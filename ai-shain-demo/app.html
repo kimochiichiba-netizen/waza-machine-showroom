@@ -1727,6 +1727,14 @@ function viewHojokin(){
   banner.innerHTML=`<div style="width:44px;height:44px;color:#cfe7d5;flex:0 0 44px">${I.hojo}</div><div style="flex:1;min-width:200px"><div style="font-size:14px;font-weight:700;color:#fff;line-height:1.6">自社の定款40項目（AI/IT/教育/ヘルスケア/EC/コンサル等）に当てはまる補助金を、公募が出るたび自動で抽出してお知らせします。</div><div style="font-size:12px;color:#bcdac6;margin-top:5px">本日の新着 2件</div></div><span class="chip" style="background:#fff;color:var(--warn)"><span class="d"></span>NEW 2</span>`;
   v.appendChild(banner);
 
+  // 新着を社内に通知（Discord/Slack）
+  const notifyRow=el("div");notifyRow.style.cssText="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px";
+  const notifyBtn=el("button","btn btn-green btn-sm","🔔 新着の補助金を社内に通知（Discord / Slack）");
+  notifyBtn.onclick=()=>toast("Discord・Slack へ『IT導入補助金2026（マッチ度95%）ほか1件』を社内通知しました（デモ）");
+  const notifyNote=el("span");notifyNote.style.cssText="font-size:11px;color:var(--muted)";notifyNote.textContent="※自社（定款40項目）に合う新着が出るたび、自動で社内チャンネルへお知らせできます（通知連携で設定）。";
+  notifyRow.append(notifyBtn,notifyNote);
+  v.appendChild(notifyRow);
+
   // tabs
   const tabs=el("div","tabs mt24");
   [["list","該当一覧"],["cal","締切カレンダー"],["share","社内共有"],["doc","書類作成支援"]].forEach(([id,lbl])=>{
@@ -1982,6 +1990,7 @@ function viewTsuchi(){
   const chGrid=el("div","grid g4");
   const channels=[
     {n:"Slack",sub:"#業務連絡",on:true},
+    {n:"Discord",sub:"#お知らせ",on:true},
     {n:"LINE",sub:"社内グループ",on:true},
     {n:"メール",sub:"代表アドレス",on:true},
     {n:"スマホ通知",sub:"NTFY（任意）",on:false}
@@ -2000,7 +2009,13 @@ function viewTsuchi(){
   });
   chCard.appendChild(chGrid);
   const testBtn=el("button","btn btn-green mt16","テスト通知を送る");
-  testBtn.onclick=()=>toast("通知を送信しました（デモ）");
+  testBtn.onclick=()=>{
+    const chips='<span class="chip green" style="font-size:10px;padding:1px 8px">Slack✓</span> <span class="chip green" style="font-size:10px;padding:1px 8px">Discord✓</span> <span class="chip green" style="font-size:10px;padding:1px 8px">LINE✓</span>';
+    const li=el("li");
+    li.innerHTML=`<div class="fic">${I.bell}</div><div style="flex:1;min-width:0"><div>テスト通知：本日の段取り（未入金2・要返信3・タスク7/10）を送信</div><div class="ft">たった今</div><div class="chan">${chips}</div></div>`;
+    if(typeof feed!=="undefined"&&feed.firstChild)feed.insertBefore(li,feed.firstChild); else if(typeof feed!=="undefined")feed.appendChild(li);
+    toast("Slack・Discord・LINE へ送信しました（デモ）");
+  };
   chCard.appendChild(testBtn);
   v.appendChild(chCard);
 
@@ -2009,9 +2024,12 @@ function viewTsuchi(){
   rCard.innerHTML=`<div class="card-h"><h3>通知ルール</h3><span class="sub">トグルでON/OFF</span></div>`;
   const rules=[
     ["日報の未提出リマインド","本人LINE","18:00",true,"gray"],
-    ["未入金 / 督促の下書き完了","社長Slack＋LINE","即時",true,"amber"],
-    ["シフト希望の提出","社長Slack","即時",true,"gray"],
-    ["補助金の新着公募","社長メール＋Slack","公募検知時",true,"gray"],
+    ["未入金 / 督促の下書き完了","社長Slack＋LINE＋Discord","即時",true,"amber"],
+    ["入金の確認（消込）","社長Slack＋Discord","入金検知時",true,"gray"],
+    ["請求書の発行完了","社長Slack＋Discord","発行時",true,"gray"],
+    ["シフト希望の提出 / 確定","社長Slack","即時",true,"gray"],
+    ["補助金の新着公募（自社にマッチ）","社長メール＋Slack＋Discord","公募検知時",true,"amber"],
+    ["ダッシュボードの異常（資金ショート等）","社長LINE＋Slack＋Discord","検知時",true,"amber"],
     ["月次締めリマインド","社長LINE","毎月1日 9:00",true,"gray"],
     ["タスク期限 前日","担当者本人","前日 17:00",true,"gray"]
   ];
