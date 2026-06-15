@@ -1982,13 +1982,15 @@ function viewKioku(){
 ==================================================================== */
 function viewTsuchi(){
   const v=el("div","view");
-  v.innerHTML=`<div class="page-head"><h1>通知連携</h1><p>日報・入金・シフト・補助金の動きをSlack / LINE / メールへ自動でお知らせ。ただし送るのは「知らせ」だけ、お金と送信は本人だけ。</p></div>`;
+  v.innerHTML=`<div class="page-head"><h1>通知連携</h1><p>日報・シフト・請求・入金・補助金・ダッシュボードの動きを Chatwork / LINE WORKS / Slack / Discord / LINE / メール へ自動でお知らせ。ただし送るのは「知らせ」だけ、お金と送信は本人だけ。</p></div>`;
 
   // channels
   const chCard=el("div","card");
   chCard.innerHTML=`<div class="card-h"><h3>接続チャンネル</h3><span class="sub">トグルで接続のON/OFF</span></div>`;
   const chGrid=el("div","grid g4");
   const channels=[
+    {n:"Chatwork",sub:"マイチャット/グループ",on:true},
+    {n:"LINE WORKS",sub:"社内トーク",on:true},
     {n:"Slack",sub:"#業務連絡",on:true},
     {n:"Discord",sub:"#お知らせ",on:true},
     {n:"LINE",sub:"社内グループ",on:true},
@@ -2010,11 +2012,11 @@ function viewTsuchi(){
   chCard.appendChild(chGrid);
   const testBtn=el("button","btn btn-green mt16","テスト通知を送る");
   testBtn.onclick=()=>{
-    const chips='<span class="chip green" style="font-size:10px;padding:1px 8px">Slack✓</span> <span class="chip green" style="font-size:10px;padding:1px 8px">Discord✓</span> <span class="chip green" style="font-size:10px;padding:1px 8px">LINE✓</span>';
+    const chips='<span class="chip green" style="font-size:10px;padding:1px 8px">Chatwork✓</span> <span class="chip green" style="font-size:10px;padding:1px 8px">LINE WORKS✓</span> <span class="chip green" style="font-size:10px;padding:1px 8px">Slack✓</span> <span class="chip green" style="font-size:10px;padding:1px 8px">Discord✓</span>';
     const li=el("li");
     li.innerHTML=`<div class="fic">${I.bell}</div><div style="flex:1;min-width:0"><div>テスト通知：本日の段取り（未入金2・要返信3・タスク7/10）を送信</div><div class="ft">たった今</div><div class="chan">${chips}</div></div>`;
     if(typeof feed!=="undefined"&&feed.firstChild)feed.insertBefore(li,feed.firstChild); else if(typeof feed!=="undefined")feed.appendChild(li);
-    toast("Slack・Discord・LINE へ送信しました（デモ）");
+    toast("Chatwork・LINE WORKS・Slack・Discord へ送信しました（デモ）");
   };
   chCard.appendChild(testBtn);
   v.appendChild(chCard);
@@ -2334,7 +2336,27 @@ const OPTION_FEATURES=[
   {id:"hojo", ic:I.hojo, title:"補助金書類の自動作成", desc:"定款40項目と公募要領を照合し、事業計画書のたたき台まで自動生成。採択は保証しません。申請・提出は社長本人。", price:"初期 5万円／月額 10,000円〜", link:"hojokin",
     demo:["公募が出るたび定款と自動照合","使える補助金だけを抽出してお知らせ","事業計画書のたたき台を自動下書き","数値・申請・提出は社長が一次資料で確定（採択保証なし）"]},
   {id:"sns", ic:I.share, title:"SNS自動投稿", desc:"1つのテーマから各SNS向けの投稿文を自動作成し、承認後に予約投稿。実際の公開前に必ず社長の承認を挟みます。", price:"初期 5万円／月額 12,000円〜",
-    demo:["1テーマ→各SNS向けに投稿文を自動生成","画像・ハッシュタグの候補も用意","承認後に予約投稿（公開前に社長が確認）","反応データを集計してレポート"]}
+    demo:["1テーマ→各SNS向けに投稿文を自動生成","画像・ハッシュタグの候補も用意","承認後に予約投稿（公開前に社長が確認）","反応データを集計してレポート"]},
+  {id:"denwa", ic:I.bell, title:"電話／LINE一次対応便", desc:"出られない電話やLINEの一次対応をAIが代行。用件を要約し、返信の下書きと折り返しリストを用意します。送信は人が確認。", price:"初期 5万円／月額 9,800円〜",
+    demo:["着信・LINEの用件をAIが要約","返信の下書きを自動作成（送信は人が確認）","折り返しリストを優先度つきで整理","通知連携で社内チャットへ即共有"]},
+  {id:"report", ic:I.doc, title:"経営者向け 月次AIレポート便", desc:"売上・入金・未入金・粗利・資金繰りを毎月1枚に自動要約。来月の打ち手まで提案します。", price:"初期 3万円／月額 7,800円〜", link:"shushi",
+    demo:["売上・入金・未入金・粗利を自動集計","資金繰りの見通しを1枚に要約","来月の打ち手を3つ提案","Chatwork/メールへ自動配信"]},
+  {id:"zaiko", ic:I.scan, title:"在庫×発注 自動連携便", desc:"在庫の残量から発注のタイミングと数量を提案。発注書（PDF）の下書きまで自動。発注確定は人。", price:"初期 5万円／月額 9,800円〜",
+    demo:["在庫の残量から発注タイミングを判定","発注数量を提案（過不足を防ぐ）","発注書PDFの下書きを自動作成","取引先への送信は人が確認"]},
+  {id:"multi", ic:I.home, title:"多店舗・多拠点 横断ダッシュ便", desc:"2店舗以上の売上・タスク・シフトを1画面に集約。店ごとのバラつきを横断で見える化。", price:"月額 +5,000円／拠点〜", link:"dashboard",
+    demo:["拠点ごとの数字を1画面に集約","店舗間の比較・順位を表示","異常値（売上急減等）を自動で通知","拠点が増えても同じ画面で管理"]},
+  {id:"yoshin", ic:I.check, title:"与信・反社・取引先チェック便", desc:"新規取引先の基本情報・リスクを1枚に。安心して取引を始める判断材料を用意します。", price:"月額 4,800円＋件数従量",
+    demo:["会社名から基本情報を収集・要約","リスクの観点を1枚に整理","結果は社内で共有（最終判断は人）","記録を残して後から確認"]},
+  {id:"yoyaku", ic:I.bell, title:"来客・予約 受付便", desc:"予約の受付・空き管理・前日リマインドを自動化。クリニックや教室・サロン向け。", price:"初期 3万円／月額 7,800円〜",
+    demo:["予約の受付と空き状況を管理","前日のリマインドを自動送信（確認モード）","ダブルブッキングを防止","予約状況をダッシュボードに反映"]},
+  {id:"dakoku", ic:I.task, title:"クラウド勤怠 打刻便", desc:"スマホ打刻と集計、残業・休憩割れのアラートまで。勤怠集計（標準）に打刻インフラを足します。", price:"月額 +500円／人〜",
+    demo:["スマホで出退勤を打刻","残業・法定休憩割れを自動アラート","勤怠集計（標準）と自動連携","管理者が承認して確定"]},
+  {id:"tagengo", ic:I.share, title:"多言語 接客・掲示便", desc:"メニューや掲示・案内を多言語に自動変換。観光地・飲食・宿泊の外国人対応に。", price:"月額 4,800円〜",
+    demo:["日本語から多言語に自動変換","メニュー・POP・案内のPDFを作成","用語を自社向けに統一","更新も一度の入力で全言語へ"]},
+  {id:"kuchikomi", ic:I.star, title:"口コミ／予約 接客便", desc:"Google・SNSの口コミに返信の下書きを用意。取りこぼし防止の通知まで。投稿は人が確認。", price:"月額 4,800円〜",
+    demo:["新着の口コミをAIが要約","丁寧な返信の下書きを作成（投稿は人）","低評価は優先で社内に通知","返信のトーンを自社向けに統一"]},
+  {id:"keiyaku", ic:I.doc, title:"契約・サブスク見張り便", desc:"契約の更新日やサブスクの自動更新を見張り、見落としを防ぐアラート。", price:"月額 2,980円〜",
+    demo:["契約更新日を一覧で管理","更新・解約の期限前にアラート","サブスクの二重・不要契約を検知","担当者へ自動でリマインド"]}
 ];
 
 function viewOptions(){
@@ -2389,7 +2411,20 @@ function viewOptions(){
         icon:f.ic, title:f.title, foot,
         build:(bodyEl)=>{
           if(typeof builder==="function"){ builder(bodyEl); }
-          else { bodyEl.appendChild(mdLead(f.desc)); }
+          else {
+            bodyEl.appendChild(mdLead(f.desc));
+            const box=el("div","md-demo");
+            box.innerHTML=`<div class="mdh">${I.star}<span>このオプションでできること</span></div>`;
+            (f.demo||[]).forEach(d=>{
+              const row=el("div");row.style.cssText="display:flex;gap:9px;align-items:flex-start;padding:6px 0;font-size:12.5px;color:var(--ink-soft);line-height:1.6";
+              row.innerHTML=`<span style="flex:0 0 16px;color:var(--opt-deep);margin-top:2px"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 9 17 20 6"/></svg></span><span>${d}</span>`;
+              box.appendChild(row);
+            });
+            bodyEl.appendChild(box);
+            const price=el("div");price.style.cssText="margin-top:12px;font-size:12px;color:var(--ink-soft)";price.innerHTML=`価格目安：<b style="color:var(--opt-deep)">${f.price}</b>`;
+            bodyEl.appendChild(price);
+            bodyEl.appendChild(mdNote("これは別オプション機能です（標準パックには含まれません）。送信・支払い・公開・確定は社長本人が行います。"));
+          }
           if(f.link){
             const more=el("button","btn btn-opt-o btn-sm mt16","フル機能の画面を開く");
             more.onclick=()=>{ closeDemoModal(); go(f.link); toast(f.title+"の画面へ移動しました"); };
@@ -2438,17 +2473,17 @@ function viewShikin(){
   );
   v.append(k);
   const warn=el("div");warn.style.cssText="margin:18px 0;background:var(--warn-soft);border:1px solid #f0c9c2;border-left:5px solid var(--warn);border-radius:12px;padding:14px 18px;color:#7a2f24;font-size:13px;font-weight:700";
-  warn.innerHTML=`⚠️ <b>6/25 に支払が集中</b>します。一時的に残高が <b>¥730,000</b> まで下がる見込みです。入金の前倒し依頼や支払日の調整をご検討ください。<span style="display:block;font-weight:400;color:#9a5a4f;margin-top:5px;font-size:11.5px">※AIは気づき・警告と下書きまで。実際の振込・調整は社長が行います。</span>`;
+  warn.innerHTML=`⚠️ <b>6/5 の仕入支払</b>で、一時的に残高が <b>¥610,000</b> まで下がります（月末は <b>¥1,880,000</b> に回復見込み）。入金の前倒し依頼や支払日の調整をご検討ください。<span style="display:block;font-weight:400;color:#9a5a4f;margin-top:5px;font-size:11.5px">※AIは気づき・警告と下書きまで。実際の振込・調整は社長が行います。</span>`;
   v.append(warn);
   const cal=el("div","card");cal.style.marginTop="4px";
   cal.innerHTML=`<div class="card-h"><h3>2026年6月 入出金カレンダー</h3><span class="sub" style="color:var(--muted)">緑＝入金予定 ／ 赤＝支払予定</span></div>`;
   const grid=el("div");grid.style.cssText="display:grid;grid-template-columns:repeat(7,1fr);gap:6px";
   ["日","月","火","水","木","金","土"].forEach(d=>{const h=el("div");h.style.cssText="text-align:center;font-size:11px;color:var(--muted);font-weight:700;padding:4px 0";h.textContent=d;grid.append(h);});
-  const ev={10:[{t:"入金",a:"129.6万"}],13:[{t:"入金",a:"5.4万"}],20:[{t:"入金",a:"54万"}],25:[{t:"支払",a:"124万"}],30:[{t:"支払",a:"62万"}]};
+  const ev={5:[{t:"支払",a:"124万"}],10:[{t:"入金",a:"129.6万"}],20:[{t:"入金",a:"54万"}],25:[{t:"支払",a:"62万"}],28:[{t:"入金",a:"5.4万"}]};
   const firstDow=1, days=30;
   for(let i=0;i<firstDow;i++)grid.append(el("div"));
   for(let d=1;d<=days;d++){
-    const cell=el("div");const danger=(d===25);
+    const cell=el("div");const danger=(d===5);
     cell.style.cssText="min-height:60px;border:1px solid var(--line);border-radius:9px;padding:5px 6px;background:"+(danger?"var(--warn-soft)":"#fff");
     let h=`<div style="font-size:11px;font-weight:700;color:${danger?'var(--warn)':'var(--ink-soft)'}">${d}${danger?' ⚠':''}</div>`;
     (ev[d]||[]).forEach(e=>{const col=e.t==="入金"?"#1f6b3a":"#bb4631";h+=`<div style="margin-top:3px;font-size:9px;font-weight:700;color:#fff;background:${col};border-radius:5px;padding:1px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.t} ${e.a}</div>`;});
@@ -2456,12 +2491,13 @@ function viewShikin(){
   }
   cal.append(grid);v.append(cal);
   const tbl=el("div","card");tbl.style.marginTop="18px";
-  tbl.innerHTML=`<div class="card-h"><h3>直近の入出金予定</h3></div><table>
+  tbl.innerHTML=`<div class="card-h"><h3>直近の入出金予定</h3><span class="sub" style="color:var(--muted)">月初残高 ¥1,850,000</span></div><table>
    <tr><th>日付</th><th>区分</th><th>相手</th><th style="text-align:right">金額</th><th style="text-align:right">残高見込み</th></tr>
-   <tr><td>6/10</td><td><span style="color:#1f6b3a;font-weight:700">入金</span></td><td>サンプル総合病院</td><td style="text-align:right;color:#1f6b3a">+¥1,296,000</td><td style="text-align:right">¥3,146,000</td></tr>
-   <tr><td>6/20</td><td><span style="color:#1f6b3a;font-weight:700">入金</span></td><td>みどり介護園</td><td style="text-align:right;color:#1f6b3a">+¥540,000</td><td style="text-align:right">¥3,686,000</td></tr>
-   <tr style="background:var(--warn-soft)"><td>6/25</td><td><span style="color:#bb4631;font-weight:700">支払 ⚠</span></td><td>大分青果市場（仕入）</td><td style="text-align:right;color:#bb4631">−¥1,240,000</td><td style="text-align:right;font-weight:700">¥730,000</td></tr>
-   <tr><td>6/30</td><td><span style="color:#bb4631;font-weight:700">支払</span></td><td>給与</td><td style="text-align:right;color:#bb4631">−¥620,000</td><td style="text-align:right">¥1,880,000</td></tr>
+   <tr style="background:var(--warn-soft)"><td>6/5</td><td><span style="color:#bb4631;font-weight:700">支払 ⚠</span></td><td>大分青果市場（前月仕入）</td><td style="text-align:right;color:#bb4631">−¥1,240,000</td><td style="text-align:right;font-weight:700">¥610,000</td></tr>
+   <tr><td>6/10</td><td><span style="color:#1f6b3a;font-weight:700">入金</span></td><td>サンプル総合病院</td><td style="text-align:right;color:#1f6b3a">+¥1,296,000</td><td style="text-align:right">¥1,906,000</td></tr>
+   <tr><td>6/20</td><td><span style="color:#1f6b3a;font-weight:700">入金</span></td><td>みどり介護園</td><td style="text-align:right;color:#1f6b3a">+¥540,000</td><td style="text-align:right">¥2,446,000</td></tr>
+   <tr><td>6/25</td><td><span style="color:#bb4631;font-weight:700">支払</span></td><td>給与</td><td style="text-align:right;color:#bb4631">−¥620,000</td><td style="text-align:right">¥1,826,000</td></tr>
+   <tr><td>6/28</td><td><span style="color:#1f6b3a;font-weight:700">入金</span></td><td>その他取引先</td><td style="text-align:right;color:#1f6b3a">+¥54,000</td><td style="text-align:right;font-weight:700">¥1,880,000</td></tr>
    </table>`;
   v.append(tbl);
   v.append(footer());
@@ -2553,6 +2589,53 @@ function viewSakugen(){
   v.append(footer());
   return v;
 }
+
+/* 新オプション本命3つの体験デモ（DEMO_BUILDERSへ追加） */
+DEMO_BUILDERS.denwa=function(body){
+  body.appendChild(mdLead("出られなかった電話・LINEの<b>用件をAIが要約</b>し、返信の下書きと折り返しリストを用意します。送信は人が確認します。"));
+  const ex=el("div","md-demo");
+  ex.innerHTML=`<div class="mdh">${I.bell}<span>未対応の着信（サンプル・架空）</span></div>`;
+  const r=el("div","md-row");
+  r.innerHTML=`<div class="l"><b>090-xxxx-1234（サンプル）</b><span>11:42 不在着信・留守電あり</span></div><span class="chip warn" style="font-size:10px;padding:1px 8px">未対応</span>`;
+  ex.appendChild(r);body.appendChild(ex);
+  const btn=el("button","btn btn-opt mt16");btn.style.width="100%";btn.innerHTML=`${I.ai}<span>AIで要約＋返信下書き</span>`;body.appendChild(btn);
+  const out=el("div");out.style.marginTop="14px";body.appendChild(out);
+  btn.onclick=function(){
+    out.innerHTML="";
+    const c=el("div","md-demo");
+    c.innerHTML=`<div class="mdh">${I.ai}<span>AIの要約と下書き</span></div><div style="font-size:12.5px;color:var(--ink-soft);line-height:1.7"><b>用件：</b>来週分の野菜定期便の数量変更の相談。折り返し希望（本日17時まで）。<br><b>優先度：</b><span style="color:#bb4631;font-weight:700">高（本日中）</span></div>`;
+    const ta=el("textarea","md-draft");ta.readOnly=true;ta.style.marginTop="10px";
+    ta.value="サンプル総合病院 田中様\n\nお電話ありがとうございました。来週分の定期便の数量変更について、ご希望をお伺いできればと存じます。本日17時までにお電話、またはこのメッセージへのご返信でも承ります。\n\n株式会社サンプル市場";
+    c.appendChild(ta);out.appendChild(c);
+  };
+};
+DEMO_BUILDERS.report=function(body){
+  body.appendChild(mdLead("売上・入金・未入金・粗利・資金繰りを<b>毎月1枚に自動要約</b>し、来月の打ち手まで提案します。"));
+  const btn=el("button","btn btn-opt mt16");btn.style.width="100%";btn.innerHTML=`${I.doc}<span>今月の月次レポートを作成</span>`;body.appendChild(btn);
+  const out=el("div");out.style.marginTop="14px";body.appendChild(out);
+  btn.onclick=function(){
+    out.innerHTML="";
+    const c=el("div","md-demo");
+    c.innerHTML=`<div class="mdh">${I.doc}<span>2026年6月 月次サマリ（サンプル・架空）</span></div><table style="width:100%;font-size:12px;border-collapse:collapse"><tr><td style="padding:5px 0">売上</td><td style="text-align:right;font-weight:700">¥3,820,000（前月比 +12.4%）</td></tr><tr><td style="padding:5px 0">入金済み / 未入金</td><td style="text-align:right">¥3,658,000 / <span style="color:#bb4631">¥162,000（2件）</span></td></tr><tr><td style="padding:5px 0">経費</td><td style="text-align:right">¥2,210,000</td></tr><tr><td style="padding:5px 0;font-weight:700">粗利</td><td style="text-align:right;font-weight:700;color:#1f6b3a">¥1,610,000（42.1%）</td></tr></table><div style="margin-top:10px;font-size:12.5px;color:var(--ink-soft);line-height:1.7"><b>来月の打ち手（AI提案）</b><br>① 未入金2件の督促（¥162,000の早期回収）<br>② 6/5の仕入支払で資金が薄くなる→入金前倒しの相談<br>③ 粗利率の高い受託の比率を上げる</div>`;
+    out.appendChild(c);
+    const dl=el("button","btn btn-opt-o btn-sm mt16","PDFでダウンロード（デモ）");dl.onclick=function(){toast("月次レポートをダウンロードしました（デモ）");};out.appendChild(dl);
+  };
+};
+DEMO_BUILDERS.zaiko=function(body){
+  body.appendChild(mdLead("在庫の残量から<b>発注のタイミングと数量を提案</b>し、発注書（PDF）の下書きまで作ります。発注確定は人が行います。"));
+  const ex=el("div","md-demo");
+  ex.innerHTML=`<div class="mdh">${I.scan}<span>在庫の状況（サンプル・架空）</span></div><table style="width:100%;font-size:12px;border-collapse:collapse"><tr style="color:var(--muted)"><td>品目</td><td style="text-align:right">残量</td><td style="text-align:right">状態</td></tr><tr><td style="padding:5px 0">トマト（箱）</td><td style="text-align:right">3</td><td style="text-align:right"><span class="chip warn" style="font-size:10px;padding:1px 8px">要発注</span></td></tr><tr><td style="padding:5px 0">レタス（箱）</td><td style="text-align:right">12</td><td style="text-align:right"><span class="chip green" style="font-size:10px;padding:1px 8px">十分</span></td></tr><tr><td style="padding:5px 0">じゃがいも（kg）</td><td style="text-align:right">8</td><td style="text-align:right"><span class="chip warn" style="font-size:10px;padding:1px 8px">要発注</span></td></tr></table>`;
+  body.appendChild(ex);
+  const btn=el("button","btn btn-opt mt16");btn.style.width="100%";btn.innerHTML=`${I.ai}<span>発注提案を作成</span>`;body.appendChild(btn);
+  const out=el("div");out.style.marginTop="14px";body.appendChild(out);
+  btn.onclick=function(){
+    out.innerHTML="";
+    const c=el("div","md-demo");
+    c.innerHTML=`<div class="mdh">${I.ai}<span>発注提案（下書き）</span></div><div style="font-size:12.5px;color:var(--ink-soft);line-height:1.8">・トマト 10箱（過去4週の平均消費から）<br>・じゃがいも 30kg<br>発注先：大分青果市場（前回と同条件）</div>`;
+    out.appendChild(c);
+    const dl=el("button","btn btn-opt-o btn-sm mt16","発注書PDFを作成（デモ）");dl.onclick=function(){toast("発注書（下書き）を作成しました。送信は社長が確認（デモ）");};out.appendChild(dl);
+  };
+};
 
 const VIEWS={
   dashboard:viewDashboard, tasks:viewTasks, nippo:viewNippo, shift:viewShift,
