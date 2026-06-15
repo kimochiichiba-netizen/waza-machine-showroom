@@ -646,10 +646,7 @@ svg{display:block;}
       <div class="nm">AI社員パック<small>Team Edition</small></div>
     </div>
     <nav class="sb-nav" id="nav"></nav>
-    <div class="sb-foot">
-      <div class="av">社</div>
-      <div class="who"><b>社長</b><span>管理者でログイン中</span></div>
-    </div>
+    <div class="sb-foot" id="sbFoot"></div>
   </aside>
 
   <!-- ===== MAIN ===== -->
@@ -734,6 +731,7 @@ const NAV = [
 /* ---------- state ---------- */
 const STATE = {
   view:"dashboard",
+  role:"admin",
   tasksTab:"list",
   hojoTab:"list",
   expenses:2210000,
@@ -2637,11 +2635,101 @@ DEMO_BUILDERS.zaiko=function(body){
   };
 };
 
+/* ====================================================================
+   役職切替（管理者 / 従業員）＋ 従業員専用ホーム
+==================================================================== */
+const EMP_NAV=[
+  {id:"emp-home", ic:I.home, label:"マイホーム", sec:"main"}
+];
+
+function setRole(r){
+  STATE.role=r;
+  STATE.view = (r==="employee") ? "emp-home" : "dashboard";
+  document.body.classList.remove("nav-open");
+  const fab=document.getElementById("aiqFab"); if(fab) fab.style.display=(r==="employee"?"none":"");
+  buildNav(); render(); window.scrollTo({top:0,behavior:"smooth"});
+}
+
+/* 管理者に切替＝パスワード必須（デモ用：空 or「demo」でそのまま入れる） */
+function requestAdmin(){
+  const ov=el("div");ov.style.cssText="position:fixed;inset:0;z-index:135;background:rgba(14,30,20,.55);backdrop-filter:blur(3px);display:flex;align-items:flex-start;justify-content:center;padding:13vh 18px;animation:fadeUp .2s ease";
+  const p=el("div");p.style.cssText="width:100%;max-width:380px;background:#fff;border-radius:16px;box-shadow:0 24px 60px rgba(14,30,20,.34);overflow:hidden";
+  p.innerHTML=`<div style="background:linear-gradient(135deg,#14512a,#1f6b3a);color:#fff;padding:16px 20px;font-weight:700;display:flex;align-items:center;gap:9px">🔒 管理者に切り替え</div>
+   <div style="padding:18px 20px">
+     <div style="font-size:12.5px;color:#3a444b;line-height:1.7;margin-bottom:11px">管理者画面（お金・全社の数字・補助金・設定）に入るにはパスワードが必要です。</div>
+     <input id="admPw" type="password" placeholder="パスワード" style="width:100%;border:1.5px solid #dde3dd;border-radius:10px;padding:11px 13px;font-size:14px;font-family:inherit">
+     <div style="font-size:11px;color:#6e7872;margin-top:8px;line-height:1.6">※デモ用：空のまま、または「demo」で入れます（本番はパスワード必須にできます）。</div>
+     <div style="display:flex;gap:8px;margin-top:15px"><button id="admGo" style="flex:1;border:none;border-radius:10px;padding:11px;background:linear-gradient(135deg,#d08e1f,#a96a10);color:#fff;font-weight:700;cursor:pointer">管理者で入る</button><button id="admCancel" style="border:1px solid #dde3dd;background:#fff;border-radius:10px;padding:11px 16px;cursor:pointer">やめる</button></div>
+   </div>`;
+  ov.appendChild(p);document.body.appendChild(ov);
+  const close=()=>{ov.remove();document.removeEventListener("keydown",onKey);};
+  const enter=()=>{ close(); setRole("admin"); toast("管理者に切り替えました"); };
+  function onKey(e){ if(e.key==="Escape")close(); if(e.key==="Enter")enter(); }
+  ov.addEventListener("mousedown",e=>{if(e.target===ov)close();});
+  document.addEventListener("keydown",onKey);
+  p.querySelector("#admCancel").onclick=close;
+  p.querySelector("#admGo").onclick=enter;
+  setTimeout(()=>{const i=p.querySelector("#admPw");if(i)i.focus();},60);
+}
+
+function viewEmpHome(){
+  const v=el("div","view");
+  v.innerHTML=`<div class="page-head"><h1>マイホーム<span style="font-size:13px;font-weight:700;color:var(--green);background:var(--green-soft);padding:2px 10px;border-radius:20px;margin-left:10px;vertical-align:middle">従業員</span></h1><p>おはようございます、佐藤さん。あなたの「今日のやること・日報・シフト希望」をここから。お金や全社の情報・設定は管理者だけが見られます。</p></div>`;
+  // 勤怠打刻
+  const att=el("div","card");att.style.marginBottom="18px";
+  att.innerHTML=`<div class="card-h"><h3>勤怠打刻</h3><span class="sub" id="empClock" style="color:var(--muted)">本日 未打刻</span></div>`;
+  const arow=el("div");arow.style.cssText="display:flex;gap:10px";
+  const bin=el("button","btn btn-green btn-sm","🕐 出勤");const bout=el("button","btn btn-opt-o btn-sm","🏁 退勤");
+  bin.onclick=()=>{const c=$("#empClock");if(c)c.textContent="出勤 09:02 打刻済";toast("出勤を打刻しました（デモ）");};
+  bout.onclick=()=>{const c=$("#empClock");if(c)c.textContent="出勤09:02 / 退勤18:10 打刻済";toast("退勤を打刻しました（デモ）");};
+  arow.append(bin,bout);att.append(arow);v.append(att);
+  // 今日のマイタスク
+  const tc=el("div","card");tc.style.marginBottom="18px";
+  tc.innerHTML=`<div class="card-h"><h3>今日のマイタスク</h3><span class="sub" style="color:var(--muted)">チェックで完了</span></div>`;
+  const tl=el("div");
+  ["A病院へ野菜定期便を納品","在庫の棚卸し（午前）","日報を書いて提出"].forEach(t=>{
+    const row=el("label");row.style.cssText="display:flex;gap:11px;align-items:center;padding:10px 0;border-bottom:1px dashed var(--line);font-size:13.5px;cursor:pointer";
+    const cb=el("input");cb.type="checkbox";cb.style.cssText="width:18px;height:18px;flex:0 0 18px;accent-color:var(--green)";
+    const sp=el("span");sp.textContent=t;
+    cb.onchange=()=>{sp.style.textDecoration=cb.checked?"line-through":"";sp.style.color=cb.checked?"var(--muted)":"";};
+    row.append(cb,sp);tl.append(row);
+  });
+  tc.append(tl);v.append(tc);
+  // 日報を書く
+  const nc=el("div","card");nc.style.marginBottom="18px";
+  nc.innerHTML=`<div class="card-h"><h3>日報を書く</h3></div>`;
+  const ta=el("textarea");ta.placeholder="今日やったこと・気づいたこと（例：A病院へ納品、追加注文の相談あり）";ta.style.cssText="width:100%;min-height:74px;border:1.5px solid var(--line);border-radius:10px;padding:11px 13px;font-size:13px;font-family:inherit;background:#fbfdfb";
+  const sb=el("button","btn btn-green btn-sm mt16","日報を送信");
+  const done=el("div");done.style.cssText="display:none;margin-top:11px;color:var(--green);font-weight:700;font-size:13px";done.textContent="✓ 日報を送信しました（AIが要約して上司に共有・デモ）";
+  sb.onclick=()=>{ if(!ta.value.trim()){toast("日報の内容を入力してください");return;} done.style.display="block"; toast("日報を送信しました（デモ）"); ta.value=""; };
+  nc.append(ta,sb,done);v.append(nc);
+  // 今週のシフト希望
+  const sc=el("div","card");sc.style.marginBottom="18px";
+  sc.innerHTML=`<div class="card-h"><h3>今週のシフト希望</h3><span class="sub" style="color:var(--muted)">入れる日を選んで提出</span></div>`;
+  const grid=el("div");grid.style.cssText="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:13px";
+  const sel={};
+  ["月","火","水","木","金","土","日"].forEach(d=>{
+    const b=el("button");b.textContent=d;b.style.cssText="width:46px;height:46px;border-radius:12px;border:1.5px solid var(--line);background:#fff;font-weight:700;cursor:pointer;transition:.12s";sel[d]=false;
+    b.onclick=()=>{sel[d]=!sel[d];b.style.background=sel[d]?"var(--green)":"#fff";b.style.color=sel[d]?"#fff":"var(--ink)";b.style.borderColor=sel[d]?"var(--green)":"var(--line)";};
+    grid.append(b);
+  });
+  const ssb=el("button","btn btn-green btn-sm","シフト希望を提出");
+  ssb.onclick=()=>{const n=Object.values(sel).filter(Boolean).length; if(!n){toast("入れる日を選んでください");return;} toast(n+"日分のシフト希望を提出しました（デモ）");};
+  sc.append(grid,ssb);v.append(sc);
+  // 自分宛のお知らせ
+  const noc=el("div","card");noc.style.marginBottom="18px";
+  noc.innerHTML=`<div class="card-h"><h3>自分宛のお知らせ</h3></div><ul class="feed"><li><div class="fic">${I.bell}</div><div style="flex:1;min-width:0"><div>来週のシフトが確定しました</div><div class="ft">10分前</div></div></li><li><div class="fic">${I.bell}</div><div style="flex:1;min-width:0"><div>本日分の日報の提出をお願いします</div><div class="ft">1時間前</div></div></li></ul>`;
+  v.append(noc);
+  v.append(el("div","note box","従業員モードでは、お金（請求・入金・収支・資金繰り）・全社の数字・補助金・設定・記憶ノートは表示されません。会社の大事な操作（送信・支払い・確定・公開）は管理者だけが行います。これは安全のための権限分けです。"));
+  v.append(footer());
+  return v;
+}
+
 const VIEWS={
   dashboard:viewDashboard, tasks:viewTasks, nippo:viewNippo, shift:viewShift,
   shushi:viewShushi, seikyu:viewSeikyu, hojokin:viewHojokin, kioku:viewKioku,
   shikin:viewShikin, shorui:viewShorui, sakugen:viewSakugen,
-  tsuchi:viewTsuchi, options:viewOptions
+  tsuchi:viewTsuchi, options:viewOptions, "emp-home":viewEmpHome
 };
 
 function buildNav(){
@@ -2655,12 +2743,35 @@ function buildNav(){
     b.onclick=()=>{go(n.id);};
     return b;
   };
-  // メイン（標準パック）
-  nav.appendChild(el("div","nav-sec","メイン"));
-  NAV.filter(n=>n.sec==="main").forEach(n=>nav.appendChild(mkItem(n)));
-  // オプション（別オプション）
-  nav.appendChild(el("div","nav-sec opt","オプション"));
-  NAV.filter(n=>n.sec==="opt").forEach(n=>nav.appendChild(mkItem(n)));
+  if(STATE.role==="employee"){
+    nav.appendChild(el("div","nav-sec","従業員メニュー"));
+    EMP_NAV.forEach(n=>nav.appendChild(mkItem(n)));
+  } else {
+    nav.appendChild(el("div","nav-sec","メイン"));
+    NAV.filter(n=>n.sec==="main").forEach(n=>nav.appendChild(mkItem(n)));
+    nav.appendChild(el("div","nav-sec opt","オプション"));
+    NAV.filter(n=>n.sec==="opt").forEach(n=>nav.appendChild(mkItem(n)));
+  }
+  // sb-foot（ログイン中の役職＋切り替え）
+  const foot=$("#sbFoot");
+  if(foot){
+    foot.style.display="block";
+    foot.innerHTML="";
+    const row=el("div");row.style.cssText="display:flex;align-items:center;gap:13px;margin-bottom:10px";
+    if(STATE.role==="employee"){
+      row.innerHTML=`<div class="av" style="background:linear-gradient(150deg,#5a8f6f,#3f7a57)">佐</div><div class="who"><b>佐藤さん</b><span>従業員でログイン中</span></div>`;
+    } else {
+      row.innerHTML=`<div class="av">社</div><div class="who"><b>社長</b><span>管理者でログイン中</span></div>`;
+    }
+    foot.appendChild(row);
+    const sw=el("button");
+    sw.style.cssText="width:100%;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);color:#dde9e0;border-radius:9px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;transition:.15s";
+    sw.onmouseenter=()=>sw.style.background="rgba(255,255,255,.16)";
+    sw.onmouseleave=()=>sw.style.background="rgba(255,255,255,.08)";
+    if(STATE.role==="employee"){ sw.textContent="🔒 管理者に切り替え"; sw.onclick=requestAdmin; }
+    else { sw.textContent="👤 従業員画面に切り替え"; sw.onclick=()=>setRole("employee"); }
+    foot.appendChild(sw);
+  }
 }
 
 function go(id){
