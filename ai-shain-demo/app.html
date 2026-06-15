@@ -2458,5 +2458,98 @@ $("#scrim").onclick=()=>document.body.classList.remove("nav-open");
 buildNav();
 render();
 </script>
+
+<!-- ★あったらいいな機能：どの画面からでも使える「AIに頼む（合言葉）」＋朝のブリーフィング（自己完結・既存コード非干渉） -->
+<style>
+.aiq-fab{position:fixed;right:22px;bottom:22px;z-index:115;display:flex;align-items:center;gap:10px;
+ background:linear-gradient(135deg,var(--green-bright,#2c8f4d),var(--green,#1f6b3a));color:#fff;border:none;
+ border-radius:30px;padding:13px 20px;font-family:'Noto Sans JP',sans-serif;font-weight:700;font-size:14px;
+ box-shadow:0 10px 26px rgba(20,81,42,.34),inset 0 1px 0 rgba(255,255,255,.28);cursor:pointer;transition:transform .15s var(--ease,ease),box-shadow .15s;}
+.aiq-fab:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(20,81,42,.42);}
+.aiq-fab .pls{width:8px;height:8px;border-radius:50%;background:#ffe1a6;box-shadow:0 0 0 3px rgba(255,225,166,.3);}
+@media(max-width:760px){.aiq-fab{right:14px;bottom:14px;padding:12px 16px;font-size:13px;}}
+.aiq-ov{position:fixed;inset:0;z-index:130;background:rgba(14,30,20,.5);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+ display:flex;align-items:flex-start;justify-content:center;padding:7vh 18px 30px;opacity:0;pointer-events:none;transition:opacity .24s var(--ease,ease);overflow-y:auto;}
+.aiq-ov.open{opacity:1;pointer-events:auto;}
+.aiq-panel{width:100%;max-width:560px;background:#fff;border-radius:18px;box-shadow:0 24px 64px rgba(14,30,20,.34);
+ transform:translateY(16px) scale(.99);opacity:.6;transition:transform .28s var(--ease,ease),opacity .24s;overflow:hidden;margin:auto 0;}
+.aiq-ov.open .aiq-panel{transform:none;opacity:1;}
+.aiq-h{display:flex;align-items:center;gap:12px;padding:18px 20px;color:#fff;background:linear-gradient(135deg,#14512a,#1f6b3a);}
+.aiq-h .ic{width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font-size:20px;flex:0 0 40px;}
+.aiq-h .tt{flex:1;min-width:0;} .aiq-h .tt b{font-size:15.5px;font-weight:700;display:block;} .aiq-h .tt span{font-size:11.5px;color:#cfe6d6;}
+.aiq-x{width:32px;height:32px;border-radius:9px;border:none;background:rgba(255,255,255,.15);color:#fff;font-size:17px;cursor:pointer;flex:0 0 32px;transition:.15s;}
+.aiq-x:hover{background:rgba(255,255,255,.28);transform:rotate(90deg);}
+.aiq-body{padding:18px 20px;}
+.aiq-inrow{display:flex;gap:8px;margin-bottom:14px;}
+.aiq-in{flex:1;border:1.5px solid var(--line,#dde3dd);border-radius:11px;padding:11px 13px;font-size:14px;font-family:inherit;background:#fbfdfb;}
+.aiq-in:focus{outline:none;border-color:var(--green,#1f6b3a);box-shadow:0 0 0 3px rgba(31,107,58,.12);}
+.aiq-send{border:none;border-radius:11px;padding:0 16px;background:linear-gradient(135deg,#2c8f4d,#1f6b3a);color:#fff;font-weight:700;font-size:14px;cursor:pointer;}
+.aiq-lbl{font-size:11px;letter-spacing:.08em;color:var(--muted,#6e7872);font-weight:700;margin:4px 0 8px;}
+.aiq-chips{display:flex;flex-wrap:wrap;gap:8px;}
+.aiq-chip{display:flex;align-items:center;gap:7px;border:1px solid var(--line,#dde3dd);background:#fff;border-radius:22px;padding:8px 14px;font-size:12.5px;font-weight:600;color:var(--ink,#22272e);cursor:pointer;transition:.14s var(--ease,ease);}
+.aiq-chip:hover{border-color:var(--green,#1f6b3a);background:#f3f7f3;transform:translateY(-1px);}
+.aiq-res{margin-top:16px;}
+.aiq-card{border:1px solid var(--green-soft,#cfe3d4);background:linear-gradient(180deg,#f3f9f4,#fff);border-radius:14px;padding:16px 18px;animation:aiqUp .3s var(--ease,ease);}
+@keyframes aiqUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+.aiq-card .rh{display:flex;align-items:center;gap:9px;font-weight:700;color:var(--green,#1f6b3a);font-size:14px;margin-bottom:8px;}
+.aiq-card .rb{font-size:13px;color:#3c443c;line-height:1.7;}
+.aiq-card ul{margin:8px 0 0;padding-left:2px;list-style:none;}
+.aiq-card li{display:flex;gap:9px;padding:5px 0;font-size:13px;color:#3c443c;border-bottom:1px dashed #e3ece4;}
+.aiq-card li:last-child{border-bottom:none;}
+.aiq-cta{margin-top:13px;border:none;border-radius:10px;padding:10px 16px;background:linear-gradient(135deg,#d08e1f,#a96a10);color:#fff;font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 4px 12px rgba(160,103,16,.26);}
+.aiq-note{font-size:10.5px;color:var(--muted,#6e7872);margin-top:12px;line-height:1.6;}
+</style>
+<button id="aiqFab" class="aiq-fab" aria-label="AIに頼む"><span class="pls"></span>AIに頼む</button>
+<div id="aiqOv" class="aiq-ov" role="dialog" aria-modal="true" aria-hidden="true"><div class="aiq-panel">
+  <div class="aiq-h"><div class="ic">🟢</div><div class="tt"><b>AIに頼む（合言葉）</b><span>話しかけるだけ。どの画面からでも使えます</span></div><button class="aiq-x" id="aiqClose" aria-label="閉じる">×</button></div>
+  <div class="aiq-body">
+    <div class="aiq-inrow"><input id="aiqInp" class="aiq-in" placeholder="例：未入金チェックして / 今月の請求書つくって"><button id="aiqGo" class="aiq-send">頼む</button></div>
+    <div class="aiq-lbl">よく使う合言葉</div>
+    <div class="aiq-chips" id="aiqChips"></div>
+    <div class="aiq-res" id="aiqRes"></div>
+    <div class="aiq-note">※デモのサンプルです。AIは下書き・案・通知まで。送信・支払い・確定は必ず社長が行います。</div>
+  </div>
+</div></div>
+<script>
+(function(){
+  var ov=document.getElementById('aiqOv'),fab=document.getElementById('aiqFab'),res=document.getElementById('aiqRes'),inp=document.getElementById('aiqInp');
+  function open(){ov.classList.add('open');ov.setAttribute('aria-hidden','false');setTimeout(function(){if(inp)inp.focus();},90);}
+  function close(){ov.classList.remove('open');ov.setAttribute('aria-hidden','true');}
+  fab.addEventListener('click',open);
+  document.getElementById('aiqClose').addEventListener('click',close);
+  ov.addEventListener('mousedown',function(e){if(e.target===ov)close();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&ov.classList.contains('open'))close();});
+  function toastMsg(m){var w=document.getElementById('toastWrap');if(!w){w=document.createElement('div');w.id='toastWrap';w.style.cssText='position:fixed;right:20px;bottom:90px;z-index:140;display:flex;flex-direction:column;gap:8px';document.body.appendChild(w);}var t=document.createElement('div');t.textContent=m;t.style.cssText='background:#14512a;color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;box-shadow:0 6px 18px rgba(0,0,0,.25);animation:aiqUp .25s ease';w.appendChild(t);setTimeout(function(){t.remove();},2600);}
+  function navTo(label){var bs=Array.prototype.slice.call(document.querySelectorAll('nav button'));var b=bs.find(function(x){return x.textContent.replace(/\s+/g,'').indexOf(label)>=0;});if(b){b.click();return true;}return false;}
+  var CMDS=[
+    {k:'☀️ 朝のブリーフィング',type:'brief'},
+    {k:'💰 未入金チェック',nav:'請求',r:'未入金は <b>2件・¥162,000</b> です。丁寧な督促文の下書きを用意しました（送信は承認後）。',cta:'請求・入金を開く'},
+    {k:'🧾 今月の請求書をつくる',nav:'請求',r:'請求書 <b>5件</b> を下書きしました（インボイス対応）。最終承認だけお願いします。',cta:'請求・入金を開く'},
+    {k:'📒 経費の仕分け',nav:'収支',r:'カード明細 <b>32件</b> を自動で科目仕分けしました（要確認 3件）。',cta:'収支・月次を開く'},
+    {k:'🗓 シフト希望を集計',nav:'シフト',r:'<b>6名中6名</b> が提出済み。最適なシフト案を作成できます。',cta:'シフトを開く'},
+    {k:'🎁 補助金をチェック',nav:'補助金',r:'新着 <b>1件</b>：IT導入補助金2026（マッチ度95%）。書類のたたき台まで用意できます。',cta:'補助金を開く'},
+    {k:'✅ 今日のタスク',nav:'タスク',r:'今日のタスクは <b>10件中7件</b> 完了。承認待ちが 2件 あります。',cta:'タスクを開く'}
+  ];
+  function card(html){res.innerHTML='';var d=document.createElement('div');d.className='aiq-card';d.innerHTML=html;res.appendChild(d);return d;}
+  function showCmd(c){var d=card('<div class="rh">'+c.k+'</div><div class="rb">'+c.r+'</div>');if(c.cta&&c.nav){var b=document.createElement('button');b.className='aiq-cta';b.textContent=c.cta+' →';b.onclick=function(){close();navTo(c.nav);toastMsg(c.cta+'へ移動しました');};d.appendChild(b);}}
+  function showBrief(){card('<div class="rh">☀️ 今日の要点（おはようございます）</div><ul>'+
+    '<li>💰 未入金 <b>2件・¥162,000</b></li>'+
+    '<li>✉️ 要返信メール <b>3件</b>（返信の下書き用意済み）</li>'+
+    '<li>✅ 今日のタスク <b>7/10</b> 完了（承認待ち2）</li>'+
+    '<li>🗓 シフト未提出 <b>1名</b>（リマインド送信済み）</li>'+
+    '<li>🎁 補助金 新着 <b>1件</b>（IT導入補助金2026）</li>'+
+    '</ul><div style="font-size:11px;color:#6e7872;margin-top:9px">この1枚を毎朝お届けします（デモ・サンプル）。</div>');}
+  function run(text){var t=(text||'').trim();if(!t)return;
+    var hit=CMDS.find(function(c){var key=c.k.replace(/^[^ ]+ /,'');return t.indexOf(key)>=0||(c.nav&&t.indexOf(c.nav)>=0);});
+    if(/ブリーフ|今日|朝|まとめ/.test(t)&&!hit)hit=CMDS[0];
+    if(hit){ if(hit.type==='brief')showBrief(); else showCmd(hit); }
+    else { card('<div class="rh">🟢 承知しました</div><div class="rb">「'+t.replace(/</g,'&lt;')+'」を確認し、下書き・候補を用意します（デモ）。実行・送信は社長の承認後です。</div>'); }
+  }
+  var chips=document.getElementById('aiqChips');
+  CMDS.forEach(function(c){var b=document.createElement('button');b.className='aiq-chip';b.textContent=c.k;b.onclick=function(){run(c.type==='brief'?'朝のブリーフィング':c.k);};chips.appendChild(b);});
+  document.getElementById('aiqGo').onclick=function(){run(inp.value);};
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter')run(inp.value);});
+})();
+</script>
 </body>
 </html>
