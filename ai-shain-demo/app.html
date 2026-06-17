@@ -707,13 +707,16 @@ const I = {
   send:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="100%" height="100%"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg>',
   doc:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="100%" height="100%"><path d="M14 3v5h5"/><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M8 13h8M8 17h6M8 9h2"/></svg>',
   scan:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="100%" height="100%"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/></svg>',
-  share:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="100%" height="100%"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>'
+  share:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="100%" height="100%"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>',
+  deal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="100%" height="100%"><path d="M3 4h18l-7 8.5V19l-4 2v-8.5z"/></svg>'
 };
 
 /* ---------- nav config ---------- */
 /* sec: "main" = 標準パック / "opt" = 別オプション。サイドバーを2セクションに分ける */
 const NAV = [
+  {id:"banto",     ic:I.ai,   label:"番頭（経営参謀AI）", sec:"main"},
   {id:"dashboard", ic:I.home, label:"ダッシュボード", sec:"main"},
+  {id:"eigyo",     ic:I.deal, label:"案件・アポ管理", sec:"main"},
   {id:"tasks",     ic:I.task, label:"タスク", sec:"main"},
   {id:"nippo",     ic:I.nippo, label:"日報", sec:"main"},
   {id:"shift",     ic:I.shift, label:"シフト", sec:"main"},
@@ -1060,6 +1063,11 @@ function viewDashboard(){
   const v = el("div","view");
   v.innerHTML = `<div class="page-head"><h1>一元管理ダッシュボード</h1><p>会社のお金・タスク・人の状態を1画面に。朝この1枚を見れば今日やることが分かります。</p></div>`;
 
+  // ★番頭バナー（尖りへの導線）
+  const bn=el("div","card click");bn.dataset.go="banto";bn.style.cssText="margin-bottom:18px;background:linear-gradient(135deg,#14512a,#1f6b3a);color:#fff;border:none";
+  bn.innerHTML=`<div style="display:flex;gap:14px;align-items:center"><div style="flex:0 0 34px;width:34px;height:34px;color:#bfe6cd">${I.ai}</div><div style="flex:1;min-width:0"><div style="font-weight:800;font-size:16px">「うちの会社、いま何が弱い？」と番頭AIに聞く</div><div style="font-size:12.5px;color:#d6ecdd;margin-top:2px">数字を全部つないで見ているから、弱点と次の一手を根拠つきで答えます</div></div><span style="font-size:12px;color:#bfe6cd;white-space:nowrap">開く →</span></div>`;
+  v.appendChild(bn);
+
   // KPI row
   const k = el("div","grid g4");
   k.appendChild(kpiCard({lbl:"今月の売上",val:yen(STATE.sales),delta:"▲ 前月比 +12.4%",deltaTone:"up",icon:I.money,go:"shushi"}));
@@ -1067,6 +1075,37 @@ function viewDashboard(){
   k.appendChild(kpiCard({lbl:"今日のタスク",val:"7 / 10",icon:I.task,tone:"blue",ring:70,ringTxt:"70%",go:"tasks"}));
   k.appendChild(kpiCard({lbl:"提出済み日報",val:"本日 5 / 6名",delta:"1名 未提出",deltaTone:"warn",icon:I.nippo,go:"nippo"}));
   v.appendChild(k);
+
+  // 今月の営業（案件・アポ）サマリー → タップで案件・アポ管理へ
+  const eg=el("div","card click mt24"); eg.dataset.go="eigyo";
+  eg.innerHTML=`<div class="card-h"><h3>今月の営業（案件・アポ）</h3><span class="sub" style="color:var(--muted)">タップで詳しく → 案件・アポ管理</span></div>`;
+  const egRow=el("div"); egRow.style.cssText="display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:16px;margin-top:4px";
+  const egMini=(lbl,val,sub,tone)=>{ const m=el("div"); m.style.cssText="padding:14px 16px;border:1px solid var(--line);border-radius:13px;background:#fbfdfb"; m.innerHTML=`<div style="font-size:12px;color:var(--muted);font-weight:700">${lbl}</div><div style="font-family:'Oswald';font-weight:700;font-size:26px;color:${tone==='amber'?'var(--amber-deep,#a96a10)':'var(--green)'};margin-top:3px;line-height:1.1">${val}</div><div style="font-size:11.5px;color:var(--muted);margin-top:3px">${sub}</div>`; return m; };
+  const shodan=EIGYO.pipeline.find(p=>p.s==="商談中");
+  egRow.append(
+    egMini("アポ獲得", EIGYO.apoMonth+"件", "目標"+EIGYO.apoGoal+"件 ／ 達成"+Math.round(EIGYO.apoMonth/EIGYO.apoGoal*100)+"%"),
+    egMini("受注", EIGYO.juchuN+"件", yen(EIGYO.juchuAmt)),
+    egMini("商談中", (shodan?shodan.n:0)+"件", "提案フェーズ", "amber"),
+    egMini("パイプライン総額", yen(EIGYO.pipeAmt), "進行中"+EIGYO.activeN+"件")
+  );
+  eg.append(egRow); v.appendChild(eg);
+
+  // AI社員からの今日のおすすめ（横断 Top3）
+  const todo=el("div","card mt24");
+  todo.innerHTML=`<div class="card-h"><h3>AI社員からの今日のおすすめ</h3><span class="sub" style="color:var(--muted)">朝はこの3つから</span></div>`;
+  const todoItems=[
+    {ic:I.deal, t:"ひまわり介護サービスが6日間 未接触。AIがフォロー文を用意しました。", go:"eigyo", a:"案件を見る"},
+    {ic:I.card, t:"未入金が2件（¥162,000）。督促文の下書きが作れます。", go:"seikyu", a:"請求・入金へ"},
+    {ic:I.nippo, t:"本日の日報が1名 未提出。リマインドできます。", go:"nippo", a:"日報へ"}
+  ];
+  todoItems.forEach(x=>{
+    const r=el("div");r.style.cssText="display:flex;gap:12px;align-items:center;padding:11px 0;border-bottom:1px dashed var(--line)";
+    const ic=el("div");ic.style.cssText="flex:0 0 30px;width:30px;height:30px;color:var(--green)";ic.innerHTML=x.ic;
+    const tx=el("div");tx.style.cssText="flex:1;font-size:13px;color:var(--ink);line-height:1.6";tx.textContent=x.t;
+    const b=el("button","btn btn-opt-o btn-sm");b.textContent=x.a;b.dataset.go=x.go;
+    r.append(ic,tx,b);todo.append(r);
+  });
+  v.appendChild(todo);
 
   // mid row: donut + bar
   const mid = el("div","grid g23 mt24");
@@ -2639,7 +2678,8 @@ DEMO_BUILDERS.zaiko=function(body){
    役職切替（管理者 / 従業員）＋ 従業員専用ホーム
 ==================================================================== */
 const EMP_NAV=[
-  {id:"emp-home", ic:I.home, label:"マイホーム", sec:"main"}
+  {id:"emp-home", ic:I.home, label:"マイホーム", sec:"main"},
+  {id:"emp-eigyo", ic:I.deal, label:"自分の案件", sec:"main"}
 ];
 
 function setRole(r){
@@ -2725,11 +2765,408 @@ function viewEmpHome(){
   return v;
 }
 
+/* ====================================================================
+   VIEW: 案件・アポ管理（標準装備）— AI社員が営業の数字を毎日自動集計
+==================================================================== */
+const EIGYO = {
+  apoMonth:12, apoGoal:15, apoPrev:9,
+  juchuN:4, juchuAmt:1840000,
+  pipeAmt:6250000, activeN:9, winRate:33,
+  pts:540, ptsPrev:458, ptsGoal:600,
+  pipeline:[
+    {s:"リード",   n:38, amt:0,       c:"#b9ccbf"},
+    {s:"アポ獲得", n:12, amt:5200000, c:"#7fb494"},
+    {s:"商談中",   n:9,  amt:4100000, c:"#4f9468"},
+    {s:"見積提出", n:6,  amt:2950000, c:"#2d7a4a"},
+    {s:"受注",     n:4,  amt:1840000, c:"#14512a"}
+  ],
+  trend:[{m:"1月",n:7},{m:"2月",n:9},{m:"3月",n:8},{m:"4月",n:11},{m:"5月",n:10},{m:"6月",n:12}],
+  channel:[
+    {label:"紹介",       pct:42, color:"#1f6b3a"},
+    {label:"Web問合せ",  pct:25, color:"#2a8585"},
+    {label:"電話",       pct:18, color:"#c98a2b"},
+    {label:"SNS",        pct:15, color:"#a64e2a"}
+  ],
+  deals:[
+    {name:"みどり歯科クリニック", gyo:"歯科",   stage:"見積提出", amt:680000,  prob:70,  last:"5日前", next:"見積のフォロー文を送付",       owner:"佐藤"},
+    {name:"海辺カフェ＆ベーカリー", gyo:"飲食", stage:"商談中",   amt:420000,  prob:55,  last:"2日前", next:"提案書を再送し日程調整",       owner:"佐藤"},
+    {name:"さくら工務店",       gyo:"建設",   stage:"受注",     amt:1280000, prob:100, last:"昨日",   next:"契約書を送付（社長確認）",     owner:"社長"},
+    {name:"大分グリーン物流",   gyo:"運送",   stage:"アポ獲得", amt:0,       prob:25,  last:"3日前", next:"初回ヒアリングの準備",         owner:"佐藤"},
+    {name:"ひまわり介護サービス", gyo:"介護", stage:"商談中",   amt:560000,  prob:50,  last:"6日前", next:"久しく未接触→フォロー文を作成", owner:"社長"}
+  ],
+  emp:{ name:"佐藤", apoMonth:5, apoGoal:6, pts:180, ptsPrev:150 }
+};
+
+/* ---- 案件・アポ：さわると数字が動く（状態更新＋詳細ドロワー＋アポ記録） ---- */
+const EIGYO_STAGES=["リード","アポ獲得","商談中","見積提出","受注"];
+const STAGE_PROB={"リード":10,"アポ獲得":25,"商談中":50,"見積提出":70,"受注":100};
+const STAGE_PTS ={"リード":0,"アポ獲得":10,"商談中":20,"見積提出":30,"受注":100};
+
+function followDraftText(d){
+  const base={
+    "アポ獲得":"この度はお打ち合わせのお時間をいただき、誠にありがとうございます。当日は御社の事務作業のうち、特にお手間のかかっている点を伺い、AI社員でどれだけ軽くできるかを具体例でご提示いたします。お手元の資料のご準備は不要です。",
+    "商談中":"先日はお時間をいただきありがとうございました。その後ご検討状況はいかがでしょうか。ご懸念点があれば、実際の画面で動かしながら一つずつ解消いたします。まずは小さく1機能からのお試しも可能です。",
+    "見積提出":"先日はお見積りの機会をいただき、ありがとうございました。ご不明点やご予算とのすり合わせがございましたら、遠慮なくお申し付けください。30日間の全額返金保証付きですので、リスクなくお試しいただけます。",
+    "受注":"この度はご契約をいただき、誠にありがとうございます。導入はこちらで2営業日ほどで整えます。初月は私どもが伴走いたしますのでご安心ください。",
+    "リード":"はじめまして、株式会社気持ち市場でございます。御社の事務作業を、人を増やさずAI社員で軽くするお手伝いをしております。よろしければ一度、無料の『事務の健康診断』だけでもいかがでしょうか。"
+  };
+  return base[d.stage]||base["リード"];
+}
+function dealTimeline(d){
+  const idx=EIGYO_STAGES.indexOf(d.stage);
+  const days=["20日前","14日前","9日前","5日前","昨日"];
+  const labelMap={"リード":"リード獲得","アポ獲得":"アポ獲得","商談中":"商談を実施","見積提出":"見積を提出","受注":"受注・契約"};
+  const items=[];
+  for(let i=0;i<=idx;i++) items.push({when:days[i]||"先日", what:labelMap[EIGYO_STAGES[i]]});
+  return items.reverse();
+}
+
+let eigyoDrawerOpen=false;
+function openDealDrawer(d,opts){
+  if(eigyoDrawerOpen) return;
+  opts=opts||{};
+  const hideMoney=!!opts.hideMoney, allowAdv=opts.allowAdvance!==false;
+  eigyoDrawerOpen=true;
+  const ov=el("div");ov.style.cssText="position:fixed;inset:0;z-index:140;background:rgba(14,30,20,.45);backdrop-filter:blur(2px);opacity:0;transition:opacity .2s";
+  const dr=el("div");dr.style.cssText="position:fixed;top:0;right:0;height:100%;width:min(440px,92vw);background:#fff;z-index:141;box-shadow:-14px 0 50px rgba(14,30,20,.30);transform:translateX(100%);transition:transform .26s cubic-bezier(.22,.61,.36,1);overflow-y:auto";
+  const chipCls=(d.stage==="受注")?"green":(d.stage==="リード"?"":"amber");
+  const isWon=(d.stage==="受注");
+  const tl=dealTimeline(d).map(t=>`<div style="display:flex;gap:11px;align-items:flex-start;padding:7px 0"><div style="flex:0 0 10px;width:10px;height:10px;border-radius:50%;background:var(--green);margin-top:5px"></div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--ink)">${t.what}</div><div style="font-size:11px;color:var(--muted)">${t.when}</div></div></div>`).join("");
+  const moneyHtml=hideMoney?'<span style="color:var(--muted)">管理者のみ</span>':(d.amt?yen(d.amt):'—');
+  dr.innerHTML=`
+    <div style="background:linear-gradient(135deg,#14512a,#1f6b3a);color:#fff;padding:20px 22px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+        <div><div style="font-size:11px;letter-spacing:1px;color:#bfe0cb;font-weight:700">案件の詳細（架空）</div><div style="font-size:19px;font-weight:800;margin-top:4px">${d.name}</div></div>
+        <button id="drwClose" style="background:rgba(255,255,255,.16);border:none;color:#fff;width:34px;height:34px;border-radius:9px;font-size:18px;cursor:pointer;flex:0 0 34px">×</button>
+      </div>
+      <div style="margin-top:12px"><span class="chip ${chipCls}" style="background:rgba(255,255,255,.18);color:#fff"><span class="d" style="background:#fff"></span>${d.stage}</span></div>
+    </div>
+    <div style="padding:20px 22px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:18px">
+        <div><div style="font-size:11px;color:var(--muted);font-weight:700">業種</div><div style="font-size:14px;font-weight:700">${d.gyo}</div></div>
+        <div><div style="font-size:11px;color:var(--muted);font-weight:700">確度</div><div style="font-size:14px;font-weight:700;color:${d.prob>=70?'var(--green)':'var(--ink)'}">${d.prob}%</div></div>
+        <div><div style="font-size:11px;color:var(--muted);font-weight:700">想定金額</div><div style="font-size:14px;font-weight:700">${moneyHtml}</div></div>
+        <div><div style="font-size:11px;color:var(--muted);font-weight:700">最終接触</div><div style="font-size:14px;font-weight:700">${d.last}</div></div>
+      </div>
+      <div style="font-size:13px;font-weight:800;color:var(--ink);margin-bottom:8px">これまでの流れ</div>
+      <div style="border-left:2px solid var(--line-soft);padding-left:14px;margin-bottom:20px">${tl}</div>
+      <div style="font-size:13px;font-weight:800;color:var(--ink);margin-bottom:8px">AIが用意したフォロー文（下書き）</div>
+      <div style="background:#f7faf6;border:1px solid var(--line);border-radius:11px;padding:14px;font-size:12.5px;line-height:1.85;color:var(--ink-soft);white-space:pre-wrap">${followDraftText(d)}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:7px">※送信は社長が確認してから。AIは下書きまでです。</div>
+      <div style="display:flex;gap:9px;margin-top:18px;flex-wrap:wrap">
+        <button id="drwCopy" class="btn btn-opt-o btn-sm">フォロー文をコピー</button>
+        ${(allowAdv && !isWon)?'<button id="drwAdv" class="btn btn-green btn-sm">次の段階へ進める ▶</button>':(isWon&&allowAdv?'<span class="chip green"><span class="d"></span>受注済み</span>':'')}
+      </div>
+    </div>`;
+  document.body.appendChild(ov);document.body.appendChild(dr);
+  requestAnimationFrame(()=>{ov.style.opacity="1";dr.style.transform="translateX(0)";});
+  const close=()=>{ov.style.opacity="0";dr.style.transform="translateX(100%)";document.removeEventListener("keydown",onKey);setTimeout(()=>{ov.remove();dr.remove();eigyoDrawerOpen=false;},260);};
+  function onKey(e){if(e.key==="Escape")close();}
+  document.addEventListener("keydown",onKey);
+  ov.addEventListener("mousedown",close);
+  dr.querySelector("#drwClose").onclick=close;
+  dr.querySelector("#drwCopy").onclick=()=>toast(d.name+" 向けのフォロー文をコピーしました（送信は社長が確認・デモ）");
+  const adv=dr.querySelector("#drwAdv");
+  if(adv){ adv.onclick=()=>{ advanceStage(d); close(); }; }
+}
+
+function advanceStage(d){
+  const i=EIGYO_STAGES.indexOf(d.stage);
+  if(i<0||i>=EIGYO_STAGES.length-1) return;
+  const from=d.stage, to=EIGYO_STAGES[i+1];
+  const pf=EIGYO.pipeline.find(p=>p.s===from), pt=EIGYO.pipeline.find(p=>p.s===to);
+  if(pf&&pf.n>0)pf.n--; if(pt)pt.n++;
+  d.stage=to; d.prob=STAGE_PROB[to]; d.last="たった今";
+  EIGYO.pts+=STAGE_PTS[to];
+  if(to==="受注"){ EIGYO.juchuN++; EIGYO.juchuAmt+=(d.amt||0); }
+  d.next=(to==="受注")?"契約書を送付（社長確認）":"次の打ち手をAIが提案";
+  toast(d.name+"を「"+to+"」へ進めました（+"+STAGE_PTS[to]+"pt）");
+  if(typeof render==="function") render();
+}
+
+function recordApo(){
+  const ov=el("div");ov.style.cssText="position:fixed;inset:0;z-index:140;background:rgba(14,30,20,.5);backdrop-filter:blur(3px);display:flex;align-items:flex-start;justify-content:center;padding:12vh 18px;animation:fadeUp .2s ease";
+  const p=el("div");p.style.cssText="width:100%;max-width:400px;background:#fff;border-radius:16px;box-shadow:0 24px 60px rgba(14,30,20,.34);overflow:hidden";
+  p.innerHTML=`<div style="background:linear-gradient(135deg,#14512a,#1f6b3a);color:#fff;padding:16px 20px;font-weight:700">＋ アポを記録</div>
+    <div style="padding:18px 20px">
+      <label style="font-size:12px;font-weight:700;color:var(--ink)">会社名（架空でOK）</label>
+      <input id="apName" placeholder="例：あおぞら不動産" style="width:100%;border:1.5px solid #dde3dd;border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;margin:6px 0 13px">
+      <label style="font-size:12px;font-weight:700;color:var(--ink)">業種</label>
+      <input id="apGyo" placeholder="例：不動産" style="width:100%;border:1.5px solid #dde3dd;border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;margin:6px 0 13px">
+      <label style="font-size:12px;font-weight:700;color:var(--ink)">獲得経路</label>
+      <select id="apCh" style="width:100%;border:1.5px solid #dde3dd;border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;margin:6px 0 4px;background:#fff"><option>紹介</option><option>Web問合せ</option><option>電話</option><option>SNS</option></select>
+      <div style="display:flex;gap:8px;margin-top:16px"><button id="apGo" style="flex:1;border:none;border-radius:10px;padding:11px;background:linear-gradient(135deg,#2c8f4d,#1f6b3a);color:#fff;font-weight:700;cursor:pointer">記録する</button><button id="apCancel" style="border:1px solid #dde3dd;background:#fff;border-radius:10px;padding:11px 16px;cursor:pointer">やめる</button></div>
+    </div>`;
+  document.body.appendChild(ov);ov.appendChild(p);
+  const close=()=>{ov.remove();document.removeEventListener("keydown",onKey);};
+  function onKey(e){if(e.key==="Escape")close();}
+  document.addEventListener("keydown",onKey);
+  ov.addEventListener("mousedown",e=>{if(e.target===ov)close();});
+  p.querySelector("#apCancel").onclick=close;
+  p.querySelector("#apGo").onclick=()=>{
+    const nm=(p.querySelector("#apName").value||"").trim()||"新規のお客さま";
+    const gy=(p.querySelector("#apGyo").value||"").trim()||"—";
+    EIGYO.deals.unshift({name:nm,gyo:gy,stage:"アポ獲得",amt:0,prob:25,last:"たった今",next:"初回ヒアリングの準備",owner:"社長"});
+    EIGYO.apoMonth++; EIGYO.pts+=10; EIGYO.activeN++;
+    const apo=EIGYO.pipeline.find(s=>s.s==="アポ獲得"); if(apo)apo.n++;
+    const last=EIGYO.trend[EIGYO.trend.length-1]; if(last)last.n++;
+    close(); if(typeof render==="function") render();
+    toast(nm+" のアポを記録しました（+10pt）");
+  };
+  setTimeout(()=>{const i=p.querySelector("#apName");if(i)i.focus();},60);
+}
+
+function viewEigyo(){
+  const v=el("div","view");
+  v.innerHTML=`<div class="page-head"><h1>案件・アポ管理<span style="font-size:12.5px;font-weight:700;color:var(--green);background:var(--green-soft);padding:3px 11px;border-radius:20px;margin-left:8px;vertical-align:middle">標準装備</span></h1><p>AI社員が、案件（商談）とアポイントの「数字」を毎日自動で集計します。どれだけアポが取れて、どれだけ受注できているかが一目で分かります。</p></div>`;
+  v.append(el("div","note box","表示はすべてサンプルデータ（架空の会社名）です。実際の運用ではお問い合わせ・名刺・商談メモから自動集計します。送信・契約の確定は必ず社長が行います（AIは集計・下書きまで）。"));
+
+  // ---- 上部KPI ----
+  const apoPct=Math.round(EIGYO.apoMonth/EIGYO.apoGoal*100);
+  const k=el("div");k.style.cssText="display:grid;grid-template-columns:repeat(auto-fit,minmax(212px,1fr));gap:16px;margin-top:6px";
+  k.append(
+    kpiCard({icon:I.bell, lbl:"今月のアポ獲得（目標"+EIGYO.apoGoal+"件）", val:EIGYO.apoMonth+"件", ring:apoPct, ringTxt:apoPct+"%", delta:"先月比 +"+(EIGYO.apoMonth-EIGYO.apoPrev)+"件", deltaTone:"up"}),
+    kpiCard({icon:I.check, lbl:"今月の受注", val:EIGYO.juchuN+"件", delta:yen(EIGYO.juchuAmt), deltaTone:"up"}),
+    kpiCard({icon:I.money, lbl:"パイプライン総額（進行中"+EIGYO.activeN+"件）", val:yen(EIGYO.pipeAmt)}),
+    kpiCard({icon:I.share, lbl:"受注率（アポ→受注）", val:EIGYO.winRate+"%", ring:EIGYO.winRate, ringTxt:EIGYO.winRate+"%"})
+  );
+  v.append(k);
+
+  // ---- 営業ポイント ----
+  const ptPct=Math.min(100,Math.round(EIGYO.pts/EIGYO.ptsGoal*100));
+  const ptUp=Math.round((EIGYO.pts-EIGYO.ptsPrev)/EIGYO.ptsPrev*100);
+  const pt=el("div","card");pt.style.marginTop="18px";
+  pt.innerHTML=`<div class="card-h"><h3>今月の営業ポイント</h3><span class="sub" style="color:var(--muted)">${EIGYO.pts>=EIGYO.ptsPrev?"先月比 +"+ptUp+"%":""}</span></div>
+    <div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap"><div style="font-family:'Oswald';font-size:48px;font-weight:700;color:var(--green);line-height:1">${EIGYO.pts}<span style="font-size:18px;margin-left:4px">pt</span></div><div style="font-size:12.5px;color:var(--muted);line-height:1.8">先月 ${EIGYO.ptsPrev}pt ／ 今月の目標 ${EIGYO.ptsGoal}pt<br>${EIGYO.activeN}件の案件が進行中です</div></div>
+    <div style="margin-top:15px;background:#eef1ed;border-radius:20px;height:13px;overflow:hidden"><div style="width:${ptPct}%;height:100%;background:linear-gradient(90deg,#2d7a4a,#1f6b3a);border-radius:20px;transition:width .6s"></div></div>
+    <div style="font-size:11.5px;color:var(--muted);margin-top:9px">採点ルール：アポ獲得 10pt ／ 商談 20pt ／ 見積提出 30pt ／ 受注 100pt（やる気が出るよう、進み具合を点数で見える化）</div>`;
+  v.append(pt);
+
+  // ---- 営業パイプライン（じょうご） ----
+  const pl=el("div","card");pl.style.marginTop="18px";
+  pl.innerHTML=`<div class="card-h"><h3>営業パイプライン</h3><span class="sub" style="color:var(--muted)">リードから受注までの件数と金額</span></div>`;
+  const maxN=Math.max.apply(null,EIGYO.pipeline.map(p=>p.n));
+  EIGYO.pipeline.forEach(p=>{
+    const row=el("div");row.style.cssText="display:flex;align-items:center;gap:13px;margin:11px 0";
+    const lab=el("div");lab.style.cssText="flex:0 0 80px;font-size:13px;font-weight:700;color:var(--ink)";lab.textContent=p.s;
+    const barw=el("div");barw.style.cssText="flex:1;background:#f1f4f0;border-radius:9px;height:30px;overflow:hidden";
+    const bar=el("div");bar.style.cssText="height:100%;border-radius:9px;width:"+Math.max(9,Math.round(p.n/maxN*100))+"%;background:"+p.c+";display:flex;align-items:center;padding-left:11px;color:#fff;font-weight:700;font-size:12.5px";bar.textContent=p.n+"件";
+    barw.append(bar);
+    const amt=el("div");amt.style.cssText="flex:0 0 108px;text-align:right;font-size:12.5px;color:var(--muted)";amt.textContent=p.amt?yen(p.amt):"—";
+    row.append(lab,barw,amt);pl.append(row);
+  });
+  v.append(pl);
+
+  // ---- 2カラム：推移 + チャネル ----
+  const two=el("div");two.style.cssText="display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:18px;margin-top:18px";
+  const tr=el("div","card");
+  tr.innerHTML=`<div class="card-h"><h3>アポ獲得の推移</h3><span class="sub" style="color:var(--muted)">直近6ヶ月</span></div>`;
+  const bars=el("div");bars.style.cssText="display:flex;align-items:flex-end;gap:12px;height:150px;padding-top:12px";
+  const maxT=Math.max.apply(null,EIGYO.trend.map(t=>t.n));
+  EIGYO.trend.forEach(t=>{
+    const col=el("div");col.style.cssText="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end";
+    const b=el("div");b.style.cssText="width:100%;max-width:34px;border-radius:7px 7px 0 0;background:linear-gradient(180deg,#3f8d5c,#1f6b3a);height:"+Math.round(t.n/maxT*100)+"%;min-height:10px;display:flex;align-items:flex-start;justify-content:center;color:#fff;font-size:11px;font-weight:700;padding-top:4px";b.textContent=t.n;
+    const lb=el("div");lb.style.cssText="font-size:11px;color:var(--muted)";lb.textContent=t.m;
+    col.append(b,lb);bars.append(col);
+  });
+  tr.append(bars);two.append(tr);
+  const ch=el("div","card");
+  ch.innerHTML=`<div class="card-h"><h3>アポの獲得経路</h3><span class="sub" style="color:var(--muted)">今月</span></div>`;
+  ch.append(donut(EIGYO.channel,"主な経路","紹介 42%"));
+  const leg=el("div");leg.style.cssText="margin-top:14px;display:flex;flex-direction:column;gap:9px";
+  EIGYO.channel.forEach(c=>{
+    const r=el("div");r.style.cssText="display:flex;align-items:center;gap:9px;font-size:12.5px";
+    r.innerHTML=`<span style="width:13px;height:13px;border-radius:4px;background:${c.color};flex:0 0 13px"></span><span style="flex:1">${c.label}</span><b>${c.pct}%</b>`;
+    leg.append(r);
+  });
+  ch.append(leg);two.append(ch);
+  v.append(two);
+
+  // ---- 進行中の案件 ----
+  const dl=el("div","card");dl.style.marginTop="18px";
+  const dlHead=el("div");dlHead.style.cssText="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px";
+  dlHead.innerHTML=`<div class="card-h" style="margin:0;border:none;padding:0"><h3>進行中の案件</h3><span class="sub" style="color:var(--muted)">行をタップで詳細／確度の高い順</span></div>`;
+  const addBtn=el("button","btn btn-green btn-sm","＋ アポを記録");addBtn.onclick=recordApo;
+  dlHead.append(addBtn);
+  dl.append(dlHead);
+  const stageChip=(s)=>{const g=(s==="受注")?"green":(s==="リード"?"":"amber");return `<span class="chip ${g}"><span class="d"></span>${s}</span>`;};
+  const tbl=el("table","tbl");
+  tbl.innerHTML=`<thead><tr><th>案件（架空）</th><th>業種</th><th>段階</th><th style="text-align:right">金額</th><th style="text-align:right">確度</th><th>AIの次の一手</th><th></th></tr></thead>`;
+  const tb=el("tbody");
+  EIGYO.deals.slice().sort((a,b)=>b.prob-a.prob).forEach(d=>{
+    const row=el("tr");row.style.cursor="pointer";
+    row.innerHTML=`<td><b>${d.name}</b><div style="font-size:11px;color:var(--muted)">最終接触 ${d.last}</div></td><td>${d.gyo}</td><td>${stageChip(d.stage)}</td><td style="text-align:right;font-family:'Oswald';font-weight:600">${d.amt?yen(d.amt):"—"}</td><td style="text-align:right;font-weight:700;color:${d.prob>=70?'var(--green)':'var(--ink)'}">${d.prob}%</td><td style="font-size:12px;color:var(--ink-soft)">${d.next}</td>`;
+    const td=el("td");
+    const b=el("button","btn btn-opt-o btn-sm","フォロー文");
+    b.onclick=(ev)=>{ev.stopPropagation();toast(d.name+" 向けのフォロー文を下書きしました（送信は社長が確認・デモ）");};
+    td.append(b);
+    row.append(td);
+    row.onclick=()=>openDealDrawer(d);
+    tb.append(row);
+  });
+  tbl.append(tb);
+  const sc=el("div");sc.style.cssText="overflow-x:auto";sc.append(tbl);
+  dl.append(sc);
+  dl.append(el("div","note","ヒント：行をタップすると、流れ・AIのフォロー文・「次の段階へ進める」が開きます。"));
+  v.append(dl);
+
+  // ---- AI社員からのおすすめ ----
+  const ai=el("div","card");ai.style.marginTop="18px";
+  ai.innerHTML=`<div class="card-h"><h3>AI社員からの今日のおすすめ</h3></div>`;
+  const recs=[
+    {t:"ひまわり介護サービスは6日間未接触です。フォロー文の下書きを用意しました。", a:"下書きを見る"},
+    {t:"みどり歯科クリニックは見積提出から5日。確度70%＝あと一押しです。", a:"フォロー文を作成"},
+    {t:"今月の目標まであと3件。紹介経由のアポが好調です（42%）。", a:"紹介先リストを見る"}
+  ];
+  const ul=el("div");
+  recs.forEach(r=>{
+    const row=el("div");row.style.cssText="display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px dashed var(--line)";
+    const ic=el("div");ic.style.cssText="flex:0 0 30px;width:30px;height:30px;color:var(--green)";ic.innerHTML=I.ai;
+    const tx=el("div");tx.style.cssText="flex:1;font-size:13px;color:var(--ink);line-height:1.6";tx.textContent=r.t;
+    const b=el("button","btn btn-green btn-sm");b.textContent=r.a;
+    b.onclick=()=>toast("「"+r.a+"」を実行しました（下書き・デモ。送信や確定は社長が行います）");
+    row.append(ic,tx,b);ul.append(row);
+  });
+  ai.append(ul);
+  v.append(ai);
+
+  v.append(footer());
+  return v;
+}
+
+/* 従業員向け：自分の担当案件だけ（全社の数字・お金は出さない＝権限分け） */
+function viewEmpEigyo(){
+  const v=el("div","view");
+  const e=EIGYO.emp;
+  const mine=EIGYO.deals.filter(d=>d.owner===e.name).slice().sort((a,b)=>b.prob-a.prob);
+  v.innerHTML=`<div class="page-head"><h1>自分の案件 <span style="font-size:12.5px;font-weight:700;color:var(--green);background:var(--green-soft);padding:3px 11px;border-radius:20px;margin-left:8px;vertical-align:middle">従業員</span></h1><p>${e.name}さんの担当案件と、自分のアポ・成績だけをまとめています。会社全体の数字やお金の情報は管理者だけが見られます。</p></div>`;
+  v.append(el("div","note box","表示は自分の担当ぶんのサンプルです。フォロー文は下書きまで。送信・契約の確定は管理者（社長）が行います。"));
+
+  // 自分のKPI（全社合計は出さない）
+  const apoPct=Math.round(e.apoMonth/e.apoGoal*100);
+  const k=el("div");k.style.cssText="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin-top:6px";
+  k.append(
+    kpiCard({icon:I.bell, lbl:"今月の自分のアポ（目標"+e.apoGoal+"件）", val:e.apoMonth+"件", ring:apoPct, ringTxt:apoPct+"%"}),
+    kpiCard({icon:I.deal, lbl:"自分の進行中案件", val:mine.length+"件"}),
+    kpiCard({icon:I.star, lbl:"自分の営業ポイント", val:e.pts+"pt", delta:(e.pts>=e.ptsPrev?"先月比 +"+Math.round((e.pts-e.ptsPrev)/e.ptsPrev*100)+"%":""), deltaTone:"up"})
+  );
+  v.append(k);
+
+  // 自分の担当案件（金額は出さない＝お金は管理者）
+  const dl=el("div","card");dl.style.marginTop="18px";
+  dl.innerHTML=`<div class="card-h"><h3>自分の担当案件</h3><span class="sub" style="color:var(--muted)">確度の高い順／次の一手はAIが提案</span></div>`;
+  const stageChip=(s)=>{const g=(s==="受注")?"green":(s==="リード"?"":"amber");return `<span class="chip ${g}"><span class="d"></span>${s}</span>`;};
+  const tbl=el("table","tbl");
+  tbl.innerHTML=`<thead><tr><th>案件（架空）</th><th>業種</th><th>段階</th><th style="text-align:right">確度</th><th>AIの次の一手</th><th></th></tr></thead>`;
+  const tb=el("tbody");
+  mine.forEach(d=>{
+    const row=el("tr");row.style.cursor="pointer";
+    row.innerHTML=`<td><b>${d.name}</b><div style="font-size:11px;color:var(--muted)">最終接触 ${d.last}</div></td><td>${d.gyo}</td><td>${stageChip(d.stage)}</td><td style="text-align:right;font-weight:700;color:${d.prob>=70?'var(--green)':'var(--ink)'}">${d.prob}%</td><td style="font-size:12px;color:var(--ink-soft)">${d.next}</td>`;
+    const td=el("td");
+    const b=el("button","btn btn-opt-o btn-sm","フォロー文");
+    b.onclick=(ev)=>{ev.stopPropagation();toast(d.name+" 向けのフォロー文を下書きしました（送信は管理者が確認・デモ）");};
+    td.append(b);row.append(td);
+    row.onclick=()=>openDealDrawer(d,{hideMoney:true,allowAdvance:false});
+    tb.append(row);
+  });
+  tbl.append(tb);
+  const sc=el("div");sc.style.cssText="overflow-x:auto";sc.append(tbl);
+  dl.append(sc);v.append(dl);
+
+  // AIからのひとこと
+  const ai=el("div","card");ai.style.marginTop="18px";
+  ai.innerHTML=`<div class="card-h"><h3>AIからの今日のひとこと</h3></div>`;
+  const row=el("div");row.style.cssText="display:flex;gap:12px;align-items:center;padding-top:4px";
+  const ic=el("div");ic.style.cssText="flex:0 0 30px;width:30px;height:30px;color:var(--green)";ic.innerHTML=I.ai;
+  const tx=el("div");tx.style.cssText="flex:1;font-size:13px;color:var(--ink);line-height:1.6";tx.textContent="大分グリーン物流は3日前にアポ獲得。初回ヒアリングの準備メモを用意しました。みどり歯科は確度70%＝あと一押しです。";
+  const b=el("button","btn btn-green btn-sm");b.textContent="準備メモを見る";
+  b.onclick=()=>toast("準備メモを開きました（下書き・デモ）");
+  row.append(ic,tx,b);ai.append(row);v.append(ai);
+
+  v.append(footer());
+  return v;
+}
+
+/* ====================================================================
+   番頭（経営参謀AI）＝尖り：全データを横断して弱点と次の一手を答えるAI
+   ※デモ：応答は本デモの数字に基づく例。実装の番頭チャット/記憶ノートは新規開発。
+==================================================================== */
+const BANTO_FLAGS=[
+  {c:"#c0392b",lv:"赤",t:"資金ショート接近",d:"6/5に残高が¥610,000まで低下する見込み。大口支払いと入金のズレが主因。",go:"shikin",a:"資金繰りを見る"},
+  {c:"#c0392b",lv:"赤",t:"未入金 2件 ¥162,000",d:"期日超過の売掛が2件。1件は3か月連続の遅延先。督促文の下書きを用意できます。",go:"seikyu",a:"請求・入金へ"},
+  {c:"#d98e1f",lv:"黄",t:"経費が前年比1.4倍",d:"通信費が増加傾向。契約の見直し候補です。",go:"shushi",a:"収支を見る"}
+];
+const BANTO_QA=[
+  {q:"今月ヤバい数字ある？",a:"いま一番の急所は3つです。",ev:["資金：6/5に残高が¥610,000まで低下する見込み（資金ショート接近）","未入金：2件・¥162,000（うち1件は3か月連続の遅延）","経費：通信費が前年比1.4倍に増加"],go:"shikin",ga:"資金繰りを見る"},
+  {q:"利益が落ちた理由は？",a:"先月比で粗利が下がっています。主因は2つ。",ev:["青果B2Bの廃棄が増え、原価率が悪化","通信費が前年比1.4倍（固定費の増加）"],go:"shushi",ga:"収支・月次を見る"},
+  {q:"未回収はどこ？",a:"未入金は2件・合計¥162,000です。",ev:["最大はA社 ¥98,000（期日超過・3か月連続の遅延）","B社 ¥64,000（期日超過）","→ 督促文の下書きを用意できます（送信は社長）"],go:"seikyu",ga:"請求・入金へ"},
+  {q:"人で気になることは？",a:"日報まわりで気づきが1つ。",ev:["本日の日報が1名 未提出","Aさんの提出遅れが3週連続。早めの声かけを","※これは“気づきの参考”で、勤務評価には使いません"],go:"nippo",ga:"日報を見る"},
+  {q:"在庫（青果）で気になることは？",a:"青果の在庫で2つ。",ev:["葉物の廃棄率が上昇。発注量の見直し候補","来週は天候の影響で相場上昇の見込み。仕入れ前倒しを検討"],go:"tasks",ga:"タスクで段取り"}
+];
+function bantoAppendUser(q){
+  const log=document.getElementById("bantoLog"); if(!log) return;
+  const w=el("div");w.style.cssText="align-self:flex-end;max-width:80%;background:var(--green);color:#fff;padding:10px 14px;border-radius:14px 14px 4px 14px;font-size:13.5px;line-height:1.6";w.textContent=q;
+  log.appendChild(w);log.scrollTop=log.scrollHeight;
+}
+function bantoAnswer(qa){
+  bantoAppendUser(qa.q);
+  const log=document.getElementById("bantoLog"); if(!log) return;
+  const w=el("div");w.style.cssText="align-self:flex-start;max-width:94%;background:#fff;border:1px solid var(--line);border-radius:14px 14px 14px 4px;padding:13px 15px;box-shadow:0 2px 8px rgba(20,60,30,.05)";
+  const ev=(qa.ev||[]).map(e=>`<li style="margin:4px 0">${e}</li>`).join("");
+  w.innerHTML=`<div style="display:flex;gap:9px;align-items:flex-start"><div style="flex:0 0 26px;width:26px;height:26px;color:var(--green)">${I.ai}</div><div class="bantoBody" style="flex:1;min-width:0"><div style="font-weight:700;color:#14512a;margin-bottom:5px">${qa.a}</div><ul style="margin:0 0 10px;padding-left:18px;font-size:13px;line-height:1.7">${ev}</ul></div></div>`;
+  if(qa.go){ const body=w.querySelector(".bantoBody"); const b=el("button","btn btn-green btn-sm");b.textContent=qa.ga||"開く";b.onclick=()=>go(qa.go);body.appendChild(b);
+    const sp=el("span");sp.style.cssText="font-size:11px;color:var(--muted);margin-left:8px";sp.textContent="根拠：会社の数字を横断して確認";body.appendChild(sp); }
+  log.appendChild(w);log.scrollTop=log.scrollHeight;
+}
+function viewBanto(){
+  const v=el("div","view");
+  v.innerHTML=`<div class="page-head"><h1>番頭（経営参謀AI）<span style="font-size:12px;font-weight:700;color:#fff;background:var(--green);padding:2px 10px;border-radius:20px;margin-left:10px;vertical-align:middle">尖り</span></h1><p>「うちの会社、いま何が弱い？」と聞けるAI。会社の数字・入金・タスク・日報・在庫を“全部つないで”見ているから、弱点と次の一手を根拠つきで答えます。</p></div>`;
+  // 今日の経営の急所（赤信号）
+  const ky=el("div","card");ky.style.cssText="margin-bottom:18px;border-left:5px solid #c0392b";
+  ky.innerHTML=`<div class="card-h"><h3>🚨 今日の経営の急所</h3><span class="sub" style="color:var(--muted)">弱点だけを赤で名指し（“平均点”の表示はしません）</span></div>`;
+  BANTO_FLAGS.forEach(f=>{
+    const r=el("div");r.style.cssText="display:flex;gap:12px;align-items:center;padding:11px 0;border-bottom:1px dashed var(--line)";
+    const dot=el("div");dot.style.cssText=`flex:0 0 auto;font-size:11px;font-weight:700;color:#fff;background:${f.c};border-radius:6px;padding:3px 9px`;dot.textContent=f.lv;
+    const tx=el("div");tx.style.cssText="flex:1;min-width:0";tx.innerHTML=`<div style="font-weight:700;font-size:13.5px">${f.t}</div><div style="font-size:12px;color:var(--muted);line-height:1.6">${f.d}</div>`;
+    const b=el("button","btn btn-opt-o btn-sm");b.textContent=f.a;b.onclick=()=>go(f.go);
+    r.append(dot,tx,b);ky.append(r);
+  });
+  v.append(ky);
+  // 会話
+  const chat=el("div","card");
+  chat.innerHTML=`<div class="card-h"><h3>番頭に聞く</h3><span class="sub" style="color:var(--muted)">気になることをタップ／入力</span></div>`;
+  const log=el("div");log.id="bantoLog";log.style.cssText="display:flex;flex-direction:column;gap:12px;margin:6px 0 14px;max-height:330px;overflow:auto;padding:4px";
+  const greet=el("div");greet.style.cssText="align-self:flex-start;max-width:94%;background:#fff;border:1px solid var(--line);border-radius:14px 14px 14px 4px;padding:13px 15px";
+  greet.innerHTML=`<div style="display:flex;gap:9px;align-items:flex-start"><div style="flex:0 0 26px;width:26px;height:26px;color:var(--green)">${I.ai}</div><div style="flex:1">おはようございます、社長。今日の経営の急所は上に3つ出しました。気になることを聞いてください。</div></div>`;
+  log.append(greet);chat.append(log);
+  const chips=el("div");chips.style.cssText="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px";
+  BANTO_QA.forEach(qa=>{const c=el("button","btn btn-opt-o btn-sm");c.textContent=qa.q;c.onclick=()=>bantoAnswer(qa);chips.append(c);});
+  chat.append(chips);
+  const row=el("div");row.style.cssText="display:flex;gap:8px";
+  const inp=el("input");inp.type="text";inp.placeholder="自由に質問（例：来月の資金は大丈夫？）";inp.style.cssText="flex:1;border:1.5px solid var(--line);border-radius:10px;padding:10px 13px;font-size:13px;font-family:inherit";
+  const send=el("button","btn btn-green btn-sm","聞く");
+  const ask=()=>{const q=inp.value.trim();if(!q)return;let hit=null;
+    if(q.match(/資金|お金|残高|来月|キャッシュ/))hit=BANTO_QA[0];
+    else if(q.match(/利益|粗利|儲け|もうけ/))hit=BANTO_QA[1];
+    else if(q.match(/未回収|未入金|回収|売掛|入金/))hit=BANTO_QA[2];
+    else if(q.match(/人|日報|従業|シフト|残業|社員/))hit=BANTO_QA[3];
+    else if(q.match(/在庫|青果|仕入|発注|廃棄|相場/))hit=BANTO_QA[4];
+    if(hit)bantoAnswer({...hit,q});
+    else bantoAnswer({q,a:"全体を横断して見たところ、いま一番の急所は資金ショート接近です。",ev:["6/5に残高が¥610,000まで低下する見込み","あわせて未入金2件・¥162,000の回収を優先しましょう"],go:"shikin",ga:"資金繰りを見る"});
+    inp.value="";};
+  send.onclick=ask;inp.addEventListener("keydown",e=>{if(e.key==="Enter")ask();});
+  row.append(inp,send);chat.append(row);v.append(chat);
+  v.append(el("div","note box","番頭は会社の数字を“横断して読む”AIです（脳を読む・勝手に判断するものではありません）。送信・支払い・確定は必ず人。番頭チャット・記憶ノートは今後実装する新機能を含みます。数値はデモ用の例です。"));
+  v.append(footer());
+  return v;
+}
+
 const VIEWS={
-  dashboard:viewDashboard, tasks:viewTasks, nippo:viewNippo, shift:viewShift,
+  banto:viewBanto,
+  dashboard:viewDashboard, eigyo:viewEigyo, tasks:viewTasks, nippo:viewNippo, shift:viewShift,
   shushi:viewShushi, seikyu:viewSeikyu, hojokin:viewHojokin, kioku:viewKioku,
   shikin:viewShikin, shorui:viewShorui, sakugen:viewSakugen,
-  tsuchi:viewTsuchi, options:viewOptions, "emp-home":viewEmpHome
+  tsuchi:viewTsuchi, options:viewOptions, "emp-home":viewEmpHome, "emp-eigyo":viewEmpEigyo
 };
 
 function buildNav(){
@@ -2789,7 +3226,7 @@ function render(){
   const view=builder();
   view.classList.add("active");
   wrap.appendChild(view);
-  const nv=NAV.find(n=>n.id===STATE.view);
+  const nv=NAV.find(n=>n.id===STATE.view)||EMP_NAV.find(n=>n.id===STATE.view);
   $("#tbTitle").textContent=nv?nv.label:"";
   // wire any data-go (kpi cards / links)
   $$("[data-go]",wrap).forEach(elm=>{
