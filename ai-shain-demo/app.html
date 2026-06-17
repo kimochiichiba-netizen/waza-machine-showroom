@@ -718,6 +718,7 @@ const NAV = [
   {id:"dashboard", ic:I.home, label:"ダッシュボード", sec:"main"},
   {id:"weekly",    ic:I.nippo, label:"週次レポート", sec:"main"},
   {id:"teiki",     ic:I.bell,  label:"経営レポート定期便", sec:"main"},
+  {id:"sim",       ic:I.money,  label:"コスト削減シミュレーター", sec:"main"},
   {id:"eigyo",     ic:I.deal, label:"案件・アポ管理", sec:"main"},
   {id:"tasks",     ic:I.task, label:"タスク", sec:"main"},
   {id:"nippo",     ic:I.nippo, label:"日報", sec:"main"},
@@ -1391,6 +1392,23 @@ function viewNippo(){
   top.appendChild(kpiCard({lbl:"今週の提出",val:"27 / 30",icon:I.check,tone:"blue"}));
   top.appendChild(kpiCard({lbl:"AI要約",val:"自動生成",delta:"毎日18時",icon:I.ai,tone:"amber"}));
   v.appendChild(top);
+
+  // ★日報トレンド分析（職場の傾向をAIが要約・議員が「飛びつく」と名指し）
+  const tr=el("div","card mt24");
+  tr.innerHTML=`<div class="card-h"><h3>日報トレンド分析（職場の傾向をAIが要約）</h3><span class="sub" style="color:var(--muted)">期間横断・個人攻撃でなく“傾向”</span></div>`;
+  const trWords=[{w:"人手不足",n:3,p:"+3",max:5},{w:"配送遅延",n:2,p:"+2",max:5},{w:"在庫切れ",n:1,p:"+1",max:5},{w:"残業",n:1,p:"+1",max:5}];
+  const tw=el("div");tw.style.cssText="margin:4px 0 12px";
+  trWords.forEach(x=>{
+    const r=el("div");r.style.cssText="display:flex;align-items:center;gap:10px;margin:7px 0";
+    r.innerHTML=`<div style="flex:0 0 84px;font-size:13px;font-weight:700">${x.w}</div><div style="flex:1;background:#eef3ee;border-radius:6px;height:14px;overflow:hidden"><div style="width:${x.n/x.max*100}%;height:100%;background:var(--green)"></div></div><div style="flex:0 0 64px;font-size:12px;color:var(--muted)">先週比 <b style="color:#a96a10">${x.p}</b></div>`;
+    tw.append(r);
+  });
+  tr.append(tw);
+  const trc=el("div");trc.style.cssText="display:flex;gap:10px;align-items:flex-start;background:var(--green-soft2);border-radius:12px;padding:12px 15px";
+  trc.innerHTML=`<div style="flex:0 0 24px;width:24px;height:24px;color:var(--green)">${I.ai}</div><div style="flex:1;font-size:13px;line-height:1.7"><b style="color:#14512a">番頭より：</b>「配送遅延」「人手不足」の言及が先週より増えています。<b>特定の個人の問題でなく、繁忙による全体の傾向</b>です。早めのシフト調整や応援の手配を検討しては。気になる方への声かけも一案です。</div>`;
+  tr.append(trc);
+  tr.append(el("div","note","※個人を評価・断罪するものではなく“傾向の気づき”です。集計は社内のAIで行い外部に送信しません。最終判断は社長。"));
+  v.appendChild(tr);
 
   const grid=el("div","grid g23 mt24");
 
@@ -3159,6 +3177,21 @@ function viewBanto(){
     inp.value="";};
   send.onclick=ask;inp.addEventListener("keydown",e=>{if(e.key==="Enter")ask();});
   row.append(inp,send);chat.append(row);v.append(chat);
+  // ★報奨・ねぎらい進言（議員が実演：「○○さん頑張ってる、お小遣いを」）
+  const ho=el("div","card mt24");
+  ho.innerHTML=`<div class="card-h"><h3>番頭からの進言：今月の頑張り</h3><span class="sub" style="color:var(--muted)">ねぎらいの“きっかけ”を提案（送金はしません）</span></div>`;
+  const hoItems=[
+    {n:"佐藤さん", r:"今月タスク18件完遂・A病院の定期便を一度も落とさず", a:"ねぎらいを送る"},
+    {n:"田中さん", r:"請求書を毎月ミスなく・入金照合も安定", a:"ねぎらいを送る"}
+  ];
+  hoItems.forEach(x=>{
+    const r=el("div");r.style.cssText="display:flex;gap:12px;align-items:center;padding:11px 0;border-bottom:1px dashed var(--line)";
+    const tx=el("div");tx.style.cssText="flex:1;min-width:0";tx.innerHTML=`<div style="font-weight:700;font-size:13.5px">${x.n}</div><div style="font-size:12px;color:var(--muted);line-height:1.6">${x.r}</div>`;
+    const b=el("button","btn btn-green btn-sm");b.textContent="👏 "+x.a;b.onclick=()=>toast(x.n+"にねぎらいを通知しました（金額や賞与は社長が決定・デモ）");
+    r.append(tx,b);ho.append(r);
+  });
+  ho.append(el("div","note","AIは“この人を褒めては”と進言するだけ。お金（賞与・お小遣い）の決定と送金は社長が行います（確定は人）。"));
+  v.append(ho);
   v.append(el("div","note box","番頭は会社の数字を“横断して読む”AIです（脳を読む・勝手に判断するものではありません）。送信・支払い・確定は必ず人。番頭チャット・記憶ノートは今後実装する新機能を含みます。数値はデモ用の例です。"));
   v.append(footer());
   return v;
@@ -3274,8 +3307,54 @@ function viewTeiki(){
   return v;
 }
 
+/* ====================================================================
+   事務員1人分コスト削減シミュレーター＝メイン機能（営業の決め手）
+   議員・社長が値付け軸で何度も言った「20万を3万に」を機能化。試算。
+==================================================================== */
+function viewSim(){
+  const v=el("div","view");
+  v.innerHTML=`<div class="page-head"><h1>コスト削減シミュレーター<span style="font-size:12px;font-weight:700;color:#fff;background:var(--green);padding:2px 10px;border-radius:20px;margin-left:10px;vertical-align:middle">メイン機能</span></h1><p>「事務の人件費」と「AI社員パック」を比べて、年間いくら浮くかをその場で試算します。商談でそのまま使えます。</p></div>`;
+  const PACK_M=29800; // スタンダード月額
+  // 入力
+  const inc=el("div","card");inc.style.marginBottom="18px";
+  inc.innerHTML=`<div class="card-h"><h3>入力</h3><span class="sub" style="color:var(--muted)">数字を動かすと下が変わります</span></div>`;
+  const mkNum=(lbl,id,val,unit)=>{const w=el("div");w.style.cssText="margin:10px 0";w.innerHTML=`<div style="font-size:13px;font-weight:700;margin-bottom:5px">${lbl}</div><div style="display:flex;align-items:center;gap:8px"><input id="${id}" type="number" value="${val}" style="width:160px;border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;font-size:14px;font-family:inherit"><span style="font-size:13px;color:var(--muted)">${unit}</span></div>`;return w;};
+  inc.append(mkNum("事務スタッフの月給（1人あたり）","simPay",180000,"円 / 月"));
+  inc.append(mkNum("AIで肩代わりしたい人数の目安","simN",1,"人分の事務作業"));
+  v.append(inc);
+  // 結果
+  const out=el("div","card");
+  out.innerHTML=`<div class="card-h"><h3>試算の結果</h3><span class="sub" style="color:var(--muted)">年間ベース</span></div>`;
+  const res=el("div");res.id="simRes";out.append(res);
+  out.append(el("div","note box","これは試算です（効果を保証するものではありません）。AIは“定型のくり返し事務”を肩代わりするもので、人をそのまま置き換える前提ではありません。実際の削減は業務内容により異なります。送信・支払い・確定は人。"));
+  v.append(out);
+  const calc=()=>{
+    const pay=Math.max(0, +(document.getElementById("simPay")||{}).value||0);
+    const n=Math.max(0, +(document.getElementById("simN")||{}).value||0);
+    const human=pay*12*n;            // 年間人件費
+    const pack=PACK_M*12;            // 年間パック額
+    const save=human-pack;           // 年間削減見込み
+    const r=document.getElementById("simRes"); if(!r)return;
+    const bar=(lbl,amt,color,base)=>{const pct=base>0?Math.min(100,Math.round(amt/base*100)):0;return `<div style="margin:9px 0"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>${lbl}</span><b style="font-family:'Oswald'">${yen(amt)}</b></div><div style="background:#eef3ee;border-radius:7px;height:18px;overflow:hidden"><div style="width:${pct}%;height:100%;background:${color}"></div></div></div>`;};
+    const base=Math.max(human,pack,1);
+    r.innerHTML=`
+      ${bar("いまの事務の人件費（年）",human,"#c0392b",base)}
+      ${bar("AI社員パック（年・スタンダード）",pack,"#1f6b3a",base)}
+      <div style="margin-top:16px;padding:16px 18px;border-radius:14px;background:linear-gradient(135deg,#14512a,#1f6b3a);color:#fff">
+        <div style="font-size:13px;color:#bfe6cd">年間の削減見込み（試算）</div>
+        <div style="font-family:'Oswald';font-weight:700;font-size:40px;line-height:1.1;margin-top:2px">${save>=0?"":"−"}${yen(Math.abs(save))}</div>
+        <div style="font-size:12.5px;color:#d6ecdd;margin-top:4px">${save>=0?("月あたり 約"+yen(Math.round(save/12))+" のゆとり。浮いた分を本業や人の時間に回せます。"):"この条件ではパック費が上回ります。人数や月給の前提を見直してください。"}</div>
+      </div>`;
+  };
+  setTimeout(calc,40);
+  // 入力イベントは描画後にバインド
+  setTimeout(()=>{["simPay","simN"].forEach(id=>{const e=document.getElementById(id);if(e)e.addEventListener("input",calc);});},60);
+  v.append(footer());
+  return v;
+}
+
 const VIEWS={
-  banto:viewBanto, weekly:viewWeekly, teiki:viewTeiki,
+  banto:viewBanto, weekly:viewWeekly, teiki:viewTeiki, sim:viewSim,
   dashboard:viewDashboard, eigyo:viewEigyo, tasks:viewTasks, nippo:viewNippo, shift:viewShift,
   shushi:viewShushi, seikyu:viewSeikyu, hojokin:viewHojokin, kioku:viewKioku,
   shikin:viewShikin, shorui:viewShorui, sakugen:viewSakugen,
