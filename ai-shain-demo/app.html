@@ -716,6 +716,8 @@ const I = {
 const NAV = [
   {id:"banto",     ic:I.ai,   label:"番頭（経営参謀AI）", sec:"main"},
   {id:"dashboard", ic:I.home, label:"ダッシュボード", sec:"main"},
+  {id:"weekly",    ic:I.nippo, label:"週次レポート", sec:"main"},
+  {id:"teiki",     ic:I.bell,  label:"経営レポート定期便", sec:"main"},
   {id:"eigyo",     ic:I.deal, label:"案件・アポ管理", sec:"main"},
   {id:"tasks",     ic:I.task, label:"タスク", sec:"main"},
   {id:"nippo",     ic:I.nippo, label:"日報", sec:"main"},
@@ -2679,7 +2681,8 @@ DEMO_BUILDERS.zaiko=function(body){
 ==================================================================== */
 const EMP_NAV=[
   {id:"emp-home", ic:I.home, label:"マイホーム", sec:"main"},
-  {id:"emp-eigyo", ic:I.deal, label:"自分の案件", sec:"main"}
+  {id:"emp-eigyo", ic:I.deal, label:"自分の案件", sec:"main"},
+  {id:"weekly", ic:I.nippo, label:"週次レポート（全員）", sec:"main"}
 ];
 
 function setRole(r){
@@ -3161,8 +3164,118 @@ function viewBanto(){
   return v;
 }
 
+/* ====================================================================
+   週次レポート（収支＋“だれが何をしているか”の見える化）＝メイン機能
+   社長・経理・従業員の全員が見られる「会社の週報」。番頭が毎週まとめる。
+==================================================================== */
+const WEEKLY_WORK=[
+  {n:"佐藤さん", w:"A病院へ野菜定期便を納品／みどり歯科の見積フォロー", h:"11.5h", st:"順調", c:"var(--green)"},
+  {n:"田中さん", w:"請求書づくり12件・入金照合", h:"9.0h", st:"順調", c:"var(--green)"},
+  {n:"鈴木さん", w:"在庫の棚卸し・発注ボード入力", h:"8.5h", st:"やや遅れ", c:"#d98e1f"},
+  {n:"山本さん", w:"経費仕分け・ネット購入の整理", h:"7.0h", st:"順調", c:"var(--green)"},
+  {n:"高橋さん", w:"シフト調整・電話の一次対応", h:"6.5h", st:"順調", c:"var(--green)"},
+  {n:"中村さん", w:"本日の日報が未提出", h:"—", st:"未提出", c:"#c0392b"}
+];
+function viewWeekly(){
+  const v=el("div","view");
+  v.innerHTML=`<div class="page-head"><h1>週次レポート<span style="font-size:12px;font-weight:700;color:#fff;background:var(--green);padding:2px 10px;border-radius:20px;margin-left:10px;vertical-align:middle">メイン機能</span></h1><p>今週の収支と「だれが・どの作業をしているか」を1枚に。番頭が毎週まとめ、<b>社長・経理・従業員の全員</b>が同じ画面で見られます。</p></div>`;
+  // 今週の収支
+  const k=el("div","grid g4");
+  k.appendChild(kpiCard({lbl:"今週の売上",val:yen(920000),delta:"▲ 前週比 +8%",deltaTone:"up",icon:I.money}));
+  k.appendChild(kpiCard({lbl:"今週の入金",val:yen(1180000),icon:I.money,tone:"blue"}));
+  k.appendChild(kpiCard({lbl:"今週の支出",val:yen(640000),icon:I.money,tone:"amber"}));
+  k.appendChild(kpiCard({lbl:"今週の差引",val:"+"+yen(540000),delta:"黒字",deltaTone:"up",icon:I.money}));
+  v.append(k);
+  // 作業の見える化
+  const w=el("div","card mt24");
+  w.innerHTML=`<div class="card-h"><h3>だれが・どの作業をしているか（今週）</h3><span class="sub" style="color:var(--muted)">日報・タスクから自動集計</span></div>`;
+  const tbl=el("div");tbl.style.cssText="overflow:auto";
+  let rows=WEEKLY_WORK.map(p=>`<tr><td style="font-weight:700;white-space:nowrap">${p.n}</td><td style="font-size:13px">${p.w}</td><td style="text-align:right;font-family:'Oswald';white-space:nowrap">${p.h}</td><td style="white-space:nowrap"><span style="font-size:11px;font-weight:700;color:#fff;background:${p.c};border-radius:6px;padding:2px 9px">${p.st}</span></td></tr>`).join("");
+  tbl.innerHTML=`<table style="border-collapse:collapse;width:100%;font-size:13.5px"><thead><tr style="background:var(--green-soft)"><th style="text-align:left;padding:9px 11px">従業員</th><th style="text-align:left;padding:9px 11px">今週の主な作業</th><th style="text-align:right;padding:9px 11px">稼働</th><th style="text-align:left;padding:9px 11px">状態</th></tr></thead><tbody>${rows}</tbody></table>`;
+  [...tbl.querySelectorAll("td")].forEach(td=>{td.style.borderBottom="1px dashed var(--line)";td.style.padding="10px 11px";td.style.verticalAlign="top";});
+  w.append(tbl);
+  // 番頭の週次コメント
+  const cm=el("div");cm.style.cssText="margin-top:14px;display:flex;gap:10px;align-items:flex-start;background:var(--green-soft2);border-radius:12px;padding:12px 15px";
+  cm.innerHTML=`<div style="flex:0 0 24px;width:24px;height:24px;color:var(--green)">${I.ai}</div><div style="flex:1;font-size:13px;line-height:1.7"><b style="color:#14512a">番頭より：</b>今週は黒字（差引+¥540,000）。ただし鈴木さんの棚卸しがやや遅れ、中村さんの日報が未提出です。来週は6/5の大口支払いがあるので、未入金2件の回収を先に進めると安心です。</div>`;
+  w.append(cm);
+  v.append(w);
+  // 共有
+  const sh=el("div","card mt24");
+  sh.innerHTML=`<div class="card-h"><h3>この週報を全員に共有</h3><span class="sub" style="color:var(--muted)">送信は人が押します</span></div>`;
+  const sb=el("button","btn btn-green btn-sm","📤 週報を全員に共有（Discord / Slack / Chatwork）");
+  sb.onclick=()=>toast("週報を全員に共有しました（社内チャットへ・デモ）");
+  sh.append(sb);v.append(sh);
+  v.append(el("div","note box","数値はデモ用の例です。この週報は社長・経理・従業員の全員が閲覧できる前提です（透明な情報共有）。共有の送信は人が確認して行います。"));
+  v.append(footer());
+  return v;
+}
+
+/* ====================================================================
+   経営レポート定期便（週1・月1で自動お知らせ）＝メイン機能
+   「今月はこうだった→来月はこうなりそう→会社の議題」を定期配信。
+==================================================================== */
+const TEIKI_AGENDA=[
+  "来週6/5の大口支払いに向けた資金の確認（番頭が資金ショート接近を警告）",
+  "未入金2件（¥162,000）の督促をいつ・誰が出すか",
+  "ひまわり介護サービスの商談（6日間 未接触）の再アプローチ",
+  "夏の繁忙期に向けたシフト・増員の検討"
+];
+function viewTeiki(){
+  const v=el("div","view");
+  v.innerHTML=`<div class="page-head"><h1>経営レポート定期便<span style="font-size:12px;font-weight:700;color:#fff;background:var(--green);padding:2px 10px;border-radius:20px;margin-left:10px;vertical-align:middle">メイン機能</span></h1><p>「今月はこうだった → 来月はこうなりそう → 会社の議題」を、番頭が<b>毎週（1週間ごと）と毎月</b>まとめて社内に自動でお知らせします。</p></div>`;
+  // 今月はこうだった
+  const m=el("div","card");
+  m.innerHTML=`<div class="card-h"><h3>📅 今月はこうだった（実績）</h3><span class="sub" style="color:var(--muted)">6月</span></div>`;
+  const mg=el("div");mg.style.cssText="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px";
+  const mini=(l,val,sub,tone)=>{const d=el("div");d.style.cssText="padding:13px 15px;border:1px solid var(--line);border-radius:12px;background:#fbfdfb";d.innerHTML=`<div style="font-size:12px;color:var(--muted);font-weight:700">${l}</div><div style="font-family:'Oswald';font-weight:700;font-size:23px;color:${tone==='amber'?'#a96a10':'var(--green)'};margin-top:3px">${val}</div><div style="font-size:11.5px;color:var(--muted);margin-top:2px">${sub}</div>`;return d;};
+  mg.append(
+    mini("売上", yen(3820000), "前月比 +12.4%"),
+    mini("受注", EIGYO.juchuN+"件", yen(EIGYO.juchuAmt)),
+    mini("アポ獲得", EIGYO.apoMonth+"件", "目標"+EIGYO.apoGoal+"件"),
+    mini("未入金", yen(162000), "2件・要回収", "amber")
+  );
+  m.append(mg);
+  const mh=el("div");mh.style.cssText="margin-top:13px;font-size:13px;line-height:1.7;color:var(--ink)";
+  mh.innerHTML=`<b style="color:#14512a">ハイライト：</b>売上は前月比+12.4%と好調。一方で経費（通信費）が前年比1.4倍に増加。未入金2件が残り、6/5に資金がタイトになる見込み。`;
+  m.append(mh);v.append(m);
+  // 来月はこうなりそう
+  const nx=el("div","card mt24");
+  nx.innerHTML=`<div class="card-h"><h3>🔮 来月はこうなりそう（見通し）</h3><span class="sub" style="color:var(--muted)">案件・アポから自動試算</span></div>`;
+  const shodan=EIGYO.pipeline.find(p=>p.s==="商談中");
+  const mitsumori=EIGYO.pipeline.find(p=>p.s==="見積提出");
+  const yosoku=Math.round((EIGYO.pipeAmt*EIGYO.winRate/100)/10000)*10000;
+  const nb=el("div");nb.style.cssText="font-size:13.5px;line-height:1.9";
+  nb.innerHTML=`<ul style="margin:0;padding-left:20px">
+    <li>商談中 <b>${shodan?shodan.n:0}件</b>・見積提出 <b>${mitsumori?mitsumori.n:0}件</b>、パイプライン総額 <b>${yen(EIGYO.pipeAmt)}</b>。</li>
+    <li>勝率（${EIGYO.winRate}%）で試算すると、来月の受注見込みは <b>約${yen(yosoku)}前後</b>（試算・確約ではありません）。</li>
+    <li>注目案件：さくら工務店＝受注見込み（契約書は社長確認）／ひまわり介護＝6日未接触のため要フォロー。</li>
+    <li>来月は売上が今月並み〜微増の見通し。未入金の回収と経費（通信費）の見直しで利益はさらに改善できます。</li>
+  </ul>`;
+  nx.append(nb);v.append(nx);
+  // 会社の議題
+  const ag=el("div","card mt24");
+  ag.innerHTML=`<div class="card-h"><h3>📝 会社の議題（決めること・共有すること）</h3><span class="sub" style="color:var(--muted)">番頭が今月分を抽出</span></div>`;
+  const ul=el("div");
+  TEIKI_AGENDA.forEach((t,i)=>{const r=el("div");r.style.cssText="display:flex;gap:11px;align-items:flex-start;padding:10px 0;border-bottom:1px dashed var(--line);font-size:13.5px";r.innerHTML=`<span style="flex:0 0 auto;font-family:'Oswald';font-weight:700;color:var(--amber-deep,#a96a10)">${i+1}</span><span>${t}</span>`;ul.append(r);});
+  ag.append(ul);v.append(ag);
+  // 配信設定
+  const cfg=el("div","card mt24");
+  cfg.innerHTML=`<div class="card-h"><h3>🔔 お知らせの設定</h3><span class="sub" style="color:var(--muted)">いつ・どこへ届けるか</span></div>`;
+  const mkToggle=(label,sub,on)=>{const r=el("label");r.style.cssText="display:flex;gap:11px;align-items:center;padding:10px 0;border-bottom:1px dashed var(--line);cursor:pointer";const cb=el("input");cb.type="checkbox";cb.checked=on;cb.style.cssText="width:18px;height:18px;flex:0 0 18px;accent-color:var(--green)";const tx=el("div");tx.style.flex="1";tx.innerHTML=`<div style="font-weight:700;font-size:13.5px">${label}</div><div style="font-size:12px;color:var(--muted)">${sub}</div>`;r.append(cb,tx);return r;};
+  cfg.append(mkToggle("週次便（毎週 月曜 9:00）","今週の収支＋作業の見える化＋来週の注意",true));
+  cfg.append(mkToggle("月次便（毎月 1日 9:00）","今月の実績＋来月の見通し＋会社の議題",true));
+  const ch=el("div");ch.style.cssText="margin-top:12px;font-size:12.5px;color:var(--muted)";ch.innerHTML="届け先：Discord ／ Slack ／ Chatwork ／ LINE WORKS ／ メール（通知連携で選べます）";
+  cfg.append(ch);
+  const pb=el("button","btn btn-green btn-sm mt16","📤 今すぐプレビュー配信（社内チャットへ）");
+  pb.onclick=()=>toast("経営レポートを社内チャットに配信しました（デモ・送信は人）");
+  cfg.append(pb);v.append(cfg);
+  v.append(el("div","note box","数値・見通しはデモ用の試算で、売上・受注を保証するものではありません。配信は人が確認して行います。定期便は今後実装する新機能を含みます。"));
+  v.append(footer());
+  return v;
+}
+
 const VIEWS={
-  banto:viewBanto,
+  banto:viewBanto, weekly:viewWeekly, teiki:viewTeiki,
   dashboard:viewDashboard, eigyo:viewEigyo, tasks:viewTasks, nippo:viewNippo, shift:viewShift,
   shushi:viewShushi, seikyu:viewSeikyu, hojokin:viewHojokin, kioku:viewKioku,
   shikin:viewShikin, shorui:viewShorui, sakugen:viewSakugen,
