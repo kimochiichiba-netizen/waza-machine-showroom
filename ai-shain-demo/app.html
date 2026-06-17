@@ -719,6 +719,8 @@ const NAV = [
   {id:"weekly",    ic:I.nippo, label:"週次レポート", sec:"main"},
   {id:"teiki",     ic:I.bell,  label:"経営レポート定期便", sec:"main"},
   {id:"sim",       ic:I.money,  label:"コスト削減シミュレーター", sec:"main"},
+  {id:"donyu",     ic:I.check,  label:"導入のしかた（機能を選ぶ）", sec:"main"},
+  {id:"soudan",    ic:I.ai,     label:"社長専用の相談 🔒", sec:"main"},
   {id:"eigyo",     ic:I.deal, label:"案件・アポ管理", sec:"main"},
   {id:"tasks",     ic:I.task, label:"タスク", sec:"main"},
   {id:"nippo",     ic:I.nippo, label:"日報", sec:"main"},
@@ -3353,8 +3355,105 @@ function viewSim(){
   return v;
 }
 
+/* ====================================================================
+   導入のしかた＝「アナログを残すモード」＝メイン機能（市場・職人に刺さる差別化）
+   議員「システム化は型にはめる・市場は丸くなりたい・節税の都合」→全部は変えない。
+==================================================================== */
+const DONYU_ITEMS=[
+  {k:"入金照合", on:true},{k:"請求書づくり", on:true},{k:"経費仕分け", on:true},
+  {k:"日報", on:true},{k:"シフト", on:false},{k:"発注（青果）", on:false},
+  {k:"紙の伝票", on:false},{k:"競り（セリ）", on:false}
+];
+function viewDonyu(){
+  const v=el("div","view");
+  v.innerHTML=`<div class="page-head"><h1>導入のしかた（使う機能を選ぶ）<span style="font-size:12px;font-weight:700;color:#fff;background:var(--green);padding:2px 10px;border-radius:20px;margin-left:10px;vertical-align:middle">メイン機能</span></h1><p>全部を一気に変えません。<b>今の紙のやり方を残したまま</b>、変えたい所だけデジタルにできます。市場や職人の現場の「アナログじゃないといけない部分」はそのままでOKです。</p></div>`;
+  const msg=el("div");msg.style.cssText="background:var(--green-soft2);border-left:4px solid var(--green);border-radius:0 10px 10px 0;padding:12px 15px;font-size:13.5px;line-height:1.7;margin-bottom:16px";
+  msg.innerHTML=`<b style="color:#14512a">導入しても、今の仕事のやり方は壊しません。</b> 「ここは紙のまま」「ここだけデジタル」を業務ごとに選べます。後からいつでも変えられます。`;
+  v.append(msg);
+  const state=DONYU_ITEMS.map(x=>({...x}));
+  const card=el("div","card");
+  card.innerHTML=`<div class="card-h"><h3>業務ごとに選ぶ</h3><span id="donyuCount" class="sub" style="color:var(--muted)"></span></div>`;
+  const list=el("div");
+  const updCount=()=>{const c=document.getElementById("donyuCount");if(c){const n=state.filter(s=>s.on).length;c.textContent="デジタル化 "+n+"個 ／ 紙のまま "+(state.length-n)+"個";}};
+  const rowEls=[];
+  state.forEach((s,i)=>{
+    const r=el("div");r.style.cssText="display:flex;gap:12px;align-items:center;padding:11px 0;border-bottom:1px dashed var(--line)";
+    const nm=el("div");nm.style.cssText="flex:1;font-weight:700;font-size:14px";nm.textContent=s.k;
+    const tg=el("button");tg.style.cssText="flex:0 0 auto;border:none;border-radius:20px;padding:6px 16px;font-weight:700;font-size:12.5px;cursor:pointer;transition:.12s";
+    const paint=()=>{tg.textContent=s.on?"デジタル化":"紙のまま";tg.style.background=s.on?"var(--green)":"#e6e1d8";tg.style.color=s.on?"#fff":"#7a7468";};
+    tg.onclick=()=>{s.on=!s.on;paint();updCount();};
+    paint();r.append(nm,tg);list.append(r);rowEls.push({s,paint});
+  });
+  card.append(list);
+  // プリセット
+  const pre=el("div");pre.style.cssText="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px";
+  const applyPreset=(map)=>{rowEls.forEach(({s,paint})=>{s.on=map(s.k);paint();});updCount();};
+  const mk=(lbl,fn)=>{const b=el("button","btn btn-opt-o btn-sm");b.textContent=lbl;b.onclick=()=>fn();return b;};
+  pre.append(
+    mk("🏪 市場・職人向け（競り・伝票だけ）", ()=>applyPreset(k=>["競り（セリ）","紙の伝票","発注（青果）"].includes(k))),
+    mk("🚀 まるごとデジタル", ()=>applyPreset(()=>true)),
+    mk("🐣 最小から（お金まわりだけ）", ()=>applyPreset(k=>["入金照合","請求書づくり","経費仕分け"].includes(k)))
+  );
+  card.append(pre);v.append(card);
+  setTimeout(updCount,30);
+  v.append(el("div","note box","「全部自動化」を押し付けません。今のやり方（紙・電話・FAX）を残したまま、効く所だけ小さく始められます。最終の判断・確定は人が行います。"));
+  v.append(footer());
+  return v;
+}
+
+/* ====================================================================
+   社長専用の相談（孤独ケアAI）＝メイン機能・社長だけ（従業員には出さない）
+   議員「社長は孤独・言いづらい部分をAIが拾えば飛びつく」。
+==================================================================== */
+const SOUDAN_QA=[
+  {q:"最近やる気が出ない", a:"社長業は孤独で、気分に波があって当たり前です。今月は売上が前月比+12%と、数字はちゃんと出ています。完璧を求めすぎず、休む時間も予定に1つ入れませんか。ここでは何でも吐き出して大丈夫です。"},
+  {q:"Aさんの評価で悩む", a:"評価は感情でなく“事実”で分けると楽になります。Aさんは日報の提出が3週遅れ気味、一方でA病院の納品は一度も落としていません。良い点と気になる点を分け、まず1対1で事実だけ共有しては。声かけの下書きも作れます。"},
+  {q:"資金が不安で眠れない", a:"6/5に残高が¥610,000まで下がる見込みですが、未入金2件（¥162,000）を回収できれば一山越えます。番頭の資金繰り画面で日繰りを一緒に見ましょう。不安は“数字”にすると小さくなります。"},
+  {q:"従業員に言いづらいことがある", a:"言いづらいことほど、①事実ベースで ②1対1で ③改善前提で 伝えると角が立ちません。相手と内容を教えていただければ、伝え方の台本を下書きします（送るかは社長が決めます）。"}
+];
+function viewSoudan(){
+  const v=el("div","view");
+  v.innerHTML=`<div class="page-head"><h1>社長専用の相談<span style="font-size:12px;font-weight:700;color:#fff;background:#7a4ea0;padding:2px 10px;border-radius:20px;margin-left:10px;vertical-align:middle">🔒 誰にも見えません</span></h1><p>番頭が「会社の弱点」を答えるのに対し、ここは<b>社長おひとりの悩み</b>を、誰にも見られずに話せる相手です。従業員・経理には一切表示されません。</p></div>`;
+  // 週次の気になる兆候
+  const ki=el("div","card");ki.style.cssText="margin-bottom:18px;border-left:5px solid #7a4ea0";
+  ki.innerHTML=`<div class="card-h"><h3>今週、そっとお伝えしたいこと</h3><span class="sub" style="color:var(--muted)">ケアのための気づき・評価ではありません</span></div>`;
+  const kiList=["Aさんの日報の言葉数が先週より減っています。疲れがたまっているかもしれません。","鈴木さんの残業が3日続きました。負荷が偏っていないか気にかけてみては。","社長ご自身も今週は休みが0日です。1コマだけでも休息を。"];
+  kiList.forEach(t=>{const r=el("div");r.style.cssText="display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px dashed var(--line);font-size:13px;line-height:1.6";r.innerHTML=`<span style="color:#7a4ea0">●</span><span>${t}</span>`;ki.append(r);});
+  v.append(ki);
+  // プライベートチャット
+  const chat=el("div","card");
+  chat.innerHTML=`<div class="card-h"><h3>誰にも見えない相談</h3><span class="sub" style="color:var(--muted)">ここでの会話は社外にも社内にも出ません</span></div>`;
+  const log=el("div");log.id="soudanLog";log.style.cssText="display:flex;flex-direction:column;gap:12px;margin:6px 0 14px;max-height:300px;overflow:auto;padding:4px";
+  const greet=el("div");greet.style.cssText="align-self:flex-start;max-width:94%;background:#faf7fd;border:1px solid #e4d8ef;border-radius:14px 14px 14px 4px;padding:13px 15px;font-size:13px;line-height:1.7";
+  greet.innerHTML="社長、お疲れさまです。ここは誰にも見えません。今日はどんなことが気がかりですか。";
+  log.append(greet);chat.append(log);
+  const ans=(q,a)=>{
+    const u=el("div");u.style.cssText="align-self:flex-end;max-width:80%;background:#7a4ea0;color:#fff;padding:10px 14px;border-radius:14px 14px 4px 14px;font-size:13.5px";u.textContent=q;log.append(u);
+    const w=el("div");w.style.cssText="align-self:flex-start;max-width:94%;background:#faf7fd;border:1px solid #e4d8ef;border-radius:14px 14px 14px 4px;padding:13px 15px;font-size:13px;line-height:1.7";w.textContent=a;log.append(w);
+    log.scrollTop=log.scrollHeight;
+  };
+  const chips=el("div");chips.style.cssText="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px";
+  SOUDAN_QA.forEach(x=>{const c=el("button","btn btn-opt-o btn-sm");c.textContent=x.q;c.onclick=()=>ans(x.q,x.a);chips.append(c);});
+  chat.append(chips);
+  const row=el("div");row.style.cssText="display:flex;gap:8px";
+  const inp=el("input");inp.type="text";inp.placeholder="思っていることを、そのまま…";inp.style.cssText="flex:1;border:1.5px solid var(--line);border-radius:10px;padding:10px 13px;font-size:13px;font-family:inherit";
+  const send=el("button","btn btn-sm","話す");send.style.cssText+="background:#7a4ea0;color:#fff;border:none";
+  const ask=()=>{const q=inp.value.trim();if(!q)return;let hit=SOUDAN_QA.find(x=>q.includes(x.q.slice(0,4)));
+    if(q.match(/資金|お金|不安|眠れ/))hit=SOUDAN_QA[2];
+    else if(q.match(/評価|Aさん|部下|社員/))hit=SOUDAN_QA[1];
+    else if(q.match(/やる気|疲れ|しんど|孤独/))hit=SOUDAN_QA[0];
+    else if(q.match(/言いづらい|伝え|注意/))hit=SOUDAN_QA[3];
+    ans(q, hit?hit.a:"そう感じるのは、それだけ真剣に会社と向き合っている証拠です。よければ、もう少し詳しく聞かせてください。事実を一緒に整理すると、次の一歩が見えてきます。");
+    inp.value="";};
+  send.onclick=ask;inp.addEventListener("keydown",e=>{if(e.key==="Enter")ask();});
+  row.append(inp,send);chat.append(row);v.append(chat);
+  v.append(el("div","note box","この相談は社長専用で、従業員・経理・社外の誰にも表示されません。記録は社長のお手元にのみ残ります。AIは寄り添いと事実の整理まで（医療・心理の専門的な診断ではありません）。送信・確定は人。"));
+  v.append(footer());
+  return v;
+}
+
 const VIEWS={
-  banto:viewBanto, weekly:viewWeekly, teiki:viewTeiki, sim:viewSim,
+  banto:viewBanto, weekly:viewWeekly, teiki:viewTeiki, sim:viewSim, donyu:viewDonyu, soudan:viewSoudan,
   dashboard:viewDashboard, eigyo:viewEigyo, tasks:viewTasks, nippo:viewNippo, shift:viewShift,
   shushi:viewShushi, seikyu:viewSeikyu, hojokin:viewHojokin, kioku:viewKioku,
   shikin:viewShikin, shorui:viewShorui, sakugen:viewSakugen,
