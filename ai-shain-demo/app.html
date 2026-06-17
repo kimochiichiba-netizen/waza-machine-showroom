@@ -2418,6 +2418,30 @@ const OPTION_FEATURES=[
     demo:["契約更新日を一覧で管理","更新・解約の期限前にアラート","サブスクの二重・不要契約を検知","担当者へ自動でリマインド"]}
 ];
 
+/* ★全オプション機能をサイドバー（オプション節）にも個別追加（★付き・クリックで体験モーダル） */
+OPTION_FEATURES.forEach(f=>NAV.push({id:"opt-"+f.id, ic:f.ic, label:f.title, sec:"opt", opt:true, optKey:f.id}));
+
+/* ナビ／カード共通：キーから体験モーダルを開く */
+function openOptionByKey(key){
+  const f=OPTION_FEATURES.find(x=>x.id===key); if(!f)return;
+  const builder=DEMO_BUILDERS[f.id];
+  let foot="※デモのため、実際の送信・支払い・公開・確定は行いません。AIは下書き・案・予約まで／実行は社長本人です。";
+  if(f.id==="hojo")foot="※デモのため実際の申請・提出は行いません。補助金の採択は保証しません。申請・提出は社長本人です。";
+  if(f.id==="shift")foot="※出るのは“案”です。労基法の確認と確定は雇用主が行います（デモ）。";
+  openDemoModal({icon:f.ic, title:f.title, foot, build:(bodyEl)=>{
+    if(typeof builder==="function"){ builder(bodyEl); }
+    else {
+      bodyEl.appendChild(mdLead(f.desc));
+      const box=el("div","md-demo");
+      box.innerHTML=`<div class="mdh">${I.star}<span>このオプションでできること</span></div>`;
+      (f.demo||[]).forEach(d=>{const row=el("div");row.style.cssText="display:flex;gap:9px;align-items:flex-start;padding:6px 0;font-size:12.5px;color:var(--ink-soft);line-height:1.6";row.innerHTML=`<span style="flex:0 0 16px;color:var(--opt-deep);margin-top:2px"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 9 17 20 6"/></svg></span><span>${d}</span>`;box.appendChild(row);});
+      bodyEl.appendChild(box);
+      const price=el("div");price.style.cssText="margin-top:12px;font-size:12px;color:var(--ink-soft)";price.innerHTML=`価格目安：<b style="color:var(--opt-deep)">${f.price}</b>`;bodyEl.appendChild(price);
+      bodyEl.appendChild(mdNote("これは別オプション機能です（標準パックには含まれません）。送信・支払い・公開・確定は社長本人が行います。"));
+    }
+  }});
+}
+
 function viewOptions(){
   const v=el("div","view");
   v.innerHTML=`<div class="page-head"><h1><span class="h-star" aria-hidden="true">${STAR_MINI}</span>オプション機能</h1><p>標準パックの「できること」をさらに広げる追加機能です。必要なものだけ、後からでも追加できます。</p></div>`;
@@ -3468,7 +3492,7 @@ function buildNav(){
     const badge=n.badge?`<span class="badge">${n.badge}</span>`:"";
     b.innerHTML=`<span class="ic">${n.ic}</span><span class="ni-label">${n.label}</span>${star}${badge}`;
     b.setAttribute("aria-current",STATE.view===n.id?"page":"false");
-    b.onclick=()=>{go(n.id);};
+    b.onclick = n.optKey ? ()=>{openOptionByKey(n.optKey);document.body.classList.remove("nav-open");} : ()=>{go(n.id);};
     return b;
   };
   if(STATE.role==="employee"){
@@ -3510,6 +3534,35 @@ function go(id){
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
+/* 各メイン機能の「詳しい説明」（page-headの直下に自動挿入） */
+const FEATURE_INFO={
+  banto:{what:"会社の数字（お金・タスク・人）を“全部つないで”見ているAI参謀。話しかけると、いま会社のどこが弱いかを根拠つきで答えます。",points:["「今月ヤバい数字ある？」など普通の言葉で質問→未入金・資金・経費などから弱点を名指し","聞かなくても朝イチで『今日の経営の急所』を赤信号で提示","頑張った社員を見つけて“ねぎらい”を進言（お金の決定・送金は社長）","※答えの根拠は実データ。送信・支払い・確定は必ず人。番頭チャットは今後実装の新機能を含む"]},
+  dashboard:{what:"会社のお金・タスク・人の状態を1画面に集約。朝この1枚を見れば今日やることが分かります。",points:["売上・未入金・今日のタスク・日報の提出状況をひと目で","今月の営業（案件・アポ）サマリーも同じ画面に","AI社員からの『今日のおすすめ』を3つ提示","気になる数字はタップで各画面へ"]},
+  weekly:{what:"今週の収支と「だれが・どの作業をしているか」を1枚に。社長・経理・従業員の全員が同じ画面で見られます。",points:["今週の売上・入金・支出・差引を自動集計","従業員ごとの今週の作業・稼働・状態（順調/遅れ/未提出）を見える化","番頭が今週の総評を一言","ワンタップで全員に共有（送信は人）"]},
+  teiki:{what:"「今月はこうだった→来月はこうなりそう→会社の議題」を、番頭が毎週・毎月まとめて自動でお知らせします。",points:["今月の実績（売上・受注・アポ・未入金）を自動要約","案件・アポから来月の受注見込みを試算","決めるべき『会社の議題』を抽出","週次=毎週月曜9時／月次=毎月1日9時に社内チャットへ（試算・配信は人）"]},
+  sim:{what:"「事務の人件費」と「AI社員パック」を比べて、年間いくら浮くかをその場で試算します。商談でそのまま使えます。",points:["事務スタッフの月給と人数を入れるだけ","年間の削減見込みを即計算して表示","数字を動かすとリアルタイムで再計算","※試算であり効果を保証するものではありません"]},
+  donyu:{what:"全部を一気に変えません。今の紙のやり方を残したまま、変えたい所だけデジタルにできます。",points:["業務ごとに『紙のまま／デジタル化』を選べる","市場・職人向けなどのプリセットも用意","後からいつでも変更できる","『導入しても今の仕事を壊さない』のが方針"]},
+  soudan:{what:"番頭が“会社の弱点”を答えるのに対し、ここは社長おひとりの悩みを、誰にも見られずに話せる相手です。",points:["従業員・経理・社外の誰にも表示されないプライベートな相談","週1で『気になる兆候』をそっと要約（評価でなくケア前提）","不安を“数字”に変えて次の一歩を整理","※医療・心理の専門的診断ではありません。記録は社長のお手元のみ"]},
+  eigyo:{what:"案件とアポを“じょうご”で管理。どの案件が今どの段階か、次に何をすべきかが分かります。",points:["リード→アポ→商談→見積→受注 の段階で見える化","各案件の次アクション・確度・最終接触日を表示","担当者・チャネル別の成績も","フォロー漏れをAIが通知"]},
+  tasks:{what:"会社のタスクをAIが期日・優先順位・担当で整理。『今これをやるべき』を自分から提案します。",points:["大きなプロジェクトから細かい連絡まで一元管理","期日・優先度・ボールの持ち主を自動で判断","今日やるべきことを先回りで提案","付箋に頼らず、抜け漏れを防ぐ"]},
+  nippo:{what:"6人分の日報を毎日1枚に要約。提出漏れが赤で即わかります。さらに職場の“傾向”もAIが分析します。",points:["提出マトリクスで未提出がひと目","AIが日報を毎日要約","日報トレンド分析＝増えた言及ワード・気になる傾向を炙り出す（個人攻撃でなく傾向）","集計は社内のAI・外部送信なし。最終判断は社長"]},
+  shift:{what:"全員の希望からシフトを調整。人員不足や無理な連勤を避けた勤務表づくりを助けます。",points:["従業員がスマホからシフト希望を提出","希望を集めて勤務表の原案を作成","人員不足・連勤・休憩割れを警告","確定は必ず責任者（社長）の承認"]},
+  shushi:{what:"売掛・買掛、入ってくるお金・出ていくお金を1画面に。会社の利益と資金の状態が分かります。",points:["売上・経費・粗利を月次で集計","売掛金・買掛金の残高を管理","キャッシュフローの見通しを表示","気になる増減はAIが指摘"]},
+  seikyu:{what:"請求書づくりと入金チェックを自動化。未入金を見つけて督促文の下書きまで用意します。",points:["請求書をワンクリックで作成","入金を自動で照合（消し込み）","未入金・期日超過を一覧で警告","督促文の下書きを用意（送信は社長）"]},
+  shikin:{what:"これから入るお金・出るお金をカレンダーで。資金がショートしそうな日を前もって警告します。",points:["入金予定・支払予定をカレンダーで可視化","月末の見込み残高を自動計算","資金ショートの恐れを事前にアラート","直近の予定を一覧で確認"]},
+  shorui:{what:"AIが作った請求書・見積書・給与明細などを、その場でプレビュー確認できます。",points:["書類の種類を切り替えてプレビュー","内容を確認してPDFダウンロード","適格請求書（インボイス）の形式に対応","送付・確定は社長が行う"]},
+  sakugen:{what:"AI社員によって削減できた作業時間とお金を“見える化”。導入効果がひと目で分かります。",points:["今月の削減時間・削減額を表示","業務別の内訳を集計","6ヶ月の推移をグラフで","※数値は試算・前提により変動"]},
+  hojokin:{what:"会社に使えそうな補助金をAIが探してお知らせ。事業計画書のたたき台づくりまで助けます。",points:["公募が出るたび会社の事業内容と照合","使える補助金だけを抽出して通知","事業計画書のたたき台を下書き","※採択は保証しません。申請・提出は社長本人"]},
+  kioku:{what:"社長の好み・判断基準・合言葉を覚えて、使うほど先回りするAIの“記憶ノート”です。",points:["社長の手直しや判断のクセを記録","次回から社長の段取り・口調で先回り","会社専用なので他社には真似できない","※脳を読むのではなく“好みのメモ”を貯める仕組み"]},
+  tsuchi:{what:"日報・未入金・シフト・補助金などの“動き”を、いつものチャットへ自動でお知らせします。",points:["Chatwork・LINE WORKS・Slack・Discord・LINE・メールに対応","『何かあるたび』に自動通知（ルールは選べる）","補助金の新着・ダッシュボードの異常も通知","ログインしなくても会社が回る"]}
+};
+function featInfoBox(id){
+  const f=FEATURE_INFO[id]; if(!f) return null;
+  const d=el("div","card");d.style.cssText="margin:0 0 20px;background:var(--green-soft2);border:1px solid var(--line);border-left:5px solid var(--green)";
+  let pts=f.points.map(p=>`<li style="margin:5px 0">${p}</li>`).join("");
+  d.innerHTML=`<div style="display:flex;gap:10px;align-items:flex-start"><div style="flex:0 0 24px;width:24px;height:24px;color:var(--green)">${I.ai}</div><div style="flex:1;min-width:0"><div style="font-weight:800;color:#14512a;font-size:14.5px;margin-bottom:6px">この機能でできること（詳しく）</div><div style="font-size:13px;line-height:1.8;margin-bottom:8px">${f.what}</div><ul style="margin:0;padding-left:20px;font-size:12.8px;line-height:1.7;color:var(--ink)">${pts}</ul></div></div>`;
+  return d;
+}
 function render(){
   const wrap=$("#viewwrap");
   wrap.innerHTML="";
@@ -3517,6 +3570,9 @@ function render(){
   const view=builder();
   view.classList.add("active");
   wrap.appendChild(view);
+  // ★各メイン機能に「詳しい説明」をpage-head直下へ自動挿入
+  const ib=featInfoBox(STATE.view); const ph=view.querySelector(".page-head");
+  if(ib && ph){ ph.insertAdjacentElement("afterend", ib); }
   const nv=NAV.find(n=>n.id===STATE.view)||EMP_NAV.find(n=>n.id===STATE.view);
   $("#tbTitle").textContent=nv?nv.label:"";
   // wire any data-go (kpi cards / links)
